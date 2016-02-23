@@ -17,6 +17,9 @@ class TrussModel(FiniteElementModel):
         self.request_output_variable('P', SCALAR, ELEMENT)
 
     def Solve(self):
+        """Solves the finite element problem
+
+        """
         # active DOF set dynamically
         self.active_dof = range(self.elements[0].ndof)
         self.validate(LinknD2, one=True)
@@ -44,7 +47,11 @@ class TrussModel(FiniteElementModel):
     # --------------------------- POSTPROCESSING ---------------------------- #
     # ----------------------------------------------------------------------- #
     def internal_forces(self, u):
-        """Computes the axial internal forces for all elements in the truss
+        """
+
+        .. _truss_int_force:
+
+        Computes the axial internal forces for all elements in the truss
 
         Parameters
         ----------
@@ -57,6 +64,10 @@ class TrussModel(FiniteElementModel):
         p : ndarray
             Axial internal force
 
+        See Also
+        --------
+        pyfem2.elemlib1.LinknD2.internal_force
+
         """
         p = zeros(self.numele)
         for el in self.elements:
@@ -65,7 +76,11 @@ class TrussModel(FiniteElementModel):
         return p
 
     def stresses(self, p):
-        """Computes the stress in each truss element
+        """
+
+        .. _truss_stresses:
+
+        Computes the stress in each truss element
 
         Parameters
         ----------

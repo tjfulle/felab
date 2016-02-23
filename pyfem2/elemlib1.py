@@ -36,6 +36,22 @@ class Element(object):
 # ------------------------------ TRUSS ELEMENT ------------------------------ #
 # --------------------------------------------------------------------------- #
 class LinknD2(Element):
+    """Base class for 2 node elastic link elements
+
+    Parameters
+    ----------
+    label : int
+        Element label
+    elenod : list of int
+        Internal node IDs of nodes making up this element
+    elecoord : ndarray
+        Coordinates of nodes
+    elemat : object
+        A pyfem2.mat.Material instance
+    elefab : dict
+        Requires area 'A'
+
+    """
     nfab = 1
     def __init__(self, label, elenod, elecoord, elemat, **elefab):
         self.label = label
@@ -83,7 +99,10 @@ class LinknD2(Element):
         return zeros(self.numnod*self.ndof)
 
     def internal_force(self, uc):
-        """Computes the element axial internal force
+        """
+        .. _link_int_force:
+
+        Computes the element axial internal force
 
         Parameters
         ----------
@@ -125,6 +144,22 @@ class Link3D2(LinknD2):
 # ---------------------- EULER BERNOULI BEAM ELEMENT ------------------------ #
 # --------------------------------------------------------------------------- #
 class BeamColumn2D(Element):
+    """Base class for 2 node Euler-Bernouli beam elements
+
+    Parameters
+    ----------
+    label : int
+        Element label
+    elenod : list of int
+        Internal node IDs of nodes making up this element
+    elecoord : ndarray
+        Coordinates of nodes
+    elemat : object
+        A pyfem2.mat.Material instance
+    elefab : dict
+        Requires area 'A' and 'Izz'
+
+    """
     nfab = 2
     numdim, ndof, numnod = 2, 3, 2
     signature = 1100010
