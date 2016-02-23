@@ -1,0 +1,259 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>6.6. Element Library, 1 &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="6. pyfem2 Source" href="index.html" />
+    <link rel="prev" title="6.5. Material" href="material.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pyfem2.elemlib1">
+<span id="element-library-1"></span><span id="apielementlib1"></span><h1>6.6. Element Library, 1<a class="headerlink" href="#module-pyfem2.elemlib1" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyfem2.elemlib1.LinknD2">
+<em class="property">class </em><code class="descclassname">pyfem2.elemlib1.</code><code class="descname">LinknD2</code><span class="sig-paren">(</span><em>label</em>, <em>elenod</em>, <em>elecoord</em>, <em>elemat</em>, <em>**elefab</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.elemlib1.LinknD2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for 2 node elastic link elements</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>label</strong> : int</p>
+<blockquote>
+<div><p>Element label</p>
+</div></blockquote>
+<p><strong>elenod</strong> : list of int</p>
+<blockquote>
+<div><p>Internal node IDs of nodes making up this element</p>
+</div></blockquote>
+<p><strong>elecoord</strong> : ndarray</p>
+<blockquote>
+<div><p>Coordinates of nodes</p>
+</div></blockquote>
+<p><strong>elemat</strong> : object</p>
+<blockquote>
+<div><p>A pyfem2.mat.Material instance</p>
+</div></blockquote>
+<p><strong>elefab</strong> : dict</p>
+<blockquote class="last">
+<div><p>Requires area &#8216;A&#8217;</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="pyfem2.elemlib1.LinknD2.internal_force">
+<code class="descname">internal_force</code><span class="sig-paren">(</span><em>uc</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.elemlib1.LinknD2.internal_force" title="Permalink to this definition">¶</a></dt>
+<dd><p id="link-int-force">Computes the element axial internal force</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>xc</strong> : array_like</p>
+<blockquote>
+<div><p>nodal coordinates
+x[i,j] is the jth coordinate of the ith node</p>
+</div></blockquote>
+<p><strong>E, A</strong> : float</p>
+<blockquote>
+<div><p>Young&#8217;s modulus and cross-sectional area</p>
+</div></blockquote>
+<p><strong>uc</strong> : array_like</p>
+<blockquote>
+<div><p>nodal displacements
+on reshaping to have shape (number of nodes, degrees of freedom),
+u[i,j] is the jth coordinate displacement of the ith node</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>p</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Array of axial internal forces</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.elemlib1.LinknD2.stiffness">
+<code class="descname">stiffness</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.elemlib1.LinknD2.stiffness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the stiffness of a n-dimensional elastic link</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>xc</strong> : array_like</p>
+<blockquote>
+<div><p>nodal coordinates
+xc[i,j] is the jth coordinate of the ith node</p>
+</div></blockquote>
+<p><strong>E, A</strong> : float</p>
+<blockquote>
+<div><p>Young&#8217;s modulus and area of the bar</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>k</strong> : array_like</p>
+<blockquote class="last">
+<div><p>2*nd x 2*nd elastic stiffness</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyfem2.elemlib1.BeamColumn2D">
+<em class="property">class </em><code class="descclassname">pyfem2.elemlib1.</code><code class="descname">BeamColumn2D</code><span class="sig-paren">(</span><em>label</em>, <em>elenod</em>, <em>elecoord</em>, <em>elemat</em>, <em>**elefab</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.elemlib1.BeamColumn2D" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for 2 node Euler-Bernouli beam elements</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>label</strong> : int</p>
+<blockquote>
+<div><p>Element label</p>
+</div></blockquote>
+<p><strong>elenod</strong> : list of int</p>
+<blockquote>
+<div><p>Internal node IDs of nodes making up this element</p>
+</div></blockquote>
+<p><strong>elecoord</strong> : ndarray</p>
+<blockquote>
+<div><p>Coordinates of nodes</p>
+</div></blockquote>
+<p><strong>elemat</strong> : object</p>
+<blockquote>
+<div><p>A pyfem2.mat.Material instance</p>
+</div></blockquote>
+<p><strong>elefab</strong> : dict</p>
+<blockquote class="last">
+<div><p>Requires area &#8216;A&#8217; and &#8216;Izz&#8217;</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="fem0.html">6.1. UniformBar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem1.html">6.2. FiniteElementModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem2.html">6.3. TrussModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">6.4. Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="material.html">6.5. Material</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">6.6. Element Library, 1</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+      <li>Previous: <a href="material.html" title="previous chapter">6.5. Material</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/apidoc/elemlib1.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

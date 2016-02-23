@@ -41,7 +41,7 @@ The problem is defined and solved in ``pyfem2`` as follows:
 
    # Create the model problem and read the mesh from a file
    V = HeatTransfer2DModel()
-   V.Mesh(filename='plate_w_hole_tri_0.025.g')
+   V.Mesh(filename='PlateWithHoleTria3Fine.g')
 
    # Define an element block of diffusive heat transfer elements
    # with material 'Material-1'
@@ -77,7 +77,7 @@ The problem is defined and solved in ``pyfem2`` as follows:
 How does it work?
 -----------------
 
-The complete code can be found in the files ``examples/heat1.py`` and ``examples/Heat1.ipynb``. We now examine the preceding program in detail.
+The complete code can be found in the files ``pyfem2/tutorials/Heat1.py``. We now examine the preceding program in detail.
 
 The first lines of the program,
 
@@ -101,7 +101,7 @@ creates the finite element model.  The finite element mesh is assigned to the pr
 
 .. code:: python
 
-   V.Mesh(filename='plate_w_hole_tri_0.025.g')
+   V.Mesh(filename='PlateWithHoleTria3Fine.g')
 
 which reads the mesh definition from a
 `ExodusII <http://prod.sandia.gov/techlib/access-control.cgi/1992/922137.pdf>`__ formatted file.  The mesh is composed of 1885 triangular elements

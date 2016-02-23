@@ -44,11 +44,10 @@
 <span id="install"></span><h1>1.2. Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="obtaining-pyfem2">
 <h2>1.2.1. Obtaining <code class="docutils literal"><span class="pre">pyfem2</span></code><a class="headerlink" href="#obtaining-pyfem2" title="Permalink to this headline">¶</a></h2>
-<p><code class="docutils literal"><span class="pre">pyfem2</span></code> is a pure Python package requiring only , in addition to the
-standard library. may be obtained in several ways, but the easiest is to
-download and install the <a class="reference external" href="http://www.continuum.io">Anaconda</a> Python
-Distribution. is also easily installed on linux using the distribution’s
-package manager.</p>
+<p><code class="docutils literal"><span class="pre">pyfem2</span></code> is a pure Python package requiring only <a class="reference external" href="https://scipy.org">numpy</a>, in addition to the standard library. numpy may be
+obtained in several ways, but the easiest is to download and install the
+<a class="reference external" href="https://www.continuum.io">Anaconda</a> Python Distribution. is also easily
+installed on linux using the distribution’s package manager.</p>
 <p><code class="docutils literal"><span class="pre">pyfem2</span></code> is installed by first</p>
 <ul class="simple">
 <li>downloading the package from <a class="reference external" href="https://github.com/tjfulle/pyfem2">Git Hub</a>, or</li>
@@ -64,13 +63,20 @@ to your <code class="docutils literal"><span class="pre">PYTHONPATH</span></code
 and placed in the <code class="docutils literal"><span class="pre">Documents</span></code> folder in your home directory:</p>
 <ul class="simple">
 <li><strong>Mac OS X or Linx:</strong> add <code class="docutils literal"><span class="pre">export</span> <span class="pre">PYTHONPATH=$HOME/Documents/pyfem2</span></code> to your <code class="docutils literal"><span class="pre">.bashrc</span></code> (if using a variant of <code class="docutils literal"><span class="pre">bash</span></code>) or <code class="docutils literal"><span class="pre">setenv</span> <span class="pre">PYTHONPATH</span> <span class="pre">$HOME/Documents/pyfem2</span></code> to your <code class="docutils literal"><span class="pre">.cshrc</span></code> (if using a variant of <code class="docutils literal"><span class="pre">csh</span></code>)</li>
-<li><strong>Windows:</strong> create a <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> variable that points to <code class="docutils literal"><span class="pre">%HOMEPATH%\My</span> <span class="pre">Documents\pyfem2</span></code> environment variable (<code class="docutils literal"><span class="pre">My</span> <span class="pre">Computer</span> <span class="pre">&gt;</span> <span class="pre">Properties</span> <span class="pre">&gt;</span> <span class="pre">Advanced</span> <span class="pre">System</span> <span class="pre">Settings</span> <span class="pre">&gt;</span> <span class="pre">Environment</span> <span class="pre">Variables</span></code>)</li>
+<li><strong>Windows:</strong> create a <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> environment variable that points to <code class="docutils literal"><span class="pre">%HOMEPATH%\My</span> <span class="pre">Documents\pyfem2</span></code>:<ul>
+<li>Right click <code class="docutils literal"><span class="pre">Computer</span></code> in Start menu</li>
+<li>Choose <code class="docutils literal"><span class="pre">System</span> <span class="pre">Properties</span></code> from the context menue</li>
+<li>Click <code class="docutils literal"><span class="pre">Advanced</span> <span class="pre">System</span> <span class="pre">Settings</span></code></li>
+<li>Under the <code class="docutils literal"><span class="pre">Advanced</span></code> tab, click on <code class="docutils literal"><span class="pre">Environment</span> <span class="pre">Variables</span></code></li>
+<li>Edit or create the <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> environment variable.</li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="section" id="testing-the-installation">
 <h2>1.2.3. Testing the installation<a class="headerlink" href="#testing-the-installation" title="Permalink to this headline">¶</a></h2>
 <p>Test the installation by navigating to <code class="docutils literal"><span class="pre">$HOME/Documents/pyfem2/examples</span></code> and executing</p>
-<div class="code shell highlight-python"><div class="highlight"><pre>python plane1.py
+<div class="code shell highlight-python"><div class="highlight"><pre>python Plane1.py
 </pre></div>
 </div>
 <p>at a command prompt.</p>

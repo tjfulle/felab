@@ -1,3 +1,4 @@
+.. _FirstProgram:
 
 A First Finite Element Program
 ==============================

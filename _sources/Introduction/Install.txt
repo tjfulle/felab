@@ -6,11 +6,11 @@ Installation
 Obtaining ``pyfem2``
 --------------------
 
-``pyfem2`` is a pure Python package requiring only , in addition to the
-standard library. may be obtained in several ways, but the easiest is to
-download and install the `Anaconda <http://www.continuum.io>`__ Python
-Distribution. is also easily installed on linux using the distribution’s
-package manager.
+``pyfem2`` is a pure Python package requiring only `numpy
+<https://scipy.org>`__, in addition to the standard library. numpy may be
+obtained in several ways, but the easiest is to download and install the
+`Anaconda <https://www.continuum.io>`__ Python Distribution. is also easily
+installed on linux using the distribution’s package manager.
 
 ``pyfem2`` is installed by first
 
@@ -29,7 +29,13 @@ and placed in the ``Documents`` folder in your home directory:
 
 - **Mac OS X or Linx:** add ``export PYTHONPATH=$HOME/Documents/pyfem2`` to your ``.bashrc`` (if using a variant of ``bash``) or ``setenv PYTHONPATH $HOME/Documents/pyfem2`` to your ``.cshrc`` (if using a variant of ``csh``)
 
--  **Windows:** create a ``PYTHONPATH`` variable that points to ``%HOMEPATH%\My Documents\pyfem2`` environment variable (``My Computer > Properties > Advanced System Settings > Environment Variables``)
+-  **Windows:** create a ``PYTHONPATH`` environment variable that points to ``%HOMEPATH%\My Documents\pyfem2``:
+
+   - Right click ``Computer`` in Start menu
+   - Choose ``System Properties`` from the context menue
+   - Click ``Advanced System Settings``
+   - Under the ``Advanced`` tab, click on ``Environment Variables``
+   - Edit or create the ``PYTHONPATH`` environment variable.
 
 Testing the installation
 ------------------------
@@ -38,7 +44,7 @@ Test the installation by navigating to ``$HOME/Documents/pyfem2/examples`` and e
 
 .. code:: shell
 
-   python plane1.py
+   python Plane1.py
 
 at a command prompt.
 

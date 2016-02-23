@@ -70,7 +70,7 @@ top face.</p>
 
 <span class="c1"># Create the model problem and read the mesh from a file</span>
 <span class="n">V</span> <span class="o">=</span> <span class="n">HeatTransfer2DModel</span><span class="p">()</span>
-<span class="n">V</span><span class="o">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;plate_w_hole_tri_0.025.g&#39;</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;PlateWithHoleTria3Fine.g&#39;</span><span class="p">)</span>
 
 <span class="c1"># Define an element block of diffusive heat transfer elements</span>
 <span class="c1"># with material &#39;Material-1&#39;</span>
@@ -107,7 +107,7 @@ top face.</p>
 </div>
 <div class="section" id="how-does-it-work">
 <h2>2.3.4. How does it work?<a class="headerlink" href="#how-does-it-work" title="Permalink to this headline">¶</a></h2>
-<p>The complete code can be found in the files <code class="docutils literal"><span class="pre">examples/heat1.py</span></code> and <code class="docutils literal"><span class="pre">examples/Heat1.ipynb</span></code>. We now examine the preceding program in detail.</p>
+<p>The complete code can be found in the files <code class="docutils literal"><span class="pre">pyfem2/tutorials/Heat1.py</span></code>. We now examine the preceding program in detail.</p>
 <p>The first lines of the program,</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
@@ -122,7 +122,7 @@ the <code class="docutils literal"><span class="pre">HeatTransfer2DModel</span><
 </pre></div>
 </div>
 <p>creates the finite element model.  The finite element mesh is assigned to the problem by</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;plate_w_hole_tri_0.025.g&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;PlateWithHoleTria3Fine.g&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>which reads the mesh definition from a

@@ -18,7 +18,7 @@ Determine the maximum principal stress in the plate with hole and compare with t
    from pyfem2 import *
 
    V = Plane2DModel()
-   V.GenesisMesh('../meshes/plate_quarter.g')
+   V.GenesisMesh('../meshes/PlateWithHoleQuad4QuarterSym.g')
 
    V.Material('Material-1')
    V.materials['Material-1'].Elastic(E=100, Nu=.2)

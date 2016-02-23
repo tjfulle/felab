@@ -77,7 +77,7 @@ The problem is defined and solved in ``pyfem2`` as follows:
 How does it work?
 -----------------
 
-The complete code can be found in the files ``examples/Truss2.py``. We now examine the preceding program in detail.
+The complete code can be found in the files ``tutorials/Truss2.py``. We now examine the preceding program in detail.
 
 The first lines of the program,
 

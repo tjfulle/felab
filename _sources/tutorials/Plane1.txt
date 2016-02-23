@@ -57,7 +57,7 @@ The problem is defined and solved in ``pyfem2`` as follows:
 How does it work?
 -----------------
 
-The complete code can be found in the file ``examples/plane1.py``. We now examine the preceding program in detail.
+We now examine the preceding program in detail.
 
 The first lines of the program,
 

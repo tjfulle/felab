@@ -92,7 +92,7 @@ The computed displacement and nodal reactions are
 How does it work?
 -----------------
 
-The complete code can be found in the files ``examples/Truss1.py``. We now examine the preceding program in detail.
+The complete code can be found in the files ``tutorials/Truss1.py``. We now examine the preceding program in detail.
 
 The first lines of the program,
 

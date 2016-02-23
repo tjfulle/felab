@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>6. pyfem2 Source &mdash; pyfem2 3.0 documentation</title>
+    <title>6.3. TrussModel &mdash; pyfem2 3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -25,8 +25,9 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
-    <link rel="next" title="6.1. UniformBar" href="fem0.html" />
-    <link rel="prev" title="5.8. TrussModel: A Complete Truss Program" href="../Implementation/Truss1.html" />
+    <link rel="up" title="6. pyfem2 Source" href="index.html" />
+    <link rel="next" title="6.4. Mesh" href="mesh.html" />
+    <link rel="prev" title="6.2. FiniteElementModel" href="fem1.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -39,37 +40,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="pyfem2-source">
-<h1>6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source<a class="headerlink" href="#pyfem2-source" title="Permalink to this headline">¶</a></h1>
-<p><code class="docutils literal"><span class="pre">pyfem2</span></code> is a Python <a class="footnote-reference" href="#id2" id="id1">[1]</a> package providing modules, classes, and functions
-for setting up and solving finite element models.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="fem0.html">6.1. UniformBar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fem1.html">6.2. FiniteElementModel</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fem2.html">6.3. TrussModel</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mesh.html">6.4. Mesh</a></li>
-<li class="toctree-l1"><a class="reference internal" href="material.html">6.5. Material</a></li>
-<li class="toctree-l1"><a class="reference internal" href="elemlib1.html">6.6. Element Library, 1</a></li>
-</ul>
-</div>
-<table class="docutils footnote" frame="void" id="id2" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Python is an open source programming environment that comes standard
-on most operating systems and is becoming ubiqutous in computational
-sciences. However, the version of Python packaged on most operating
-systems does not come with many of the components needed for
-scientific computing (modules such as
-<a class="reference external" href="http://www.numpy.org">numpy</a> and
-<a class="reference external" href="http://scipy.org/index.html">scipy</a>). Building and installing all
-of the necessary components is tedious and error prone. I recommend
-downloading and installing the
-<a class="reference external" href="https://www.continuum.io/downloads">Anaconda</a> Python distribution
-from <a class="reference external" href="https://continuum.io">Continuum Analytics</a>. All source
-examples were written using Anaconda Python3.5.</td></tr>
-</tbody>
-</table>
+  <div class="section" id="module-pyfem2.fem2">
+<span id="trussmodel"></span><span id="apitrussmodel"></span><h1>6.3. TrussModel<a class="headerlink" href="#module-pyfem2.fem2" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
@@ -99,10 +71,10 @@ examples were written using Anaconda Python3.5.</td></tr>
 <li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="fem0.html">6.1. UniformBar</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fem1.html">6.2. FiniteElementModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fem2.html">6.3. TrussModel</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">6.3. TrussModel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mesh.html">6.4. Mesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="material.html">6.5. Material</a></li>
 <li class="toctree-l2"><a class="reference internal" href="elemlib1.html">6.6. Element Library, 1</a></li>
@@ -114,8 +86,10 @@ examples were written using Anaconda Python3.5.</td></tr>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="../Implementation/Truss1.html" title="previous chapter">5.8. TrussModel: A Complete Truss Program</a></li>
-      <li>Next: <a href="fem0.html" title="next chapter">6.1. UniformBar</a></li>
+  <li><a href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+      <li>Previous: <a href="fem1.html" title="previous chapter">6.2. FiniteElementModel</a></li>
+      <li>Next: <a href="mesh.html" title="next chapter">6.4. Mesh</a></li>
+  </ul></li>
   </ul></li>
 </ul>
 </div>
@@ -144,7 +118,7 @@ examples were written using Anaconda Python3.5.</td></tr>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
-      <a href="../_sources/apidoc/index.txt"
+      <a href="../_sources/apidoc/fem2.txt"
           rel="nofollow">Page source</a>
     </div>
 

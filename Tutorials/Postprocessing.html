@@ -52,7 +52,7 @@
 <div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">V</span> <span class="o">=</span> <span class="n">Plane2DModel</span><span class="p">()</span>
-<span class="n">V</span><span class="o">.</span><span class="n">GenesisMesh</span><span class="p">(</span><span class="s1">&#39;../meshes/plate_quarter.g&#39;</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">GenesisMesh</span><span class="p">(</span><span class="s1">&#39;../meshes/PlateWithHoleQuad4QuarterSym.g&#39;</span><span class="p">)</span>
 
 <span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
 <span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">2</span><span class="p">)</span>

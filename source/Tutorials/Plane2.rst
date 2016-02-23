@@ -34,7 +34,7 @@ The problem is defined and solved in ``pyfem2`` as follows:
 
    # Create the finite element model and assign a mesh
    V = Plane2DModel()
-   V.GenesisMesh('../meshes/quarter_cylinder.g')
+   V.GenesisMesh('../meshes/QuarterCylinderQuad4.g')
 
    # Define an element block of plane strain elements
    V.ElementBlock('ElementBlock1', ALL)
@@ -59,7 +59,7 @@ The problem is defined and solved in ``pyfem2`` as follows:
 How does it work?
 -----------------
 
-The complete code can be found in the file ``examples/plane1.py``. We now examine the preceding program in detail.
+The complete code can be found in the file ``tutorials/Plane1.py``. We now examine the preceding program in detail.
 
 The first lines of the program,
 
@@ -82,7 +82,7 @@ creates the finite element model.  The mesh is assigned to the model by
 
 .. code:: python
 
-   V.GenesisMesh('quarter_cylinder.g')
+   V.GenesisMesh('../meshes/QuarterCylinderQuad4.g')
 
 which reads the mesh parameters from a
 `ExodusII <http://prod.sandia.gov/techlib/access-control.cgi/1992/922137.pdf>`__ formatted file.
