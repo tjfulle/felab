@@ -31,7 +31,7 @@ from __future__ import division, print_function, absolute_import
 
 __all__ = ['netcdf_file']
 
-
+import sys
 import warnings
 import weakref
 from operator import mul
@@ -43,7 +43,22 @@ from numpy import fromstring, ndarray, dtype, empty, array, asarray
 from numpy import little_endian as LITTLE_ENDIAN
 from functools import reduce
 
-from scipy._lib.six import integer_types, text_type, binary_type
+# True if we are running on Python 3.
+PY3 = sys.version_info[0] == 3
+if PY3:
+    string_types = str,
+    integer_types = int,
+    class_types = type,
+    text_type = str
+    binary_type = bytes
+    MAXSIZE = sys.maxsize
+else:
+    import types
+    string_types = basestring,
+    integer_types = (int, long)
+    class_types = (type, types.ClassType)
+    text_type = unicode
+    binary_type = str
 
 ABSENT = b'\x00\x00\x00\x00\x00\x00\x00\x00'
 ZERO = b'\x00\x00\x00\x00'
