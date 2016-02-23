@@ -17,8 +17,7 @@ V.AssignProperties('ElementBlock1', PlaneStrainTria3, 'Material-1', t=1)
 
 V.PrescribedBC('LeftHandSide', X, 0.)
 V.PrescribedBC('BottomLeft', Y, 0)
-
-V.PrescribedBC(IHI, X, .1)
+V.PrescribedBC('RightHandSide', X, .1)
 
 # Solve for the unknown degrees of freedom
 V.Solve()

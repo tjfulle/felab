@@ -6,12 +6,19 @@ from pyfem2 import *
 import matplotlib.pyplot as plt
 
 V = Plane2DModel()
-V.GenesisMesh('../meshes/QuarterCylinderQuad4.g')
+V.GenesisMesh('../meshes/PlateWithHoleQuad4.g')
+
 V.Material('Material-1')
-V.materials['Material-1'].Elastic(mu=1, Nu=.499)
+V.materials['Material-1'].Elastic(E=10e6, Nu=.29)
+
 V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1', t=1)
-V.PrescribedBC('Nodeset-200', X)
-V.PrescribedBC('Nodeset-201', Y)
-V.Pressure('Surface-1', 1.)
+
+V.PrescribedBC('LeftHandSide', X, 0.)
+V.PrescribedBC('PinNode', Y, 0.)
+V.PrescribedBC('RightHandSide', X, .1)
+
 V.Solve()
-V.WriteResults('VolumeLocking.Linear')
+
+V.WriteResults('Plane1.exo')
+
+V.Plot2D(show=1, deformed=1)

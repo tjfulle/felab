@@ -25,8 +25,8 @@ class IsoPTria3(IsoPElement):
     signature = 1100000
     numdim, numnod, ndof = 2, 3, 2
     edges = array([[0, 1], [1, 2], [2, 0]])
-    gaussp = None   # COMPLETE: FILL IN THE ARRAY OF GAUSS POINTS
-    gaussw = None   # COMPLETE: FILL IN THE ARRAY OF GAUSS WEIGHTS
+    gaussp = array([[.6, .2], [.2, .6], [.2, .2]])
+    gaussw = ones(3) / 6.
     cp = array([1, 1], dtype=float64) / 3.
     xp = array([[0, 0], [1, 0], [0, 1]], dtype=float64)
 
@@ -52,24 +52,17 @@ class IsoPTria3(IsoPElement):
         return self.t * self.area
 
     def shape(self, xi):
-        # COMPLETE: DEFINE THE APPROPRIATE SHAPE FUNCTIONS
-        Ne = None
+        Ne = array([xi[0], xi[1], 1. - xi[0] - xi[1]])
         return Ne
 
     def shapegrad(self, xi):
-        # COMPLETE: DEFINE THE APPROPRIATE SHAPE FUNCTION DERIVATIVES
-        dN = None
-        return dN
+        return array([[1., 0., -1.], [0., 1., -1.]])
 
     def bshape(self, xi):
-        # COMPLETE: DEFINE THE APPROPRIATE BOUNDARY SHAPE FUNCTIONS
-        bN = None
-        return bN
+        return array([1. - xi, 1. + xi]) / 2.
 
     def bshapegrad(self, xi):
-        # COMPLETE: DEFINE THE APPROPRIATE BOUNDARY SHAPE FUNCTION DERIVATIVES
-        dbN = None
-        return dbN
+        return array([-1., 1.]) / 2.
 
 # --------------------------------------------------------------------------- #
 # ------------------------ USER ELEMENT TYPES ------------------------------- #
@@ -77,13 +70,15 @@ class IsoPTria3(IsoPElement):
 class PlaneStressTria3(IsoPTria3):
     ndir, nshr = 2, 1
     def bmatrix(self, dN):
-        # COMPLETE: DEFINE THE B MATRIX FOR PLANE STRESS
-        B = None
+        B = zeros((3, 6))
+        B[0, 0::2] = B[2, 1::2] = dN[0, :]
+        B[1, 1::2] = B[2, 0::2] = dN[1, :]
         return B
 
 class PlaneStrainTria3(IsoPTria3):
     ndir, nshr = 3, 1
     def bmatrix(self, dN):
-        # COMPLETE: DEFINE THE B MATRIX FOR PLANE STRAIN
-        B = None
+        B = zeros((4, 6))
+        B[0, 0::2] = B[3, 1::2] = dN[0, :]
+        B[1, 1::2] = B[3, 0::2] = dN[1, :]
         return B
