@@ -1,0 +1,685 @@
+import os
+from numpy import *
+from argparse import ArgumentParser
+
+from constants import *
+from utilities import is_listlike
+from elemlib1 import ElementFamily
+
+__all__ = ['Mesh']
+
+def is_listlike(a):
+    return (not hasattr(a, 'strip') and
+            hasattr(a, '__getitem__') or hasattr(a, '__iter__'))
+
+def is_stringlike(s):
+    return hasattr(s, 'strip')
+
+class ElementBlock:
+    def __init__(self, name, id, labels, elefam, elecon):
+        self.name = name
+        self.id = id
+        self.labels = labels
+        self.elefam = elefam
+        self.numele = len(labels)
+        self.elecon = elecon
+    @property
+    def eletyp(self):
+        return self.elefam
+    @eletyp.setter
+    def eletyp(self, arg):
+        self.elefam = arg
+
+class Mesh(object):
+    """Class for creating a finite element mesh.
+
+    Parameters
+    ----------
+    nodtab : list of list
+        ``nodtab[n]`` is a list describing the nth node where
+        ``nodtab[n][0]`` is the node label of the nth node and
+        ``nodtab[n][1:]`` are the nodal coordinates of the nth node
+    eletab : list of list
+        ``eletab[e]`` is a list describing the eth element where
+        ``eletab[e][0]`` is the element label of the eth element and
+        ``eletab[e][1:]`` are the nodes forming the eth element, the nodal
+        labels must correpond to the node labels in ``nodtab``
+    filename : str
+        Name of a genesis or vtu file containing the mesh
+    p : ndarray of float
+        Array of nodal coordinates
+    t : ndarray of int
+        Array of element connectivity
+
+    Notes
+    -----
+    The nodtab/eletab, filename, and p/t arguments are mutually exclusive.
+
+    If ``p`` and ``t`` are specified, node labels are assigned to nodes in the
+    order they appear in the nodal coordinates array ``p`` and take values of
+    ``0`` to ``n-1``, where ``n`` is the length of ``p``. The element
+    connectivity array ``t`` must use this numbering scheme. This method is
+    useful for creating meshes using triangulations created by the
+    ``distmesh2d`` module.
+
+    Examples
+    --------
+
+    In the following examples, a simple mesh is created of a unit square
+    centered at the origin with node and element numbers as follows:
+
+    .. image:: unitsquare1.png
+       :scale: 35
+       :align: center
+
+    Method 1: specifying ``nodtab`` and ``eletab``:
+
+    >>> nodtab = [[10, -.5, -.5], [20, .5, -.5], [30, .5, .5], [40, -.5, .5]]
+    >>> eletab = [[100, 10, 20, 30, 40]]
+    >>> mesh = Mesh(nodtab=nodtab, eletab=eletab)
+
+    Method 2: specifying ``filename``
+
+    >>> mesh = Mesh(filename='unitsquare.g')
+
+    Method 3: specifying ``p`` and ``t``:
+
+    >>> p = array([[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5]])
+    >>> t = array([[0, 1, 2, 3]])
+    >>> mesh = Mesh(p=p, t=t)
+
+    """
+    def __init__(self, nodtab=None, eletab=None, filename=None, p=None, t=None):
+        o1 = nodtab is not None and eletab is not None
+        o2 = filename is not None
+        o3 = p is not None and t is not None
+        if not (o1 or o2 or o3):
+            raise ValueError('nodtab/eletab, filename, or p/t required')
+        elif len([x for x in (o1, o2, o3) if x]) > 1:
+            raise ValueError('nodtab/eletab, filename, an p/t are '
+                             'mutually exclusive')
+        if o1:
+            # Format nodes and elements
+            data = self.parse_nod_and_elem_tables(nodtab, eletab)
+            self.init1(*data)
+
+        elif o2:
+            self.init_from_file(filename)
+
+        elif o3:
+            p, t = asarray(p), asarray(t)
+            nodmap = dict(zip(range(p.shape[0]), range(p.shape[0])))
+            eletab = dict([(i,t[i]) for i in range(t.shape[0])])
+            self.init1(nodmap, p, eletab)
+
+        else:
+            raise ValueError('nodtab/eletab or filename required')
+
+        self._bndry_nod2 = None
+        self._free_edges = None
+
+    @property
+    def unassigned(self):
+        return self.num_assigned != self.numele
+
+    def init1(self, nodmap, coord, eletab, nodesets=None,
+              elemsets=None, surfaces=None):
+        self.nodmap = nodmap
+        self.coord = asarray(coord)
+        self.numnod, self.numdim = self.coord.shape
+
+        self.eletab = eletab
+        self.numele = len(self.eletab)
+        self.elemap = dict(zip(self.eletab.keys(), [None]*self.numele))
+        self.ielemap = {}
+
+        self.nodesets = nodesets or {}
+        self.elemsets = elemsets or {}
+        self.surfaces = surfaces or {}
+
+        self.eleblx = []
+        self.element_blocks = {}
+
+        # maximum number of edges on any one element
+        self.maxedge = max([len(ElementFamily(self.numdim,len(nodes)).edges)
+                            for nodes in self.eletab.values()])
+
+        # Number of elements assigned to a block
+        self.num_assigned = 0
+
+    def init2(self, nodmap, coord, elemap, eleblx, nodesets, elemsets, sidesets):
+        self.nodmap = nodmap
+        self.coord = asarray(coord)
+        self.numnod, self.numdim = self.coord.shape
+
+        self.elemap = elemap
+        self.numele = len(self.elemap)
+        self.ielemap = array(sorted(elemap.keys(), key=lambda k: elemap[k]))
+
+        self.nodesets = nodesets
+        self.elemsets = elemsets
+        self.surfaces = sidesets
+
+        self.eleblx = eleblx
+        self.element_blocks = dict([(eb.name, eb) for eb in eleblx])
+        self.maxedge = max([len(eb.elefam.edges) for eb in eleblx])
+        self.num_assigned = self.numele
+
+    def init_from_file(self, filename):
+        import vtk
+        import exodusii
+        if filename.endswith(('.vtk', '.vtu')):
+            data = self.parse_nod_and_elem_tables(*vtk.ReadMesh(filename))
+            self.init1(*data)
+
+        elif filename.endswith(('.exo', '.g', '.gen')):
+            exo = exodusii.File(filename, mode='r')
+            self.init2(exo.nodmap, exo.coord, exo.elemap, exo.eleblx,
+                       exo.nodesets, exo.elemsets, exo.sidesets)
+
+        else:
+            raise ValueError('Unknown file type')
+
+    def get_internal_node_ids(self, label):
+        if is_stringlike(label) and label in self.nodesets:
+            return self.nodesets[label]
+        if isinstance(label, int):
+            inodes = [self.nodmap[label]]
+        elif label == ALL:
+            inodes = range(self.numnod)
+        elif label == BOUNDARY:
+            inodes = self.boundary_nodes()
+        elif label in (ILO, IHI, JLO, JHI, KLO, KHI):
+            inodes = self.nodes_in_rectilinear_region(label)
+        else:
+            inodes = [self.nodmap[xn] for xn in label]
+        return array(inodes, dtype=int)
+
+    @staticmethod
+    def parse_nod_and_elem_tables(nodtab, eletab):
+        """
+
+        .. _parse_nodes_and_elements:
+
+        Format the node map, coordinates array, element map, types, and
+        connectivity table
+
+        Parameters
+        ----------
+        nodtab : list of list
+            ``nodtab[n]`` is a list describing the nth node where
+            ``nodtab[n][0]`` is the node label of the nth node and
+            ``nodtab[n][1:]`` are the nodal coordinates of the nth node
+        eletab : list of list
+            ``eletab[e]`` is a list describing the eth element where
+            ``eletab[e][0]`` is the element label of the eth element and
+            ``eletab[e][1:]`` are the nodes forming the eth element, the
+            nodal labels must correpond to the node labels in ``nodtab``
+
+        Returns
+        -------
+        nodmap : dict
+            nodmap[xn] is the internal node number of node labeled xn
+        coord : ndarray
+            Nodal coordinates.  coord[:,0] are the x, coord[:,1] the y, etc.
+        eletab1 : dict
+            eletab1[xel] are the internal node numbers of element labeled xel
+
+        """
+        # Basic node info
+        nodmap = {}
+        numnod, maxdim = len(nodtab), 0
+        for (inode, noddef) in enumerate(nodtab):
+            if noddef[0] in nodmap:
+                raise ValueError('Duplicate node label: {0}'.format(noddef[0]))
+            nodmap[noddef[0]] = inode
+        maxdim = max(maxdim, len(noddef[1:]))
+        coord = zeros((numnod, maxdim))
+        for (inode, noddef) in enumerate(nodtab):
+            coord[inode,:len(noddef[1:])] = noddef[1:]
+
+        # Basic element info
+        eletab1 = {}
+        for (iel, eledef) in enumerate(eletab):
+            if eledef[0] in eletab1:
+                raise ValueError('Duplicate element label: {0}'.format(eledef[0]))
+            eletab1[eledef[0]] = [nodmap[n] for n in eledef[1:]]
+
+        return nodmap, coord, eletab1
+
+    def find_edges(self):
+        # Find edges
+        if self.unassigned:
+            raise ValueError('Mesh element operations require all elements be '
+                             'assigned to an element block')
+        if self._free_edges is not None:
+            return self._free_edges
+
+        edges = {}
+        k = 0
+        for (ieb, eb) in enumerate(self.eleblx):
+            for (j, elenod) in enumerate(eb.elecon):
+                iel = self.elemap[eb.labels[j]]
+                for (i, ix) in enumerate(eb.elefam.edges):
+                    edge = tuple(elenod[ix])
+                    edges.setdefault(tuple(sorted(edge)), []).append((iel, i)+edge)
+        self._free_edges = edges.values()
+        return self._free_edges
+
+    def boundary_nodes2(self):
+        if self._bndry_nod2 is not None:
+            return self._bndry_nod2
+        edges = self.find_edges()
+        nodes = []
+        for edge in edges:
+            if len(edge) == 1:
+                # edge not shared by multiple elements
+                nodes.extend(edge[0][2:])
+        self._bndry_nod2 = unique(sorted(nodes))
+        return self._bndry_nod2
+
+    def boundary_nodes(self):
+        if self.numdim == 1:
+            return [argmin(self.coord), argmax(self.coord)]
+        elif self.numdim == 2:
+            return self.boundary_nodes2()
+        raise ValueError('3D meshes not supported')
+
+    def nodes_in_rectilinear_region(self, region, tol=1e-6):
+        # Find nodes in region
+        if region not in (ILO, IHI, JLO, JHI, KLO, KHI):
+            raise ValueError('unknown region {0!r}'.format(region))
+        axis, fun = {ILO: (0, amin),
+                     IHI: (0, amax),
+                     JLO: (1, amin),
+                     JHI: (1, amax),
+                     KLO: (2, amin),
+                     KHI: (2, amax)}[region]
+        xpos = fun(self.coord[:,axis])
+        return where(abs(self.coord[:,axis] - xpos) < tol)[0]
+
+    def find_surface(self, region):
+        if self.unassigned:
+            raise ValueError('Mesh element operations require all elements be '
+                             'assigned to an element block')
+        if is_stringlike(region) and region in self.surfaces:
+            return self.surfaces[region]
+        if region in (ILO, IHI, JLO, JHI, KLO, KHI):
+            if self.numdim == 1:
+                return self.find_surface1(region)
+            if self.numdim == 2:
+                return self.find_surface2(region)
+        # Check if region is a surface
+        if not is_listlike(region):
+            raise ValueError('Unrecognized surface: {0}'.format(region))
+        surface = []
+        for item in region:
+            elem, edge = item
+            if is_listlike(elem):
+                surface.extend([(self.elemap[e], edge) for e in elem])
+            else:
+                surface.append((self.elemap[elem], edge))
+        return surface
+
+    def find_surface1(self, region):
+        if region not in (ILO, IHI):
+            raise ValueError('Incorrect 1D region')
+        if region == ILO:
+            node = argmin(self.coord)
+        else:
+            node = argmax(self.coord)
+        for (ieb, eb) in enumerate(self.eleblx):
+            for (e, elenod) in enumerate(eb.elecon):
+                if node in elenod:
+                    i = 0 if node == elenod[0] else 1
+                    return [self.elemap[eb.labels[e]], i]
+
+    def find_surface2(self, region):
+        nodes = self.nodes_in_rectilinear_region(region)
+        surface = []
+        for (ieb, eb) in enumerate(self.eleblx):
+            for (e, elenod) in enumerate(eb.elecon):
+                w = where(in1d(elenod, nodes))[0]
+                if len(w) < 2:
+                    continue
+                w = tuple(sorted(w))
+                for (ie, edge) in enumerate(eb.elefam.edges):
+                    if tuple(sorted(edge)) == w:
+                        # the internal node numbers match, this is the edge
+                        surface.append((self.elemap[eb.labels[e]], ie))
+        return array(surface)
+
+        for (e, c) in enumerate(self.elecon):
+            c = c[:self.elefam[e].numnod]
+            w = where(in1d(c, nodes))[0]
+            if len(w) < 2:
+                continue
+            w = tuple(sorted(w))
+            for (ie, edge) in enumerate(self.elefam[e].edges):
+                if tuple(sorted(edge)) == w:
+                    # the internal node numbers match, this is the edge
+                    surface.append((e, ie))
+        return array(surface)
+
+    def NodeSet(self, name, region):
+        if not is_stringlike(name):
+            raise ValueError('Name must be a string')
+        self.nodesets[name] = self.get_internal_node_ids(region)
+
+    def Surface(self, name, surface):
+        if self.unassigned:
+            raise ValueError('Mesh element operations require all elements be '
+                             'assigned to an element block')
+        if not is_stringlike(name):
+            raise ValueError('Name must be a string')
+        self.surfaces[name] = self.find_surface(surface)
+
+    def ElementSet(self, name, region):
+        if self.unassigned:
+            raise ValueError('Mesh element operations require all elements be '
+                             'assigned to an element block')
+        if not is_stringlike(name):
+            raise ValueError('Name must be a string')
+        if region == ALL:
+            ielems = range(self.numele)
+        else:
+            if not is_listlike(region):
+                region = [region]
+            ielems = [self.elemap[el] for el in region]
+        self.elemsets[name] = ielems
+
+    def ElementBlock(self, name, elements):
+
+        if name in self.element_blocks:
+            raise ValueError('{0!r} already an element block'.format(name))
+        if elements == ALL:
+            xelems = sorted(self.elemap.keys())
+        else:
+            if not is_listlike(elements):
+                elements = [elements]
+            xelems = elements
+
+        if not self.unassigned:
+            raise ValueError('All elements have been assigned')
+
+        # Elements are numbered in the order the appear in element blocks,
+        # we need to map from the temporary internal numbers
+        blkcon, badel = [], []
+        numblkel = len(xelems)
+        ielems = arange(self.num_assigned, self.num_assigned+numblkel)
+        for (i, xelem) in enumerate(xelems):
+            # external element label -> new internal element ID
+            ielem = ielems[i]
+            self.elemap[xelem] = ielem
+            self.ielemap[ielem] = xelem
+            elenod = self.eletab[xelem]
+            if blkcon and len(elenod) != len(blkcon[-1]):
+                badel.append(xelem)
+                continue
+            blkcon.append(elenod)
+        if badel:
+            badel = ',\n   '.join(str(e) for e in badel)
+            raise ValueError('The following elements have inconsistent element '
+                             'connectivity:\n   {0}'.format(badel))
+        blkcon = array(blkcon, dtype=int)
+        elefam = ElementFamily(self.numdim, blkcon.shape[1])
+        blk = ElementBlock(name, len(self.eleblx)+1, xelems, elefam, blkcon)
+        self.eleblx.append(blk)
+        self.element_blocks[blk.name] = blk
+        self.num_assigned += len(ielems)
+        self.maxedge = max(self.maxedge, len(elefam.edges))
+        return blk
+
+    @classmethod
+    def RectilinearMesh2D(cls, shape, lengths):
+        """Create a two-dimensional rectilinear Mesh object
+
+        Parameters
+        ----------
+        shape : tuple
+            (nx, ny) where nx is the number elements in :math:`x` and ny
+            number of element in :math:`y`.
+        lengths : tuple
+            (lx, ly) where lx is the length of the mesh in :math:`x` and ny
+            is the length of the mesh in :math:`y`.
+
+        Returns
+        -------
+        Mesh : object
+            An instantiated ``Mesh`` object.
+
+        """
+        nodtab, eletab = GenRectilinearMesh2D(shape, lengths)
+        return cls(nodtab, eletab)
+
+    def to_genesis(self, filename):
+        from exodusii import File
+        exof = File(filename, mode='w')
+        if not self.eleblx:
+            # put in a single element block
+            self.ElementBlock('ElementBlock1', ALL)
+        exof.genesis(self.nodmap, self.elemap, self.coord,
+                     self.eleblx, nodesets=self.nodesets, elemsets=self.elemsets,
+                     sidesets=self.surfaces)
+        exof.close()
+
+    def Plot2D(self, xy=None, elecon=None, u=None, color=None, ax=None, show=0,
+               weight=None, colorby=None, linestyle='-', label=None, xlim=None,
+               ylim=None, **kwds):
+        assert self.numdim == 2
+        from matplotlib.patches import Polygon
+        import matplotlib.lines as mlines
+        from matplotlib.collections import PatchCollection
+        from matplotlib.cm import coolwarm, Spectral
+        import matplotlib.pyplot as plt
+
+        if xy is None:
+            xy = array(self.coord)
+        if elecon is None:
+            elecon = []
+            for blk in self.eleblx:
+                elecon.extend(blk.elecon.tolist())
+            elecon = asarray(elecon)
+        if u is not None:
+            xy += u.reshape(xy.shape)
+
+        patches = []
+        for points in xy[elecon[:]]:
+            quad = Polygon(points, True)
+            patches.append(quad)
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        #colors = 100 * random.rand(len(patches))
+        p = PatchCollection(patches, linewidth=weight, **kwds)
+        if colorby is not None:
+            colorby = asarray(colorby).flatten()
+            if len(colorby) == len(xy):
+                # average value in element
+                colorby = array([average(colorby[points]) for points in elecon])
+            p.set_cmap(Spectral)  #coolwarm)
+            p.set_array(colorby)
+            p.set_clim(vmin=colorby.min(), vmax=colorby.max())
+            fig.colorbar(p)
+        else:
+            p.set_edgecolor(color)
+            p.set_facecolor('None')
+            p.set_linewidth(weight)
+            p.set_linestyle(linestyle)
+
+        if label:
+            ax.plot([], [], color=color, linestyle=linestyle, label=label)
+
+        ax.add_collection(p)
+
+        if not ylim:
+            ymin, ymax = amin(xy[:,1]), amax(xy[:,1])
+            dy = max(abs(ymin*.05), abs(ymax*.05))
+            ax.set_ylim([ymin-dy, ymax+dy])
+        else:
+            ax.set_ylim(ylim)
+
+        if not xlim:
+            xmin, xmax = amin(xy[:,0]), amax(xy[:,0])
+            dx = max(abs(xmin*.05), abs(xmax*.05))
+            ax.set_xlim([xmin-dx, xmax+dx])
+        else:
+            ax.set_xlim(xlim)
+        ax.set_aspect('equal')
+
+        if show:
+            plt.show()
+        return ax
+
+    def PlotScalar2D(self, u, show=0):
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D
+        from matplotlib.cm import Spectral
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1, projection='3d')
+        elecon = []
+        for eb in self.eleblx:
+            elecon.extend(eb.elecon)
+        elecon = asarray(elecon)
+        ax.plot_trisurf(self.coord[:,0], self.coord[:,1], u,
+                        triangles=elecon, cmap=Spectral)
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        if show:
+            plt.show()
+        return
+
+    def PutNodalSolution(self, filename, u):
+        import exodusii
+        if not self.eleblx:
+            self.ElementBlock('ElementBlock1', ALL)
+        if not filename.endswith(('.exo', '.e')):
+            filename += '.exo'
+        exodusii.PutNodalSolution(filename, self.nodmap, self.elemap, self.coord,
+                                  self.eleblx, u)
+
+def GenRectilinearMesh2D(shape, lengths):
+    nx, ny = shape
+    if nx < 1:
+        raise ValueError('Requres at least 1 element in x')
+    if ny < 1:
+        raise ValueError('Requres at least 1 element in y')
+
+    shape = asarray([nx+1,ny+1])
+    lx, ly = lengths
+    xpoints = linspace(0, lx, nx+1)
+    ypoints = linspace(0, ly, ny+1)
+    coord = array([(x, y) for y in ypoints for x in xpoints])
+    numnod = prod(shape)
+    numele = prod(shape - 1)
+
+    # Connectivity
+    row = 0
+    elecon = zeros((numele, 4), dtype=int)
+    nelx = xpoints.size - 1
+    for elem_num in range(numele):
+        ii = elem_num + row
+        elem_nodes = [ii, ii + 1, ii + nelx + 2, ii + nelx + 1]
+        elecon[elem_num, :] = elem_nodes
+        if (elem_num + 1) % (nelx) == 0:
+            row += 1
+        continue
+
+    nodtab = []
+    for n in range(numnod):
+        nodtab.append([n+1])
+        nodtab[-1].extend(coord[n])
+    eletab = []
+    for e in range(numele):
+        eletab.append([e+1])
+        eletab[-1].extend([n+1 for n in elecon[e]])
+
+    return nodtab, eletab
+
+def VTU2Genesis(nodtab=None, eletab=None, filename=None):
+    if filename is None:
+        assert nodtab is not None and eletab is not None
+        outfile = 'mesh.g'
+    elif not os.path.isfile(filename):
+        assert nodtab is not None and eletab is not None
+        assert filename.endswith('.g')
+        outfile = filename
+        filename = None
+    else:
+        assert nodtab is None and eletab is None
+        outfile = os.path.splitext(filename)[0] + '.g'
+    try:
+        mesh = Mesh(nodtab=nodtab, eletab=eletab, filename=filename)
+    except KeyError:
+        return
+    mesh.to_genesis(outfile)
+
+def INP2Genesis(filename):
+    lines = open(filename).readlines()
+    kw, name = None, None
+    nodtab = []
+    eletab = []
+    nodesets = {}
+    elemsets = {}
+    eleblx = {}
+    for line in lines:
+        line = ','.join([x.strip() for x in line.split(',')])
+        if line.startswith('**'):
+            continue
+        if not line.split():
+            continue
+        if line.startswith('*'):
+            name = None
+            line = line.split(',')
+            kw = line[0][1:].lower()
+            opts = {}
+            for opt in line[1:]:
+                k, v = opt.split('=')
+                opts[k.strip().lower()] = v.strip()
+            if kw != 'element':
+                name = None
+            if kw == 'element':
+                name = opts.get('elset')
+                if name is None:
+                    raise ValueError('requires elements be put in elset')
+                eleblx[name] = []
+            elif kw == 'nset':
+                name = opts['nset']
+                nodesets[name] = []
+            elif kw == 'elset':
+                elemsets[name] = []
+            continue
+        if kw is None:
+            continue
+        if kw == 'node':
+            line = line.split(',')
+            nodtab.append([int(line[0])] + [float(x) for x in line[1:]])
+            continue
+        elif kw == 'element':
+            eledef = [int(n) for n in line.split(',')]
+            eletab.append(eledef)
+            eleblx[name].append(eledef[0])
+            continue
+        elif kw == 'nset':
+            nodesets[name].extend([int(n) for n in line.split(',') if n.split()])
+            continue
+        elif kw == 'elset':
+            elemsets[name].extend([int(n) for n in line.split(',') if n.split()])
+            continue
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    for (name, elems) in eleblx.items():
+        mesh.ElementBlock(name, elems)
+    for (name, nodes) in nodesets.items():
+        mesh.NodeSet(name, nodes)
+    for (name, elems) in elemsets.items():
+        mesh.ElementSet(name, elems)
+    outfile = os.path.splitext(filename)[0] + '.g'
+    mesh.to_genesis(outfile)
+    return
+
+import glob
+d = os.path.realpath('../meshes')
+files = glob.glob(d + '/*.inp')
+for file in files:
+    INP2Genesis(file)
