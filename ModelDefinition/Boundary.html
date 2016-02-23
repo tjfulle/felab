@@ -1,0 +1,217 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>3.7. Boundary conditions &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="3. Defining a Model" href="index.html" />
+    <link rel="next" title="3.8. Loading conditions" href="Loading.html" />
+    <link rel="prev" title="3.6. Entity sets" href="Sets.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="boundary-conditions">
+<span id="boundary"></span><h1>3.7. Boundary conditions<a class="headerlink" href="#boundary-conditions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>3.7.1. Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Boundary conditions:</p>
+<ul class="simple">
+<li>are used to specify the values of basic solution variables (displacements, rotations, temperature) at nodes;</li>
+<li>are defined <em>after</em> elements have been assigned to element blocks.</li>
+</ul>
+</div>
+<div class="section" id="prescribing-degrees-of-freedom">
+<span id="prescribedbc"></span><h2>3.7.2. Prescribing degrees of freedom<a class="headerlink" href="#prescribing-degrees-of-freedom" title="Permalink to this headline">¶</a></h2>
+<p>Degrees of freedom can be prescribed by:</p>
+<div class="code python highlight-python"><div class="highlight"><pre>V.PrescribedBC(region, dof[, amplitude=0])
+</pre></div>
+</div>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">region</span></code> is a node label, list of node labels, node set, or one of the symbolic constants:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="79%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Constant</td>
+<td>Description</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">ALL</span></code></td>
+<td>All of the nodes in the mesh</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">BOUNDARY</span></code></td>
+<td>All of the nodes on the boundary of the mesh</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">ILO</span></code></td>
+<td>Low boundary in the <span class="math">\(x\)</span> coordinate direction</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">IHI</span></code></td>
+<td>High boundary in the <span class="math">\(x\)</span> coordinate direction</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">JLO</span></code></td>
+<td>Low boundary in the <span class="math">\(y\)</span> coordinate direction</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">JHI</span></code></td>
+<td>High boundary in the <span class="math">\(y\)</span> coordinate direction</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">dof</span></code> is the degree of freedom direction, one of the symbolic constants <code class="docutils literal"><span class="pre">X</span></code>, <code class="docutils literal"><span class="pre">Y</span></code>, <code class="docutils literal"><span class="pre">Z</span></code>, <code class="docutils literal"><span class="pre">TX</span></code>, <code class="docutils literal"><span class="pre">TY</span></code>, <code class="docutils literal"><span class="pre">TZ</span></code>, or <code class="docutils literal"><span class="pre">T</span></code>.  Can be given as a list of degrees of freedom.</p>
+</li>
+<li><p class="first">the optional <code class="docutils literal"><span class="pre">amplitude</span></code> is the magnitude of the prescribed boundary condition.  <code class="docutils literal"><span class="pre">amplitude</span></code> is either a scalar constant or function of the coordinates.</p>
+</li>
+</ul>
+<p>For example, to fix the <span class="math">\(x\)</span> displacement of the node set <code class="docutils literal"><span class="pre">Nodeset-1</span></code> do:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-1&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Or, to prescribe a temperature in the <span class="math">\(x\)</span> and <span class="math">\(y\)</span> given by <span class="math">\(2\frac{1+y}{(3+x)^2+(1+y)^2}\)</span> on the boundary of a mesh do:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">fun</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mf">2.</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">((</span><span class="mf">3.</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">BOUNDARY</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="pinning-displacement-degrees-of-freedom">
+<span id="pinnodes"></span><h3>3.7.2.1. Pinning displacement degrees of freedom<a class="headerlink" href="#pinning-displacement-degrees-of-freedom" title="Permalink to this headline">¶</a></h3>
+<p>Displacement degrees of freedom can be fixed by:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">PinNodes</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal"><span class="pre">region</span></code> is a node label, list of node labels, node set, or symbolic constant (see <a class="reference internal" href="#prescribedbc"><span>Prescribing degrees of freedom</span></a>.)</p>
+</div>
+<div class="section" id="fixing-displacement-degrees-of-freedom">
+<span id="fixnodes"></span><h3>3.7.2.2. Fixing displacement degrees of freedom<a class="headerlink" href="#fixing-displacement-degrees-of-freedom" title="Permalink to this headline">¶</a></h3>
+<p>Displacement and rotation degrees of freedom can be fixed by:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal"><span class="pre">region</span></code> is a node label, list of node labels, node set, or symbolic constant (see <a class="reference internal" href="#prescribedbc"><span>Prescribing degrees of freedom</span></a>.)</p>
+</div>
+</div>
+<div class="section" id="initial-temperature">
+<span id="initialtemperature"></span><h2>3.7.3. Initial temperature<a class="headerlink" href="#initial-temperature" title="Permalink to this headline">¶</a></h2>
+<p>The initial temperature at nodes can be set by:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">InitialTemperature</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">3. Defining a Model</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Model.html">3.1. The finite element model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Mesh.html">3.2. The finite element mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ElementBlocks.html">3.3. Element blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Materials.html">3.4. Material models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Properties.html">3.5. Element Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Sets.html">3.6. Entity sets</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">3.7. Boundary conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Loading.html">3.8. Loading conditions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">3. Defining a Model</a><ul>
+      <li>Previous: <a href="Sets.html" title="previous chapter">3.6. Entity sets</a></li>
+      <li>Next: <a href="Loading.html" title="next chapter">3.8. Loading conditions</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/ModelDefinition/Boundary.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

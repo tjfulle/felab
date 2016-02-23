@@ -1,0 +1,47 @@
+.. _NodeDefinition:
+
+Node definition
+===============
+
+Overview
+--------
+
+A node is a coordinate location in space where degrees of freedom are
+defined. A node definition consists of:
+
+-  a node label, and
+
+-  the node coordinates.
+
+Defining nodes
+--------------
+
+A node label is a positive integer by which the node is identified. Node
+labels are also referred to as external node numbers. Node labels do not
+need to be numbered continuous. Individual node labels are consistently
+identified by symbols or . All external communication uses external node
+labels.
+
+The node coordinates are defined as their position in a regular
+Cartesian space. The coordinate system is shown in Figure
+[fig:nodandel.coords].
+
+.. figure:: Node1.png
+   :align: center
+
+   Node coordinates in Cartesian space.
+
+Nodes are defined in a two-dimensional list where is a sublist defining
+the node label and nodal coordinates of the n\ :math:`^{\rm th}` node.
+For example, the node definition for node at coordinate location
+:math:`P_n` in Figure [fig:nodandel.coords] is
+
+.. code:: python
+
+    node_n = [n, xn, yn, zn]
+
+The collection of nodes is
+
+.. code:: python
+
+    nodtab = [node_1, node_2, ..., node_n, ..., node_N]

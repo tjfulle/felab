@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyfem2 Documentation &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="#" />
+    <link rel="next" title="1. Introduction" href="Introduction/index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pyfem2-documentation">
+<h1><code class="docutils literal"><span class="pre">pyfem2</span></code> Documentation<a class="headerlink" href="#pyfem2-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Introduction/index.html">1. Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Introduction/Overview.html">1.1. Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Introduction/Install.html">1.2. Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Introduction/Conventions.html">1.3. Conventions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Introduction/Model.html">1.4. Defining a model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Introduction/Output.html">1.5. Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Tutorials/Truss1.html">2.1. Plane truss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Tutorials/Truss2.html">2.2. Space truss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Tutorials/Heat1.html">2.3. Diffusive Heat Transfer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Tutorials/Plane1.html">2.4. Plane Elasticity, 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Tutorials/Plane2.html">2.5. Plane Elasticity, 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Tutorials/Postprocessing.html">2.6. Post processing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ModelDefinition/index.html">3. Defining a Model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ModelDefinition/Model.html">3.1. The finite element model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ModelDefinition/Mesh.html">3.2. The finite element mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ModelDefinition/ElementBlocks.html">3.3. Element blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ModelDefinition/Materials.html">3.4. Material models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ModelDefinition/Properties.html">3.5. Element Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ModelDefinition/Sets.html">3.6. Entity sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ModelDefinition/Boundary.html">3.7. Boundary conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ModelDefinition/Loading.html">3.8. Loading conditions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ElementLibrary/index.html">4. Element Library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ElementLibrary/Overview.html">4.1. Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ElementLibrary/Link.html">4.2. Elastic bar elements</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Implementation/index.html">5. Implementation Details</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Implementation/Overview.html">5.1. Finite element analysis stages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Implementation/First.html">5.2. A First Finite Element Program</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Implementation/InternalNodesAndElements.html">5.3. Nodes and elements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Implementation/Boundary1.html">5.4. Boundary conditions and concentrated loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Implementation/DistributedLoads.html">5.5. Source terms and Distributed Loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Implementation/Assembly1.html">5.6. Assembly, Part I</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Implementation/Boundary2.html">5.7. Application of Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Implementation/Truss1.html">5.8. TrussSolution: A Complete Truss Program</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apidoc/fem0.html">6.1. UniformBar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apidoc/fem1.html">6.2. FiniteElementModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apidoc/mesh.html">6.3. Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="apidoc/material.html">6.4. Material</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span>Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span>Search Page</span></a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="Introduction/index.html" title="next chapter">1. Introduction</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/index.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>6.1. UniformBar &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="6. pyfem2 Source" href="index.html" />
+    <link rel="next" title="6.2. FiniteElementModel" href="fem1.html" />
+    <link rel="prev" title="6. pyfem2 Source" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pyfem2.fem0">
+<span id="uniformbar"></span><h1>6.1. UniformBar<a class="headerlink" href="#module-pyfem2.fem0" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="pyfem2.fem0.UniformBar">
+<code class="descclassname">pyfem2.fem0.</code><code class="descname">UniformBar</code><span class="sig-paren">(</span><em>xa</em>, <em>xb</em>, <em>A</em>, <em>E</em>, <em>p</em>, <em>q</em>, <em>numele=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem0.UniformBar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve for the displacement along a uniform bar, fixed on its left end
+and with a constant distributed load acting over its length and point
+force applied to its right, using the finite element method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>xa, xb</strong> : float</p>
+<blockquote>
+<div><p>Left and right coordinates of bar</p>
+</div></blockquote>
+<p><strong>A, E</strong> : float</p>
+<blockquote>
+<div><p>Area and Young&#8217;s modulus of bar</p>
+</div></blockquote>
+<p><strong>p</strong> : float</p>
+<blockquote>
+<div><p>Point force acting on right end of bar</p>
+</div></blockquote>
+<p><strong>q</strong> : float</p>
+<blockquote>
+<div><p>Distributed load acting over bar</p>
+</div></blockquote>
+<p><strong>numele</strong> : int, optional {10}</p>
+<blockquote>
+<div><p>Number of elements</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>u</strong> : array_like</p>
+<blockquote>
+<div><p>Displacements of nodes along bar</p>
+</div></blockquote>
+<p><strong>e</strong> : array_like</p>
+<blockquote>
+<div><p>Element strains</p>
+</div></blockquote>
+<p><strong>f</strong> : array_like</p>
+<blockquote class="last">
+<div><p>Element forces</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<p>Define a uniform bar on the interval <span class="math">\(x\in (0, 1)\)</span> with cross
+sectional area <span class="math">\(A=1\)</span>, Young&#8217;s modulus <span class="math">\(E=1\)</span>, point force
+<span class="math">\(p=1\)</span>, and distributed load <span class="math">\(q=0\)</span>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">xa</span><span class="p">,</span> <span class="n">xb</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">,</span> <span class="n">E</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="p">,</span> <span class="n">q</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">u</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">UniformBar</span><span class="p">(</span><span class="n">xa</span><span class="p">,</span> <span class="n">xb</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">numele</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-12</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">6.1. UniformBar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem1.html">6.2. FiniteElementModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">6.3. Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="material.html">6.4. Material</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+      <li>Next: <a href="fem1.html" title="next chapter">6.2. FiniteElementModel</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/apidoc/fem0.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,158 @@
+pyfem2 package
+==============
+
+Submodules
+----------
+
+pyfem2.constants module
+-----------------------
+
+.. automodule:: pyfem2.constants
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.data module
+------------------
+
+.. automodule:: pyfem2.data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.elemlib module
+---------------------
+
+.. automodule:: pyfem2.elemlib
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.elemlib1 module
+----------------------
+
+.. automodule:: pyfem2.elemlib1
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.elemlib2_3 module
+------------------------
+
+.. automodule:: pyfem2.elemlib2_3
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.elemlib2_4 module
+------------------------
+
+.. automodule:: pyfem2.elemlib2_4
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.elemlib2_8 module
+------------------------
+
+.. automodule:: pyfem2.elemlib2_8
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.exodusii module
+----------------------
+
+.. automodule:: pyfem2.exodusii
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.fem2 module
+------------------
+
+.. automodule:: pyfem2.fem2
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.fem3 module
+------------------
+
+.. automodule:: pyfem2.fem3
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.fem4 module
+------------------
+
+.. automodule:: pyfem2.fem4
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.fem5 module
+------------------
+
+.. automodule:: pyfem2.fem5
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.isoplib module
+---------------------
+
+.. automodule:: pyfem2.isoplib
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.mat module
+-----------------
+
+.. automodule:: pyfem2.mat
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.netcdf module
+--------------------
+
+.. automodule:: pyfem2.netcdf
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.test module
+------------------
+
+.. automodule:: pyfem2.test
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.utilities module
+-----------------------
+
+.. automodule:: pyfem2.utilities
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyfem2.vtk module
+-----------------
+
+.. automodule:: pyfem2.vtk
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: pyfem2
+    :members:
+    :undoc-members:
+    :show-inheritance:

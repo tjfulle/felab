@@ -1,0 +1,69 @@
+Introduction
+============
+
+Overview
+--------
+
+``pyfem2`` is
+
+-  a collection of small special purpose finite element programs written
+   in Python  [1]_,
+
+-  a Python package for building special purpose finite element programs
+   in a modular fashion,
+
+-  an introduction to the logic and structure used in production finite
+   element codes, and
+
+-  is open source and available on `Git
+   Hub <https://github.com/tjfulle/pyfem>`__.
+
+This document serves a guide both to using the programs developed with
+``pyfem`` and to developing new programs using the modules within
+``pyfem``. The chapters are organized in to the following parts:
+
+Obtaining and Installing ``pyfem``
+----------------------------------
+
+``pyfem`` is a pure Python package requiring only , in addition to the
+standard library. may be obtained in several ways, but the easiest is to
+download and install the `Anaconda <http://www.continuum.io>`__ Python
+Distribution. is also easily installed on linux using the distribution’s
+package manager.
+
+Installation
+~~~~~~~~~~~~
+
+``pyfem`` is installed by first
+
+-  downloading or
+
+-  cloning the package from `Git
+   Hub <https://github.com/tjfulle/pyfem>`__.
+
+After obtaining ``pyfem``, the Python distribution must be able to find
+it. There are several ways to accomplish this. Perhaps the easiest is to
+move the package to a location on your file system and add the location
+to your environment variable. For example, if ``pyfem`` is downloaded
+and placed in the folder in your home directory:
+
+-  add ``export PYTHONPATH=$HOME/Documents/pyfem`` to your on Linux or
+   Mac OS X, or
+
+-  | create a ``PYTHONPATH`` variable that points to
+     ``%HOMEPATH%\My Documents\pyfem`` environment variable
+   | (``My Computer > Properties > Advanced System Settings > Environment Variables``)
+
+.. [1]
+   Python is an open source programming environment that comes standard
+   on most operating systems and is becoming ubiqutous in computational
+   sciences. However, the version of Python packaged on most operating
+   systems does not come with many of the components needed for
+   scientific computing (modules such as
+   `numpy <http://www.numpy.org>`__ and
+   `scipy <http://scipy.org/index.html>`__). Building and installing all
+   of the necessary components is tedious and error prone. I recommend
+   downloading and installing the
+   `Anaconda <https://www.continuum.io/downloads>`__ Python distribution
+   from `Continuum Analytics <https://continuum.io>`__. All source
+   examples were written using Anaconda Python3.5.

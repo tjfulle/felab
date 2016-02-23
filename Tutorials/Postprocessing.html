@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>2.6. Post processing &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="2. pyfem2 Tutorials" href="index.html" />
+    <link rel="next" title="3. Defining a Model" href="../ModelDefinition/index.html" />
+    <link rel="prev" title="2.5. Plane Elasticity, 2" href="Plane2.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="post-processing">
+<span id="postprocessing"></span><h1>2.6. Post processing<a class="headerlink" href="#post-processing" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="objective">
+<h2>2.6.1. Objective<a class="headerlink" href="#objective" title="Permalink to this headline">¶</a></h2>
+<p>This example demonstrates the use of the <code class="docutils literal"><span class="pre">pyfem2</span></code> scripting interface to the <code class="docutils literal"><span class="pre">ExodusII</span></code> output database.</p>
+</div>
+<div class="section" id="problem-description">
+<h2>2.6.2. Problem description<a class="headerlink" href="#problem-description" title="Permalink to this headline">¶</a></h2>
+<p>Determine the maximum principal stress in the plate with hole and compare with the analytic solution.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">V</span> <span class="o">=</span> <span class="n">Plane2DModel</span><span class="p">()</span>
+<span class="n">V</span><span class="o">.</span><span class="n">GenesisMesh</span><span class="p">(</span><span class="s1">&#39;../meshes/plate_quarter.g&#39;</span><span class="p">)</span>
+
+<span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;LeftHandSide&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">(</span><span class="s1">&#39;PinNode&#39;</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">SurfaceLoad</span><span class="p">(</span><span class="n">IHI</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
+<span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;PlateQuad.exo&#39;</span><span class="p">)</span>
+
+<span class="n">F</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="s1">&#39;PlateQuad.exo&#39;</span><span class="p">)</span>
+<span class="n">max_p</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
+<span class="n">max_u</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">F</span><span class="o">.</span><span class="n">steps</span><span class="p">:</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">field_outputs</span><span class="p">[</span><span class="s1">&#39;U&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">u</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+        <span class="n">u1</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">magnitude</span>
+        <span class="k">if</span> <span class="n">max_u</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">u1</span><span class="p">:</span>
+            <span class="n">max_u</span> <span class="o">=</span> <span class="p">[</span><span class="n">u1</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">field_outputs</span><span class="p">[</span><span class="s1">&#39;S&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">max_principal</span>
+        <span class="k">if</span> <span class="n">max_p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">s1</span><span class="p">:</span>
+            <span class="n">max_p</span> <span class="o">=</span> <span class="p">[</span><span class="n">s1</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span>
+
+<span class="c1"># External and internal element numbers</span>
+<span class="n">xel</span> <span class="o">=</span> <span class="n">max_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">label</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">get_elem_coord</span><span class="p">(</span><span class="n">xel</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Truss1.html">2.1. Plane truss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Truss2.html">2.2. Space truss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Heat1.html">2.3. Diffusive Heat Transfer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Plane1.html">2.4. Plane Elasticity, 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Plane2.html">2.5. Plane Elasticity, 2</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">2.6. Post processing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a><ul>
+      <li>Previous: <a href="Plane2.html" title="previous chapter">2.5. Plane Elasticity, 2</a></li>
+      <li>Next: <a href="../ModelDefinition/index.html" title="next chapter">3. Defining a Model</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/Tutorials/Postprocessing.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

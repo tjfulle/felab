@@ -1,0 +1,250 @@
+.. _nodes_and_elems:
+
+Nodes and Elements
+##################
+
+Nodes
+=====
+
+A node is a coordinate location in space where degrees of freedom are
+defined. A node definition consists of:
+
+-  a node label, and
+
+-  the node coordinates.
+
+A node label is a positive integer by which the node is identified. Node
+labels are also referred to as external node numbers. Node labels do not
+need to be numbered continuous. Individual node labels are consistently
+identified by symbols or . All external communication uses external node
+labels.
+
+The node coordinates are defined as their position in a regular
+Cartesian space. The coordinate system is shown in Figure
+[fig:nodandel.coords].
+
+.. figure:: Node1.png
+   :alt: [fig:nodandel.coords]Node coordinates in Cartesian space.
+
+   [fig:nodandel.coords]Node coordinates in Cartesian space.
+
+Defining nodes
+--------------
+
+Nodes are defined in a two-dimensional list where is a sublist defining
+the node label and nodal coordinates of the n\ :math:`^{\rm th}` node.
+For example, the node definition for node at coordinate location
+:math:`P_n` in Figure [fig:nodandel.coords] is
+
+.. code:: python
+
+    node_n = [n, xn, yn, zn]
+
+The collection of nodes is
+
+.. code:: python
+
+    nodtab = [node_1, node_2, ..., node_n, ..., node_N]
+
+Elements
+========
+
+An element is a mathematical relation that defines how the degrees of
+freedom of a node relate to the next. An element definition consists of
+
+-  an element type,
+
+-  an element label, and
+
+-  list of node labels forming the element.
+
+The element type ID is a unique ID defined in ``pyfem``. See Section
+[sec:elemlib] for description of each element type.
+
+An element label is a positive integer by which the element is
+identified. Element labels do not need to be numbered continuously.
+Individual element labels are consistently identified by symbols or .
+All external communication uses external element labels.
+
+The node labels forming the element refer to the external node labels.
+Node labels must be ordered as required by the element type.
+
+Defining elements
+-----------------
+
+Elements are defined in a two-dimensional list where is a sublist
+defining the element label, element type, and external node labels of
+nodes forming element . For example, the definition for element in
+Figure [fig:nodandel.elem1] is
+
+.. figure:: Element1.png
+   :alt: [fig:nodandel.elem1]Element e
+
+   [fig:nodandel.elem1]Element e
+
+.. code:: python
+
+    elem_e = [e, eletyp_e, i, j]
+
+and the collection of elements is
+
+.. code:: python
+
+    eletab = [elem_1, elem_2, ..., elem_e, ..., elem_M]
+
+Internal representation of nodes and elements
+---------------------------------------------
+
+Nodes
+~~~~~
+
+Internally, nodes are assigned integer IDs ranging from to , where is
+the number of nodes in the problem. Node IDs are assigned in the order
+they appear in . In ``pyfem``, internal node IDs are consistently
+identified by the symbol . Node coordinates and internal node IDs are
+stored separately in
+
+-  the nodal coordinate array , and
+
+-  the node ID mapping .
+
+is the i\ :math:`^{\rm th}` coordinate of node and the internal node ID
+.
+
+Elements
+~~~~~~~~
+
+Like nodes, elements are assigned integer IDs ranging from to , where is
+the number of elements in the problem. In ``pyfem``, internal element
+IDs are consistently identified by the symbols and . Element node lists,
+element type list, and internal element IDs are stored separately in
+
+-  the element connectivity array ,
+
+-  the element type list , and
+
+-  the element ID mapping .
+
+is the n\ :math:`^{\rm th}` internal node ID of element , is the element
+type of element , and the internal element ID .
+
+Generating the internal node and element representations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The function , shown in Listing [lst:parse1], creates the , , , , and .
+is defined in the module and is invoked as:
+
+.. code:: python
+
+    nodmap, coord, elemap, eletyp, elecon=FormatNodesAndElements(nodtab, eletab)
+
+[h!]
+
+.. code:: python
+
+    def FormatNodesAndElements(nodtab, eletab):
+        # Basic geometry info
+        dim, maxnod = 0, 0
+        numele = len(eletab)
+        elemap, eletyp = {}, []
+        for (iel, eledef) in enumerate(eletab):
+            eletyp.append(eledef[1])
+            elemap[eledef[0]] = iel
+            dim = max(dim, ElementDimension(eledef[1]))
+            maxnod = max(maxnod, NodesPerElement(eledef[1]))
+        eletyp = array(eletyp, dtype=int)
+        # Create the node map
+        nodmap = dict([(node[0], i) for (i, node) in enumerate(nodtab)])
+        # Format elements
+        elecon = zeros((numele, maxnod), dtype=int)
+        for (iel, eledef) in enumerate(eletab):
+            nelnod = NodesPerElement(eletyp[iel])
+            elecon[iel,:nelnod] = [nodmap[n] for n in eledef[2:]]
+        # Format the nodes
+        numnod = len(nodtab)
+        coord = zeros((numnod, dim))
+        for (inode, node) in enumerate(nodtab):
+            n = len(node[1:])
+            coord[inode,:n] = node[1:]
+        return nodmap, coord, elemap, eletyp, elecon
+
+The arguments to are
+
++--------------+-----------------------------------------------------------------------------------------------------------------------------------------+
+| ``nodtab``   | Table of defining nodes. is the node label of node and are the coordinates of node .                                                    |
++--------------+-----------------------------------------------------------------------------------------------------------------------------------------+
+| ``eletab``   | Table of defining elements. is the element label of element , is the element type, and are the node labels of nodes forming element .   |
++--------------+-----------------------------------------------------------------------------------------------------------------------------------------+
+
+The outputs from are
+
++--------------+-----------------------------------------------------------------------------+
+| ``nodmap``   | Dictionary mapping external node labels to internal node numbers. .         |
++--------------+-----------------------------------------------------------------------------+
+| ``coord``    | Nodal coordinates. is the ith coordinate of node n.                         |
++--------------+-----------------------------------------------------------------------------+
+| ``elemap``   | Dictionary mapping external element labels to internal element numbers. .   |
++--------------+-----------------------------------------------------------------------------+
+| ``eletyp``   | Element types. is the element type of element .                             |
++--------------+-----------------------------------------------------------------------------+
+| ``elecon``   | Element connectivity. is the nth internal node label of element e.          |
++--------------+-----------------------------------------------------------------------------+
+
+first determines the number of elements in the problem and the maximum
+number of nodes in any one element from the container. This information
+is used to initialize the element connectivity array. Next, the internal
+node mapping is created and used to populate the connectivity array by
+mapping external node labels from to internal node numbers. Lastly, the
+nodal coordinates are passed to the array.
+
+Example
+~~~~~~~
+
+Consider the space truss comprised of three-dimensional two-node elastic
+bars in Figure [fig:nodedef.space\_truss],
+
+.. figure:: SpaceTruss1.jpeg
+   :alt: Space truss example
+
+   Space truss example
+
+the node and element tables are
+
+.. code:: python
+
+    nodtab = [[1, 72, 0, 0], [2, 0, 36, 0],
+              [3, 0, 36, 72], [4, 0, 0, -48]]
+    eletab = [[1, L3D2, 1, 2], [2, L3D2, 1, 3], [3, L3D2, 1, 4]]
+
+The internal representation of nodes and elements are:
+
+.. code:: python
+
+    >>> nodmap,coord,elemap,eletyp,elecon=FormatNodesAndElements(nodtab,eletab)
+    >>> print nodmap
+    {1:0, 2:1, 3:2, 4:3}
+
+.. code:: python
+
+    >>> print coord
+    array([[ 72,   0,   0],
+           [  0,  36,   0],
+           [  0,  36,  72],
+           [  0,   0, -48]])
+
+.. code:: python
+
+    >>> print elemap
+    {1:0, 2:1, 3:2}
+
+.. code:: python
+
+    >>> print eletyp
+    [L3D2, L3D2, L3D2]
+
+.. code:: python
+
+    >>> print elecon
+    array([[ 0, 1],
+           [ 0, 2],
+           [ 0, 3]])

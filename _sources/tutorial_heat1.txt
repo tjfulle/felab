@@ -1,0 +1,51 @@
+
+.. _heat1:
+
+Tutorial: Diffusive Heat Transfer
+#################################
+
+.. code:: python
+
+   """
+   pyfem2 tutorial demo program: Diffusive heat transfer.
+
+   """
+
+   from numpy import *
+   from pyfem2 import *
+
+   # Read mesh from file
+   mesh = Mesh(filename='plate_w_hole_tri_0.025.g')
+
+   # Create the solution
+   V = HeatTransfer2DModel(mesh)
+
+   # Create a material and define the thermal conductivity
+   mat = Material()
+   mat.ThermalConductivity(12)
+
+   # Define an alement block of diffusive heat transfer elements with material mat
+   V.ElementSet('EAll', ALL)
+   V.ElementBlock('EAll', DiffussiveHeatTransfer2D3, mat)
+
+   # Fix temperatures on left and right edge
+   V.PrescribedBC(ILO, T, 200)
+   V.PrescribedBC(IHI, T, 50)
+
+   # Define surface flux on bottome edge of domain
+   V.SurfaceFlux(JLO, 2000)
+
+   # Define surface convection on top edge of domain
+   Too, h = 25, 250
+   V.SurfaceConvection(JHI, Too, h)
+
+   # Define a function specifying the heat generation
+   def fun(x):
+   return 1000. / sqrt(x[:,0] ** 2 + x[:,1] ** 2)
+   V.HeatGeneration(ALL, fun)
+
+   # Solve for the unknown degrees of freedom
+   V.Solve()
+
+   # Write the results to the ExodusII output database
+   V.WriteResults('heat1')

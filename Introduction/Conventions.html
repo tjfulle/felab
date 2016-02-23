@@ -1,0 +1,208 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>1.3. Conventions &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="1. Introduction" href="index.html" />
+    <link rel="next" title="1.4. Defining a model" href="Model.html" />
+    <link rel="prev" title="1.2. Installation" href="Install.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="conventions">
+<h1>1.3. Conventions<a class="headerlink" href="#conventions" title="Permalink to this headline">¶</a></h1>
+<p>The following conventions that are used throughout <code class="docutils literal"><span class="pre">pyfem2</span></code> are
+discussed:</p>
+<ul class="simple">
+<li>Degrees of freedom</li>
+<li>Symbolic constants</li>
+</ul>
+<div class="section" id="degrees-of-freedom">
+<h2>1.3.1. Degrees of freedom<a class="headerlink" href="#degrees-of-freedom" title="Permalink to this headline">¶</a></h2>
+<p>The “degrees of freedom,” (DOF) of a physical system describe its
+spatial configuration. For example, the spatial configuration of a
+mechanical system could be described by the position, rotation, and
+temperature of every point in a system. If the number of degrees of
+freedom is finite, the model is said to be discrete, and continuous
+otherwise. Because FEM is a discretization method, the number of DOF of
+a FEM model is necessarily finite.</p>
+<p>The degrees of freedom at a point are referred to as follows:</p>
+<ol class="arabic simple">
+<li>x-displacement</li>
+<li>y-displacement</li>
+<li>z-displacement</li>
+<li>Rotation about the x-axis, in radians</li>
+<li>Rotation about the y-axis, in radians</li>
+<li>Rotation about the z-axis, in radians</li>
+<li>Temperature</li>
+</ol>
+<p>The x-, y-, and z-directions coincide with the global X-, Y-, and
+Z-directions, respectively. Not every degree of freedom is activated for
+every point in space. For example, two-dimensional bodies subject only
+to displacements in the x- and y-directions use only the degrees of
+freedom 1 and 2.</p>
+</div>
+<div class="section" id="symbolic-constants">
+<h2>1.3.2. Symbolic constants<a class="headerlink" href="#symbolic-constants" title="Permalink to this headline">¶</a></h2>
+<p>Symbolic constants are defined in <code class="docutils literal"><span class="pre">pyfem2</span></code> to identify common objects, e.g.,
+degree of freedom labels (among others). Symbolic constants are written in all
+capital letters. Symbolic constants must be imported in to a script before
+using them with the following statement:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pyfem2.constants</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>Importing the entire <code class="docutils literal"><span class="pre">pyfem2</span></code> namespace with</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>also imports the symbolic constants.</p>
+<div class="section" id="symbolic-constants-representing-degrees-of-freedom">
+<h3>1.3.2.1. Symbolic constants representing degrees of freedom<a class="headerlink" href="#symbolic-constants-representing-degrees-of-freedom" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">X</span></code>, <code class="docutils literal"><span class="pre">Y</span></code>, <code class="docutils literal"><span class="pre">Z</span></code> represent the <span class="math">\(x\)</span>, <span class="math">\(y\)</span>, and <span class="math">\(z\)</span> Cartesian coordinate directions, respectively.</li>
+<li><code class="docutils literal"><span class="pre">TX</span></code>, <code class="docutils literal"><span class="pre">TY</span></code>, <code class="docutils literal"><span class="pre">TZ</span></code> represent the rotation <span class="math">\(theta\)</span> about the <span class="math">\(x\)</span>, <span class="math">\(y\)</span>, and <span class="math">\(z\)</span> Cartesian axes, respectively.</li>
+<li><code class="docutils literal"><span class="pre">T</span></code> represents the temperature.</li>
+</ul>
+</div>
+<div class="section" id="symbolic-constants-representing-geometry">
+<h3>1.3.2.2. Symbolic constants representing geometry<a class="headerlink" href="#symbolic-constants-representing-geometry" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">ALL</span></code> represents all geometric entities, e.g., all nodes, all elements, etc.</li>
+<li><code class="docutils literal"><span class="pre">ILO</span></code>, <code class="docutils literal"><span class="pre">IHI</span></code>, <code class="docutils literal"><span class="pre">JLO</span></code>, <code class="docutils literal"><span class="pre">JHI</span></code> correspond to the <span class="math">\(x\)</span> (<code class="docutils literal"><span class="pre">I</span></code>) and a <span class="math">\(y\)</span> (<code class="docutils literal"><span class="pre">J</span></code>) coordinate directions and the identifiers <code class="docutils literal"><span class="pre">LO</span></code> and <code class="docutils literal"><span class="pre">HI</span></code> to the corresponding low and high boundaries.</li>
+<li><code class="docutils literal"><span class="pre">BOUNDARY</span></code> correspond to entities on the finite element domain boundary.</li>
+<li><code class="docutils literal"><span class="pre">S1</span></code>, <code class="docutils literal"><span class="pre">S2</span></code>, ... <code class="docutils literal"><span class="pre">S10</span></code> represent the <span class="math">\({\rm i}^{\rm{th}}\)</span> side of an element.</li>
+</ul>
+</div>
+<div class="section" id="symbolic-constants-representing-data-types">
+<h3>1.3.2.3. Symbolic constants representing data types<a class="headerlink" href="#symbolic-constants-representing-data-types" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">SCALAR</span></code> represents scalar data.</li>
+<li><code class="docutils literal"><span class="pre">VECTOR</span></code> represents vector data.</li>
+<li><code class="docutils literal"><span class="pre">SYMTENSOR</span></code> represents symmetric tensor data.</li>
+</ul>
+</div>
+<div class="section" id="symbolic-constants-representing-field-positions">
+<h3>1.3.2.4. Symbolic constants representing field positions<a class="headerlink" href="#symbolic-constants-representing-field-positions" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">NODE</span></code> represents the nodal field position.</li>
+<li><code class="docutils literal"><span class="pre">ELEMENT</span></code> represents the element field position.</li>
+<li><code class="docutils literal"><span class="pre">ELEMENT_CENTROID</span></code> represents the element centroid field position.</li>
+<li><code class="docutils literal"><span class="pre">INTEGRATION_POINT</span></code> represents the integration point field position.</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">1. Introduction</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Overview.html">1.1. Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Install.html">1.2. Installation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">1.3. Conventions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Model.html">1.4. Defining a model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Output.html">1.5. Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">1. Introduction</a><ul>
+      <li>Previous: <a href="Install.html" title="previous chapter">1.2. Installation</a></li>
+      <li>Next: <a href="Model.html" title="next chapter">1.4. Defining a model</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/Introduction/Conventions.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

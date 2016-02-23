@@ -1,0 +1,355 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>4.2. Elastic bar elements &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="4. Element Library" href="index.html" />
+    <link rel="next" title="5. Implementation Details" href="../Implementation/index.html" />
+    <link rel="prev" title="4.1. Overview" href="Overview.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="elastic-bar-elements">
+<span id="barelements"></span><h1>4.2. Elastic bar elements<a class="headerlink" href="#elastic-bar-elements" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">Link1D2</span></code></td>
+<td>1D 2 node elastic bar element</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">Link2D2</span></code></td>
+<td>2D 2 node elastic bar element</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">Link3D2</span></code></td>
+<td>3D 2 node elastic bar element</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="active-degrees-of-freedom">
+<h2>4.2.1. Active degrees of freedom<a class="headerlink" href="#active-degrees-of-freedom" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>1D: <code class="docutils literal"><span class="pre">X</span></code></li>
+<li>2D: <code class="docutils literal"><span class="pre">X</span></code>, <code class="docutils literal"><span class="pre">Y</span></code></li>
+<li>3D: <code class="docutils literal"><span class="pre">X</span></code>, <code class="docutils literal"><span class="pre">Y</span></code>, <code class="docutils literal"><span class="pre">Z</span></code></li>
+</ul>
+</div>
+<div class="section" id="element-formulation">
+<h2>4.2.2. Element formulation<a class="headerlink" href="#element-formulation" title="Permalink to this headline">¶</a></h2>
+<p>The two-node elastic bar element is shown embedded in a two-dimensional
+space in Figure [fig:ch1.link]. In the element’s local coordinates
+(<span class="math">\(\tilde{\pmb{x}}_i\)</span>), forces and displacements act along only the
+local <span class="math">\(\tilde{x}\)</span> direction. When viewed in the global
+coordinates, forces and displacements act along all <span class="math">\(\pmb{x}_i\)</span>
+coordinate directions. Thus, in two dimensions, the bar element has
+<span class="math">\(2\)</span> degrees of freedom per node, for a total of <span class="math">\(4\)</span> degrees
+of freedom. Elements of this type are referred to as <strong>plane</strong> bar
+elements and a system made up of plane bar elements is a <strong>plane
+truss</strong>. In three dimensions, the element has <span class="math">\(3\)</span> degrees of
+freedom per node, for a total of 6 degrees of freedom and is referred to
+as <strong>space</strong> bar elements. A system made up of space bar elements is a
+<strong>space truss</strong>.</p>
+<div class="figure align-center" id="id1">
+<img alt="../_images/TrussCoords.png" src="../_images/TrussCoords.png" />
+<p class="caption"><span class="caption-text">Two-node elastic bar element</span></p>
+</div>
+<p>In three dimensions, the element node displacement and force vectors in
+three dimensions are arranged as</p>
+<div class="math">
+\[\begin{split}\boldsymbol{u}-{(e)} = \begin{Bmatrix}
+    u_{1x} \\ u_{1y} \\ u_{1z} \\ u_{2x} \\ u_{2y} \\ u_{2z}
+  \end{Bmatrix}, \quad
+  \boldsymbol{f}-{(e)} = \begin{Bmatrix}
+    f_{1x} \\ f_{1y} \\ f_{1z} \\ f_{2x} \\ f_{2y} \\ f_{2z}
+  \end{Bmatrix}\end{split}\]</div>
+<p>The displacement and force vectors in the global coordinates are related
+to their local counterparts through the following transformations</p>
+<div class="math">
+\[\tilde{\boldsymbol{u}}-{(e)} = \boldsymbol{T}\boldsymbol{u}-{(e)},
+  \quad
+  \tilde{\boldsymbol{f}}-{(e)} = \boldsymbol{T}\boldsymbol{f}-{(e)},\]</div>
+<p>where <span class="math">\(\boldsymbol{T}\)</span> is the <span class="math">\(2 \times 6\)</span> matrix of
+direction cosines of the axial axis of the element, given by</p>
+<div class="math">
+\[\begin{split}\label{eq:transm}
+  \boldsymbol{T} = \begin{bmatrix}
+    l_{ij} &amp; m_{ij} &amp; n_{ij} &amp; 0 &amp; 0 &amp; 0 \\
+    0 &amp; 0 &amp; 0 &amp; l_{ij} &amp; m_{ij} &amp; n_{ij} \\
+  \end{bmatrix}, \quad\end{split}\]</div>
+<p>The direction cosines <span class="math">\(l_{ij}\)</span>, <span class="math">\(m_{ij}\)</span>, and <span class="math">\(n_{ij}\)</span>
+are given by</p>
+<div class="math">
+\[\begin{split}\begin{aligned}
+  \label{eq:dircos}
+  l_{ij} &amp;= \cos\left(\tilde{x}, x\right) = \frac{x_j-x_i}{l_e} \\
+  m_{ij} &amp;= \cos\left(\tilde{x}, y\right) = \frac{y_j-y_i}{l_e} \\
+  n_{ij} &amp;= \cos\left(\tilde{x}, y\right) = \frac{z_j-z_i}{l_e}\end{aligned}\end{split}\]</div>
+<p>The force-displacement relationship in the local coordinates is</p>
+<div class="math">
+\[\tilde{\boldsymbol{f}}-{(e)} =
+  \tilde{\boldsymbol{k}}-{(e)}\tilde{\boldsymbol{u}}-{(e)}\]</div>
+<p>where <span class="math">\(\tilde{\boldsymbol{k}}-{(e)}\)</span> is the <span class="math">\(2 \times 2\)</span>
+element stiffness matrix in the local coordinates. Using the coordinate
+transformations, the force-displacement relationship in the global
+coordinates is</p>
+<div class="math">
+\[\label{eq:ch1.force-disp-1}
+  \tilde{\boldsymbol{f}}-{(e)}
+  = \boldsymbol{T}\boldsymbol{f}-{(e)}
+  = \tilde{\boldsymbol{k}}-{(e)}\tilde{\boldsymbol{u}}-{(e)}
+  = \tilde{\boldsymbol{k}}-{(e)}\boldsymbol{T}\boldsymbol{u}-{(e)}\]</div>
+<p>From , we get</p>
+<div class="math">
+\[\boldsymbol{f}-{(e)} = \boldsymbol{k}-{(e)}\boldsymbol{u}-{(e)}\]</div>
+<p>where the element stiffness matrix in the global coordinates
+<span class="math">\(\boldsymbol{k}-{(e)}\)</span> is</p>
+<div class="math">
+\[\label{eq:gstiff1}
+  \boldsymbol{k}-{(e)} = \boldsymbol{T}-T\tilde{\boldsymbol{k}}-{(e)}\boldsymbol{T}\]</div>
+<p>Expanding in components, the force-displacement relationship can be
+expressed as</p>
+<div class="math">
+\[\begin{split}\begin{Bmatrix}
+    \boldsymbol{f}_1 \\ \boldsymbol{f}_2
+  \end{Bmatrix} = \frac{AE}{l_e}
+  \begin{bmatrix*}[r]
+    \boldsymbol{n}\otimes\boldsymbol{n} &amp;
+    -\boldsymbol{n}\otimes\boldsymbol{n} \\
+    -\boldsymbol{n}\otimes\boldsymbol{n} &amp;
+    \boldsymbol{n}\otimes\boldsymbol{n} \\
+  \end{bmatrix*}
+  \begin{Bmatrix}
+    \boldsymbol{u}_1 \\ \boldsymbol{u}_2
+  \end{Bmatrix}\end{split}\]</div>
+<p>where the vectors <span class="math">\(\boldsymbol{f}_i\)</span> and <span class="math">\(\boldsymbol{u}_i\)</span>
+are the force and displacement vectors for the <span class="math">\(i-{\rm th}\)</span> node
+in the global coordinates, <span class="math">\(A\)</span> and <span class="math">\(E\)</span> are the constant
+element area and Young’s modulus, respectively, <span class="math">\(l_e\)</span> is the
+element length, and <span class="math">\(\boldsymbol{n}\)</span> is the element unit normal,
+given by</p>
+<div class="math">
+\[\begin{split}\begin{aligned}
+  \boldsymbol{v} &amp;= \boldsymbol{x}_2-\boldsymbol{x}_1 \\
+  \boldsymbol{n} &amp;= \frac{\boldsymbol{v}}{\lVert\boldsymbol{v}\rVert}\end{aligned}\end{split}\]</div>
+<p>The product <span class="math">\(\boldsymbol{a}\otimes\boldsymbol{b}\)</span> represents the
+vector outer product whose result is a matrix. In direct, indicial, and
+matrix notation, the matrix <span class="math">\(\boldsymbol{A}\)</span> resulting from the
+outer product of vectors <span class="math">\(\boldsymbol{a}\)</span> and
+<span class="math">\(\boldsymbol{b}\)</span> is</p>
+<div class="math">
+\[\begin{split}\boldsymbol{A} = \boldsymbol{a}\otimes\boldsymbol{b} = a_i b_j =
+  \begin{bmatrix}
+    a_1b_1 &amp; a_1b_2 &amp; \ldots &amp; a_1b_n \\
+    a_2b_1 &amp; a_2b_2 &amp; \ldots &amp; a_2b_n \\
+    \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+    a_nb_1 &amp; a_nb_2 &amp; \ldots &amp; a_nb_n
+  \end{bmatrix}\end{split}\]</div>
+</div>
+<div class="section" id="element-stiffness-function">
+<h2>4.2.3. Element stiffness function<a class="headerlink" href="#element-stiffness-function" title="Permalink to this headline">¶</a></h2>
+<p>The computation of stiffness matrix for the two-node elastic bar is
+performed in the function , given in Listing [lst:stiff1]. is invoked as</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">ke</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Arguments to the are</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="32%" />
+<col width="68%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">xc</span></code></td>
+<td>Nodal coordinates</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">E</span></code></td>
+<td>Element modulus.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">A</span></code></td>
+<td>Element area.</td>
+</tr>
+</tbody>
+</table>
+<p>The output from is</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="93%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">ke</span></code></td>
+<td>Element stiffness stored as a (numdim*2, numdim*2) symmetric matrix, where numdim is the number of degrees of freedom per node.</td>
+</tr>
+</tbody>
+</table>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">Link2Stiffness</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+    <span class="c1"># Element dimensionality</span>
+    <span class="n">xc</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">xc</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">xc</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">numdim</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">numdim</span> <span class="o">=</span> <span class="n">xc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># Compute element normal</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">xc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">v</span> <span class="o">/</span> <span class="n">h</span>
+    <span class="k">if</span> <span class="n">xc</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">nn</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">nn</span> <span class="o">=</span> <span class="n">outer</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="c1"># Assemble element stiffness</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">numdim</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">numdim</span><span class="p">))</span>
+    <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">numdim</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">numdim</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">numdim</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">numdim</span><span class="p">))</span>
+    <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span>  <span class="n">nn</span> <span class="c1"># upper left and lower right 2x2</span>
+    <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">nn</span> <span class="c1"># lower left and upper right 2x2</span>
+    <span class="k">return</span> <span class="n">A</span> <span class="o">*</span> <span class="n">E</span> <span class="o">/</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="verification-of-program-units">
+<h2>4.2.4. Verification of Program Units<a class="headerlink" href="#verification-of-program-units" title="Permalink to this headline">¶</a></h2>
+<p>The validity of each program unit is tested below. In each case, the
+Python statement is used with the function to test the output. The
+statement performs a Null operation if the expression that follows
+evaluates to , otherwise it raises an error. The function evaluates to
+if all elements in two test arrays are close to within a toloerance,
+otherwise it evaluates to .</p>
+<div class="section" id="verification-of-the-n-dimensional-elastic-bar-stiffness">
+<h3>4.2.4.1. Verification of the n-Dimensional Elastic Bar Stiffness<a class="headerlink" href="#verification-of-the-n-dimensional-elastic-bar-stiffness" title="Permalink to this headline">¶</a></h3>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K1D</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">allclose</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]],</span> <span class="n">K1D</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K2D</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span><span class="mi">40</span><span class="p">]],</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">allclose</span><span class="p">([[</span> <span class="mf">36.</span><span class="p">,</span>  <span class="mf">48.</span><span class="p">,</span> <span class="o">-</span><span class="mf">36.</span><span class="p">,</span> <span class="o">-</span><span class="mf">48.</span><span class="p">],</span>
+                 <span class="p">[</span> <span class="mf">48.</span><span class="p">,</span>  <span class="mf">64.</span><span class="p">,</span> <span class="o">-</span><span class="mf">48.</span><span class="p">,</span> <span class="o">-</span><span class="mf">64.</span><span class="p">],</span>
+                 <span class="p">[</span><span class="o">-</span><span class="mf">36.</span><span class="p">,</span> <span class="o">-</span><span class="mf">48.</span><span class="p">,</span>  <span class="mf">36.</span><span class="p">,</span>  <span class="mf">48.</span><span class="p">],</span>
+                 <span class="p">[</span><span class="o">-</span><span class="mf">48.</span><span class="p">,</span> <span class="o">-</span><span class="mf">64.</span><span class="p">,</span>  <span class="mf">48.</span><span class="p">,</span>  <span class="mf">64.</span><span class="p">]],</span> <span class="n">K2D</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K3D</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">]],</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">343</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">allclose</span><span class="p">([[</span>  <span class="mf">40.</span><span class="p">,</span>   <span class="mf">60.</span><span class="p">,</span>  <span class="mf">120.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">40.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">60.</span><span class="p">,</span> <span class="o">-</span><span class="mf">120.</span><span class="p">],</span>
+                 <span class="p">[</span>  <span class="mf">60.</span><span class="p">,</span>   <span class="mf">90.</span><span class="p">,</span>  <span class="mf">180.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">60.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">90.</span><span class="p">,</span> <span class="o">-</span><span class="mf">180.</span><span class="p">],</span>
+                 <span class="p">[</span> <span class="mf">120.</span><span class="p">,</span>  <span class="mf">180.</span><span class="p">,</span>  <span class="mf">360.</span><span class="p">,</span> <span class="o">-</span><span class="mf">120.</span><span class="p">,</span> <span class="o">-</span><span class="mf">180.</span><span class="p">,</span> <span class="o">-</span><span class="mf">360.</span><span class="p">],</span>
+                 <span class="p">[</span> <span class="o">-</span><span class="mf">40.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">60.</span><span class="p">,</span> <span class="o">-</span><span class="mf">120.</span><span class="p">,</span>   <span class="mf">40.</span><span class="p">,</span>   <span class="mf">60.</span><span class="p">,</span>  <span class="mf">120.</span><span class="p">],</span>
+                 <span class="p">[</span> <span class="o">-</span><span class="mf">60.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">90.</span><span class="p">,</span> <span class="o">-</span><span class="mf">180.</span><span class="p">,</span>   <span class="mf">60.</span><span class="p">,</span>   <span class="mf">90.</span><span class="p">,</span>  <span class="mf">180.</span><span class="p">],</span>
+                 <span class="p">[</span><span class="o">-</span><span class="mf">120.</span><span class="p">,</span> <span class="o">-</span><span class="mf">180.</span><span class="p">,</span> <span class="o">-</span><span class="mf">360.</span><span class="p">,</span>  <span class="mf">120.</span><span class="p">,</span>  <span class="mf">180.</span><span class="p">,</span>  <span class="mf">360.</span><span class="p">]],</span> <span class="n">K3D</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">4. Element Library</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Overview.html">4.1. Overview</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">4.2. Elastic bar elements</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">4. Element Library</a><ul>
+      <li>Previous: <a href="Overview.html" title="previous chapter">4.1. Overview</a></li>
+      <li>Next: <a href="../Implementation/index.html" title="next chapter">5. Implementation Details</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/ElementLibrary/Link.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

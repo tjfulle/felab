@@ -1,0 +1,250 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>2.5. Plane Elasticity, 2 &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="2. pyfem2 Tutorials" href="index.html" />
+    <link rel="next" title="2.6. Post processing" href="Postprocessing.html" />
+    <link rel="prev" title="2.4. Plane Elasticity, 1" href="Plane1.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="plane-elasticity-2">
+<span id="planeelasticity2"></span><h1>2.5. Plane Elasticity, 2<a class="headerlink" href="#plane-elasticity-2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="objective">
+<h2>2.5.1. Objective<a class="headerlink" href="#objective" title="Permalink to this headline">¶</a></h2>
+<p>This example demonstrates the use of the <code class="docutils literal"><span class="pre">Plane2DModel</span></code> to solve a plane strain problem.</p>
+</div>
+<div class="section" id="problem-description">
+<h2>2.5.2. Problem Description<a class="headerlink" href="#problem-description" title="Permalink to this headline">¶</a></h2>
+<p>A pressurized cylinder is modeled as a plane strain elastic solid.  The thickness of the cylinder is 1 and the material is linear elastic with constant Young&#8217;s modulus <span class="math">\(E\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu\)</span>.  The cylinder is modeled with quarter-symmetry and a unit pressure is applied to the inner face.</p>
+<img alt="../_images/plane1_1.png" class="align-center" src="../_images/plane1_1.png" />
+</div>
+<div class="section" id="model-script">
+<h2>2.5.3. Model Script<a class="headerlink" href="#model-script" title="Permalink to this headline">¶</a></h2>
+<p>The problem is defined and solved in <code class="docutils literal"><span class="pre">pyfem2</span></code> as follows:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">pyfem2 tutorial demo program: Plane strain elasticity</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c1"># Create the finite element model and assign a mesh</span>
+<span class="n">V</span> <span class="o">=</span> <span class="n">Plane2DModel</span><span class="p">()</span>
+<span class="n">V</span><span class="o">.</span><span class="n">GenesisMesh</span><span class="p">(</span><span class="s1">&#39;../meshes/quarter_cylinder.g&#39;</span><span class="p">)</span>
+
+<span class="c1"># Define an element block of plane strain elements</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
+
+<span class="c1"># Create a material and define the elastic properties</span>
+<span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">Mu</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">499</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Fix the X displacement of Nodeset-200 and Y displacement of Nodeset-201.</span>
+<span class="c1"># Nodeset-200 defines the LHS and Nodeset-201 the bottom side, respectively.</span>
+<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-200&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-201&#39;</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+
+<span class="c1"># Apply a unit pressure on inside face</span>
+<span class="n">V</span><span class="o">.</span><span class="n">Pressure</span><span class="p">(</span><span class="s1">&#39;Surface-1&#39;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+
+<span class="c1"># Solve the model and write results to the ExodusII database</span>
+<span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
+<span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;PlaneElasticity.exo&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-does-it-work">
+<h2>2.5.4. How does it work?<a class="headerlink" href="#how-does-it-work" title="Permalink to this headline">¶</a></h2>
+<p>The complete code can be found in the file <code class="docutils literal"><span class="pre">examples/plane1.py</span></code>. We now examine the preceding program in detail.</p>
+<p>The first lines of the program,</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>import objects from the <code class="docutils literal"><span class="pre">numpy</span></code> and <code class="docutils literal"><span class="pre">pyfem2</span></code> namespaces in to the program.
+<a class="reference external" href="http://www.numpy.org">numpy</a> is a python package providing numerical data
+types and procedures. The key import from the <code class="docutils literal"><span class="pre">pyfem2</span></code> library is <code class="docutils literal"><span class="pre">Plane2DModel</span></code>.</p>
+<p>The statement</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span> <span class="o">=</span> <span class="n">Plane2DModel</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>creates the finite element model.  The mesh is assigned to the model by</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">GenesisMesh</span><span class="p">(</span><span class="s1">&#39;quarter_cylinder.g&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>which reads the mesh parameters from a
+<a class="reference external" href="http://prod.sandia.gov/techlib/access-control.cgi/1992/922137.pdf">ExodusII</a> formatted file.</p>
+<a class="reference internal image-reference" href="../_images/plane1_2.png"><img alt="../_images/plane1_2.png" class="align-center" src="../_images/plane1_2.png" style="width: 480.0px; height: 360.0px;" /></a>
+<p>The finite element model <code class="docutils literal"><span class="pre">V</span></code> requires that every element in the mesh be
+assigned an element type and material constitutive relations. The assignment
+occurs by grouping elements of the same type together in to element blocks and
+then assigning to those element blocks material and fabrication properties.
+For this problem, every element in the mesh is a <code class="docutils literal"><span class="pre">PlaneStrainQuad4</span></code> four-node
+plane strain element (a quadralateral element with two degrees of freedom per
+node). The element block, named <code class="docutils literal"><span class="pre">ElementBlock1</span></code>, containing all of the
+elements in the mesh is created by:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The symbol <code class="docutils literal"><span class="pre">ALL</span></code> informs the <code class="docutils literal"><span class="pre">ElementBlock</span></code> method to assign all elements
+in the mesh to the block <code class="docutils literal"><span class="pre">ElementBlock1</span></code>. Material properties are defined by
+the <code class="docutils literal"><span class="pre">Material</span></code> method and elements in a block are assigned material and
+fabrication properties by the <code class="docutils literal"><span class="pre">AssignProperties</span></code> method:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">Mu</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">499</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The method <code class="docutils literal"><span class="pre">AssignProperties</span></code> takes as input the name of the element block
+to which properties are being assigned, the element type for elements in the
+block, the material model name, and any element fabrication properties. For
+<code class="docutils literal"><span class="pre">PlaneStrainQuad4</span></code> elements, the thickness <code class="docutils literal"><span class="pre">t</span></code> is the only fabrication
+property.</p>
+<p>The next step is to specify the boundary conditions <span class="math">\(u_x(x=0,y)=0\)</span> and
+<span class="math">\(u_y(x,y=0)=0\)</span>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-200&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-201&#39;</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The nodesets <code class="docutils literal"><span class="pre">Nodeset-200</span></code> and <code class="docutils literal"><span class="pre">Nodeset-201</span></code> are defined in the mesh file.</p>
+<p>The pressure on the inside surface of the cylinder is defined by</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Pressure</span><span class="p">(</span><span class="s1">&#39;Surface-1&#39;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, the unknown displacements are determined by solving the model and the model results are written to an ExodusII output file</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Perhaps the easiest way to view results is by:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Plot2D</span><span class="p">(</span><span class="n">deformed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With the <code class="docutils literal"><span class="pre">deformed</span></code> keyword, the deformed coordinates are plotted.</p>
+<a class="reference internal image-reference" href="../_images/plane1_3.png"><img alt="../_images/plane1_3.png" class="align-center" src="../_images/plane1_3.png" style="width: 480.0px; height: 360.0px;" /></a>
+<p>The results can also be written to an ExodusII file and viewed in
+<a class="reference external" href="http://www.paraview.org">ParaView</a></p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;PlaneElasticity.exo&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/plane1_4.png" class="align-center" src="../_images/plane1_4.png" />
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Truss1.html">2.1. Plane truss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Truss2.html">2.2. Space truss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Heat1.html">2.3. Diffusive Heat Transfer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Plane1.html">2.4. Plane Elasticity, 1</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">2.5. Plane Elasticity, 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Postprocessing.html">2.6. Post processing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a><ul>
+      <li>Previous: <a href="Plane1.html" title="previous chapter">2.4. Plane Elasticity, 1</a></li>
+      <li>Next: <a href="Postprocessing.html" title="next chapter">2.6. Post processing</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/Tutorials/Plane2.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

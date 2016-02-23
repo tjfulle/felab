@@ -1,0 +1,524 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>5.8. TrussSolution: A Complete Truss Program &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="5. Implementation Details" href="index.html" />
+    <link rel="next" title="6. pyfem2 Source" href="../apidoc/index.html" />
+    <link rel="prev" title="5.7. Application of Boundary Conditions" href="Boundary2.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="trusssolution-a-complete-truss-program">
+<span id="trussmodel"></span><h1>5.8. TrussSolution: A Complete Truss Program<a class="headerlink" href="#trusssolution-a-complete-truss-program" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Chapter [sec:first],</li>
+<li>Chapter [sec:intro.conventions],</li>
+<li>Chapter [ch:bc_and_load],</li>
+<li>Chapter [sec:ass],</li>
+<li>Chapter [sec:appbc],</li>
+<li><a class="reference external" href="http://www.colorado.edu/engineering/CAS/courses.d/IFEM.d/IFEM.Ch02.d/IFEM.Ch02.pdf">IFEM Chapter 2, “The Direct Stiffness Method I”</a></li>
+<li><a class="reference external" href="http://www.colorado.edu/engineering/CAS/courses.d/IFEM.d/IFEM.Ch03.d/IFEM.Ch03.pdf">IFEM Chapter 3, “The Direct Stiffness Method II”</a></li>
+</ul>
+<div class="section" id="overview">
+<h2>5.8.1. Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>models truss-like structures, like the one shown in Figure
+[fig:truss.intro] in one, two, and three-dimensions.</p>
+<ul class="simple">
+<li>models truss members as two-node elastic bars having constant
+cross-sectional area and Young’s modulus,</li>
+<li>supports truss members defined in 1, 2, or 3 dimensions,</li>
+<li>uses the direct stiffness method to assemble and solve the global
+system of equations,</li>
+<li>supports prescribed displacements and nodal forces,</li>
+<li>uses linear solver to solve the global system of equations, and</li>
+<li>writes results to <a class="reference external" href="www.vtk.ort">vtk</a> formatted files.</li>
+</ul>
+<div class="figure align-center" id="id1">
+<img alt="../_images/IntroTruss.png" src="../_images/IntroTruss.png" />
+<p class="caption"><span class="caption-text">Finite element analysis of a truss-like structure</span></p>
+</div>
+<div class="section" id="program-limitations">
+<h3>5.8.1.1. Program limitations<a class="headerlink" href="#program-limitations" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>is valid only for truss-like structures whose members are two-node
+elastic bars,</li>
+<li>does not support distributed loads,</li>
+<li>does not support multi-freedom constraints, and</li>
+<li>sacrifices speed and efficiency for clarity.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="element-types">
+<h2>5.8.2. Element types<a class="headerlink" href="#element-types" title="Permalink to this headline">¶</a></h2>
+<p>supports the following element types:</p>
+<ul class="simple">
+<li>: one-dimensional two-node elastic bar.</li>
+<li>: two-dimensional two-node elastic bar.</li>
+<li>: three-dimensional two-node elastic bar.</li>
+</ul>
+<p>The different element types are described in Appendix [app:elem.lib].</p>
+</div>
+<div class="section" id="truss-program-design">
+<h2>5.8.3. Truss program design<a class="headerlink" href="#truss-program-design" title="Permalink to this headline">¶</a></h2>
+<p>A callgraph of the truss program, shown in Figure [fig:truss.callgraph],
+demonstrates its overal design. As described in “Chapter 1: Introduction
+and Conventions”, the program is split broadly in to preprocessing,
+processing, and postprocessing stages. The user defines the model
+definition in the preprocessing stage and the truss program performs the
+processing and postprocessing steps.</p>
+<div class="figure align-center" id="id2">
+<img alt="../_images/TrussCallGraph.png" src="../_images/TrussCallGraph.png" />
+<p class="caption"><span class="caption-text">Callgraph of Truss FE program</span></p>
+</div>
+<div class="section" id="the-truss-program-script">
+<h3>5.8.3.1. The truss program script<a class="headerlink" href="#the-truss-program-script" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line">The function , shown in Listing [lst:truss.app], is an executive type
+function that organizes the processing and postprocessing analysis
+stages. It is invoked as</div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">TrussSolution</span><span class="p">(</span><span class="n">nodtab</span><span class="p">,</span> <span class="n">eletab</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">cloads</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The arguments to are</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="95%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">nodtab</span></code></td>
+<td>Table of defining nodes. is the node label of node and are the coordinates of node .</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">eletab</span></code></td>
+<td>Table of defining elements. is the element label of element , is the element type, and are the node labels of nodes forming element .</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">elemat</span></code></td>
+<td>Element material data. For the Link2 element, the only element material property is the Young’s modulus E. is given as either a float if all elements have the same constant Young’s modulus or a list , where is the total number of elements.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">elefab</span></code></td>
+<td>Element fabrication data. For the Link2 element, the only element fabrication property is the cross-sectional area A. is given as either a float if all elements have the same constant cross sectional area or a list , where is the total number of elements.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">bcs</span></code></td>
+<td>Displacement boundary condition specification. List of lists defining the prescribed displacements in the model. Each sublist contains three elements defining the node ID[s] constrained, the degree[s] of freedom constrained, and the magnitude of the constraint.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">cloads</span></code></td>
+<td>Concentrated (nodal) force specification. The composition of is identical to that of .</td>
+</tr>
+</tbody>
+</table>
+<p>The outputs from are</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="12%" />
+<col width="88%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">u</span></code></td>
+<td>Nodal displacements. , where is the total number of nodes.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">R</span></code></td>
+<td>Nodal reactions. , where is the total number of nodes.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">p</span></code></td>
+<td>Element axial forces. , where is the total number of elements.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">s</span></code></td>
+<td>Element stresses , where is the total number of elements.</td>
+</tr>
+</tbody>
+</table>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">TrussSolution</span><span class="p">(</span><span class="n">nodtab</span><span class="p">,</span><span class="n">eletab</span><span class="p">,</span><span class="n">elemat</span><span class="p">,</span><span class="n">elefab</span><span class="p">,</span><span class="n">bcs</span><span class="p">,</span><span class="n">cload</span><span class="p">,</span><span class="n">jobid</span><span class="o">=</span><span class="s1">&#39;Job-1&#39;</span><span class="p">):</span>
+    <span class="c1"># Format user input</span>
+    <span class="n">nodmap</span><span class="p">,</span><span class="n">coord</span><span class="p">,</span><span class="n">elemap</span><span class="p">,</span><span class="n">eletyp</span><span class="p">,</span><span class="n">elecon</span><span class="o">=</span><span class="n">FormatNodesAndElements</span><span class="p">(</span><span class="n">nodtab</span><span class="p">,</span><span class="n">eletab</span><span class="p">)</span>
+    <span class="c1"># Truss program valid only for Link elements</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">eletyp</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;TrussSolution expected only one element type&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">et</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">L1D2</span><span class="p">,</span> <span class="n">L2D2</span><span class="p">,</span> <span class="n">L3D2</span><span class="p">)</span> <span class="k">for</span> <span class="n">et</span> <span class="ow">in</span> <span class="n">eletyp</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;TrussSolution expected element types &#39;</span>
+                         <span class="s1">&#39;L1D2, L2D2, or L3D2&#39;</span><span class="p">)</span>
+    <span class="c1"># number of elements, nodes</span>
+    <span class="n">numele</span><span class="p">,</span> <span class="n">numnod</span> <span class="o">=</span> <span class="n">elecon</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">coord</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="c1"># number of degrees of freedom per node</span>
+    <span class="n">ndof</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">coord</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">coord</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># make sure properties are arrays</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">IsListlike</span><span class="p">(</span><span class="n">elemat</span><span class="p">):</span> <span class="n">elemat</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="n">elemat</span><span class="p">]</span> <span class="o">*</span> <span class="n">numele</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">IsListlike</span><span class="p">(</span><span class="n">elefab</span><span class="p">):</span> <span class="n">elefab</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="n">elefab</span><span class="p">]</span> <span class="o">*</span> <span class="n">numele</span><span class="p">)</span>
+    <span class="c1"># Format the boundary conditions</span>
+    <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span> <span class="o">=</span> <span class="n">FormatBoundaryConditions</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">nodmap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span>
+                                                <span class="n">bcs</span><span class="p">,</span> <span class="n">cload</span><span class="p">)</span>
+    <span class="c1"># Limit doftags, dofvals to just the DOF of interest</span>
+    <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span> <span class="o">=</span> <span class="n">doftags</span><span class="p">[:,</span> <span class="p">:</span><span class="n">ndof</span><span class="p">],</span> <span class="n">dofvals</span><span class="p">[:,</span> <span class="p">:</span><span class="n">ndof</span><span class="p">]</span>
+    <span class="c1"># Assemble the global stiffness and force</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">AssembleGlobalStiffnessUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">)</span>
+    <span class="n">F</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">AssembleGlobalForceUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">)</span>
+    <span class="n">Kbc</span><span class="p">,</span> <span class="n">Fbc</span> <span class="o">=</span> <span class="n">ApplyBoundaryConditionsUDOF</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">F</span><span class="o">+</span><span class="n">Q</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span><span class="n">Kbc</span><span class="p">,</span> <span class="n">Fbc</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">LinAlgError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;attempting to solve under constrained system&#39;</span><span class="p">)</span>
+    <span class="c1"># Total force, including reaction, and reaction</span>
+    <span class="n">Ft</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">Ft</span> <span class="o">-</span> <span class="n">F</span> <span class="o">-</span> <span class="n">Q</span>
+    <span class="c1"># reshape u, R to be the same shape as coord</span>
+    <span class="n">u</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">coord</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">coord</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">TrussIntForces</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">TrussStresses</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">elefab</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">jobid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">WriteFEResults</span><span class="p">(</span><span class="n">jobid</span><span class="p">,</span> <span class="n">coord</span><span class="p">,</span> <span class="n">nodmap</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span>
+                       <span class="n">u</span><span class="o">=</span><span class="n">u</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="n">R</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">u</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span>
+</pre></div>
+</div>
+<div class="section" id="example-model-driver">
+<h4>Example model driver<a class="headerlink" href="#example-model-driver" title="Permalink to this headline">¶</a></h4>
+<p>Consider the space truss shown in Figure [fig:truss.space_truss], the
+model driver for this problem is given Listing [lst:truss.model].</p>
+<div class="figure align-center" id="id3">
+<img alt="../_images/SpaceTruss1.jpeg" src="../_images/SpaceTruss1.jpeg" />
+<p class="caption"><span class="caption-text">Example space truss</span></p>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre>nodtab = [[1, 72, 0, 0], [2, 0, 36, 0], [3, 0, 36, 72], [4, 0, 0, -48]]
+eletab = [[1, 1, 2], [2, 1, 3], [3, 1, 4]]
+A = [.302, .729, .187]
+E = 10e6
+
+# Boundary conditions
+bcs = [[1, Y, 0]], [[2,3,4], (X,Y,Z), 0]]
+
+# Concentrated force in &#39;z&#39; direction on node 1
+cloads = [[1, Z, -1000]]
+
+u, R, p, s = TrussSolution(nodtab, eletab, E, A, bcs, cloads)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="displacement-solution-and-recovery-of-reactions">
+<h3>5.8.3.2. Displacement solution and recovery of reactions<a class="headerlink" href="#displacement-solution-and-recovery-of-reactions" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line">The linear system
+<span class="math">\(\boldsymbol{K}^*\boldsymbol{u}=\boldsymbol{F}^*\)</span>, where
+<span class="math">\(\boldsymbol{K}^*\)</span> and <span class="math">\(\boldsymbol{F}^*\)</span> are the boundary
+condition modified global stiffness and force, respectively, is solved
+using the function that is a part of the module. is invoked as</div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">u</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">Kbc</span><span class="p">,</span> <span class="n">Fbc</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Reaction forces <span class="math">\(\boldsymbol{R}\)</span> are recovered as</p>
+<div class="math">
+\[\boldsymbol{R} = \boldsymbol{K}\boldsymbol{u} - \boldsymbol{F}\]</div>
+<p>where <span class="math">\(\boldsymbol{K}\)</span> and <span class="math">\(\boldsymbol{F}\)</span> are the global
+stiffness and force, respectively (before application of boundary
+conditions), and <span class="math">\(\boldsymbol{u}\)</span> is the displacement found from
+the call to .</p>
+</div>
+<div class="section" id="postprocessing">
+<h3>5.8.3.3. Postprocessing<a class="headerlink" href="#postprocessing" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line">With nodal displacements known, postprocessing can begin. In this
+program, postprocessing consists of determining the element internal
+forces and stresses. computes the axial internal forces of truss
+members and is invoked as</div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">p</span> <span class="o">=</span> <span class="n">TrussIntForces</span><span class="p">(</span><span class="n">coor</span><span class="p">,</span> <span class="n">nodmap</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The arguments , , , , , and are described in earlier sections. uses the
+subordinate function to determine the internal force in individual
+elements.</p>
+<div class="line-block">
+<div class="line">The internal stress is computed in the function and is invoked as</div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">s</span> <span class="o">=</span> <span class="n">TrussStresses</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">elefab</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The ouput from is</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">p</span></code></td>
+<td>Element axial forces , where is the total number of elements. Computed by .</td>
+</tr>
+</tbody>
+</table>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">TrussIntForces</span><span class="p">(</span><span class="n">coor</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">elecon</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">elecon</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="p">[</span><span class="n">nodmap</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">c</span><span class="p">]</span>
+        <span class="n">p</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="o">=</span> <span class="n">Link2IntForce</span><span class="p">(</span><span class="n">coor</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">elemat</span><span class="p">[</span><span class="n">e</span><span class="p">],</span> <span class="n">elefab</span><span class="p">[</span><span class="n">e</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">p</span>
+
+<span class="k">def</span> <span class="nf">Link2IntForce</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">uc</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">xc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">uc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">uc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">Xu</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">E</span> <span class="o">*</span> <span class="n">A</span> <span class="o">/</span> <span class="n">L</span> <span class="o">*</span> <span class="n">Xu</span> <span class="o">/</span> <span class="n">L</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">TrussStresses</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">elefab</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">p</span> <span class="o">/</span> <span class="n">elefab</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="writing-fe-results">
+<h3>5.8.3.4. Writing FE results<a class="headerlink" href="#writing-fe-results" title="Permalink to this headline">¶</a></h3>
+<p>writes the results to a <a class="reference external" href="www.vtk.org">vtk</a> finite element database.
+files and are viewable in several commercial and open source
+visualization products, including the open source
+<a class="reference external" href="http://www.paraview.org">ParaView</a>. is invoked as</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">WriteFEResults</span><span class="p">(</span><span class="n">jobid</span><span class="p">,</span> <span class="n">coord</span><span class="p">,</span> <span class="n">nodmap</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">u</span><span class="o">=</span><span class="n">u</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The arguments to are</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="9%" />
+<col width="91%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">jobid</span></code></td>
+<td>String identifying the simulation</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">coord</span></code></td>
+<td>Nodal coordinates , where is the total number of nodes. Node IDs are implied by the row number.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">elemap</span></code></td>
+<td>Mapping from external node label to internal node number. .</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">eletyp</span></code></td>
+<td>Element type. is the element type of element e.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">elecon</span></code></td>
+<td>Element connectivity (nodes defining ends of element). is the th node ID of the th element. Element IDs are implied by the row number.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">u</span></code></td>
+<td>Nodal displacements , where is the total number of nodes. Node IDs are implied by the row number.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">**kwds</span></code></td>
+<td>Keyword arguments. Pass nodal and element data as keywords.</td>
+</tr>
+</tbody>
+</table>
+<p>The argument to allows one to store arbitrary nodal and element results
+to the output database. For example, to store the nodal reactions,
+element forces, and element stresses, would be invoked as</p>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>5.8.4. Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="example-1">
+<h3>5.8.4.1. Example 1<a class="headerlink" href="#example-1" title="Permalink to this headline">¶</a></h3>
+<p>Consider the bridge shown in Figure [fig.truss.bridge]. The user model
+definition script is</p>
+<div class="figure align-center" id="id4">
+<img alt="../_images/Bridge.png" src="../_images/Bridge.png" />
+<p class="caption"><span class="caption-text">Six-bay bridge plane truss. (a) physical problem; (b) finite element idealization. (Credit: <a class="reference external" href="http://www.colorado.edu/engineering/CAS/courses.d/IFEM.d/IFEM.Ch21.d/IFEM.Ch21.pdf">Ch. 21</a> of Prof. Felippa’s introductory finite element course materials)</span></p>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">coor</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">6</span><span class="p">,</span><span class="mi">30</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span><span class="mi">30</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span><span class="mi">40</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span><span class="mi">40</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">50</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">11</span><span class="p">,</span><span class="mi">50</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">12</span><span class="p">,</span><span class="mi">60</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span>
+<span class="n">elecon</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span><span class="mi">11</span><span class="p">,</span><span class="mi">12</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">7</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">8</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">12</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">13</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">14</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">15</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">17</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">18</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">19</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">],</span> <span class="p">[</span><span class="mi">21</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">10</span><span class="p">]]</span>
+<span class="n">E</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">Abot</span><span class="p">,</span> <span class="n">Atop</span><span class="p">,</span> <span class="n">Abat</span><span class="p">,</span> <span class="n">Adia</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span>
+<span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="n">Abot</span><span class="p">,</span> <span class="n">Abot</span><span class="p">,</span> <span class="n">Abot</span><span class="p">,</span> <span class="n">Abot</span><span class="p">,</span> <span class="n">Abot</span><span class="p">,</span> <span class="n">Abot</span><span class="p">,</span>
+     <span class="n">Atop</span><span class="p">,</span> <span class="n">Atop</span><span class="p">,</span> <span class="n">Atop</span><span class="p">,</span> <span class="n">Atop</span><span class="p">,</span> <span class="n">Atop</span><span class="p">,</span> <span class="n">Atop</span><span class="p">,</span>
+     <span class="n">Abat</span><span class="p">,</span> <span class="n">Abat</span><span class="p">,</span> <span class="n">Abat</span><span class="p">,</span> <span class="n">Abat</span><span class="p">,</span> <span class="n">Abat</span><span class="p">,</span>
+     <span class="n">Adia</span><span class="p">,</span> <span class="n">Adia</span><span class="p">,</span> <span class="n">Adia</span><span class="p">,</span> <span class="n">Adia</span><span class="p">]</span>
+<span class="n">cloads</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">3</span><span class="p">,</span><span class="n">Y</span><span class="p">,</span><span class="o">-</span><span class="mf">10.</span><span class="p">],[</span><span class="mi">5</span><span class="p">,</span><span class="n">Y</span><span class="p">,</span><span class="o">-</span><span class="mf">10.</span><span class="p">],[</span><span class="mi">7</span><span class="p">,</span><span class="n">Y</span><span class="p">,</span><span class="o">-</span><span class="mf">16.</span><span class="p">],[</span><span class="mi">9</span><span class="p">,</span><span class="n">Y</span><span class="p">,</span><span class="o">-</span><span class="mf">10.</span><span class="p">],[</span><span class="mi">11</span><span class="p">,</span><span class="n">Y</span><span class="p">,</span><span class="o">-</span><span class="mf">10.</span><span class="p">]]</span>
+<span class="n">bcs</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="n">ALL</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="n">ALL</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span>
+<span class="n">u</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">TrussSolution</span><span class="p">(</span><span class="n">nodtab</span><span class="p">,</span> <span class="n">eletab</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">cloads</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The computed displacement and nodal reactions are</p>
+<div class="code python highlight-python"><div class="highlight"><pre>nodal displacements               nodal reactions
+[[ 0.       0.       0.     ]     [[  0.  28.   0.]
+ [ 0.80954 -1.7756   0.     ]      [  0.   0.   0.]
+ [ 0.28    -1.79226  0.     ]      [  0.   0.   0.]
+ [ 0.899   -2.29193  0.     ]      [  0.   0.   0.]
+ [ 0.56    -2.3166   0.     ]      [  0.   0.   0.]
+ [ 0.8475  -2.38594  0.     ]      [ -0.  -0.   0.]
+ [ 0.8475  -2.42194  0.     ]      [ -0.   0.   0.]
+ [ 0.796   -2.29193  0.     ]      [ -0.   0.   0.]
+ [ 1.135   -2.3166   0.     ]      [  0.  -0.   0.]
+ [ 0.88546 -1.7756   0.     ]      [  0.   0.   0.]
+ [ 1.415   -1.79226  0.     ]      [  0.   0.   0.]
+ [ 1.695    0.       0.     ]]     [  0.  28.   0.]]
+</pre></div>
+</div>
+<p>The undeformed and deformed plots, generated by ParaView, are shown in
+Figure [fig.truss.bridge_res]</p>
+<div class="figure align-center" id="id5">
+<img alt="../_images/TrussExample1.png" src="../_images/TrussExample1.png" />
+<p class="caption"><span class="caption-text">Undeformed and deformed plots of the truss shown in Figure
+[fig:truss.bridge]. The deformed plots show contours of <span class="math">\(y\)</span>
+displacement and magnitude of the reaction forces.</span></p>
+</div>
+</div>
+<div class="section" id="example-2">
+<h3>5.8.4.2. Example 2<a class="headerlink" href="#example-2" title="Permalink to this headline">¶</a></h3>
+<div class="figure align-center" id="id6">
+<img alt="../_images/TrussExample2.jpg" src="../_images/TrussExample2.jpg" />
+<p class="caption"><span class="caption-text">Truss example 2</span></p>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre>nodtab = [[1, 0, 0], [2, 3, 4], [3, 0, 4]]
+eletab = [[1, 1, 2], [2, 1, 3]])
+E, A = 70e9, 5 * .01 * .01
+bcs = [[1, X, -.05], [[2,3], (X,Y), 0]]
+cloads = [[1, Y, 1000e3]]
+u, R, p, s = TrussSolution(nodtab, eletab, E, A, bcs, cloads)
+</pre></div>
+</div>
+<p>The nodal displacements are</p>
+<div class="code python highlight-python"><div class="highlight"><pre>[[-0.05     0.08828]
+ [ 0.       0.     ]
+ [ 0.       0.     ]]
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-3">
+<h3>5.8.4.3. Example 3<a class="headerlink" href="#example-3" title="Permalink to this headline">¶</a></h3>
+<p>Redo Example 2, but in 3D.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span>
+<span class="n">eletab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]</span>
+<span class="n">E</span><span class="p">,</span> <span class="n">A</span> <span class="o">=</span> <span class="mf">70e9</span><span class="p">,</span> <span class="mi">5</span> <span class="o">*</span> <span class="o">.</span><span class="mo">01</span> <span class="o">*</span> <span class="o">.</span><span class="mo">01</span>
+<span class="n">bcs</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">-.</span><span class="mo">05</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">Y</span><span class="p">,</span><span class="n">Z</span><span class="p">),</span> <span class="mi">0</span><span class="p">]]</span>
+<span class="n">cloads</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="mf">1000e3</span><span class="p">]]</span>
+<span class="n">u</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">TrussSolution</span><span class="p">(</span><span class="n">nodtab</span><span class="p">,</span> <span class="n">eletab</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">bcs</span><span class="p">,</span> <span class="n">cloads</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The nodal displacements are</p>
+<div class="code python highlight-python"><div class="highlight"><pre>[[-0.05     0.08828  0.     ]
+ [ 0.       0.       0.     ]
+ [ 0.       0.       0.     ]]
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">5. Implementation Details</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Overview.html">5.1. Finite element analysis stages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="First.html">5.2. A First Finite Element Program</a></li>
+<li class="toctree-l2"><a class="reference internal" href="InternalNodesAndElements.html">5.3. Nodes and elements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Boundary1.html">5.4. Boundary conditions and concentrated loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="DistributedLoads.html">5.5. Source terms and Distributed Loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Assembly1.html">5.6. Assembly, Part I</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Boundary2.html">5.7. Application of Boundary Conditions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">5.8. TrussSolution: A Complete Truss Program</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">5. Implementation Details</a><ul>
+      <li>Previous: <a href="Boundary2.html" title="previous chapter">5.7. Application of Boundary Conditions</a></li>
+      <li>Next: <a href="../apidoc/index.html" title="next chapter">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/Implementation/Truss1.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

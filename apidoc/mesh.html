@@ -1,0 +1,266 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>6.3. Mesh &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="6. pyfem2 Source" href="index.html" />
+    <link rel="next" title="6.4. Material" href="material.html" />
+    <link rel="prev" title="6.2. FiniteElementModel" href="fem1.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pyfem2.mesh">
+<span id="mesh"></span><h1>6.3. Mesh<a class="headerlink" href="#module-pyfem2.mesh" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyfem2.mesh.Mesh">
+<em class="property">class </em><code class="descclassname">pyfem2.mesh.</code><code class="descname">Mesh</code><span class="sig-paren">(</span><em>nodtab=None</em>, <em>eletab=None</em>, <em>filename=None</em>, <em>p=None</em>, <em>t=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh.Mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for creating a finite element mesh.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nodtab</strong> : list of list</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">nodtab[n]</span></code> is a list describing the nth node where
+<code class="docutils literal"><span class="pre">nodtab[n][0]</span></code> is the node label of the nth node and
+<code class="docutils literal"><span class="pre">nodtab[n][1:]</span></code> are the nodal coordinates of the nth node</p>
+</div></blockquote>
+<p><strong>eletab</strong> : list of list</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">eletab[e]</span></code> is a list describing the eth element where
+<code class="docutils literal"><span class="pre">eletab[e][0]</span></code> is the element label of the eth element and
+<code class="docutils literal"><span class="pre">eletab[e][1:]</span></code> are the nodes forming the eth element, the nodal
+labels must correpond to the node labels in <code class="docutils literal"><span class="pre">nodtab</span></code></p>
+</div></blockquote>
+<p><strong>filename</strong> : str</p>
+<blockquote>
+<div><p>Name of a genesis or vtu file containing the mesh</p>
+</div></blockquote>
+<p><strong>p</strong> : ndarray of float</p>
+<blockquote>
+<div><p>Array of nodal coordinates</p>
+</div></blockquote>
+<p><strong>t</strong> : ndarray of int</p>
+<blockquote class="last">
+<div><p>Array of element connectivity</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The nodtab/eletab, filename, and p/t arguments are mutually exclusive.</p>
+<p>If <code class="docutils literal"><span class="pre">p</span></code> and <code class="docutils literal"><span class="pre">t</span></code> are specified, node labels are assigned to nodes in the
+order they appear in the nodal coordinates array <code class="docutils literal"><span class="pre">p</span></code> and take values of
+<code class="docutils literal"><span class="pre">0</span></code> to <code class="docutils literal"><span class="pre">n-1</span></code>, where <code class="docutils literal"><span class="pre">n</span></code> is the length of <code class="docutils literal"><span class="pre">p</span></code>. The element
+connectivity array <code class="docutils literal"><span class="pre">t</span></code> must use this numbering scheme. This method is
+useful for creating meshes using triangulations created by the
+<code class="docutils literal"><span class="pre">distmesh2d</span></code> module.</p>
+<p class="rubric">Examples</p>
+<p>In the following examples, a simple mesh is created of a unit square
+centered at the origin with node and element numbers as follows:</p>
+<a class="reference internal image-reference" href="../_images/unitsquare11.png"><img alt="../_images/unitsquare11.png" class="align-center" src="../_images/unitsquare11.png" style="width: 453.95px; height: 211.4px;" /></a>
+<p>Method 1: specifying <code class="docutils literal"><span class="pre">nodtab</span></code> and <code class="docutils literal"><span class="pre">eletab</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">10</span><span class="p">,</span> <span class="o">-.</span><span class="mi">5</span><span class="p">,</span> <span class="o">-.</span><span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="o">-.</span><span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="o">.</span><span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">40</span><span class="p">,</span> <span class="o">-.</span><span class="mi">5</span><span class="p">,</span> <span class="o">.</span><span class="mi">5</span><span class="p">]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eletab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">Mesh</span><span class="p">(</span><span class="n">nodtab</span><span class="o">=</span><span class="n">nodtab</span><span class="p">,</span> <span class="n">eletab</span><span class="o">=</span><span class="n">eletab</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Method 2: specifying <code class="docutils literal"><span class="pre">filename</span></code></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">Mesh</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;unitsquare.g&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Method 3: specifying <code class="docutils literal"><span class="pre">p</span></code> and <code class="docutils literal"><span class="pre">t</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="o">-.</span><span class="mi">5</span><span class="p">,</span> <span class="o">-.</span><span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="o">-.</span><span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="o">.</span><span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="o">-.</span><span class="mi">5</span><span class="p">,</span> <span class="o">.</span><span class="mi">5</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">Mesh</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="classmethod">
+<dt id="pyfem2.mesh.Mesh.RectilinearMesh2D">
+<em class="property">classmethod </em><code class="descname">RectilinearMesh2D</code><span class="sig-paren">(</span><em>shape</em>, <em>lengths</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh.Mesh.RectilinearMesh2D" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a two-dimensional rectilinear Mesh object</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>shape</strong> : tuple</p>
+<blockquote>
+<div><p>(nx, ny) where nx is the number elements in <span class="math">\(x\)</span> and ny
+number of element in <span class="math">\(y\)</span>.</p>
+</div></blockquote>
+<p><strong>lengths</strong> : tuple</p>
+<blockquote>
+<div><p>(lx, ly) where lx is the length of the mesh in <span class="math">\(x\)</span> and ny
+is the length of the mesh in <span class="math">\(y\)</span>.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Mesh</strong> : object</p>
+<blockquote class="last">
+<div><p>An instantiated <code class="docutils literal"><span class="pre">Mesh</span></code> object.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="pyfem2.mesh.Mesh.parse_nod_and_elem_tables">
+<em class="property">static </em><code class="descname">parse_nod_and_elem_tables</code><span class="sig-paren">(</span><em>nodtab</em>, <em>eletab</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh.Mesh.parse_nod_and_elem_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p id="parse-nodes-and-elements">Format the node map, coordinates array, element map, types, and
+connectivity table</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nodtab</strong> : list of list</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">nodtab[n]</span></code> is a list describing the nth node where
+<code class="docutils literal"><span class="pre">nodtab[n][0]</span></code> is the node label of the nth node and
+<code class="docutils literal"><span class="pre">nodtab[n][1:]</span></code> are the nodal coordinates of the nth node</p>
+</div></blockquote>
+<p><strong>eletab</strong> : list of list</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">eletab[e]</span></code> is a list describing the eth element where
+<code class="docutils literal"><span class="pre">eletab[e][0]</span></code> is the element label of the eth element and
+<code class="docutils literal"><span class="pre">eletab[e][1:]</span></code> are the nodes forming the eth element, the
+nodal labels must correpond to the node labels in <code class="docutils literal"><span class="pre">nodtab</span></code></p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>nodmap</strong> : dict</p>
+<blockquote>
+<div><p>nodmap[xn] is the internal node number of node labeled xn</p>
+</div></blockquote>
+<p><strong>coord</strong> : ndarray</p>
+<blockquote>
+<div><p>Nodal coordinates.  coord[:,0] are the x, coord[:,1] the y, etc.</p>
+</div></blockquote>
+<p><strong>eletab1</strong> : dict</p>
+<blockquote class="last">
+<div><p>eletab1[xel] are the internal node numbers of element labeled xel</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="fem0.html">6.1. UniformBar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem1.html">6.2. FiniteElementModel</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">6.3. Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="material.html">6.4. Material</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+      <li>Previous: <a href="fem1.html" title="previous chapter">6.2. FiniteElementModel</a></li>
+      <li>Next: <a href="material.html" title="next chapter">6.4. Material</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/apidoc/mesh.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

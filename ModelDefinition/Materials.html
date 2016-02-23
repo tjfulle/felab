@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>3.4. Material models &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="3. Defining a Model" href="index.html" />
+    <link rel="next" title="3.5. Element Properties" href="Properties.html" />
+    <link rel="prev" title="3.3. Element blocks" href="ElementBlocks.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="material-models">
+<span id="material"></span><h1>3.4. Material models<a class="headerlink" href="#material-models" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>3.4.1. Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>A material definition specifies the behavior of a material and supplies all
+the relevant property data.</p>
+</div>
+<div class="section" id="defining-the-material-behavior">
+<h2>3.4.2. Defining the material behavior<a class="headerlink" href="#defining-the-material-behavior" title="Permalink to this headline">¶</a></h2>
+<p>Material properties are assigned the <code class="docutils literal"><span class="pre">FiniteElementModel</span></code> object by the <code class="docutils literal"><span class="pre">Material</span></code> method as:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where the string <code class="docutils literal"><span class="pre">name</span></code> is a name unique to the material. This command
+creates an entry in the finite element space <code class="docutils literal"><span class="pre">V</span></code>&#8216;s <code class="docutils literal"><span class="pre">materials</span></code> entry for
+material <code class="docutils literal"><span class="pre">name</span></code>. Further assignments of material properties to <code class="docutils literal"><span class="pre">name</span></code> are
+done directly on <code class="docutils literal"><span class="pre">V.materials[name]</span></code></p>
+<div class="section" id="isotropic-elastic-properties">
+<h3>3.4.2.1. Isotropic elastic properties<a class="headerlink" href="#isotropic-elastic-properties" title="Permalink to this headline">¶</a></h3>
+<p>Isotropic elastic properties are assigned to the material object by the <code class="docutils literal"><span class="pre">Elastic</span></code> method.  <code class="docutils literal"><span class="pre">Elastic</span></code> takes as input any two independent elastic constants.  For example, for a material having a Young&#8217;s modulus <span class="math">\(E=1\times10^6\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu=.29\)</span>, the elastic properties are assigned</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The following elastic constants are recognized by <code class="docutils literal"><span class="pre">Elastic</span></code>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="68%" />
+<col width="32%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Property</td>
+<td>Key</td>
+</tr>
+<tr class="row-even"><td>Bulk Modulus</td>
+<td><code class="docutils literal"><span class="pre">K</span></code></td>
+</tr>
+<tr class="row-odd"><td>Shear Modulus</td>
+<td><code class="docutils literal"><span class="pre">G</span></code></td>
+</tr>
+<tr class="row-even"><td>Young&#8217;s modulus</td>
+<td><code class="docutils literal"><span class="pre">E</span></code></td>
+</tr>
+<tr class="row-odd"><td>Poisson&#8217;s ratio</td>
+<td><code class="docutils literal"><span class="pre">Nu</span></code></td>
+</tr>
+<tr class="row-even"><td>First Lame parameter</td>
+<td><code class="docutils literal"><span class="pre">Lame</span></code></td>
+</tr>
+<tr class="row-odd"><td>Second Lame parameter</td>
+<td><code class="docutils literal"><span class="pre">Mu</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="thermal-conductivity">
+<h3>3.4.2.2. Thermal conductivity<a class="headerlink" href="#thermal-conductivity" title="Permalink to this headline">¶</a></h3>
+<p>For thermally conductive materials, the coefficient of isotropic thermal conductivity <span class="math">\(k\)</span> is assigned by the <code class="docutils literal"><span class="pre">IsotropicThermalConductivity</span></code> method as:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="density">
+<h3>3.4.2.3. Density<a class="headerlink" href="#density" title="Permalink to this headline">¶</a></h3>
+<p>The mass density <span class="math">\(\rho\)</span> of any material is assigned as</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">Density</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">3. Defining a Model</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Model.html">3.1. The finite element model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Mesh.html">3.2. The finite element mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ElementBlocks.html">3.3. Element blocks</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">3.4. Material models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Properties.html">3.5. Element Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Sets.html">3.6. Entity sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Boundary.html">3.7. Boundary conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Loading.html">3.8. Loading conditions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">3. Defining a Model</a><ul>
+      <li>Previous: <a href="ElementBlocks.html" title="previous chapter">3.3. Element blocks</a></li>
+      <li>Next: <a href="Properties.html" title="next chapter">3.5. Element Properties</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/ModelDefinition/Materials.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

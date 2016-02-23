@@ -1,0 +1,9 @@
+Generating the Mesh
+===================
+
+.. automodule:: pyfem2.mesh
+    :noindex:
+
+The ``Mesh`` object is a fundamental
+
+.. autoclass:: pyfem2.mesh.Mesh

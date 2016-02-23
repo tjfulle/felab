@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>5.4. Boundary conditions and concentrated loads &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="5. Implementation Details" href="index.html" />
+    <link rel="next" title="5.5. Source terms and Distributed Loads" href="DistributedLoads.html" />
+    <link rel="prev" title="5.3. Nodes and elements" href="InternalNodesAndElements.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="boundary-conditions-and-concentrated-loads">
+<h1>5.4. Boundary conditions and concentrated loads<a class="headerlink" href="#boundary-conditions-and-concentrated-loads" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>5.4.1. Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Boundary conditions applied to the finite element model are represented internally as <code class="docutils literal"><span class="pre">doftags</span></code> and <code class="docutils literal"><span class="pre">dofvals</span></code>.</p>
+</div>
+<div class="section" id="internal-representation-of-boundary-conditions-and-concentrated-loads">
+<h2>5.4.2. Internal representation of boundary conditions and concentrated loads<a class="headerlink" href="#internal-representation-of-boundary-conditions-and-concentrated-loads" title="Permalink to this headline">¶</a></h2>
+<p>Internally, boundary condition data for every node in the model are
+stored in two arrays:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">doftags</span></code> specifies the degree of freedom information; and</li>
+<li><code class="docutils literal"><span class="pre">dofvals</span></code> specifies the magnitudes of prescribed displacement/concentrated
+force boundary conditions.</li>
+</ul>
+<p>The arrays are populated dynamically as boundary conditions and concentrated loads are assigned to the finite element model.</p>
+<p>The arrays <code class="docutils literal"><span class="pre">doftags</span></code> and <code class="docutils literal"><span class="pre">dofvals</span></code> are best explained by
+example. Consider the space truss:</p>
+<a class="reference internal image-reference" href="../_images/SpaceTruss1.jpeg"><img alt="../_images/SpaceTruss1.jpeg" class="align-center" src="../_images/SpaceTruss1.jpeg" style="width: 363.5px; height: 360.5px;" /></a>
+<p>The boundary conditions and concentrated loads are defined by</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c1"># Boundary conditions</span>
+<span class="n">V</span><span class="o">.</span><span class="n">PinNodes</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="c1"># Concentrated force in &#39;z&#39; direction on node 1</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="o">-</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The concentrated force of <em>0</em> applied to the <code class="docutils literal"><span class="pre">X</span></code> DOF of node 1 was not
+explicitly specified. Internally, nodes on which displacements or point forces
+are not explicitly prescribed are assumed to have a point force of 0 applied.</p>
+<p>The corresponding <code class="docutils literal"><span class="pre">doftags</span></code> and <code class="docutils literal"><span class="pre">dofvals</span></code> arrays are:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">doftags</span>
+<span class="go">[[0  1  0  0  0  0  0]</span>
+<span class="go"> [1  1  1  0  0  0  0]</span>
+<span class="go"> [1  1  1  0  0  0  0]</span>
+<span class="go"> [1  1  1  0  0  0  0]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">dofvals</span>
+<span class="go">[[0  0  -1000  0  0  0  0]</span>
+<span class="go"> [0  0      0  0  0  0  0]</span>
+<span class="go"> [0  0      0  0  0  0  0]</span>
+<span class="go"> [0  0      0  0  0  0  0]]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">doftag[i,j]</span></code> is the <em>j</em><sup>th</sup> degree of freedom tag for the <em>i</em><sup>th</sup> node. <code class="docutils literal"><span class="pre">doftags[i,j]=1</span></code> indicates that degree of freedom <em>j</em> of
+node <em>i</em> is prescribed while <code class="docutils literal"><span class="pre">doftags[i,j]=0</span></code> indicates that the
+corresponding force is known.</p>
+<p>The magnitudes of the prescribed degrees of freedom or force are transferred
+to the <code class="docutils literal"><span class="pre">dofvals</span></code> array. <code class="docutils literal"><span class="pre">dofvals[i,j]</span></code> is the magnitude corresponding to
+the prescribed condition on the <em>j</em><sup>th</sup> degree of freedom of node
+<em>i</em>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Every node for which a force/displacement boundary condition is not
+explicitly prescribed is assigned a nodal force of <em>0</em>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">5. Implementation Details</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Overview.html">5.1. Finite element analysis stages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="First.html">5.2. A First Finite Element Program</a></li>
+<li class="toctree-l2"><a class="reference internal" href="InternalNodesAndElements.html">5.3. Nodes and elements</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">5.4. Boundary conditions and concentrated loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="DistributedLoads.html">5.5. Source terms and Distributed Loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Assembly1.html">5.6. Assembly, Part I</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Boundary2.html">5.7. Application of Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Truss1.html">5.8. TrussSolution: A Complete Truss Program</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">5. Implementation Details</a><ul>
+      <li>Previous: <a href="InternalNodesAndElements.html" title="previous chapter">5.3. Nodes and elements</a></li>
+      <li>Next: <a href="DistributedLoads.html" title="next chapter">5.5. Source terms and Distributed Loads</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/Implementation/Boundary1.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

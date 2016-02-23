@@ -1,0 +1,872 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>6.2. FiniteElementModel &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="6. pyfem2 Source" href="index.html" />
+    <link rel="next" title="6.3. Mesh" href="mesh.html" />
+    <link rel="prev" title="6.1. UniformBar" href="fem0.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pyfem2.fem1">
+<span id="finiteelementmodel"></span><span id="apifiniteelementmodel"></span><h1>6.2. FiniteElementModel<a class="headerlink" href="#module-pyfem2.fem1" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyfem2.fem1.FiniteElementModel">
+<em class="property">class </em><code class="descclassname">pyfem2.fem1.</code><code class="descname">FiniteElementModel</code><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>The base finite element class</p>
+<p>The <code class="docutils literal"><span class="pre">FiniteElementModel</span></code> object is not intended to be instantiated
+directly. It is a base class from which other finite element models can be
+derived. Specifically, this base class does not provide the <code class="docutils literal"><span class="pre">Solve</span></code> method
+needed to solve a finite element model. The <code class="docutils literal"><span class="pre">Solve</span></code> method must be
+implemented in class&#8217; derived from this one.</p>
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.AssignProperties">
+<code class="descname">AssignProperties</code><span class="sig-paren">(</span><em>blknam</em>, <em>eletyp</em>, <em>elemat</em>, <em>**elefab</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.AssignProperties" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign properties to elements in an element block</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>blknam</strong> : str</p>
+<blockquote>
+<div><p>The name of the element block</p>
+</div></blockquote>
+<p><strong>eletyp</strong> : object</p>
+<blockquote>
+<div><p>The element type (uninstantiated class)</p>
+</div></blockquote>
+<p><strong>elemat</strong> : str</p>
+<blockquote>
+<div><p>The name of the material model</p>
+</div></blockquote>
+<p><strong>elefab</strong> : dict</p>
+<blockquote class="last">
+<div><p>Element fabrication properties</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Before this method is called:</p>
+<ul class="simple">
+<li>elements must be assigned to element blocks; and</li>
+<li>the material model must be created with the Material method.</li>
+</ul>
+<p>Not all element types require element fabrication properties. For
+example, plane stress-displacement elements require the thickness
+<code class="docutils literal"><span class="pre">t</span></code> be specified but plane heat transfer elements do not</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.ElementBlock">
+<code class="descname">ElementBlock</code><span class="sig-paren">(</span><em>name</em>, <em>elements</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.ElementBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an element block and assign elements to it</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong> : str</p>
+<blockquote>
+<div><p>The name of the element block</p>
+</div></blockquote>
+<p><strong>elements</strong> : int, list, or symbolic constant</p>
+<blockquote class="last">
+<div><p>Element label, list of element labels, or symbolic constant</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal"><span class="pre">pyfem2.mesh.Mesh.ElementBlock</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.ElementSet">
+<code class="descname">ElementSet</code><span class="sig-paren">(</span><em>name</em>, <em>region</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.ElementSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an element set</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong> : str</p>
+<blockquote>
+<div><p>Name for this element set</p>
+</div></blockquote>
+<p><strong>region</strong> : int, list, or symbolic constant</p>
+<blockquote class="last">
+<div><p>Element label, list of element labels, or symbolic constant</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal"><span class="pre">pyfem2.mesh.Mesh.ElementSet</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.FixDOF">
+<code class="descname">FixDOF</code><span class="sig-paren">(</span><em>nodes</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.FixDOF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fix nodal degrees of freedom</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nodes</strong> : int, list of int, or symbolic constant</p>
+<blockquote class="last">
+<div><p>Nodes to fix</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal"><span class="pre">nodes</span></code> can be a single external node label, a list of external node
+labels, or one of the region symbolic constants.</p>
+<p>All active displacement and rotation degrees of freedom are set to 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.FixNodes">
+<code class="descname">FixNodes</code><span class="sig-paren">(</span><em>nodes</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.FixNodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fix nodal degrees of freedom</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nodes</strong> : int, list of int, or symbolic constant</p>
+<blockquote class="last">
+<div><p>Nodes to fix</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal"><span class="pre">nodes</span></code> can be a single external node label, a list of external node
+labels, or one of the region symbolic constants.</p>
+<p>All active displacement and rotation degrees of freedom are set to 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.GenesisMesh">
+<code class="descname">GenesisMesh</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.GenesisMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a finite element mesh from a Genesis file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : str</p>
+<blockquote class="last">
+<div><p>The path to a valid Genesis file</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="mesh.html#pyfem2.mesh.Mesh" title="pyfem2.mesh.Mesh"><code class="xref py py-obj docutils literal"><span class="pre">pyfem2.mesh.Mesh</span></code></a></p>
+</div>
+<p class="rubric">Notes</p>
+<p>This method calls <code class="docutils literal"><span class="pre">mesh.Mesh</span></code> with the <code class="docutils literal"><span class="pre">filename</span></code> keyword and
+stores the returned mesh as the <code class="docutils literal"><span class="pre">FiniteElementModel.mesh</span></code> attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.Material">
+<code class="descname">Material</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.Material" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an empty material object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong> : str</p>
+<blockquote class="last">
+<div><p>The name of the material</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal"><span class="pre">pyfem.mat.Material</span></code></p>
+</div>
+<p class="rubric">Notes</p>
+<p>The empty material is put in the self.materials container and can be
+referenced as self.material[name]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.Mesh">
+<code class="descname">Mesh</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.Mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates the finite element mesh.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="mesh.html#pyfem2.mesh.Mesh" title="pyfem2.mesh.Mesh"><code class="xref py py-obj docutils literal"><span class="pre">pyfem2.mesh.Mesh</span></code></a></p>
+</div>
+<p class="rubric">Notes</p>
+<p>This method calls the <code class="docutils literal"><span class="pre">mesh.Mesh</span></code> and
+stores the returned mesh as the <code class="docutils literal"><span class="pre">FiniteElementModel.mesh</span></code> attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.NodeSet">
+<code class="descname">NodeSet</code><span class="sig-paren">(</span><em>name</em>, <em>region</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.NodeSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a node set</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong> : str</p>
+<blockquote>
+<div><p>Name for this element set</p>
+</div></blockquote>
+<p><strong>region</strong> : int, list, or symbolic constant</p>
+<blockquote class="last">
+<div><p>Node label, list of node labels, or symbolic constant</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal"><span class="pre">pyfem2.mesh.Mesh.NodeSet</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.PinNodes">
+<code class="descname">PinNodes</code><span class="sig-paren">(</span><em>nodes</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.PinNodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pin nodal degrees of freedom</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nodes</strong> : int, list of int, or symbolic constant</p>
+<blockquote class="last">
+<div><p>Nodes to fix</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal"><span class="pre">nodes</span></code> can be a single external node label, a list of external node
+labels, or one of the region symbolic constants.</p>
+<p>All active displacement degrees of freedom are set to 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.Plot2D">
+<code class="descname">Plot2D</code><span class="sig-paren">(</span><em>deformed=False</em>, <em>color=None</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.Plot2D" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a 2D plot</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>deformed</strong> : bool, optional {False,True}</p>
+<blockquote>
+<div><p>Plot the deformed mesh if True</p>
+</div></blockquote>
+<p><strong>color</strong> : matplotlib color</p>
+<p><strong>kwds</strong> : dict</p>
+<blockquote>
+<div><p>kwds passed to pyfem2.mesh.Plot2D</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>ax</strong> : axes object</p>
+<blockquote class="last">
+<div><p>The plot axes</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal"><span class="pre">pyfem2.mesh.Mesh.Plot2D</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.PrescribedBC">
+<code class="descname">PrescribedBC</code><span class="sig-paren">(</span><em>nodes</em>, <em>dof</em>, <em>amplitude=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.PrescribedBC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prescribe nodal degrees of freedom</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nodes</strong> : int, list of int, or symbolic constant</p>
+<blockquote>
+<div><p>Nodes to fix</p>
+</div></blockquote>
+<p><strong>dof</strong> : symbolic constant</p>
+<blockquote>
+<div><p>Degree of freedom to fix.  One of <code class="docutils literal"><span class="pre">X,Y,Z,TX,TY,TZ,T</span></code>.</p>
+</div></blockquote>
+<p><strong>amplitude</strong> : float or callable {0}</p>
+<blockquote class="last">
+<div><p>The magnitude of the prescribed boundary condition</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal"><span class="pre">nodes</span></code> can be a single external node label, a list of external node
+labels, or one of the region symbolic constants.</p>
+<p><code class="docutils literal"><span class="pre">amplitude</span></code> can either be a float or a callable function. If a
+float, that value is assigned to all <code class="docutils literal"><span class="pre">nodes</span></code>. If a callable
+function, the value assigned to each node is <code class="docutils literal"><span class="pre">amplitude(x)</span></code>, where
+<code class="docutils literal"><span class="pre">x</span></code> is the node&#8217;s coordinate position. The coordinate positions of
+all nodes are sent to the function as a n-dimensional column vector.</p>
+<p class="rubric">Examples</p>
+<ul>
+<li><p class="first">Assign constant amplitude BC to the <span class="math">\(x\)</span> displacement of all
+nodes on left side of domain:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Assign variable amplitude BC to the <span class="math">\(x\)</span> displacement of all
+nodes on left side of domain. The variable amplitude function is
+<span class="math">\(\Delta_x=y^2\)</span>.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.PrescribedDOF">
+<code class="descname">PrescribedDOF</code><span class="sig-paren">(</span><em>nodes</em>, <em>dof</em>, <em>amplitude=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.PrescribedDOF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prescribe nodal degrees of freedom</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nodes</strong> : int, list of int, or symbolic constant</p>
+<blockquote>
+<div><p>Nodes to fix</p>
+</div></blockquote>
+<p><strong>dof</strong> : symbolic constant</p>
+<blockquote>
+<div><p>Degree of freedom to fix.  One of <code class="docutils literal"><span class="pre">X,Y,Z,TX,TY,TZ,T</span></code>.</p>
+</div></blockquote>
+<p><strong>amplitude</strong> : float or callable {0}</p>
+<blockquote class="last">
+<div><p>The magnitude of the prescribed boundary condition</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal"><span class="pre">nodes</span></code> can be a single external node label, a list of external node
+labels, or one of the region symbolic constants.</p>
+<p><code class="docutils literal"><span class="pre">amplitude</span></code> can either be a float or a callable function. If a
+float, that value is assigned to all <code class="docutils literal"><span class="pre">nodes</span></code>. If a callable
+function, the value assigned to each node is <code class="docutils literal"><span class="pre">amplitude(x)</span></code>, where
+<code class="docutils literal"><span class="pre">x</span></code> is the node&#8217;s coordinate position. The coordinate positions of
+all nodes are sent to the function as a n-dimensional column vector.</p>
+<p class="rubric">Examples</p>
+<ul>
+<li><p class="first">Assign constant amplitude BC to the <span class="math">\(x\)</span> displacement of all
+nodes on left side of domain:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Assign variable amplitude BC to the <span class="math">\(x\)</span> displacement of all
+nodes on left side of domain. The variable amplitude function is
+<span class="math">\(\Delta_x=y^2\)</span>.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.RectilinearMesh">
+<code class="descname">RectilinearMesh</code><span class="sig-paren">(</span><em>shape</em>, <em>lengths</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.RectilinearMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a rectilinear 2D finite element mesh.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>shape</strong> : tuple</p>
+<blockquote>
+<div><p>(nx, ny) where nx is the number elements in <span class="math">\(x\)</span> and ny
+number of element in <span class="math">\(y\)</span>.</p>
+</div></blockquote>
+<p><strong>lengths</strong> : tuple</p>
+<blockquote class="last">
+<div><p>(lx, ly) where lx is the length of the mesh in <span class="math">\(x\)</span> and ny
+is the length of the mesh in <span class="math">\(y\)</span>.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="mesh.html#pyfem2.mesh.Mesh.RectilinearMesh2D" title="pyfem2.mesh.Mesh.RectilinearMesh2D"><code class="xref py py-obj docutils literal"><span class="pre">pyfem2.mesh.Mesh.RectilinearMesh2D</span></code></a></p>
+</div>
+<p class="rubric">Notes</p>
+<p>This method calls the <code class="docutils literal"><span class="pre">Mesh.RectilinearMesh2D</span></code> class method and
+stores the returned mesh as the <code class="docutils literal"><span class="pre">FiniteElementModel.mesh</span></code> attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.Surface">
+<code class="descname">Surface</code><span class="sig-paren">(</span><em>name</em>, <em>surface</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.Surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a surface</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong> : str</p>
+<blockquote>
+<div><p>Name for this element set</p>
+</div></blockquote>
+<p><strong>surface</strong> : list, list of list, or symbolic constant</p>
+<blockquote class="last">
+<div><p>Element/face, list of element/fac, or symbolic constant</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal"><span class="pre">pyfem2.mesh.Mesh.Surface</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.VTKMesh">
+<code class="descname">VTKMesh</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.VTKMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a finite element mesh from a vtk .vtu file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : str</p>
+<blockquote class="last">
+<div><p>The path to a valid .vtu file</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="mesh.html#pyfem2.mesh.Mesh" title="pyfem2.mesh.Mesh"><code class="xref py py-obj docutils literal"><span class="pre">pyfem2.mesh.Mesh</span></code></a></p>
+</div>
+<p class="rubric">Notes</p>
+<p>This method calls <code class="docutils literal"><span class="pre">mesh.Mesh</span></code> with the <code class="docutils literal"><span class="pre">filename</span></code> keyword and
+stores the returned mesh as the <code class="docutils literal"><span class="pre">FiniteElementModel.mesh</span></code> attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.WriteResults">
+<code class="descname">WriteResults</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.WriteResults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the finite element results to a file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> : str</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>If <code class="docutils literal"><span class="pre">filename</span></code> is sent with no extension, the <code class="docutils literal"><span class="pre">.exo</span></code> extension is
+appended.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.apply_bc">
+<code class="descname">apply_bc</code><span class="sig-paren">(</span><em>K</em>, <em>F</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.apply_bc" title="Permalink to this definition">¶</a></dt>
+<dd><p id="apply-bc">Apply boundary conditions to the global stiffness <code class="docutils literal"><span class="pre">K</span></code> and global
+force <code class="docutils literal"><span class="pre">F</span></code>.</p>
+<p>This method is a layer between the other boundary condition
+application methods. It will call the appropriate method
+depending on whether the finite element problem has elements with
+uniform DOF, or variable DOF.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>K</strong> : ndarray</p>
+<blockquote>
+<div><p>Global stiffness</p>
+</div></blockquote>
+<p><strong>F</strong> : ndarray</p>
+<blockquote>
+<div><p>Global force</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Kbc, Fbc</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Boundary condition modified stiffness and force</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Boundary conditions are applied in such a way that <code class="docutils literal"><span class="pre">K</span></code> remains
+symmetric by transferring columns associated with known degrees of
+freedom to <code class="docutils literal"><span class="pre">F</span></code>. This method is intended to be called in the
+application code&#8217;s <code class="docutils literal"><span class="pre">Solve</span></code> method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.apply_bc_udof">
+<code class="descname">apply_bc_udof</code><span class="sig-paren">(</span><em>K</em>, <em>F</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.apply_bc_udof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies boundary conditions for problems having uniform DOF.</p>
+<p>A problem with uniform DOF is one in which every element in the mesh
+has the same DOF signature. This method is intended to be called in
+the application code&#8217;s <code class="docutils literal"><span class="pre">Solve</span></code> method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>K</strong> : ndarray</p>
+<blockquote>
+<div><p>Global stiffness</p>
+</div></blockquote>
+<p><strong>F</strong> : ndarray</p>
+<blockquote>
+<div><p>Global force</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Kbc, Fbc</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Boundary condition modified stiffness and force</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#pyfem2.fem1.FiniteElementModel.apply_bc" title="pyfem2.fem1.FiniteElementModel.apply_bc"><code class="xref py py-obj docutils literal"><span class="pre">FiniteElementModel.apply_bc</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.assemble_global_force">
+<code class="descname">assemble_global_force</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.assemble_global_force" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assembles the global force matrix</p>
+<p>This method is a layer between the other assemblers. It will call the
+appropriate force assembler, depending on whether the finite
+element problem has elements with uniform DOF, or variable DOF.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>args</strong> : tuple</p>
+<blockquote>
+<div><p>Arguments to be sent to individual element force methods.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>K</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>The global force array, with lentgh N, where N is the total number
+of degrees of freedom in the system.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The arguments sent to this function:</p>
+<ul class="simple">
+<li>are sent in by specific application codes;</li>
+<li>each item in <code class="docutils literal"><span class="pre">args</span></code> must be a list-like variable with length equal to
+the number of elements in the mesh;</li>
+<li>are passed to individual element force routines as args[i][iel].</li>
+</ul>
+<p>For example, for a plane stress-displacement problem the arguments
+sent are the arrays of distributed and surface loads, <code class="docutils literal"><span class="pre">dloads</span></code> and
+<code class="docutils literal"><span class="pre">sloads</span></code>, respectively:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assemble_global_force</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dloads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sloads</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This method then calls each element force as:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="p">(</span><span class="n">iel</span><span class="p">,</span> <span class="n">el</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">):</span>
+   <span class="o">...</span>
+   <span class="n">Fe</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">force</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dloads</span><span class="p">[</span><span class="n">iel</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">sloads</span><span class="p">[</span><span class="n">iel</span><span class="p">])</span>
+   <span class="o">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.assemble_global_force_udof">
+<code class="descname">assemble_global_force_udof</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.assemble_global_force_udof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assembles the global force for problems having uniform DOF.</p>
+<p>A problem with uniform DOF is one in which every element in the mesh
+has the same DOF signature. This method is intended to be called in
+the application code&#8217;s <code class="docutils literal"><span class="pre">Solve</span></code> method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>args</strong> : tuple</p>
+<blockquote>
+<div><p>Arguments to be sent to the individual element force methods.
+Must have length <code class="docutils literal"><span class="pre">numele</span></code></p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>K</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>The NxN global stiffness array, where N is the total number of degrees
+of freedom in the probem.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#pyfem2.fem1.FiniteElementModel.assemble_global_force" title="pyfem2.fem1.FiniteElementModel.assemble_global_force"><code class="xref py py-obj docutils literal"><span class="pre">FiniteElementModel.assemble_global_force</span></code></a></p>
+</div>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal"><span class="pre">assemble_global_force_udof</span></code> implements a simplified assembler
+that adopts the following assumptions:</p>
+<ul class="simple">
+<li>nodes are ordered continuously from 0 to <span class="math">\(n-1\)</span>;</li>
+<li>the number and type of degrees of freedom at each node is the same; and</li>
+<li>there are no multifreedom constraints.</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.assemble_global_stiffness">
+<code class="descname">assemble_global_stiffness</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.assemble_global_stiffness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assembles the global stiffness matrix</p>
+<p>This method is a layer between the other assemblers. It will call the
+appropriate stiffness assembler, depending on whether the finite
+element problem has elements with uniform DOF, or variable DOF.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>args</strong> : tuple</p>
+<blockquote>
+<div><p>Arguments to be sent to individual element stiffness methods.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>K</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>The NxN global stiffness array, where N is the total number of
+degrees of freedom in the system.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The arguments sent to this function:</p>
+<ul class="simple">
+<li>are sent in by specific application codes;</li>
+<li>each item in <code class="docutils literal"><span class="pre">args</span></code> must be a list-like variable with length equal to
+the number of elements in the mesh;</li>
+<li>are passed to individual element stiffness routines as args[i][iel].</li>
+</ul>
+<p>For example, for a diffusive heat-transfer
+problem the argument sent is the array of film coefficients
+<code class="docutils literal"><span class="pre">sfilm</span></code>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assemble_global_stiffness</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sfilm</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This method then calls each element stiffness as:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="p">(</span><span class="n">iel</span><span class="p">,</span> <span class="n">el</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">):</span>
+   <span class="o">...</span>
+   <span class="n">Ke</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">stiffness</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">film</span><span class="p">[</span><span class="n">iel</span><span class="p">])</span>
+   <span class="o">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.assemble_global_stiffness_udof">
+<code class="descname">assemble_global_stiffness_udof</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.assemble_global_stiffness_udof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assembles the global stiffness for problems having uniform DOF.</p>
+<p>A problem with uniform DOF is one in which every element in the mesh
+has the same DOF signature. This method is intended to be called in
+the application code&#8217;s <cite>Solve</cite> method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>args</strong> : tuple</p>
+<blockquote>
+<div><p>Arguments to be sent to the individual element stiffness methods.
+Must have length <cite>numele</cite></p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>K</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>The NxN global stiffness array, where N is the total number of degrees
+of freedom in the probem.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#pyfem2.fem1.FiniteElementModel.assemble_global_stiffness" title="pyfem2.fem1.FiniteElementModel.assemble_global_stiffness"><code class="xref py py-obj docutils literal"><span class="pre">FiniteElementModel.assemble_global_stiffness</span></code></a></p>
+</div>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal"><span class="pre">assemble_global_stiffness_udof</span></code> implements a simplified assembler
+that adopts the following assumptions:</p>
+<ul class="simple">
+<li>nodes are ordered continuously from 0 to <span class="math">\(n-1\)</span>;</li>
+<li>the number and type of degrees of freedom at each node is the same;</li>
+<li>there are no multifreedom constraints; and</li>
+<li>the global stiffness matrix is stored as a full symmetric matrix.</li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="fem0.html">6.1. UniformBar</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">6.2. FiniteElementModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">6.3. Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="material.html">6.4. Material</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+      <li>Previous: <a href="fem0.html" title="previous chapter">6.1. UniformBar</a></li>
+      <li>Next: <a href="mesh.html" title="next chapter">6.3. Mesh</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/apidoc/fem1.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

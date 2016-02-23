@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>5.7. Application of Boundary Conditions &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="5. Implementation Details" href="index.html" />
+    <link rel="next" title="5.8. TrussSolution: A Complete Truss Program" href="Truss1.html" />
+    <link rel="prev" title="5.6. Assembly, Part I" href="Assembly1.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="application-of-boundary-conditions">
+<h1>5.7. Application of Boundary Conditions<a class="headerlink" href="#application-of-boundary-conditions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>5.7.1. Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>After assembly, the global system of equations <span class="math">\([K]\{u\}=\{F\}\)</span>
+that describe the finite element problem is singular, meaning that, the
+equations for the unknown degrees of freedom are non-invertible. This
+situation arises when there are no solutions or infinite solutions to a
+problem. Boundary conditions must be applied to make the system
+non-singular.</p>
+<p>Boundary conditions are applied by</p>
+<ul class="simple">
+<li>modifying the global stiffness and force arrays on Dirichlet
+boundaries, and</li>
+<li>modifying the global force on Neummann boundaries.</li>
+</ul>
+</div>
+<div class="section" id="example">
+<h2>5.7.2. Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>Consider the problem of determining the displacements along the tapered
+bar shown</p>
+<div class="figure align-center" id="id1">
+<img alt="../_images/DiscretizedTaperedBar.png" src="../_images/DiscretizedTaperedBar.png" />
+<p class="caption"><span class="caption-text">Tapered bar discretized by four spring elements.</span></p>
+</div>
+<p>The assembled global equations are given by</p>
+<div class="math">
+\[\begin{split}\begin{bmatrix}
+  k_{1} &amp; -k_{1} &amp; 0 &amp; 0 &amp; \\
+  -k_{1} &amp; k_{1} + k_{2} &amp; -k_{2} &amp; 0 &amp; 0 \\
+  0 &amp; -k_{2} &amp; k_{2} + k_{3} &amp; -k_{3} &amp; 0 \\
+  0 &amp; 0 &amp; -k_{3} &amp; k_{3} + k_{4} &amp; -k_{4} \\
+  0 &amp; 0 &amp; 0 &amp; -k_{4} &amp; k_{4}
+\end{bmatrix}
+\begin{Bmatrix} u_1 \\ u_{2} \\ u_{3} \\ u_{4} \\ u_{5} \end{Bmatrix} =
+\begin{Bmatrix} 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ \end{Bmatrix}\end{split}\]</div>
+<p>where <span class="math">\(k_e=A_eE_e/h_e\)</span> is the stiffness coefficient of the
+e<span class="math">\(^{\rm th}\)</span> element. The boundary conditons are</p>
+<div class="math">
+\[u_{x=0}=\overline{u}_1, \quad \left[AE\frac{du}{dx}\right]_{x=L}=F\]</div>
+<p>Substituting in to gives</p>
+<div class="math">
+\[\begin{split}\begin{bmatrix}
+  k_{1} &amp; -k_{1} &amp; 0 &amp; 0 &amp; \\
+  -k_{1} &amp; k_{1} + k_{2} &amp; -k_{2} &amp; 0 &amp; 0 \\
+  0 &amp; -k_{2} &amp; k_{2} + k_{3} &amp; -k_{3} &amp; 0 \\
+  0 &amp; 0 &amp; -k_{3} &amp; k_{3} + k_{4} &amp; -k_{4} \\
+  0 &amp; 0 &amp; 0 &amp; -k_{4} &amp; k_{4}
+\end{bmatrix}
+\begin{Bmatrix}
+  \overline{u}_1 \\ u_{2} \\ u_{3} \\ u_{4} \\ u_{5}
+\end{Bmatrix} =
+\begin{Bmatrix}
+  R \\ 0 \\ 0 \\ 0 \\ F \\
+\end{Bmatrix}\end{split}\]</div>
+<p>where <span class="math">\(R\)</span> is an unkown reaction at node 1. The displacements
+<span class="math">\(u_{2}, \ u_{3},\)</span> and <span class="math">\(u_{4}\)</span> do not explicitly depend on
+<span class="math">\(R\)</span>, allowing to be written as</p>
+<div class="math">
+\[\begin{split}\begin{bmatrix}
+  1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+  -k_{1} &amp; k_{1} + k_{2} &amp; -k_{2} &amp; 0 &amp; 0 \\
+  0 &amp; -k_{2} &amp; k_{2} + k_{3} &amp; -k_{3} &amp; 0 \\
+  0 &amp; 0 &amp; -k_{3} &amp; k_{3} + k_{4} &amp; -k_{4} \\
+  0 &amp; 0 &amp; 0 &amp; -k_{4} &amp; k_{4}
+\end{bmatrix}
+\begin{Bmatrix}
+  u_1 \\ u_{2} \\ u_{3} \\ u_{4} \\ u_{5}
+\end{Bmatrix} =
+\begin{Bmatrix}
+  \overline{u}_1 \\ 0 \\ 0 \\ 0 \\ F \\
+\end{Bmatrix}\end{split}\]</div>
+<p>The global system can now be solved for the unknown displacements and the
+unknown reaction can then be determined as <span class="math">\(R=-k_1\overline{u}_1 +
+\left(k_1+k_2\right)u_2\)</span>. However, solving has the disadvantange that it is no
+longer a symmetric system due to the way the boundary conditions were applied.
+Symmetry of the global equation can be easily recovered by adding
+<span class="math">\(\begin{bmatrix}0 &amp; k_1\overline{u}_1 &amp; 0 &amp; 0 &amp; 0\end{bmatrix}^T\)</span> to
+both sides of , giving</p>
+<div class="math">
+\[\begin{split}\begin{bmatrix}
+  1 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+  0 &amp; k_{1} + k_{2} &amp; -k_{2} &amp; 0 &amp; 0 \\
+  0 &amp; -k_{2} &amp; k_{2} + k_{3} &amp; -k_{3} &amp; 0 \\
+  0 &amp; 0 &amp; -k_{3} &amp; k_{3} + k_{4} &amp; -k_{4} \\
+  0 &amp; 0 &amp; 0 &amp; -k_{4} &amp; k_{4}
+\end{bmatrix}
+\begin{Bmatrix}
+  u_1 \\ u_{2} \\ u_{3} \\ u_{4} \\ u_{5}
+\end{Bmatrix} =
+\begin{Bmatrix}
+  \overline{u}_1 \\ k_{1}\overline{u}_1 \\ 0 \\ 0 \\ F \\
+\end{Bmatrix}\end{split}\]</div>
+<p>In general, for known DOF <span class="math">\(\overline{u}_i\)</span>, the global stiffness
+and force arrays are modified according to</p>
+<div class="math">
+\[\begin{split}K_{ij} = K_{ji} = \delta_{ij}, \quad
+F_j = \begin{cases}
+  \overline{u}_i &amp; i = j \\ F_j-K_{ji}\overline{u}_i &amp; i \ne j
+\end{cases}\end{split}\]</div>
+<p>where <span class="math">\(\delta_{ij}\)</span> is the Kronecker delta.</p>
+</div>
+<div class="section" id="computational-implementation">
+<h2>5.7.3. Computational Implementation<a class="headerlink" href="#computational-implementation" title="Permalink to this headline">¶</a></h2>
+<p>Boundary conditions are applied to the global stiffness and force arrays in
+the method <a class="reference internal" href="../apidoc/fem1.html#apply-bc"><span>apply_bc</span></a>. The technique used has the advantage
+that the global stiffness matrix remains symmetric after the application of
+boundary conditions. The boundary conditions are assumed to constrain only a
+single degree of freedom (multi-point constraints are not considered).
+Homogeneous and nonhomogeneous are treated.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">5. Implementation Details</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Overview.html">5.1. Finite element analysis stages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="First.html">5.2. A First Finite Element Program</a></li>
+<li class="toctree-l2"><a class="reference internal" href="InternalNodesAndElements.html">5.3. Nodes and elements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Boundary1.html">5.4. Boundary conditions and concentrated loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="DistributedLoads.html">5.5. Source terms and Distributed Loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Assembly1.html">5.6. Assembly, Part I</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">5.7. Application of Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Truss1.html">5.8. TrussSolution: A Complete Truss Program</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">5. Implementation Details</a><ul>
+      <li>Previous: <a href="Assembly1.html" title="previous chapter">5.6. Assembly, Part I</a></li>
+      <li>Next: <a href="Truss1.html" title="next chapter">5.8. TrussSolution: A Complete Truss Program</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/Implementation/Boundary2.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,34 @@
+
+Introduction
+============
+
+Each element in ``pyfem`` has a unique name that identifies the aspects
+of the element. The aspects of an element that characterize its behavior
+are:
+
+Family
+    Elements are broadly classified as lines (trusses or beams), areas
+    (2-D or 3-D plates and membranes) or solids (bricks or
+    tetrahedrals). With the exception of beam elements, the first letter
+    of an element’s name indicates to which family the element belongs.
+    For example, is a line element and is an area element. Beam elements
+    use as the first letter in the element’s name.
+
+Degrees of freedom
+    The degrees of freedom are the fundamental variables calculated
+    during the analysis. For a stress/displacement simulation the
+    degrees of freedom are the translations and, for beam elements, the
+    rotations at each node. For heat transfer the degrees of freedom are
+    the temperatures at each node.
+
+Number of nodes
+    Degrees of freedom are calculated at the nodes of the element. The
+    number of nodes in an element is clearly identified in its name,
+    e.g. the one-dimensional 2-node beam element is .
+
+Integration
+    ``pyfem`` uses numerical techniques to integrate various quantities
+    over the volume of each element, thus allowing complete generality
+    in material behavior. ``pyfem`` uses Gaussian quadrature for most
+    elements to evaluate the material response at each integration point
+    in each element.

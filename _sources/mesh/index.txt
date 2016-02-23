@@ -1,0 +1,15 @@
+.. _mesh:
+
+The Finite Element Mesh
+#######################
+
+Overview
+========
+
+The mesh is a fundamental component in a finite element model.  In ``pyfem2``, the mesh is represented by a ``Mesh`` object.  The ``Mesh`` object
+
+.. toctree::
+   :maxdepth: 1
+
+   NodesAndElements
+   Mesh

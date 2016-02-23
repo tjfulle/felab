@@ -1,0 +1,2780 @@
+Outline
+=======
+
+#. Introduction and Overview
+
+   #. Introduction
+
+   #. Overview
+
+      #. About this guide
+
+      #. Not meant to be comprehensive.
+
+      #. Only five element types
+
+         #. truss
+
+         #. frame
+
+         #. 2dheat
+
+         #. cst
+
+         #. plane
+
+   #. Conventions
+
+      #. Symbolic constants
+
+      #. Dof
+
+      #. Element signatures
+
+   #. Output
+
+#. Nodes and Elements
+
+   #. Nodes
+
+      #. Defining
+
+      #. Elements
+
+   #. Internal representation
+
+#. BCs and Loads
+
+   #. BCs
+
+   #. Cloads
+
+   #. Dloads
+
+   #. Internal representation
+
+#. Assembly 1
+
+   #. Intro
+
+   #. EFTAB
+
+   #. EFTAB MET
+
+#. Program: Truss
+
+#. Program: Heat
+
+#. Assembly 2
+
+   #. Freedom assignments
+
+   #. ElementFreedomSignature
+
+   #. EFTAB METVF
+
+#. Program: Frame
+
+#. Program: Plane
+
+#. Appendix
+
+   #. Gauss quadrature
+
+   #. Line rules
+
+   #. Tri rules
+
+   #. Quad rules
+
+#. Element library
+
+   #. Elastic bar
+
+   #. Frame
+
+   #. Heat
+
+   #. Plane
+
+Introduction
+============
+
+Overview
+--------
+
+``pyfem`` is
+
+-  a collection of small special purpose finite element programs written
+   in Python  [1]_,
+
+-  a Python package for building special purpose finite element programs
+   in a modular fashion,
+
+-  an introduction to the logic and structure used in production finite
+   element codes, and
+
+-  is open source and available on `Git
+   Hub <https://github.com/tjfulle/pyfem>`__.
+
+This document serves a guide both to using the programs developed with
+``pyfem`` and to developing new programs using the modules within
+``pyfem``. The chapters are organized in to the following parts:
+
+Obtaining and Installing ``pyfem``
+----------------------------------
+
+``pyfem`` is a pure Python package requiring only , in addition to the
+standard library. may be obtained in several ways, but the easiest is to
+download and install the `Anaconda <http://www.continuum.io>`__ Python
+Distribution. is also easily installed on linux using the distribution’s
+package manager.
+
+Installation
+~~~~~~~~~~~~
+
+``pyfem`` is installed by first
+
+-  downloading or
+
+-  cloning the package from `Git
+   Hub <https://github.com/tjfulle/pyfem>`__.
+
+After obtaining ``pyfem``, the Python distribution must be able to find
+it. There are several ways to accomplish this. Perhaps the easiest is to
+move the package to a location on your file system and add the location
+to your environment variable. For example, if ``pyfem`` is downloaded
+and placed in the folder in your home directory:
+
+-  add ``export PYTHONPATH=$HOME/Documents/pyfem`` to your on Linux or
+   Mac OS X, or
+
+-  | create a ``PYTHONPATH`` variable that points to
+     ``%HOMEPATH%\My Documents\pyfem`` environment variable
+   | (``My Computer > Properties > Advanced System Settings > Environment Variables``)
+
+Conventions
+-----------
+
+The following conventions that are used throughout ``pyfem`` are
+discussed:
+
+-  Symbolic constants
+
+-  Degrees of freedom
+
+Symbolic constants
+~~~~~~~~~~~~~~~~~~
+
+Symbolic constants are defined in ``pyfem`` to identify common objects.
+For example, the element types or (among others). Symbolic constants are
+written in all capital letters. Symbolic constants must be imported in
+to a script before using them with the following statement:
+
+.. code:: python
+
+    from pyfem.constants import *
+
+Degrees of freedom
+~~~~~~~~~~~~~~~~~~
+
+The “degrees of freedom,” (DOF) of a physical system describe its
+spatial configuration. For example, the spatial configuration of a
+mechanical system could be described by the position, rotation, and
+temperature of every point in a system. If the number of degrees of
+freedom is finite, the model is said to be discrete, and continuous
+otherwise. Because FEM is a discretization method, the number of DOF of
+a FEM model is necessarily finite.
+
+The degrees of freedom at a point are referred to as follows:
+
+#. x-displacement
+
+#. y-displacement
+
+#. z-displacement
+
+#. Rotation about the x-axis, in radians
+
+#. Rotation about the y-axis, in radians
+
+#. Rotation about the z-axis, in radians
+
+#. Temperature
+
+The x-, y-, and z-directions coincide with the global X-, Y-, and
+Z-directions, respectively. Not every degree of freedom is activated for
+every point in space. For example, two-dimensional bodies subject only
+to displacements in the x- and y-directions use only the degrees of
+freedom 1 and 2.
+
+Output
+------
+
+Output is written to `vtk <http://vtk.org>`__ files that are viewable in
+ParaView.
+
+A First Finite Element Program
+==============================
+
+Finite element analysis stages
+------------------------------
+
+Finite element programs exercise three major analysis stages:
+preprocessing, processing, and postprocessing. This is true of small
+special-purpose programs, such as the ones developed here, and large
+commercial FE programs. The general logic-flow from one analysis stage
+to the next is shown in Figure [fig:intro.flow].
+
+.. figure:: Images/Ch0/flow.png
+   :alt: Logic-flow of a linear/static FE program
+
+   Logic-flow of a linear/static FE program
+
+Description of analysis stages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Preprocessing
+^^^^^^^^^^^^^
+
+Define the numerical model by assigning a mesh, materials, and boundary
+conditions to the physical model problem. In this program, the
+preprocessing is performed by a driver script that directly sets the
+problem data
+
+Processing
+^^^^^^^^^^
+
+Assemble and solve the system of equations describing the model problem.
+Processing involves three steps:
+
+-  Assembly of the master stiffness matrix and node force array, with
+   subordinate element procedures.
+
+-  Modification of the master stiffness matrix and node force array to
+   account for prescribed boundary condtions.
+
+-  Solution of the modified equations for unknown nodal displacements.
+
+Postprocessing
+^^^^^^^^^^^^^^
+
+Upon executing the processing steps, nodal displacements are known. The
+following postprocessing steps follow
+
+-  Recovery of forces, including reactions
+   :math:`\left(\boldsymbol{F}=\boldsymbol{K}\boldsymbol{u}\right)`.
+
+-  Computation of internal (axial) forces and stresses in the truss
+   members.
+
+-  Plotting deflected shapes and member stress levels.
+
+Uniform Bar Program
+-------------------
+
+Problem Definition
+~~~~~~~~~~~~~~~~~~
+
+.. figure:: Images/FirstTruss.png
+   :alt: Uniform truss subject to constant body load and point force.
+   Shown is the physical model and the 1D finite element idealization.
+   Node numbers are shown adjacent to nodes and range from 0 to the
+   number of elements :math:`N`. Node numbers are shown circled under
+   their element and range from 1 to :math:`N`.
+
+   Uniform truss subject to constant body load and point force. Shown is
+   the physical model and the 1D finite element idealization. Node
+   numbers are shown adjacent to nodes and range from 0 to the number of
+   elements :math:`N`. Node numbers are shown circled under their
+   element and range from 1 to :math:`N`.
+
+A complete finite element program for computing the displacements in a
+uniform elastic bar fixed at its origin and subject to a uniform body
+load and constant point force at its end, as depicted in Figure
+[fig:first.uni.1] is shown in Listing [lst:first.uni.1]. The finite
+element equations for the elastic bar are:
+
+.. math::
+
+   \label{eq:first.bar.1}
+     k_{ij}^eu_j^e = f_i^e
+
+where :math:`k_{ij}^e` is the constant element stiffness, given by
+
+.. math::
+
+   \label{eq:first.bar.2}
+     \left[k^e\right] = \frac{A_eE_e}{h_e}\begin{bmatrix}1&-1\\-1&1\end{bmatrix}
+
+and the nodal force :math:`f_i^e` is
+
+.. math::
+
+   \label{eq:first.bar.3}
+     \left\{f^e\right\} = \frac{q_0h}{2}\begin{Bmatrix}1\\1\end{Bmatrix}
+
+The assembled global equations are
+
+.. math::
+
+   \label{eq:first.glob.1}
+     \begin{bmatrix}
+       k_{11}^1 & k_{12}^1 & \\
+       k_{21}^1 & k_{22}^1+k_{11}^2 & k_{12}^2 \\
+       && \ddots \\
+       &&& k_{22}^{i-1}+k_{11}^i & k_{12}^i \\
+       &&& k_{21}^{i} & k_{22}^i+k_{11}^{i+1} & k_{12}^{i+1} \\
+       &&&& \ddots \\
+       &&&&& k_{21}^N & k_{22}^N
+     \end{bmatrix}
+     \begin{Bmatrix}
+       u_0 \\ u_1 \\ \vdots \\ u_i \\ u_{i+1} \\ \vdots \\ u_N
+     \end{Bmatrix} =
+     \begin{Bmatrix}
+       f_0 \\ f_1 \\ \vdots \\ f_i \\ f_{i+1} \\ \vdots \\ f_N
+     \end{Bmatrix}
+
+On applying the boundary conditions, the global equations in become
+
+.. math::
+
+   \label{eq:first.glob.2}
+     \begin{bmatrix}
+       1 & 0 & \\
+       k_{21}^1 & k_{22}^1+k_{11}^2 & k_{12}^2 \\
+       && \ddots \\
+       &&& k_{22}^{i-1}+k_{11}^i & k_{12}^i \\
+       &&& k_{21}^{i} & k_{22}^i+k_{11}^{i+1} & k_{12}^{i+1} \\
+       &&&& \ddots \\
+       &&&&& k_{21}^N & k_{22}^N
+     \end{bmatrix}
+     \begin{Bmatrix}
+       u_0 \\ u_1 \\ \vdots \\ u_i \\ u_{i+1} \\ \vdots \\ u_N
+     \end{Bmatrix} =
+     \begin{Bmatrix}
+       0 \\ f_1 \\ \vdots \\ f_i \\ f_{i+1} \\ \vdots \\ f_N+f
+     \end{Bmatrix}
+
+Equation [eq:first.glob.2] is formed and solved in the program in
+Listing [lst:first.uni.1]. While simplistic, the program demonstrates
+the computational implementation of the preprocessing, processing, and
+postprocessing steps outlined above.
+
+The program is invoked as:
+
+.. code:: python
+
+    u = UniformBar(xa, xb, A, E, f, q0, numele)
+
+The arguments to are:
+
++--------------+---------------------------------------------------------------+
+| ``xa``       | The coordinate location of the bar’s origin.                  |
++--------------+---------------------------------------------------------------+
+| ``xb``       | The coordinate location of the bar’s end.                     |
++--------------+---------------------------------------------------------------+
+| ``A``        | The cross sectional area of the bar.                          |
++--------------+---------------------------------------------------------------+
+| ``E``        | The Young’s modulus of the bar.                               |
++--------------+---------------------------------------------------------------+
+| ``f``        | The point force applied to the bar’s end.                     |
++--------------+---------------------------------------------------------------+
+| ``q0``       | The constant body load applied along the length of the bar.   |
++--------------+---------------------------------------------------------------+
+| ``numele``   | Number of elements (optional, default: 10).                   |
++--------------+---------------------------------------------------------------+
+
+The output from is:
+
++--------------+---------------------------+
+| ``u``        | The nodal displacements   |
++--------------+---------------------------+
+| ``e``        | The element strains       |
++--------------+---------------------------+
+| ``elefor``   | The element forces        |
++--------------+---------------------------+
+
+.. code:: python
+
+    from numpy import *
+    from numpy.linalg import solve
+    def UniformBar(xa, xb, A, E, f, q0, numele=10):
+        numnod = numele + 1
+        coord = linspace(xa, xb, numnod)
+        elecon = array([[el, el+1] for el in range(numele)])
+        K, F = zeros((numnod, numnod)), zeros(numnod)
+
+        # loop over elements and assemble global stiffness, force
+        for iel in range(numele):
+            # Element length, stiffness, and force
+            nodes = elecon[iel]
+            xe = coord[nodes]
+            he = xe[1] - xe[0]
+            ke = A * E / he * array([[1., -1.], [-1., 1.]])
+            qe = q0 * he / 2. * ones(2)
+
+            # add contributions to global matrices
+            F[nodes] += qe
+            for i in range(2):
+                I = nodes[i]
+                for j in range(i, 2):
+                    J = nodes[j]
+                    K[I,J] += ke[i,j]
+                    K[J,I] = K[I,J]
+
+        # Apply boundary conditions
+        K[0, :] = 0.
+        K[0, 0] = 1.
+        F[-1] = f
+
+        # Solve for u
+        u = solve(K, F)
+
+        # determine element forces and strains
+        elefor, e = zeros(numele), zeros(numele)
+        for i in range(numele):
+            du = u[i+1] - u[i]
+            dx = coord[i+1] - coord[i]
+            elefor[i] = k * du
+            e[i] = du / dx
+
+        return u, e, elefor
+
+How Does it Work?
+~~~~~~~~~~~~~~~~~
+
+This section describes each part of .
+
+.. code:: python
+
+    from numpy import *
+    from numpy.linalg import solve
+
+These statements make the objects and the linear solver accessible to
+the program.
+
+.. code:: python
+
+    def UniformBar(xa, xb, A, E, f, q0, numele=10):
+
+This statement defines the function to be a function of and (with the
+default being 10).
+
+.. code:: python
+
+    numnod = numele + 1
+    coord = linspace(xa, xb, numnod)
+    elecon = array([[el, el+1] for el in range(numele)])
+
+These statements declare the number of nodes (one more than the number
+of elements), initialize the array of nodal coordinates, and initialize
+the element connectivity.
+
+.. code:: python
+
+    K = zeros((numnod, numnod))
+    F = zeros(numnod)
+
+These statements initialize the global force and stiffness.
+
+In the following loop, each element’s stiffness and force arrays are
+formed and merged in to the global stiffness and force. The merging maps
+the appropriate local degrees of freedom to their global counterparts.
+Since nodes and elements are ordered continuously, the global DOF is the
+local DOF.
+
+.. code:: python
+
+    for iel in range(numele):
+        nodes = elecon[iel]
+        xe = coord[nodes]
+        he = xe[1] - xe[0]
+        ke = A * E / he * array([[1., -1.], [-1., 1.]])
+        qe = q0 * he / 2. * ones(2)
+        F[nodes] += qe
+        for i in range(2):
+            I = nodes[i]
+            for j in range(i, 2):
+                J = nodes[j]
+                K[I,J] += ke[i,j]
+                K[J,I] = K[I,J]
+
+Boundary conditions are applied setting the all but the first components
+of the first row of the global stiffness to 0. The first component is
+set to 1 and the first component of the global force is set to 0, in
+accordance to the displacement boundary condition at the bar’s origin.
+Finally, the point force is added to the last component of the global
+force.
+
+.. code:: python
+
+    K[0, :] = 0.
+    K[0, 0] = 1.
+    F[0] = 0.
+    F[-1] += f
+
+Nodal displacements are computed.
+
+.. code:: python
+
+    u = solve(K, F)
+
+Finally, the element forces and strains are determined and returned
+
+.. code:: python
+
+    elefor, e = zeros(numele), zeros(numele)
+    for i in range(numele):
+        du = u[i+1] - u[i]
+        dx = coord[i+1] - coord[i]
+        elefor[i] = k * du
+        e[i] = du / dx
+    return u, e, elefor
+
+Conclusion
+----------
+
+In the chapters to follow, more sophisticated finite element programs
+will be developed. Being more complex not withstanding, they will share
+many of the same ideas and patterns of the program outlined above.
+
+Nodes and Elements
+==================
+
+Nodes
+-----
+
+A node is a coordinate location in space where degrees of freedom are
+defined. A node definition consists of:
+
+-  a node label, and
+
+-  the node coordinates.
+
+A node label is a positive integer by which the node is identified. Node
+labels are also referred to as external node numbers. Node labels do not
+need to be numbered continuous. Individual node labels are consistently
+identified by symbols or . All external communication uses external node
+labels.
+
+The node coordinates are defined as their position in a regular
+Cartesian space. The coordinate system is shown in Figure
+[fig:nodandel.coords].
+
+.. figure:: Images/Node1.png
+   :alt: [fig:nodandel.coords]Node coordinates in Cartesian space.
+
+   [fig:nodandel.coords]Node coordinates in Cartesian space.
+
+Defining nodes
+~~~~~~~~~~~~~~
+
+Nodes are defined in a two-dimensional list where is a sublist defining
+the node label and nodal coordinates of the n\ :math:`^{\rm th}` node.
+For example, the node definition for node at coordinate location
+:math:`P_n` in Figure [fig:nodandel.coords] is
+
+.. code:: python
+
+    node_n = [n, xn, yn, zn]
+
+The collection of nodes is
+
+.. code:: python
+
+    nodtab = [node_1, node_2, ..., node_n, ..., node_N]
+
+Elements
+--------
+
+An element is a mathematical relation that defines how the degrees of
+freedom of a node relate to the next. An element definition consists of
+
+-  an element type,
+
+-  an element label, and
+
+-  list of node labels forming the element.
+
+The element type ID is a unique ID defined in ``pyfem``. See Section
+[sec:elemlib] for description of each element type.
+
+An element label is a positive integer by which the element is
+identified. Element labels do not need to be numbered continuously.
+Individual element labels are consistently identified by symbols or .
+All external communication uses external element labels.
+
+The node labels forming the element refer to the external node labels.
+Node labels must be ordered as required by the element type.
+
+Defining elements
+~~~~~~~~~~~~~~~~~
+
+Elements are defined in a two-dimensional list where is a sublist
+defining the element label, element type, and external node labels of
+nodes forming element . For example, the definition for element in
+Figure [fig:nodandel.elem1] is
+
+.. figure:: Images/Element1.png
+   :alt: [fig:nodandel.elem1]Element e
+
+   [fig:nodandel.elem1]Element e
+
+.. code:: python
+
+    elem_e = [e, eletyp_e, i, j]
+
+and the collection of elements is
+
+.. code:: python
+
+    eletab = [elem_1, elem_2, ..., elem_e, ..., elem_M]
+
+Internal representation of nodes and elements
+---------------------------------------------
+
+Nodes
+~~~~~
+
+Internally, nodes are assigned integer IDs ranging from to , where is
+the number of nodes in the problem. Node IDs are assigned in the order
+they appear in . In ``pyfem``, internal node IDs are consistently
+identified by the symbol . Node coordinates and internal node IDs are
+stored separately in
+
+-  the nodal coordinate array , and
+
+-  the node ID mapping .
+
+is the i\ :math:`^{\rm th}` coordinate of node and the internal node ID
+.
+
+Elements
+~~~~~~~~
+
+Like nodes, elements are assigned integer IDs ranging from to , where is
+the number of elements in the problem. In ``pyfem``, internal element
+IDs are consistently identified by the symbols and . Element node lists,
+element type list, and internal element IDs are stored separately in
+
+-  the element connectivity array ,
+
+-  the element type list , and
+
+-  the element ID mapping .
+
+is the n\ :math:`^{\rm th}` internal node ID of element , is the element
+type of element , and the internal element ID .
+
+Generating the internal node and element representations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The function , shown in Listing [lst:parse1], creates the , , , , and .
+is defined in the module and is invoked as:
+
+.. code:: python
+
+    nodmap, coord, elemap, eletyp, elecon=FormatNodesAndElements(nodtab, eletab)
+
+[h!]
+
+.. code:: python
+
+    def FormatNodesAndElements(nodtab, eletab):
+        # Basic geometry info
+        dim, maxnod = 0, 0
+        numele = len(eletab)
+        elemap, eletyp = {}, []
+        for (iel, eledef) in enumerate(eletab):
+            eletyp.append(eledef[1])
+            elemap[eledef[0]] = iel
+            dim = max(dim, ElementDimension(eledef[1]))
+            maxnod = max(maxnod, NodesPerElement(eledef[1]))
+        eletyp = array(eletyp, dtype=int)
+        # Create the node map
+        nodmap = dict([(node[0], i) for (i, node) in enumerate(nodtab)])
+        # Format elements
+        elecon = zeros((numele, maxnod), dtype=int)
+        for (iel, eledef) in enumerate(eletab):
+            nelnod = NodesPerElement(eletyp[iel])
+            elecon[iel,:nelnod] = [nodmap[n] for n in eledef[2:]]
+        # Format the nodes
+        numnod = len(nodtab)
+        coord = zeros((numnod, dim))
+        for (inode, node) in enumerate(nodtab):
+            n = len(node[1:])
+            coord[inode,:n] = node[1:]
+        return nodmap, coord, elemap, eletyp, elecon
+
+The arguments to are
+
++--------------+-----------------------------------------------------------------------------------------------------------------------------------------+
+| ``nodtab``   | Table of defining nodes. is the node label of node and are the coordinates of node .                                                    |
++--------------+-----------------------------------------------------------------------------------------------------------------------------------------+
+| ``eletab``   | Table of defining elements. is the element label of element , is the element type, and are the node labels of nodes forming element .   |
++--------------+-----------------------------------------------------------------------------------------------------------------------------------------+
+
+The outputs from are
+
++--------------+-----------------------------------------------------------------------------+
+| ``nodmap``   | Dictionary mapping external node labels to internal node numbers. .         |
++--------------+-----------------------------------------------------------------------------+
+| ``coord``    | Nodal coordinates. is the ith coordinate of node n.                         |
++--------------+-----------------------------------------------------------------------------+
+| ``elemap``   | Dictionary mapping external element labels to internal element numbers. .   |
++--------------+-----------------------------------------------------------------------------+
+| ``eletyp``   | Element types. is the element type of element .                             |
++--------------+-----------------------------------------------------------------------------+
+| ``elecon``   | Element connectivity. is the nth internal node label of element e.          |
++--------------+-----------------------------------------------------------------------------+
+
+first determines the number of elements in the problem and the maximum
+number of nodes in any one element from the container. This information
+is used to initialize the element connectivity array. Next, the internal
+node mapping is created and used to populate the connectivity array by
+mapping external node labels from to internal node numbers. Lastly, the
+nodal coordinates are passed to the array.
+
+Example
+~~~~~~~
+
+Consider the space truss comprised of three-dimensional two-node elastic
+bars in Figure [fig:nodedef.space\_truss],
+
+.. figure:: Images/SpaceTruss1.jpeg
+   :alt: Space truss example
+
+   Space truss example
+
+the node and element tables are
+
+.. code:: python
+
+    nodtab = [[1, 72, 0, 0], [2, 0, 36, 0],
+              [3, 0, 36, 72], [4, 0, 0, -48]]
+    eletab = [[1, L3D2, 1, 2], [2, L3D2, 1, 3], [3, L3D2, 1, 4]]
+
+The internal representation of nodes and elements are:
+
+.. code:: python
+
+    >>> nodmap,coord,elemap,eletyp,elecon=FormatNodesAndElements(nodtab,eletab)
+    >>> print nodmap
+    {1:0, 2:1, 3:2, 4:3}
+
+.. code:: python
+
+    >>> print coord
+    array([[ 72,   0,   0],
+           [  0,  36,   0],
+           [  0,  36,  72],
+           [  0,   0, -48]])
+
+.. code:: python
+
+    >>> print elemap
+    {1:0, 2:1, 3:2}
+
+.. code:: python
+
+    >>> print eletyp
+    [L3D2, L3D2, L3D2]
+
+.. code:: python
+
+    >>> print elecon
+    array([[ 0, 1],
+           [ 0, 2],
+           [ 0, 3]])
+
+Element Blocks, Nodesets, and Sidesets
+======================================
+
+The ExodusII Data Model
+-----------------------
+
+Data from finite element simulations are stored in finite element
+databases. Finite element databases are complex files containing, among
+other things, model data (mesh, boundary conditions, etc.) and results
+data (displacements, stresses, etc.). In this course, the
+`ExodusII <http://prod.sandia.gov/techlib/access-control.cgi/1992/922137.pdf>`__
+database specification, developed at `Sandia National
+Laboratories <http://www.sandia.gov>`__, is adopted for storing finite
+element data. It can be argued that a full finite element database is
+overkill for the small, one-off, applications developed in this course.
+But, adopting the ExodusII specification allows the use of the
+open-source `ParaView <http://www.paraview.org>`__ visualization
+software for results visualization and postprocessing.
+
+The details of the ExodusII database specification are beyond the scope
+of the present chapter. Understanding the data model at a high level,
+however, will help guide the overall structure of the plane stress
+application. The ExodusII data model is depicted in Figure
+[fig:ch2.exo]. A central component of the ExodusII database is the
+element block. An element block is a group of elements having the same
+type and material.
+
+.. figure:: Images/Ch2/exomodel.png
+   :alt: The ExodusII data model
+
+   The ExodusII data model
+
+.. figure:: Images/Ch2/flow.png
+   :alt: Program flow
+
+   Program flow
+
+.. figure:: Images/Ch2/callgraph.png
+   :alt: Call graph
+
+   Call graph
+
+Boundary Conditions and Concentrated Loads
+==========================================
+
+Boundary conditions
+-------------------
+
+Overview
+~~~~~~~~
+
+Boundary conditions:
+
+-  are used to specify the values of degrees of freedom (displacements,
+   rotations, and/or temperatures) at nodes, and
+
+-  are prescribed to individual nodes, lists of nodes, or mesh regions.
+
+Multi-freedom constraint type boundary conditions are not supported.
+
+Defining boundary conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Boundary conditions are defined in a two-dimensional list where is a
+sublist defining the entity (node[s] or region) for which the boundary
+condition is prescribed, degree[s] of freedom to be constrained, and the
+magnitude of the boundary condition. Use any of the following options to
+prescribe a single boundary condition:
+
+Prescribe boundary condition on a single node:
+
+.. code:: python
+
+    [xnode_1, dof, magnitude]
+
+Prescribe boundary condition on a list of nodes:
+
+.. code:: python
+
+    [[xnode_1, ..., xnode_n], dof, magnitude]
+
+Prescribe boundary condition on nodes in a region:
+
+.. code:: python
+
+    [region, dof, magnitude]
+
+The specifier is valid only on rectilinear problem domains and is one of
+the following symbolic constants:
+
+-  to represent all nodes on the boundary
+
+-  , , , , , or . ,, correspond to the :math:`x`, :math:`y`, and
+   :math:`z` coordinate directions and the identifiers and to the
+   corresponding low and high boundaries.
+
+is either a single degree of freedom identifier or a list of
+identifiers. Identifiers are one of the following symbolic constants
+
++----+-----------------------------------------------------+
+|    | The :math:`x` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | The :math:`y` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | The :math:`z` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`x` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`y` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`z` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Temperature                                         |
++----+-----------------------------------------------------+
+
+is either a scalar magnitude of the boundary condition or a function
+that takes the :math:`[x,y,z]` coordinate positions of one or more nodes
+as input and returns the magnitude of the boundary condition at those
+node[s].
+
+Examples
+^^^^^^^^
+
+Constrain node 10 in the :math:`x` and :math:`y` coordinate directions:
+
+.. code:: python
+
+    [10, (X,Y), 0]
+
+Prescribe a displacement of .01 in the :math:`x` coordinate directions
+on nodes 10-20:
+
+.. code:: python
+
+    [range(10,21), X, 0.01]
+
+Constrain nodes on the right edge of a rectangular domain:
+
+.. code:: python
+
+    [IHI, (X,Y), 0]
+
+Rotation about the :math:`z` axis of :math:`\pi` radians on node 10:
+
+.. code:: python
+
+    [10, TZ, pi]
+
+Prescribe a temperature given by to nodes on the bottom edge of a
+rectangular domain:
+
+.. code:: python
+
+    def fun(x):
+        return 2. * (1. + x[:,1]) / ((3. + x[:,0])**2 + (1 + x[:,1])**2)
+    [JLO, T, fun]
+
+Concentrated loads
+------------------
+
+Overview
+~~~~~~~~
+
+Concentrated loads:
+
+-  apply concentrated forces and moments to nodal degrees of freedom,
+   and
+
+-  are fixed in direction as the node rotates.
+
+Defining concentrated loads
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Concentrated loads are defined in a two-dimensional list where is a
+sublist defining the node[s]/region for which the concentrated load is
+prescribed, degree[s] of freedom, and the magnitude of the concentrated
+load or moment. Use any of the following options to prescribe a single
+concentrated load:
+
+Concentrated load on a single node:
+
+.. code:: python
+
+    [xnode_1, dof, magnitude]
+
+Concentrated load on a list of nodes:
+
+.. code:: python
+
+    [[xnode_1, ..., xnode_n], dof, magnitude]
+
+Concentrated load on nodes in a region:
+
+.. code:: python
+
+    [region, dof, magnitude]
+
+The specifier is valid only on rectilinear problem domains and is one of
+the following symbolic constants:
+
+-  to represent all nodes on the boundary
+
+-  , , , , , or . ,, correspond to the :math:`x`, :math:`y`, and
+   :math:`z` coordinate directions and the identifiers and to the
+   corresponding low and high boundaries.
+
+is either a single degree of freedom identifier or a list of
+identifiers. Identifiers are one of the following symbolic constants
+
++----+-----------------------------------------------------+
+|    | The :math:`x` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | The :math:`y` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | The :math:`z` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`x` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`y` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`z` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Temperature                                         |
++----+-----------------------------------------------------+
+
+is either a scalar magnitude of the boundary condition or a function
+that takes the :math:`[x,y,z]` coordinate positions of one or more nodes
+as input and returns the magnitude of the boundary condition at those
+node[s].
+
+Examples
+^^^^^^^^
+
+Concentrated load of 1000 on node 15 in the :math:`x` coordinate
+direction:
+
+.. code:: python
+
+    [15, X, 1000]
+
+Concentrated load of -500 on nodes on the top boundary of a rectangular
+domain in the :math:`y` coordinate direction:
+
+.. code:: python
+
+    [JHI, Y, -500]
+
+Concentrated moment of 200 on node 10 in the :math:`\theta_z` direction.
+
+.. code:: python
+
+    [10, TZ, 200]
+
+Internal representation of boundary conditions and concentrated loads
+---------------------------------------------------------------------
+
+Internally, boundary condition data for every node in the model are
+stored in two arrays:
+
+-  specifies the degree of freedom information, and
+
+-  specifies the magnitudes of prescribed displacement/concentrated
+   force boundary conditions.
+
+The arrays are generated from the user defined and containers by the
+function , shown in Listing [lst:bccf.bcfmt]. is defined in and is
+invoked as
+
+.. code:: python
+
+    doftags, dofvals = FormatBoundaryConditions(coord, nodmap, elecon,
+                                                eletyp, bcs, cloads)
+
+The arguments to are
+
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``coord``    | Nodal coordinates. is the ith coordinate of node n.                                                                                      |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``nodmap``   | Dictionary mapping external node labels to internal node numbers. .                                                                      |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``elecon``   | Element connectivity. is the nth internal node label of element e.                                                                       |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``eletyp``   | Element types. is the element type of element .                                                                                          |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``bcs``      | List of boundary conditions. is the ith boundary condition specification. is the node[s]/region, the DOF, and the magnitude.             |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``cloads``   | (Optional) List of concentrated loads. is the ith concentrated force specification. is the node[s]/region, the DOF, and the magnitude.   |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+
+The outputs from are the containers and . and are best explained by
+example. Consider the truss in Figure [fig:bccf.space\_truss], the and
+lists are:
+
+.. code:: python
+
+    # Boundary conditions
+    bcs = [[1, Y, 0]], [[2,3,4], (X,Y,Z), 0]]
+    # Concentrated force in 'z' direction on node 1
+    cloads = [[1, Z, -1000]]
+
+[Node forces] The concentrated force of 0 applied to the ``X`` DOF of
+node 1 was not specified in ``cloads`` above. Internally, nodes on which
+displacements or point forces are not explicitly prescribed are assumed
+to have a point force of 0 applied.
+
+.. figure:: Images/SpaceTruss1.jpeg
+   :alt: Space truss example
+
+   Space truss example
+
+The corresponding and containers are:
+
+.. code:: python
+
+    doftags = [[0, 1, 0, 0, 0, 0, 0],
+               [1, 1, 1, 0, 0, 0, 0],
+               [1, 1, 1, 0, 0, 0, 0],
+               [1, 1, 1, 0, 0, 0, 0]]
+    dofvals = [[0, 0, -1000, 0, 0, 0, 0],
+               [0, 0,     0, 0, 0, 0, 0],
+               [0, 0,     0, 0, 0, 0, 0],
+               [0, 0,     0, 0, 0, 0, 0]]
+
+is the j\ :math:`^{\rm th}` degree of freedom tag for the
+i\ :math:`^{\rm th}` node. indicates that degree of freedom j of node i
+is prescribed while indicates that the corresponding force is known.
+
+The magnitudes of the prescribed degrees of freedom or force are
+transferred to the list. is the magnitude corresponding to the
+prescribed condition indicated by .
+
+It should be noted that every node for which a force/displacement
+boundary condition is not explicitly prescribed is assigned a nodal
+force of :math:`0`.
+
+.. code:: python
+
+    def FormatBoundaryConditions(coord, nodmap, elecon, eletyp,
+                                 bcs, cloads=None):
+        # doftags[i,j] = 0 indicates the jth dof of node i has a known force
+        #              = 1 indicates the jth dof of node i has a known dof
+        cloads = cloads or []
+        numnod, numdim = coord.shape
+        doftags = zeros((numnod, MDOF), dtype=int)
+        dofvals = zeros((numnod, MDOF))
+        for (itype, uitem) in enumerate((cloads, bcs)):
+            for (label, dof, mag) in uitem:
+                # convert label to internal node numbers
+                if isinstance(label, int):
+                    inodes = [nodmap[label]]
+                elif label == ALL:
+                    inodes = range(numnod)
+                elif label == BOUNDARY:
+                    inodes = BoundaryNodes(coord, elecon, eletyp)
+                elif label in (ILO, IHI, JLO, JHI, KLO, KHI):
+                    inodes = NodesInRectilinearRegion(coord, label)
+                else:
+                    inodes = [nodmap[xn] for xn in label]
+                # format the DOFs
+                dofs = dof if IsListlike(dof) else [dof]
+                try:
+                    # magnitude defined as function
+                    magnitude = mag(coord[inodes])
+                except TypeError:
+                    magnitude = mag
+                if not IsListlike(magnitude):
+                    magnitude = ones_like(inodes)*magnitude
+                for (i,inode) in enumerate(inodes):
+                    for j in dofs:
+                        doftags[inode,j] = itype
+                        dofvals[inode,j] = float(magnitude[i])
+        return doftags, dofvals
+
+Source terms and Distributed Loads
+==================================
+
+Source terms
+------------
+
+Overview
+~~~~~~~~
+
+Source terms:
+
+-  are forces per unit length, area, or volume acting on the system in
+   solid mechanics problems, or
+
+-  heat sources in heat transfer problems.
+
+Defining source terms
+~~~~~~~~~~~~~~~~~~~~~
+
+Source terms are defined in a two-dimensional list where is a sublist
+defining the source term type, the region on which the source is active,
+and the arguments required by the source term type. Source term types
+can be one of
+
++-------------------+---------------------+-----------------------+------------------------------------------------------+
+| Source type       | Symbolic constant   | Valid element types   | Arguments                                            |
++===================+=====================+=======================+======================================================+
+| Heat generation   |                     |                       | Magnitude of the heat generation :math:`s`           |
++-------------------+---------------------+-----------------------+------------------------------------------------------+
+| Gravity           |                     | All solid elements    | Material density, components of the gravity vector   |
++-------------------+---------------------+-----------------------+------------------------------------------------------+
+
+The specifier is valid only on rectilinear problem domains and is one of
+the following symbolic constants:
+
+-  , , , , , or . ,, correspond to the :math:`x`, :math:`y`, and
+   :math:`z` coordinate directions and the identifiers and to the
+   corresponding low and high boundaries.
+
+Examples
+^^^^^^^^
+
+Heat source of magnitude :math:`10` to all nodes in the domain
+
+.. code:: python
+
+    [S, ALL, 10]
+
+Heat source given by to nodes on the bottom edge of a rectangular
+domain:
+
+.. code:: python
+
+    def fun(x):
+        return 2. * (1. + x[:,1]) / ((3. + x[:,0])**2 + (1 + x[:,1])**2)
+    [S, JLO, fun]
+
+Gravity load in the :math:`[1,0,0]` direction for a material having
+density :math:`\rho=0`.
+
+.. code:: python
+
+    [GRAV, ALL, 10, 1, 0, 0]
+
+Internal representation of source terms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Internally, source terms for every degree of freedom in the model are
+stored in a single array . is generated from the user defined
+containersby the function , shown in Listing [lst:src.src.1]. is defined
+in and is invoked as
+
+.. code:: python
+
+    f = FormatSourceTermsUDOF(coord, elemap, eletyp, elecon, src)
+
+The arguments to have been described in previous sections. The output
+from is:
+
++---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``f``   | Nodal source contributions as an array of length nd\*n where nd is the number of degrees of freedom per node and n the total number of nodes. The interpretation of the source term magnitude is dependent on the element type.   |
++---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+.. code:: python
+
+    def FormatSourceTermsUDOF(coord, elemap, eletyp, elecon, src):
+        numele = elecon.shape[0]
+        numnod = coord.shape[0]
+        ndof = NumberOfDOFPerNode(eletyp[0])
+        f = zeros(numnod*ndof)
+        for fi in src:
+            ftype = fi[0]
+            if ftype == SOURCE:
+                # Heat generation
+                region, magnitude = fi[1:3]
+                try:
+                    magnitude(array([[1,1,1]]))
+                    fun = magnitude
+                except TypeError:
+                    fun = lambda x: magnitude
+                if region == ALL:
+                    els = range(numele)
+                else:
+                    els = [elemap[el] for el in region]
+                nodes = unique(elecon[els])
+                f[nodes] += fun(coord[nodes])
+
+            elif ftype == GRAV:
+                region, density = fi[1:3]
+                components = fi[3:]
+                if len(components) != ndof:
+                    raise ValueError('Incorrect number of gravity load components')
+                if region == ALL:
+                    els = range(numele)
+                else:
+                    els = [elemap[el] for el in region]
+                nodes = unique(elecon[els])
+                g = array(components) * density
+                for node in nodes:
+                    dofs = [ndof*node + i for i in range(ndof)]
+                    f[dofs] += g
+
+        return f
+
+Distributed loads
+-----------------
+
+Overview
+~~~~~~~~
+
+Distributed loads:
+
+-  apply forces per unit length/area/volume on element edges, faces, or
+   volumes,
+
+-  require that an appropriate distributed load type be specified.
+
+Defining distributed loads
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Distributed loads are defined in a two-dimensional list where is a
+sublist defining the distributed load type, the region on which the
+distributed load is prescribed, and the arguments required by the
+distributed load type. Distributed load types can be one of
+
++----------------------+---------------------+-----------------------+---------------------------------------------------------------------------------------------------------------+
+| Load type            | Symbolic constant   | Valid element types   | Arguments                                                                                                     |
++======================+=====================+=======================+===============================================================================================================+
+| Heat conduction      |                     |                       | Magnitude of the heat flux normal :math:`q_n`                                                                 |
++----------------------+---------------------+-----------------------+---------------------------------------------------------------------------------------------------------------+
+| Surface convection   |                     |                       | Convection heat transfer constant :math:`h` and the temperature of the surrounding fluid :math:`T_{\infty}`   |
++----------------------+---------------------+-----------------------+---------------------------------------------------------------------------------------------------------------+
+| Surface tractions    |                     | ,                     | magnitude of the surface traction.                                                                            |
++----------------------+---------------------+-----------------------+---------------------------------------------------------------------------------------------------------------+
+
+The specifier defines the surfaces on which the distributed load is
+applied. Define a surface by an element number and an edge identifier
+label. The edge identifier is one of , , :math:`\ldots` , where is the
+j\ :math:`^{\rm th}` element edge. Element edge numbers are defined in
+Appendix [app:elem.lib]. For example, to define a surface composed of
+edge 1 of elements 1, 2, and 3:
+
+Alternatively, the regions
+
+-  to represent all nodes on the boundary
+
+-  , , , , , or . ,, correspond to the :math:`x`, :math:`y`, and
+   :math:`z` coordinate directions and the identifiers and to the
+   corresponding low and high boundaries.
+
+can be specified to automatically generate the surface.
+
+Examples
+^^^^^^^^
+
+Heat conduction with :math:`q_n=2000` on the top boundary of a
+rectangular domain:
+
+.. code:: python
+
+    [QCOND, JHI, 2000]
+
+Heat convection with :math:`h=250` and :math:`T_{\infty}=25` on the
+bottom of a rectangular domain:
+
+.. code:: python
+
+    [QCONV, JLO, 250, 25]
+
+Surface traction on edge 1 of elements 1, 2, and 5 with magnitude
+:math:`qn=2000`.
+
+.. code:: python
+
+    [TRAC, [(1, S1), (2, S1), (5, S1)], 2000]
+
+Internal representation of distributed loads
+--------------------------------------------
+
+Internally, distributed load data is stored in two arrays:
+
+-  specifies surfaces on which distributed loads are applied.
+
+-  specifies the magnitudes of distributed loads.
+
+and are generated from the user defined container by the function ,
+shown in Listing [lst:src.fmtdl]. is defined in and is invoked as
+
+.. code:: python
+
+    dltags, dlvals = FormatDistributedLoadsUDOF(coord, elemap, eletyp,
+                                                elecon, dload)
+
+The arguments to have described in previous sections.
+
+The outputs from are the containers and . and are best explained by
+example. Consider the triangular element with distributed load in Figure
+[fig:src.dload]. The element connectivity is
+
+.. code:: python
+
+    elecon = [[10, 1, 2, 5, 6],
+              [20, 7, 5, 2],
+              [30, 7, 4, 5],
+              [40, 7, 3, 4],
+              [50, 7, 2, 3]]
+
+The list is:
+
+.. code:: python
+
+    # Distributed load
+    dload = [[T, [(40, S2)], qn]]
+
+.. figure:: Images/DLoadEx.png
+   :alt: Distributed load example.
+
+   Distributed load example.
+
+The corresponding and containers are:
+
+.. code:: python
+
+    dltags = [[0, 0, 0],
+              [0, 0, 0],
+              [0, 0, 0],
+              [0, T, 0],
+              [0, 0, 0]]
+    dlvals = [[[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]],
+              [[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]],
+              [[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]],
+              [[0., 0., 0.], [qn, 0., 0.], [0., 0., 0.]],
+              [[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]]]
+
+is the j\ :math:`^{\rm th}` edge of the i\ :math:`^{\rm th}` element.
+indicates that no distributed load is applied over that edge and a
+distributed is applied, otherwise.
+
+is the k\ :math:`^{\rm th}` distributed load specifier for edge j of
+element i.
+
+.. code:: python
+
+    def FormatDistributedLoadsUDOF(coord, elemap, eletyp, elecon, dload):
+        from mesh import FindSurface
+        numele, numnod = elecon.shape[0], coord.shape[0]
+        # Surface load tags and vals
+        numedge = max([EdgesPerElement(et) for et in eletyp])
+        dltags = zeros((numele, numedge), dtype=int)
+        dlvals = zeros((numele, numedge, 3))
+        errors = 0
+        for load in dload:
+            loadtyp, region = load[:2]
+            args = load[2:]
+            nargs = len(args)
+            if loadtyp in (QCOND, QCONV):
+                # Surface heat flux
+                if loadtyp == QCOND:
+                    if nargs != 1:
+                        logging.error('Expected 1 QCOND dload component')
+                        errors += 1
+                        continue
+                if loadtyp == QCONV:
+                    if nargs != 2:
+                        logging.error('Expected 2 QCONV dload components')
+                        errors += 1
+                        continue
+                surf = FindSurface(coord, elemap, eletyp, elecon, region)
+            elif loadtyp == TRACTION:
+                if nargs != 1:
+                    logging.error('Expected 1 TRACTION dload component')
+                    errors += 1
+                    continue
+                surf = FindSurface(coord, elemap, eletyp, elecon, region)
+            else:
+                raise ValueError('Unrecognized dload type')
+            for (el, edge) in surf:
+                dltags[el, edge] = loadtyp
+                dlvals[el, edge][:nargs] = args
+        if errors:
+            raise Exception('Stopping due to previous errors')
+        return dltags, dlvals
+
+Assembly, Part I
+================
+
+Overview
+--------
+
+Assembly is the process of merging element equations in to their
+corresponding locations in the global equations. The assembler described
+constructs and merges one element at a time and adopts the following
+assumptions:
+
+-  nodes are ordered continuously from :math:`0\rightarrow n-1`, where
+   :math:`n` is the total number of nodes,
+
+-  the number and type of degrees of freedom at each node is the same,
+
+-  there are no multifreedom constraints, and
+
+-  the global stiffness matrix is stored as a full symmetric matrix.
+
+Assembly by Example
+-------------------
+
+Consider the truss in Figure [fig:ass.truss.1], each node has two
+degrees of freedom (translation in the :math:`x` and :math:`y`
+directions), giving :math:`3` nodes :math:`\times` 2 DOF/node = 6 DOF
+for the structure. The array of global displacements :math:`\{u\}` is
+organized as
+
+.. math::
+
+   \label{eq:ass.ug.1}
+     \{u\} = \begin{Bmatrix}
+       u_x^0 \\ u_y^0 \\ u_x^1 \\ u_y^1 \\ u_x^2 \\ u_y^2
+     \end{Bmatrix} =
+     \begin{Bmatrix}
+       u_0 \\ u_1 \\ u_2 \\ u_3 \\ u_4 \\ u_5
+     \end{Bmatrix}
+
+The associated global stiffness is a :math:`6\times6` matrix that we
+initialize with zeros:
+
+.. figure:: Images/Truss1.png
+   :alt: Example two element truss.
+
+   Example two element truss.
+
+.. math::
+
+   \label{ass.K.1}
+     \left[K\right] = \begin{bmatrix}
+       0 & 0 & 0 & 0 & 0 & 0\\
+       0 & 0 & 0 & 0 & 0 & 0\\
+       0 & 0 & 0 & 0 & 0 & 0\\
+       0 & 0 & 0 & 0 & 0 & 0\\
+       0 & 0 & 0 & 0 & 0 & 0\\
+       0 & 0 & 0 & 0 & 0 & 0
+     \end{bmatrix}
+
+Element 0 joins nodes 0 and 1. From , the local-to-global-DOF mapping
+for nodes 0 and 1 is:
+
++--------+-------------+--------------+
+| Node   | Local DOF   | Global DOF   |
++========+=============+==============+
+| 0      | :math:`x`   | 0            |
++--------+-------------+--------------+
+| 0      | :math:`y`   | 1            |
++--------+-------------+--------------+
+| 1      | :math:`x`   | 2            |
++--------+-------------+--------------+
+| 1      | :math:`y`   | 3            |
++--------+-------------+--------------+
+
+The global degrees of freedom of an element are collected in the element
+freedom table: . The element stiffness matrix :math:`\left[k^0\right]`
+is a fully populated matrix given on the left below with the element
+freedom table entries marking the columns and rows. The result of
+merging the element stiffness :math:`\left[k^0\right]` in to the global
+stiffness :math:`\left[K\right]` is shown on the right.
+
+.. math::
+
+   \label{ass.k1.1}
+     \stackrel{\begin{matrix}
+         \hphantom{k_{11}^0} &
+         \hphantom{k_{12}^0} &
+         \hphantom{k_{13}^0} &
+         \hphantom{k_{14}^0} \\ 0 & 1 & 2 & 3 \end{matrix}}{
+     \begin{bmatrix}
+       k_{11}^0 & k_{12}^0 & k_{13}^0 & k_{14}^0 \\
+       k_{21}^0 & k_{22}^0 & k_{23}^0 & k_{24}^0 \\
+       k_{31}^0 & k_{32}^0 & k_{33}^0 & k_{34}^0 \\
+       k_{41}^0 & k_{42}^0 & k_{43}^0 & k_{44}^0
+     \end{bmatrix}}\begin{matrix}0\\1\\2\\3\end{matrix} \longrightarrow
+     \stackrel{\begin{matrix}
+         \hphantom{k_{11}^0} &
+         \hphantom{k_{12}^0} &
+         \hphantom{k_{13}^0} &
+         \hphantom{k_{14}^0} &
+         \hphantom{0} &
+         \hphantom{0} \\ 0 & 1 & 2 & 3 & 4 & 5 \end{matrix}}{
+     \begin{bmatrix}
+       k_{11}^0 & k_{12}^0 & k_{13}^0 & k_{14}^0 & 0 & 0 \\
+       k_{21}^0 & k_{22}^0 & k_{23}^0 & k_{24}^0 & 0 & 0\\
+       k_{31}^0 & k_{32}^0 & k_{33}^0 & k_{34}^0 & 0 & 0\\
+       k_{41}^0 & k_{42}^0 & k_{43}^0 & k_{44}^0 & 0 & 0\\
+       0 & 0 & 0 & 0 & 0 & 0\\
+       0 & 0 & 0 & 0 & 0 & 0
+     \end{bmatrix}}\begin{matrix}0\\1\\2\\3\\4\\5\\ \end{matrix}
+
+The local-to-global-DOF mapping can be generalized as:
+
+.. math::
+
+   \label{eq:ass.mapping}
+     \text{GLOBAL DOF} = \text{NUMBER OF DOF PER NODE}\times\text{NODE
+       NUMBER} + \text{LOCAL DOF}
+
+:math:`\text{LOCAL DOF}` is one of the following integers:
+
++--------------------+-------------+
+| DOF description    | LOCAL DOF   |
++====================+=============+
+| :math:`x`          | 0           |
++--------------------+-------------+
+| :math:`y`          | 1           |
++--------------------+-------------+
+| :math:`z`          | 2           |
++--------------------+-------------+
+| :math:`\theta_x`   | 3           |
++--------------------+-------------+
+| :math:`\theta_y`   | 4           |
++--------------------+-------------+
+| :math:`\theta_z`   | 5           |
++--------------------+-------------+
+| :math:`T`          | 6           |
++--------------------+-------------+
+
+Applying to Element 1, the element freedom table is and
+:math:`\left[k^1\right]` and :math:`\left[K\right]` are:
+
+.. math::
+
+   \label{eq:ass.k1.2}
+     \stackrel{\begin{matrix}
+         \hphantom{k_{11}^0} &
+         \hphantom{k_{12}^0} &
+         \hphantom{k_{13}^0} &
+         \hphantom{k_{14}^0} \\ 0 & 1 & 4 & 5 \end{matrix}}{
+     \begin{bmatrix}
+       k_{11}^1 & k_{12}^1 & k_{13}^1 & k_{14}^1 \\
+       k_{21}^1 & k_{22}^1 & k_{23}^1 & k_{24}^1 \\
+       k_{31}^1 & k_{32}^1 & k_{33}^1 & k_{34}^1 \\
+       k_{41}^1 & k_{42}^1 & k_{43}^1 & k_{44}^1
+     \end{bmatrix}}\begin{matrix}0\\1\\4\\5\end{matrix} \longrightarrow
+     \stackrel{\begin{matrix}
+         \hphantom{k_{11}^0+k_{11}^1} &
+         \hphantom{k_{12}^0+k_{11}^1} &
+         \hphantom{k_{13}^0} &
+         \hphantom{k_{14}^0} &
+         \hphantom{k_{11}^1} &
+         \hphantom{k_{11}^1} \\ 0 & 1 & 2 & 3 & 4 & 5 \end{matrix}}{
+     \begin{bmatrix}
+       k_{11}^0+k_{11}^1 & k_{12}^0+k_{11}^1 & k_{13}^0 & k_{14}^0 & k_{13}^1 & k_{23}^1 \\
+       k_{21}^0+k_{12}^1 & k_{22}^0+k_{22}^1 & k_{23}^0 & k_{24}^0 & k_{14}^1 & k_{24}^1 \\
+       k_{31}^0 & k_{32}^0 & k_{33}^0 & k_{34}^0 & 0 & 0\\
+       k_{41}^0 & k_{42}^0 & k_{43}^0 & k_{44}^0 & 0 & 0\\
+       k_{31}^1 & k_{32}^1 & 0 & 0 & k_{33}^1 & k_{34}^1\\
+       k_{41}^1 & k_{42}^1 & 0 & 0 & k_{43}^1 & k_{44}^1\\
+     \end{bmatrix}}\begin{matrix}0\\1\\2\\3\\4\\5\\ \end{matrix}
+
+[assembly] When assembling the global finite element stiffness, the
+following questions must be answered in the affirmitive:
+
+-  Is the value of :math:`K_{II}` equal to the sum of all elements
+   connected to node :math:`I`?
+
+-  Is the value of :math:`K_{IJ}`, :math:`I\ne J`, equal to the negative
+   of all elements connecting nodes :math:`I` and :math:`J`?
+
+-  Is the stiffness symmetric?
+
+Looking at the global system in , it is clear that each of the three
+preceding questions can be answered in the affirmitive.
+
+Assembler Computational Implementation
+--------------------------------------
+
+Assemblers for the global stiffness and global force are presented.
+
+Global Stiffness
+~~~~~~~~~~~~~~~~
+
+Assembly of the global stiffness is performed in , shown in Listing
+[lst:ass.ass.1]. stands for “Uniform Degree of Freedom”. is defined in
+and is invoked as
+
+.. code:: python
+
+    K = AssembleGlobalStiffnessUDOF(coord,elemap,eletyp,elecon,elemat,elefab)
+
+The arguments to are:
+
++--------------+-----------------------------------------------------------------------------------------+
+| ``coord``    | Nodal coordinates. is the ith coordinate of node n.                                     |
++--------------+-----------------------------------------------------------------------------------------+
+| ``elemap``   | Element label map. is the internal node number of the external node label xelem.        |
++--------------+-----------------------------------------------------------------------------------------+
+| ``elecon``   | Element connectivity. is the nth internal node label of element e.                      |
++--------------+-----------------------------------------------------------------------------------------+
+| ``eletyp``   | Element types. is the element type of element .                                         |
++--------------+-----------------------------------------------------------------------------------------+
+| ``elemat``   | Element material properties. is the nth material property of element e.                 |
++--------------+-----------------------------------------------------------------------------------------+
+| ``elefab``   | Element fabrication properties. is the nth element fabrication property of element e.   |
++--------------+-----------------------------------------------------------------------------------------+
+
+The output from is:
+
++---------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``K``   | Global stiffness matrix stored as a full (nd\*n, nd\*n) symmetric matrix, where nd is the number of degrees of freedom per node and n the total number of nodes.   |
++---------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+.. code:: python
+
+    def AssembleGlobalStiffnessUDOF(coord, elemap, eletyp, elecon, elemat,
+                                    elefab, dltags=None, dlvals=None):
+        coord, elecon = asarray(coord), asarray(elecon)
+        # number of nodes and degrees of freedom per node
+        numnod = coord.shape[0]
+        ndof = NumberOfDOFPerNode(eletyp[0])
+        # Default surface tags/values
+        numele = elecon.shape[0]
+        # compute the element stiffness and scatter to global array
+        K = zeros((ndof*numnod, ndof*numnod))
+        for (e, c) in enumerate(elecon):
+            # Element stiffness
+            c = c[:NodesPerElement(eletyp[e])]
+            args = (coord[c], elemat[e], elefab[e])
+            if dltags is not None:
+                args += (dltags[e], dlvals[e])
+            Ke = ElementStiffness(eletyp[e], *args)
+            if Ke is None:
+                xel = elemap.keys()[elemap.values().index(iel)]
+                raise ValueError('Element %d has unkown element type' % xel)
+            # GLOBAL DOF = NUMBER OF DOF PER NODExNODE NUMBER + LOCAL DOF
+            eft = Flatten([[ndof*ni+i for i in range(ndof)] for ni in c])
+            for i in range(Ke.shape[0]):
+                ii = eft[i]
+                for j in range(i, Ke.shape[0]):
+                    jj = eft[j]
+                    K[ii, jj] += Ke[i,j]
+                    K[jj, ii] = K[ii, jj]
+        return K
+
+The subordinate function computes the element stiffness matrix. is shown
+in Listing [lst:ass.elemstiff]. Details of each element stiffness are
+presented in Appendix [app:elem.lib]. The heart of the assembly process
+is constructing the element freedom table, represented by the symbol .
+The element freedom table contains the global degree of freedom number
+for the nodes in the element. For elements having uniform degrees of
+freedom, this table can be constructed on the fly using . In , the
+element freedom table is constructed by creating a nested list of global
+DOF for each node on the element and flattening it. For example, for an
+element having 2 degrees of freedom per node and having nodes and , the
+element freedom table is formed by
+
+.. code:: python
+
+    def ElementStiffness(eletyp, *args):
+        if eletyp in (L1D2, L2D2, L3D2):
+            xc, E, A = args
+            return Link2Stiffness(xc, E, A)
+        elif eletyp == B1D2:
+            xc, E, (A, Izz) = args
+            return Beam2Stiffness(xc, E, (A, Izz))
+        elif eletyp == B2D2:
+            xc, E, (A, Izz) = args
+            return BeamColumn2Stiffness(xc, E, (A, Izz))
+        elif eletyp in (H2D3,):
+            xc, k, A, dltags, dlvals = args
+            Ke = HeatConductionStiffness(eletyp, xc, k)
+            # Convection contribution
+            for j in range(EdgesPerElement(eletyp)):
+                if dltags[j] == QCONV:
+                    Ke += HeatConvectionStiffness(eletyp, xc, j, dlvals[j,0])
+            return Ke
+        return None
+
+Global Force
+~~~~~~~~~~~~
+
+Assembly of the global force is performed in , shown in Listing
+[lst:ass.ass.2]. is defined in and is invoked as
+
+.. code:: python
+
+    F = AssembleGlobalForceUDOF(coord, elemap, eletyp, elecon, doftags, dofvals,
+                                f=f, dltags=dltags, dlvals=dlvals)
+
+The arguments to are
+
++---------------+----------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``coord``     | Nodal coordinates. is the ith coordinate of node n.                                                                                                |
++---------------+----------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``elemap``    | Element label map. is the internal node number of the external node label xelem.                                                                   |
++---------------+----------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``elecon``    | Element connectivity. is the nth internal node label of element e.                                                                                 |
++---------------+----------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``eletyp``    | Element types. is the element type of element .                                                                                                    |
++---------------+----------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``doftags``   | Degree of freedom tags. if the jth degree of freedom of node i has a known (prescribed) displacement, otherwise the node has a known force and .   |
++---------------+----------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``dofvals``   | Degree of freedom values. is the magnitude of the cooresponding to the prescribed condition indicated by .                                         |
++---------------+----------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``f``         | Node source. is the magnitude of the source contribution at a node.                                                                                |
++---------------+----------------------------------------------------------------------------------------------------------------------------------------------------+
+
+The output from is:
+
++---------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| ``F``   | Global force array stored as a full nd\*n array, where nd is the number of degrees of freedom per node and n the total number of nodes.   |
++---------+-------------------------------------------------------------------------------------------------------------------------------------------+
+
+.. code:: python
+
+    def AssembleGlobalForceUDOF(coord, elemap, eletyp, elecon, doftags, dofvals,
+                                f=None, dltags=None, dlvals=None):
+        if doftags.ndim == 1:
+            doftags = doftags.reshape(-1,1)
+            dofvals = dofvals.reshape(-1,1)
+        coord, elecon = asarray(coord), asarray(elecon)
+        # number of nodes and degrees of freedom per node
+        numnod = coord.shape[0]
+        ndof = NumberOfDOFPerNode(eletyp[0])
+
+        # Force contribution on Neummann boundary
+        Q = array([dofvals[i,j] if doftags[i,j] == NEUMANN else 0.
+                   for i in range(numnod) for j in range(ndof)])
+
+        # compute contribution from element sources and boundary fluxes
+        F = zeros(ndof*numnod)
+        for (e, c) in enumerate(elecon):
+            c = c[:NodesPerElement(eletyp[e])]
+            fc = zeros(len(c)) if f is None else f[c]
+            args = (coord[c], fc)
+            if dltags is not None:
+                args += (dltags[e], dlvals[e])
+            Fe = ElementForce(eletyp[e], *args)
+            if Fe is None:
+                xel = elemap.keys()[elemap.values().index(iel)]
+                raise ValueError('Element %d has unkown element type' % xel)
+
+            # GLOBAL DOF = NUMBER OF DOF PER NODExNODE NUMBER + LOCAL DOF
+            eft = Flatten([[ndof*ni+i for i in range(ndof)] for ni in c])
+            for i in range(Fe.shape[0]):
+                F[eft[i]] += Fe[i]
+
+        return F, Q
+
+The subordinate function computes the element force array due to sources
+and distributed loads. is shown shown in Listing [lst:ass.elemforce].
+Details of each element force are presented in Appendix [app:elem.lib].
+
+.. code:: python
+
+    def ElementForce(eletyp, *args):
+        xc, f = args[:2]
+        # Source array
+        Fe = ElementSourceArray(eletyp, xc, f)
+        if Fe is None:
+            return None
+        if eletyp == H2D3:
+            dltags, dlvals = args[2:4]
+            for j in range(EdgesPerElement(eletyp)):
+                if dltags[j] == QCOND:
+                    # evaluate the boundary flux contribution
+                    Fe += ConductionFluxArray(eletyp, xc, j, dlvals[j])
+                elif dltags[j] == QCONV:
+                    # evaluate the convection contribution
+                    Fe += ConvectionFluxArray(eletyp, xc, j, dlvals[j])
+        return Fe
+
+Verification of Program Units
+-----------------------------
+
+Assembly Verification
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    coord = [[0,0,0], [10,0,0], [10,10,0]]
+    elemap = {1:0, 2:1, 3:2}
+    elecon = [[0,1], [1,2], [0,2]]
+    eletyp = [L3D2, L3D2, L3D2]
+    elemat = [100] * 3
+    elefab = [1, .5, 2*sqrt(2.)]
+    K = AssembleGlobalStiffnessUDOF(coord,elemap,eletyp,elecon,elemat,elefab)
+    assert(array([[ 20.,  10.,   0., -10.,   0.,   0., -10., -10.,   0.],
+                  [ 10.,  10.,   0.,   0.,   0.,   0., -10., -10.,   0.],
+                  [  0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.],
+                  [-10.,   0.,   0.,  10.,   0.,   0.,   0.,   0.,   0.],
+                  [  0.,   0.,   0.,   0.,   5.,   0.,   0.,  -5.,   0.],
+                  [  0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.],
+                  [-10., -10.,   0.,   0.,   0.,   0.,  10.,  10.,   0.],
+                  [-10., -10.,   0.,   0.,  -5.,   0.,  10.,  15.,   0.],
+                  [  0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.]], K)
+
+.. code:: python
+
+    v = eigvals(K)
+    assert([ 45.3577,16.74031,7.902,0.,0.,0.,0.,0.,0.], v)
+
+Application of Boundary Conditions
+==================================
+
+**
+
+-  Chapter [sec:intro.conventions],
+
+-  Chapter [ch:bc\_and\_load],
+
+Overview
+--------
+
+After assembly, the global system of equations :math:`[K]\{u\}=\{F\}`
+that describe the finite element problem is singular, meaning that, the
+equations for the unknown degrees of freedom are non-invertible. This
+situation arises when there are no solutions or infinite solutions to a
+problem. Boundary conditions must be applied to make the system
+non-singular.
+
+Boundary conditions are applied by
+
+-  modifying the global stiffness and force arrays on Dirichlet
+   boundaries, and
+
+-  modifying the global force on Neummann boundaries.
+
+Example
+-------
+
+.. figure:: Images/DiscretizedTaperedBar.png
+   :alt: Tapered bar discretized by four spring elements.
+
+   Tapered bar discretized by four spring elements.
+
+Consider the problem of determining the displacements along the tapered
+bar shown in Figure [fig:appbc.taper.1]. The assembled global equations
+are given by
+
+.. math::
+
+   \label{eq:appbc.e1}
+     \begin{bmatrix}
+       k_{1} & -k_{1} & 0 & 0 & \\
+       -k_{1} & k_{1} + k_{2} & -k_{2} & 0 & 0 \\
+       0 & -k_{2} & k_{2} + k_{3} & -k_{3} & 0 \\
+       0 & 0 & -k_{3} & k_{3} + k_{4} & -k_{4} \\
+       0 & 0 & 0 & -k_{4} & k_{4}
+     \end{bmatrix}
+     \begin{Bmatrix} u_1 \\ u_{2} \\ u_{3} \\ u_{4} \\ u_{5} \end{Bmatrix} =
+     \begin{Bmatrix} 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ \end{Bmatrix}
+
+where :math:`k_e=A_eE_e/h_e` is the stiffness coefficient of the
+e\ :math:`^{\rm th}` element. The boundary conditons are
+
+.. math::
+
+   \label{eq:appbc.e2}
+   u_{x=0}=\overline{u}_1, \quad \left[AE\frac{du}{dx}\right]_{x=L}=F
+
+Substituting in to gives
+
+.. math::
+
+   \label{eq:appbc.e3}
+     \begin{bmatrix}
+       k_{1} & -k_{1} & 0 & 0 & \\
+       -k_{1} & k_{1} + k_{2} & -k_{2} & 0 & 0 \\
+       0 & -k_{2} & k_{2} + k_{3} & -k_{3} & 0 \\
+       0 & 0 & -k_{3} & k_{3} + k_{4} & -k_{4} \\
+       0 & 0 & 0 & -k_{4} & k_{4}
+     \end{bmatrix}
+     \begin{Bmatrix}
+       \overline{u}_1 \\ u_{2} \\ u_{3} \\ u_{4} \\ u_{5}
+     \end{Bmatrix} =
+     \begin{Bmatrix}
+       R \\ 0 \\ 0 \\ 0 \\ F \\
+     \end{Bmatrix}
+
+where :math:`R` is an unkown reaction at node 1. The displacements
+:math:`u_{2}, \ u_{3},` and :math:`u_{4}` do not explicitly depend on
+:math:`R`, allowing to be written as
+
+.. math::
+
+   \label{eq:appbc.e4}
+     \begin{bmatrix}
+       1 & 0 & 0 & 0 & 0 \\
+       -k_{1} & k_{1} + k_{2} & -k_{2} & 0 & 0 \\
+       0 & -k_{2} & k_{2} + k_{3} & -k_{3} & 0 \\
+       0 & 0 & -k_{3} & k_{3} + k_{4} & -k_{4} \\
+       0 & 0 & 0 & -k_{4} & k_{4}
+     \end{bmatrix}
+     \begin{Bmatrix}
+       u_1 \\ u_{2} \\ u_{3} \\ u_{4} \\ u_{5}
+     \end{Bmatrix} =
+     \begin{Bmatrix}
+       \overline{u}_1 \\ 0 \\ 0 \\ 0 \\ F \\
+     \end{Bmatrix}
+
+Equation [eq:appbc.e4] can now be solved for the unknown displacements
+and the unknown reaction can then be determined as
+:math:`R=-k_1\overline{u}_1 + \left(k_1+k_2\right)u_2`. However, solving
+has the disadvantange that it is no longer a symmetric system due to the
+way the boundary conditions were applied. Symmetry of the global
+equation can be easily recovered by adding
+:math:`\begin{bmatrix}0 & k_1\overline{u}_1 & 0 & 0 & 0\end{bmatrix}^T`
+to both sides of , giving
+
+.. math::
+
+   \label{eq:appbc.e5}
+     \begin{bmatrix}
+       1 & 0 & 0 & 0 & 0 \\
+       0 & k_{1} + k_{2} & -k_{2} & 0 & 0 \\
+       0 & -k_{2} & k_{2} + k_{3} & -k_{3} & 0 \\
+       0 & 0 & -k_{3} & k_{3} + k_{4} & -k_{4} \\
+       0 & 0 & 0 & -k_{4} & k_{4}
+     \end{bmatrix}
+     \begin{Bmatrix}
+       u_1 \\ u_{2} \\ u_{3} \\ u_{4} \\ u_{5}
+     \end{Bmatrix} =
+     \begin{Bmatrix}
+       \overline{u}_1 \\ k_{1}\overline{u}_1 \\ 0 \\ 0 \\ F \\
+     \end{Bmatrix}
+
+In general, for known DOF :math:`\overline{u}_i`, the global stiffness
+and force arrays are modified according to
+
+.. math::
+
+   \label{eq:appbc.e6}
+     K_{ij} = K_{ji} = \delta_{ij}, \quad
+     F_j = \begin{cases}
+       \overline{u}_i & i = j \\ F_j-K_{ji}\overline{u}_i & i \ne j
+     \end{cases}
+
+where :math:`\delta_{ij}` is the Kronecker delta.
+
+Computational Implementation
+----------------------------
+
+Boundary conditions are applied to the global stiffness and force arrays
+in function . The technique used has the advantage that the global
+stiffness matrix remains symmetric after the application of boundary
+conditions. The boundary conditions are assumed to constrain only a
+single degree of freedom (multi-point constraints are not considered).
+Homogeneous and nonhomogeneous are treated. which is invoked as
+
+.. code:: python
+
+    Kbc, Fbc = ApplyBoundaryConditionsUDOF(K, F, doftags, dofvals)
+
+The arguments to are described in earlier sections.
+
+.. code:: python
+
+    def ApplyBoundaryConditionsUDOF(K, F, doftags, dofvals):
+        if doftags.ndim == 1:
+            doftags = doftags.reshape(-1,1)
+            dofvals = dofvals.reshape(-1,1)
+        numnod, ndof = doftags.shape
+        Kbc, Fbc = K.copy(), F.copy()
+
+        # Dirichlet boundary conditions
+        for i in range(numnod):
+            for j in range(ndof):
+                if doftags[i,j] == DIRICHLET:
+                    I = i * ndof + j
+                    Fbc -= [K[k,I] * dofvals[i,j] for k in range(numnod*ndof)]
+                    Kbc[I, :] = Kbc[:, I] = 0
+                    Kbc[I, I] = 1
+
+        # Further modify RHS for Dirichlet boundary
+        # This must be done after the loop above.
+        for i in range(numnod):
+            for j in range(ndof):
+                if doftags[i,j] == DIRICHLET:
+                    Fbc[i*ndof+j] = dofvals[i,j]
+
+        return Kbc, Fbc
+
+TrussSolution: A Complete Truss Program
+=======================================
+
+| **
+| **
+| **
+
+-  Chapter [sec:first],
+
+-  Chapter [sec:intro.conventions],
+
+-  Chapter [ch:bc\_and\_load],
+
+-  Chapter [sec:ass],
+
+-  Chapter [sec:appbc],
+
+-  `IFEM Chapter 2, “The Direct Stiffness Method
+   I” < http://www.colorado.edu/engineering/CAS/courses.d/IFEM.d/IFEM.Ch02.d/IFEM.Ch02.pdf>`__
+
+-  `IFEM Chapter 3, “The Direct Stiffness Method
+   II” < http://www.colorado.edu/engineering/CAS/courses.d/IFEM.d/IFEM.Ch03.d/IFEM.Ch03.pdf>`__
+
+Overview
+--------
+
+models truss-like structures, like the one shown in Figure
+[fig:truss.intro] in one, two, and three-dimensions.
+
+-  models truss members as two-node elastic bars having constant
+   cross-sectional area and Young’s modulus,
+
+-  supports truss members defined in 1, 2, or 3 dimensions,
+
+-  uses the direct stiffness method to assemble and solve the global
+   system of equations,
+
+-  supports prescribed displacements and nodal forces,
+
+-  uses linear solver to solve the global system of equations, and
+
+-  writes results to `vtk <www.vtk.ort>`__ formatted files.
+
+.. figure:: Images/IntroTruss.png
+   :alt: [fig:truss.intro]Finite element analysis of a truss-like
+   structure
+
+   [fig:truss.intro]Finite element analysis of a truss-like structure
+
+Program limitations
+~~~~~~~~~~~~~~~~~~~
+
+-  is valid only for truss-like structures whose members are two-node
+   elastic bars,
+
+-  does not support distributed loads,
+
+-  does not support multi-freedom constraints, and
+
+-  sacrifices speed and efficiency for clarity.
+
+Element types
+-------------
+
+supports the following element types:
+
+-  : one-dimensional two-node elastic bar.
+
+-  : two-dimensional two-node elastic bar.
+
+-  : three-dimensional two-node elastic bar.
+
+The different element types are described in Appendix [app:elem.lib].
+
+Truss program design
+--------------------
+
+A callgraph of the truss program, shown in Figure [fig:truss.callgraph],
+demonstrates its overal design. As described in “Chapter 1: Introduction
+and Conventions”, the program is split broadly in to preprocessing,
+processing, and postprocessing stages. The user defines the model
+definition in the preprocessing stage and the truss program performs the
+processing and postprocessing steps.
+
+.. figure:: Images/TrussCallGraph.png
+   :alt: Callgraph of Truss FE program
+
+   Callgraph of Truss FE program
+
+The truss program script
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+| The function , shown in Listing [lst:truss.app], is an executive type
+  function that organizes the processing and postprocessing analysis
+  stages. It is invoked as
+
+.. code:: python
+
+    u, R, p, s = TrussSolution(nodtab, eletab, elemat, elefab, bcs, cloads)
+
+The arguments to are
+
++--------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``nodtab``   | Table of defining nodes. is the node label of node and are the coordinates of node .                                                                                                                                                                                    |
++--------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``eletab``   | Table of defining elements. is the element label of element , is the element type, and are the node labels of nodes forming element .                                                                                                                                   |
++--------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``elemat``   | Element material data. For the Link2 element, the only element material property is the Young’s modulus E. is given as either a float if all elements have the same constant Young’s modulus or a list , where is the total number of elements.                         |
++--------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``elefab``   | Element fabrication data. For the Link2 element, the only element fabrication property is the cross-sectional area A. is given as either a float if all elements have the same constant cross sectional area or a list , where is the total number of elements.         |
++--------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``bcs``      | Displacement boundary condition specification. List of lists defining the prescribed displacements in the model. Each sublist contains three elements defining the node ID[s] constrained, the degree[s] of freedom constrained, and the magnitude of the constraint.   |
++--------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``cloads``   | Concentrated (nodal) force specification. The composition of is identical to that of .                                                                                                                                                                                  |
++--------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+The outputs from are
+
++---------+------------------------------------------------------------------+
+| ``u``   | Nodal displacements. , where is the total number of nodes.       |
++---------+------------------------------------------------------------------+
+| ``R``   | Nodal reactions. , where is the total number of nodes.           |
++---------+------------------------------------------------------------------+
+| ``p``   | Element axial forces. , where is the total number of elements.   |
++---------+------------------------------------------------------------------+
+| ``s``   | Element stresses , where is the total number of elements.        |
++---------+------------------------------------------------------------------+
+
+.. code:: python
+
+    def TrussSolution(nodtab,eletab,elemat,elefab,bcs,cload,jobid='Job-1'):
+        # Format user input
+        nodmap,coord,elemap,eletyp,elecon=FormatNodesAndElements(nodtab,eletab)
+        # Truss program valid only for Link elements
+        if len(set(eletyp)) != 1:
+            raise ValueError('TrussSolution expected only one element type')
+        if any([et not in (L1D2, L2D2, L3D2) for et in eletyp]):
+            raise ValueError('TrussSolution expected element types '
+                             'L1D2, L2D2, or L3D2')
+        # number of elements, nodes
+        numele, numnod = elecon.shape[0], coord.shape[0]
+        # number of degrees of freedom per node
+        ndof = 1 if coord.ndim == 1 else coord.shape[1]
+        # make sure properties are arrays
+        if not IsListlike(elemat): elemat = array([elemat] * numele)
+        if not IsListlike(elefab): elefab = array([elefab] * numele)
+        # Format the boundary conditions
+        doftags, dofvals = FormatBoundaryConditions(coord, nodmap, eletyp, elecon,
+                                                    bcs, cload)
+        # Limit doftags, dofvals to just the DOF of interest
+        doftags, dofvals = doftags[:, :ndof], dofvals[:, :ndof]
+        # Assemble the global stiffness and force
+        K = AssembleGlobalStiffnessUDOF(coord, elemap, eletyp, elecon, elemat, elefab)
+        F, Q = AssembleGlobalForceUDOF(coord, elemat, eletyp, elecon, doftags, dofvals)
+        Kbc, Fbc = ApplyBoundaryConditionsUDOF(K, F+Q, doftags, dofvals)
+        try:
+            u = solve(Kbc, Fbc)
+        except LinAlgError:
+            raise RuntimeError('attempting to solve under constrained system')
+        # Total force, including reaction, and reaction
+        Ft = dot(K, u)
+        R = Ft - F - Q
+        # reshape u, R to be the same shape as coord
+        u, R = u.reshape(coord.shape), R.reshape(coord.shape)
+        p = TrussIntForces(coord, elecon, elemat, elefab, u)
+        s = TrussStresses(p, elefab)
+        if jobid is not None:
+            WriteFEResults(jobid, coord, nodmap, elemap, eletyp, elecon,
+                           u=u, p=p, R=R, s=s)
+        return u, R, p, s
+
+Example model driver
+^^^^^^^^^^^^^^^^^^^^
+
+Consider the space truss shown in Figure [fig:truss.space\_truss], the
+model driver for this problem is given Listing [lst:truss.model].
+
+.. figure:: Images/SpaceTruss1.jpeg
+   :alt: [fig:truss.space\_truss]Example space truss
+
+   [fig:truss.space\_truss]Example space truss
+
+.. code:: python
+
+    nodtab = [[1, 72, 0, 0], [2, 0, 36, 0], [3, 0, 36, 72], [4, 0, 0, -48]]
+    eletab = [[1, 1, 2], [2, 1, 3], [3, 1, 4]]
+    A = [.302, .729, .187]
+    E = 10e6
+
+    # Boundary conditions
+    bcs = [[1, Y, 0]], [[2,3,4], (X,Y,Z), 0]]
+
+    # Concentrated force in 'z' direction on node 1
+    cloads = [[1, Z, -1000]]
+
+    u, R, p, s = TrussSolution(nodtab, eletab, E, A, bcs, cloads)
+
+Displacement solution and recovery of reactions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+| The linear system
+  :math:`\boldsymbol{K}^*\boldsymbol{u}=\boldsymbol{F}^*`, where
+  :math:`\boldsymbol{K}^*` and :math:`\boldsymbol{F}^*` are the boundary
+  condition modified global stiffness and force, respectively, is solved
+  using the function that is a part of the module. is invoked as
+
+.. code:: python
+
+      u = numpy.linalg.solve(Kbc, Fbc)
+
+Reaction forces :math:`\boldsymbol{R}` are recovered as
+
+.. math:: \boldsymbol{R} = \boldsymbol{K}\boldsymbol{u} - \boldsymbol{F}
+
+where :math:`\boldsymbol{K}` and :math:`\boldsymbol{F}` are the global
+stiffness and force, respectively (before application of boundary
+conditions), and :math:`\boldsymbol{u}` is the displacement found from
+the call to .
+
+Postprocessing
+~~~~~~~~~~~~~~
+
+| With nodal displacements known, postprocessing can begin. In this
+  program, postprocessing consists of determining the element internal
+  forces and stresses. computes the axial internal forces of truss
+  members and is invoked as
+
+.. code:: python
+
+      p = TrussIntForces(coor, nodmap, elecon, elemat, elefab, u)
+
+The arguments , , , , , and are described in earlier sections. uses the
+subordinate function to determine the internal force in individual
+elements.
+
+| The internal stress is computed in the function and is invoked as
+
+.. code:: python
+
+    s = TrussStresses(p, elefab)
+
+The ouput from is
+
++---------+-------------------------------------------------------------------------------+
+| ``p``   | Element axial forces , where is the total number of elements. Computed by .   |
++---------+-------------------------------------------------------------------------------+
+
+.. code:: python
+
+    def TrussIntForces(coor, elecon, elemat, elefab, u):
+        p = zeros(elecon.shape[0])
+        for (e, c) in enumerate(elecon):
+            c = [nodmap[n] for n in c]
+            p[e] = Link2IntForce(coor[c], elemat[e], elefab[e], u[c])
+        return p
+
+    def Link2IntForce(xc, E, A, uc):
+        x = xc[1] - xc[0]
+        u = uc[1] - uc[0]
+        Xu = dot(x, u)
+        L = sqrt(dot(x, x))
+        return E * A / L * Xu / L
+
+.. code:: python
+
+    def TrussStresses(p, elefab):
+        return p / elefab
+
+Writing FE results
+~~~~~~~~~~~~~~~~~~
+
+writes the results to a `vtk <www.vtk.org>`__ finite element database.
+files and are viewable in several commercial and open source
+visualization products, including the open source
+`ParaView <http://www.paraview.org>`__. is invoked as
+
+.. code:: python
+
+    WriteFEResults(jobid, coord, nodmap, elemap, eletyp, elecon, u=u, **kwds)
+
+The arguments to are
+
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``jobid``    | String identifying the simulation                                                                                                        |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``coord``    | Nodal coordinates , where is the total number of nodes. Node IDs are implied by the row number.                                          |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``elemap``   | Mapping from external node label to internal node number. .                                                                              |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``eletyp``   | Element type. is the element type of element e.                                                                                          |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``elecon``   | Element connectivity (nodes defining ends of element). is the th node ID of the th element. Element IDs are implied by the row number.   |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``u``        | Nodal displacements , where is the total number of nodes. Node IDs are implied by the row number.                                        |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``**kwds``   | Keyword arguments. Pass nodal and element data as keywords.                                                                              |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+
+The argument to allows one to store arbitrary nodal and element results
+to the output database. For example, to store the nodal reactions,
+element forces, and element stresses, would be invoked as
+
+Examples
+--------
+
+Example 1
+~~~~~~~~~
+
+Consider the bridge shown in Figure [fig.truss.bridge]. The user model
+definition script is
+
+.. figure:: Images/Ch1/bridge.png
+   :alt: Six-bay bridge plane truss. (a) physical problem; (b) finite
+   element idealization. (Credit: `Ch.
+   21 <http://www.colorado.edu/engineering/CAS/courses.d/IFEM.d/IFEM.Ch21.d/IFEM.Ch21.pdf>`__
+   of Prof. Felippa’s introductory finite element course materials)
+
+   Six-bay bridge plane truss. (a) physical problem; (b) finite element
+   idealization. (Credit: `Ch.
+   21 <http://www.colorado.edu/engineering/CAS/courses.d/IFEM.d/IFEM.Ch21.d/IFEM.Ch21.pdf>`__
+   of Prof. Felippa’s introductory finite element course materials)
+
+.. code:: python
+
+    coor = [[1,0,0,0], [2,10,5,0], [3,10,0,0], [4,20,8,0], [5,20,0,0],
+            [6,30,9,0], [7,30,0,0], [8,40,8,0], [9,40,0,0], [10,50,5,0],
+            [11,50,0,0],[12,60,0,0]]
+    elecon = [[1,1,3], [2,3,5], [3,5,7], [4,7,9], [5,9,11], [6,11,12],
+              [7,1,2], [8,2,4], [9,4,6], [10,6,8], [11,8,10], [12,10,12],
+              [13,2,3], [14,4,5], [15,6,7], [16,8,9], [17,10,11], [18,2,5],
+              [19,4,7], [20,7,8], [21,9,10]]
+    E = 1000
+    Abot, Atop, Abat, Adia = 2, 10, 3, 1
+    A = [Abot, Abot, Abot, Abot, Abot, Abot,
+         Atop, Atop, Atop, Atop, Atop, Atop,
+         Abat, Abat, Abat, Abat, Abat,
+         Adia, Adia, Adia, Adia]
+    cloads = [[3,Y,-10.],[5,Y,-10.],[7,Y,-16.],[9,Y,-10.],[11,Y,-10.]]
+    bcs = [[1, ALL, 0.], [12, Y, 0.], [ALL, Z, 0]]
+    u, R, p, s = TrussSolution(nodtab, eletab, E, A, bcs, cloads)
+
+The computed displacement and nodal reactions are
+
+.. code:: python
+
+    nodal displacements               nodal reactions
+    [[ 0.       0.       0.     ]     [[  0.  28.   0.]
+     [ 0.80954 -1.7756   0.     ]      [  0.   0.   0.]
+     [ 0.28    -1.79226  0.     ]      [  0.   0.   0.]
+     [ 0.899   -2.29193  0.     ]      [  0.   0.   0.]
+     [ 0.56    -2.3166   0.     ]      [  0.   0.   0.]
+     [ 0.8475  -2.38594  0.     ]      [ -0.  -0.   0.]
+     [ 0.8475  -2.42194  0.     ]      [ -0.   0.   0.]
+     [ 0.796   -2.29193  0.     ]      [ -0.   0.   0.]
+     [ 1.135   -2.3166   0.     ]      [  0.  -0.   0.]
+     [ 0.88546 -1.7756   0.     ]      [  0.   0.   0.]
+     [ 1.415   -1.79226  0.     ]      [  0.   0.   0.]
+     [ 1.695    0.       0.     ]]     [  0.  28.   0.]]
+
+The undeformed and deformed plots, generated by ParaView, are shown in
+Figure [fig.truss.bridge\_res]
+
+.. figure:: Images/Ch1/ex1.png
+   :alt: Undeformed and deformed plots of the truss shown in Figure
+   [fig:truss.bridge]. The deformed plots show contours of :math:`y`
+   displacement and magnitude of the reaction forces.
+
+   Undeformed and deformed plots of the truss shown in Figure
+   [fig:truss.bridge]. The deformed plots show contours of :math:`y`
+   displacement and magnitude of the reaction forces.
+
+Example 2
+~~~~~~~~~
+
+.. figure:: Images/Ch1/truss_ex_5.jpg
+   :alt: Truss example 2
+
+   Truss example 2
+
+.. code:: python
+
+    nodtab = [[1, 0, 0], [2, 3, 4], [3, 0, 4]]
+    eletab = [[1, 1, 2], [2, 1, 3]])
+    E, A = 70e9, 5 * .01 * .01
+    bcs = [[1, X, -.05], [[2,3], (X,Y), 0]]
+    cloads = [[1, Y, 1000e3]]
+    u, R, p, s = TrussSolution(nodtab, eletab, E, A, bcs, cloads)
+
+The nodal displacements are
+
+.. code:: python
+
+    [[-0.05     0.08828]
+     [ 0.       0.     ]
+     [ 0.       0.     ]]
+
+Example 3
+~~~~~~~~~
+
+Redo Example 2, but in 3D.
+
+.. code:: python
+
+    nodtab = [[1,0,0,0], [2,3,4,0], [3,0,4,0]]
+    eletab = [[1, 1, 2], [2, 1, 3]]
+    E, A = 70e9, 5 * .01 * .01
+    bcs = [[1, X, -.05], [1, Z, 0], [[2,3], (X,Y,Z), 0]]
+    cloads = [[1, Y, 1000e3]]
+    u, R, p, s = TrussSolution(nodtab, eletab, E, A, bcs, cloads)
+
+The nodal displacements are
+
+.. code:: python
+
+    [[-0.05     0.08828  0.     ]
+     [ 0.       0.       0.     ]
+     [ 0.       0.       0.     ]]
+
+Element Library
+===============
+
+Each element in ``pyfem`` has a unique name that identifies the aspects
+of the element. The aspects of an element that characterize its behavior
+are:
+
+Family
+    Elements are broadly classified as lines (trusses or beams), areas
+    (2-D or 3-D plates and membranes) or solids (bricks or
+    tetrahedrals). With the exception of beam elements, the first letter
+    of an element’s name indicates to which family the element belongs.
+    For example, is a line element and is an area element. Beam elements
+    use as the first letter in the element’s name.
+
+Degrees of freedom
+    The degrees of freedom are the fundamental variables calculated
+    during the analysis. For a stress/displacement simulation the
+    degrees of freedom are the translations and, for beam elements, the
+    rotations at each node. For heat transfer the degrees of freedom are
+    the temperatures at each node.
+
+Number of nodes
+    Degrees of freedom are calculated at the nodes of the element. The
+    number of nodes in an element is clearly identified in its name,
+    e.g. the one-dimensional 2-node beam element is .
+
+Integration
+    ``pyfem`` uses numerical techniques to integrate various quantities
+    over the volume of each element, thus allowing complete generality
+    in material behavior. ``pyfem`` uses Gaussian quadrature for most
+    elements to evaluate the material response at each integration point
+    in each element.
+
+Element types
+-------------
+
+Elastic bar elements
+~~~~~~~~~~~~~~~~~~~~
+
++----+---------------------------------+
+|    | 1D 2 node elastic bar element   |
++----+---------------------------------+
+|    | 2D 2 node elastic bar element   |
++----+---------------------------------+
+|    | 3D 2 node elastic bar element   |
++----+---------------------------------+
+
+Active degrees of freedom
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+-  1D: 1
+
+-  2D: 1, 2
+
+-  3D: 1, 2, 3
+
+Element formulation
+^^^^^^^^^^^^^^^^^^^
+
+The two-node elastic bar element is shown embedded in a two-dimensional
+space in Figure [fig:ch1.link]. In the element’s local coordinates
+(:math:`\tilde{\pmb{x}}_i`), forces and displacements act along only the
+local :math:`\tilde{x}` direction. When viewed in the global
+coordinates, forces and displacements act along all :math:`\pmb{x}_i`
+coordinate directions. Thus, in two dimensions, the bar element has
+:math:`2` degrees of freedom per node, for a total of :math:`4` degrees
+of freedom. Elements of this type are referred to as **plane** bar
+elements and a system made up of plane bar elements is a **plane
+truss**. In three dimensions, the element has :math:`3` degrees of
+freedom per node, for a total of 6 degrees of freedom and is referred to
+as **space** bar elements. A system made up of space bar elements is a
+**space truss**.
+
+.. figure:: Images/Ch1/u_lgcoords.png
+   :alt: Two-node elastic bar element
+
+   Two-node elastic bar element
+
+In three dimensions, the element node displacement and force vectors in
+three dimensions are arranged as
+
+.. math::
+
+   \boldsymbol{u}^{(e)} = \begin{Bmatrix}
+       u_{1x} \\ u_{1y} \\ u_{1z} \\ u_{2x} \\ u_{2y} \\ u_{2z}
+     \end{Bmatrix}, \quad
+     \boldsymbol{f}^{(e)} = \begin{Bmatrix}
+       f_{1x} \\ f_{1y} \\ f_{1z} \\ f_{2x} \\ f_{2y} \\ f_{2z}
+     \end{Bmatrix}
+
+The displacement and force vectors in the global coordinates are related
+to their local counterparts through the following transformations
+
+.. math::
+
+   \tilde{\boldsymbol{u}}^{(e)} = \boldsymbol{T}\boldsymbol{u}^{(e)},
+     \quad
+     \tilde{\boldsymbol{f}}^{(e)} = \boldsymbol{T}\boldsymbol{f}^{(e)},
+
+where :math:`\boldsymbol{T}` is the :math:`2 \times 6` matrix of
+direction cosines of the axial axis of the element, given by
+
+.. math::
+
+   \label{eq:transm}
+     \boldsymbol{T} = \begin{bmatrix}
+       l_{ij} & m_{ij} & n_{ij} & 0 & 0 & 0 \\
+       0 & 0 & 0 & l_{ij} & m_{ij} & n_{ij} \\
+     \end{bmatrix}, \quad
+
+The direction cosines :math:`l_{ij}`, :math:`m_{ij}`, and :math:`n_{ij}`
+are given by
+
+.. math::
+
+   \begin{aligned}
+     \label{eq:dircos}
+     l_{ij} &= \cos\left(\tilde{x}, x\right) = \frac{x_j-x_i}{l_e} \\
+     m_{ij} &= \cos\left(\tilde{x}, y\right) = \frac{y_j-y_i}{l_e} \\
+     n_{ij} &= \cos\left(\tilde{x}, y\right) = \frac{z_j-z_i}{l_e}\end{aligned}
+
+The force-displacement relationship in the local coordinates is
+
+.. math::
+
+   \tilde{\boldsymbol{f}}^{(e)} =
+     \tilde{\boldsymbol{k}}^{(e)}\tilde{\boldsymbol{u}}^{(e)}
+
+where :math:`\tilde{\boldsymbol{k}}^{(e)}` is the :math:`2 \times 2`
+element stiffness matrix in the local coordinates. Using the coordinate
+transformations, the force-displacement relationship in the global
+coordinates is
+
+.. math::
+
+   \label{eq:ch1.force-disp-1}
+     \tilde{\boldsymbol{f}}^{(e)}
+     = \boldsymbol{T}\boldsymbol{f}^{(e)}
+     = \tilde{\boldsymbol{k}}^{(e)}\tilde{\boldsymbol{u}}^{(e)}
+     = \tilde{\boldsymbol{k}}^{(e)}\boldsymbol{T}\boldsymbol{u}^{(e)}
+
+From , we get
+
+.. math:: \boldsymbol{f}^{(e)} = \boldsymbol{k}^{(e)}\boldsymbol{u}^{(e)}
+
+where the element stiffness matrix in the global coordinates
+:math:`\boldsymbol{k}^{(e)}` is
+
+.. math::
+
+   \label{eq:gstiff1}
+     \boldsymbol{k}^{(e)} = \boldsymbol{T}^T\tilde{\boldsymbol{k}}^{(e)}\boldsymbol{T}
+
+Expanding in components, the force-displacement relationship can be
+expressed as
+
+.. math::
+
+   \begin{Bmatrix}
+       \boldsymbol{f}_1 \\ \boldsymbol{f}_2
+     \end{Bmatrix} = \frac{AE}{l_e}
+     \begin{bmatrix*}[r]
+       \boldsymbol{n}\otimes\boldsymbol{n} &
+       -\boldsymbol{n}\otimes\boldsymbol{n} \\
+       -\boldsymbol{n}\otimes\boldsymbol{n} &
+       \boldsymbol{n}\otimes\boldsymbol{n} \\
+     \end{bmatrix*}
+     \begin{Bmatrix}
+       \boldsymbol{u}_1 \\ \boldsymbol{u}_2
+     \end{Bmatrix}
+
+where the vectors :math:`\boldsymbol{f}_i` and :math:`\boldsymbol{u}_i`
+are the force and displacement vectors for the :math:`i^{\rm th}` node
+in the global coordinates, :math:`A` and :math:`E` are the constant
+element area and Young’s modulus, respectively, :math:`l_e` is the
+element length, and :math:`\boldsymbol{n}` is the element unit normal,
+given by
+
+.. math::
+
+   \begin{aligned}
+     \boldsymbol{v} &= \boldsymbol{x}_2-\boldsymbol{x}_1 \\
+     \boldsymbol{n} &= \frac{\boldsymbol{v}}{\lVert\boldsymbol{v}\rVert}\end{aligned}
+
+The product :math:`\boldsymbol{a}\otimes\boldsymbol{b}` represents the
+vector outer product whose result is a matrix. In direct, indicial, and
+matrix notation, the matrix :math:`\boldsymbol{A}` resulting from the
+outer product of vectors :math:`\boldsymbol{a}` and
+:math:`\boldsymbol{b}` is
+
+.. math::
+
+   \boldsymbol{A} = \boldsymbol{a}\otimes\boldsymbol{b} = a_i b_j =
+     \begin{bmatrix}
+       a_1b_1 & a_1b_2 & \ldots & a_1b_n \\
+       a_2b_1 & a_2b_2 & \ldots & a_2b_n \\
+       \vdots & \vdots & \ddots & \vdots \\
+       a_nb_1 & a_nb_2 & \ldots & a_nb_n
+     \end{bmatrix}
+
+Element stiffness function
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The computation of stiffness matrix for the two-node elastic bar is
+performed in the function , given in Listing [lst:stiff1]. is invoked as
+
+.. code:: python
+
+    ke = Link2Stiffness(xc, E, A)
+
+Arguments to the are
+
++----------+---------------------+
+| ``xc``   | Nodal coordinates   |
++----------+---------------------+
+| ``E``    | Element modulus.    |
++----------+---------------------+
+| ``A``    | Element area.       |
++----------+---------------------+
+
+The output from is
+
++----------+-------------------------------------------------------------------------------------------------------------------------------------+
+| ``ke``   | Element stiffness stored as a (numdim\*2, numdim\*2) symmetric matrix, where numdim is the number of degrees of freedom per node.   |
++----------+-------------------------------------------------------------------------------------------------------------------------------------+
+
+.. code:: python
+
+    def Link2Stiffness(xc, E, A):
+        # Element dimensionality
+        xc = asarray(xc)
+        if xc.ndim == 1:
+            numdim = 1
+        else:
+            numdim = xc.shape[1]
+        # Compute element normal
+        v = xc[1] - xc[0]
+        h = sqrt(dot(v, v))
+        n = v / h
+        if xc.ndim == 1:
+            nn = 1.
+        else:
+            nn = outer(n, n)
+        # Assemble element stiffness
+        k = zeros((2*numdim, 2*numdim))
+        i, j = numdim, 2*numdim
+        k = zeros((2*numdim, 2*numdim))
+        k[0:i, 0:i] = k[i:j, i:j] =  nn # upper left and lower right 2x2
+        k[0:i, i:j] = k[i:j, 0:i] = -nn # lower left and upper right 2x2
+        return A * E / h * k
+
+Verification of Program Units
+-----------------------------
+
+The validity of each program unit is tested below. In each case, the
+Python statement is used with the function to test the output. The
+statement performs a Null operation if the expression that follows
+evaluates to , otherwise it raises an error. The function evaluates to
+if all elements in two test arrays are close to within a toloerance,
+otherwise it evaluates to .
+
+Verification of the n-Dimensional Elastic Bar Stiffness
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    K1D = Link2Stiffness([0, 1], 1, 1)
+    assert allclose([[1,-1],[-1,1]], K1D)
+
+.. code:: python
+
+    K2D = Link2Stiffness([[0,0], [30,40]], 5, 1000)
+    assert allclose([[ 36.,  48., -36., -48.],
+                     [ 48.,  64., -48., -64.],
+                     [-36., -48.,  36.,  48.],
+                     [-48., -64.,  48.,  64.]], K2D)
+
+.. code:: python
+
+    K3D = Link2Stiffness([[0,0,0],[2,3,6]], 10, 343)
+    assert allclose([[  40.,   60.,  120.,  -40.,  -60., -120.],
+                     [  60.,   90.,  180.,  -60.,  -90., -180.],
+                     [ 120.,  180.,  360., -120., -180., -360.],
+                     [ -40.,  -60., -120.,   40.,   60.,  120.],
+                     [ -60.,  -90., -180.,   60.,   90.,  180.],
+                     [-120., -180., -360.,  120.,  180.,  360.]], K3D)
+
+.. [1]
+   Python is an open source programming environment that comes standard
+   on most operating systems and is becoming ubiqutous in computational
+   sciences. However, the version of Python packaged on most operating
+   systems does not come with many of the components needed for
+   scientific computing (modules such as
+   `numpy <http://www.numpy.org>`__ and
+   `scipy <http://scipy.org/index.html>`__). Building and installing all
+   of the necessary components is tedious and error prone. I recommend
+   downloading and installing the
+   `Anaconda <https://www.continuum.io/downloads>`__ Python distribution
+   from `Continuum Analytics <https://continuum.io>`__. All source
+   examples were written using Anaconda Python3.5.

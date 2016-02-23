@@ -1,0 +1,330 @@
+Boundary conditions and concentrated loads
+==========================================
+
+Boundary conditions
+-------------------
+
+Overview
+~~~~~~~~
+
+Boundary conditions:
+
+-  are used to specify the values of degrees of freedom (displacements,
+   rotations, and/or temperatures) at nodes, and
+
+-  are prescribed to individual nodes, lists of nodes, or mesh regions.
+
+Multi-freedom constraint type boundary conditions are not supported.
+
+Defining boundary conditions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Boundary conditions are defined in a two-dimensional list where is a
+sublist defining the entity (node[s] or region) for which the boundary
+condition is prescribed, degree[s] of freedom to be constrained, and the
+magnitude of the boundary condition. Use any of the following options to
+prescribe a single boundary condition:
+
+Prescribe boundary condition on a single node:
+
+.. code:: python
+
+    [xnode_1, dof, magnitude]
+
+Prescribe boundary condition on a list of nodes:
+
+.. code:: python
+
+    [[xnode_1, ..., xnode_n], dof, magnitude]
+
+Prescribe boundary condition on nodes in a region:
+
+.. code:: python
+
+    [region, dof, magnitude]
+
+The specifier is valid only on rectilinear problem domains and is one of
+the following symbolic constants:
+
+-  to represent all nodes on the boundary
+
+-  , , , , , or . ,, correspond to the :math:`x`, :math:`y`, and
+   :math:`z` coordinate directions and the identifiers and to the
+   corresponding low and high boundaries.
+
+is either a single degree of freedom identifier or a list of
+identifiers. Identifiers are one of the following symbolic constants
+
++----+-----------------------------------------------------+
+|    | The :math:`x` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | The :math:`y` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | The :math:`z` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`x` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`y` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`z` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Temperature                                         |
++----+-----------------------------------------------------+
+
+is either a scalar magnitude of the boundary condition or a function
+that takes the :math:`[x,y,z]` coordinate positions of one or more nodes
+as input and returns the magnitude of the boundary condition at those
+node[s].
+
+Examples
+^^^^^^^^
+
+Constrain node 10 in the :math:`x` and :math:`y` coordinate directions:
+
+.. code:: python
+
+    [10, (X,Y), 0]
+
+Prescribe a displacement of .01 in the :math:`x` coordinate directions
+on nodes 10-20:
+
+.. code:: python
+
+    [range(10,21), X, 0.01]
+
+Constrain nodes on the right edge of a rectangular domain:
+
+.. code:: python
+
+    [IHI, (X,Y), 0]
+
+Rotation about the :math:`z` axis of :math:`\pi` radians on node 10:
+
+.. code:: python
+
+    [10, TZ, pi]
+
+Prescribe a temperature given by to nodes on the bottom edge of a
+rectangular domain:
+
+.. code:: python
+
+    def fun(x):
+        return 2. * (1. + x[:,1]) / ((3. + x[:,0])**2 + (1 + x[:,1])**2)
+    [JLO, T, fun]
+
+Concentrated loads
+------------------
+
+Overview
+~~~~~~~~
+
+Concentrated loads:
+
+-  apply concentrated forces and moments to nodal degrees of freedom,
+   and
+
+-  are fixed in direction as the node rotates.
+
+Defining concentrated loads
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Concentrated loads are defined in a two-dimensional list where is a
+sublist defining the node[s]/region for which the concentrated load is
+prescribed, degree[s] of freedom, and the magnitude of the concentrated
+load or moment. Use any of the following options to prescribe a single
+concentrated load:
+
+Concentrated load on a single node:
+
+.. code:: python
+
+    [xnode_1, dof, magnitude]
+
+Concentrated load on a list of nodes:
+
+.. code:: python
+
+    [[xnode_1, ..., xnode_n], dof, magnitude]
+
+Concentrated load on nodes in a region:
+
+.. code:: python
+
+    [region, dof, magnitude]
+
+The specifier is valid only on rectilinear problem domains and is one of
+the following symbolic constants:
+
+-  to represent all nodes on the boundary
+
+-  , , , , , or . ,, correspond to the :math:`x`, :math:`y`, and
+   :math:`z` coordinate directions and the identifiers and to the
+   corresponding low and high boundaries.
+
+is either a single degree of freedom identifier or a list of
+identifiers. Identifiers are one of the following symbolic constants
+
++----+-----------------------------------------------------+
+|    | The :math:`x` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | The :math:`y` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | The :math:`z` coordinate direction                  |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`x` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`y` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Rotation about the :math:`z` coordinate direction   |
++----+-----------------------------------------------------+
+|    | Temperature                                         |
++----+-----------------------------------------------------+
+
+is either a scalar magnitude of the boundary condition or a function
+that takes the :math:`[x,y,z]` coordinate positions of one or more nodes
+as input and returns the magnitude of the boundary condition at those
+node[s].
+
+Examples
+^^^^^^^^
+
+Concentrated load of 1000 on node 15 in the :math:`x` coordinate
+direction:
+
+.. code:: python
+
+    [15, X, 1000]
+
+Concentrated load of -500 on nodes on the top boundary of a rectangular
+domain in the :math:`y` coordinate direction:
+
+.. code:: python
+
+    [JHI, Y, -500]
+
+Concentrated moment of 200 on node 10 in the :math:`\theta_z` direction.
+
+.. code:: python
+
+    [10, TZ, 200]
+
+Internal representation of boundary conditions and concentrated loads
+---------------------------------------------------------------------
+
+Internally, boundary condition data for every node in the model are
+stored in two arrays:
+
+-  specifies the degree of freedom information, and
+
+-  specifies the magnitudes of prescribed displacement/concentrated
+   force boundary conditions.
+
+The arrays are generated from the user defined and containers by the
+function , shown in Listing [lst:bccf.bcfmt]. is defined in and is
+invoked as
+
+.. code:: python
+
+    doftags, dofvals = FormatBoundaryConditions(coord, nodmap, elecon,
+                                                eletyp, bcs, cloads)
+
+The arguments to are
+
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``coord``    | Nodal coordinates. is the ith coordinate of node n.                                                                                      |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``nodmap``   | Dictionary mapping external node labels to internal node numbers. .                                                                      |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``elecon``   | Element connectivity. is the nth internal node label of element e.                                                                       |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``eletyp``   | Element types. is the element type of element .                                                                                          |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``bcs``      | List of boundary conditions. is the ith boundary condition specification. is the node[s]/region, the DOF, and the magnitude.             |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ``cloads``   | (Optional) List of concentrated loads. is the ith concentrated force specification. is the node[s]/region, the DOF, and the magnitude.   |
++--------------+------------------------------------------------------------------------------------------------------------------------------------------+
+
+The outputs from are the containers and . and are best explained by
+example. Consider the truss in Figure [fig:bccf.space\_truss], the and
+lists are:
+
+.. code:: python
+
+    # Boundary conditions
+    bcs = [[1, Y, 0]], [[2,3,4], (X,Y,Z), 0]]
+    # Concentrated force in 'z' direction on node 1
+    cloads = [[1, Z, -1000]]
+
+[Node forces] The concentrated force of 0 applied to the ``X`` DOF of
+node 1 was not specified in ``cloads`` above. Internally, nodes on which
+displacements or point forces are not explicitly prescribed are assumed
+to have a point force of 0 applied.
+
+.. figure:: SpaceTruss1.jpeg
+   :align: center
+
+   Space truss example
+
+The corresponding and containers are:
+
+.. code:: python
+
+    doftags = [[0, 1, 0, 0, 0, 0, 0],
+               [1, 1, 1, 0, 0, 0, 0],
+               [1, 1, 1, 0, 0, 0, 0],
+               [1, 1, 1, 0, 0, 0, 0]]
+    dofvals = [[0, 0, -1000, 0, 0, 0, 0],
+               [0, 0,     0, 0, 0, 0, 0],
+               [0, 0,     0, 0, 0, 0, 0],
+               [0, 0,     0, 0, 0, 0, 0]]
+
+is the j\ :math:`^{\rm th}` degree of freedom tag for the
+i\ :math:`^{\rm th}` node. indicates that degree of freedom j of node i
+is prescribed while indicates that the corresponding force is known.
+
+The magnitudes of the prescribed degrees of freedom or force are
+transferred to the list. is the magnitude corresponding to the
+prescribed condition indicated by .
+
+It should be noted that every node for which a force/displacement
+boundary condition is not explicitly prescribed is assigned a nodal
+force of :math:`0`.
+
+.. code:: python
+
+    def FormatBoundaryConditions(coord, nodmap, elecon, eletyp,
+                                 bcs, cloads=None):
+        # doftags[i,j] = 0 indicates the jth dof of node i has a known force
+        #              = 1 indicates the jth dof of node i has a known dof
+        cloads = cloads or []
+        numnod, numdim = coord.shape
+        doftags = zeros((numnod, MDOF), dtype=int)
+        dofvals = zeros((numnod, MDOF))
+        for (itype, uitem) in enumerate((cloads, bcs)):
+            for (label, dof, mag) in uitem:
+                # convert label to internal node numbers
+                if isinstance(label, int):
+                    inodes = [nodmap[label]]
+                elif label == ALL:
+                    inodes = range(numnod)
+                elif label == BOUNDARY:
+                    inodes = BoundaryNodes(coord, elecon, eletyp)
+                elif label in (ILO, IHI, JLO, JHI, KLO, KHI):
+                    inodes = NodesInRectilinearRegion(coord, label)
+                else:
+                    inodes = [nodmap[xn] for xn in label]
+                # format the DOFs
+                dofs = dof if IsListlike(dof) else [dof]
+                try:
+                    # magnitude defined as function
+                    magnitude = mag(coord[inodes])
+                except TypeError:
+                    magnitude = mag
+                if not IsListlike(magnitude):
+                    magnitude = ones_like(inodes)*magnitude
+                for (i,inode) in enumerate(inodes):
+                    for j in dofs:
+                        doftags[inode,j] = itype
+                        dofvals[inode,j] = float(magnitude[i])
+        return doftags, dofvals

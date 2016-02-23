@@ -1,0 +1,273 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>2.2. Space truss &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="2. pyfem2 Tutorials" href="index.html" />
+    <link rel="next" title="2.3. Diffusive Heat Transfer" href="Heat1.html" />
+    <link rel="prev" title="2.1. Plane truss" href="Truss1.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="space-truss">
+<span id="truss2"></span><h1>2.2. Space truss<a class="headerlink" href="#space-truss" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="objective">
+<h2>2.2.1. Objective<a class="headerlink" href="#objective" title="Permalink to this headline">¶</a></h2>
+<p>This example demonstrates the use of the <code class="docutils literal"><span class="pre">TrussModel</span></code>  to solve for the deflections in a space truss.  <code class="docutils literal"><span class="pre">TrussModel</span></code> is described in more detail in <a class="reference internal" href="../Implementation/Truss1.html#trussmodel"><span>TrussSolution: A Complete Truss Program</span></a>.</p>
+</div>
+<div class="section" id="problem-description">
+<h2>2.2.2. Problem description<a class="headerlink" href="#problem-description" title="Permalink to this headline">¶</a></h2>
+<p>Consider the six bay plane truss shown (credit: <a class="reference external" href="http://www.colorado.edu/engineering/CAS/courses.d/IFEM.d/IFEM.Ch21.d/IFEM.Ch21.pdf">Ch. 21</a> of Prof. Felippa’s introductory finite element course materials).</p>
+<div class="figure align-center" id="id1">
+<img alt="../_images/SpaceTrussEx.png" src="../_images/SpaceTrussEx.png" />
+<p class="caption"><span class="caption-text">25-member space truss model of a transmission tower. (a): Geometry definition and node numbers; (b) element numbers.</span></p>
+</div>
+</div>
+<div class="section" id="model-script">
+<h2>2.2.3. Model script<a class="headerlink" href="#model-script" title="Permalink to this headline">¶</a></h2>
+<p>The problem is defined and solved in <code class="docutils literal"><span class="pre">pyfem2</span></code> as follows:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">pyfem2 tutorial demo program: Plane truss.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">V</span> <span class="o">=</span> <span class="n">TrussModel</span><span class="p">()</span>
+
+<span class="c1"># Create mesh and define function space</span>
+<span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">200</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">200</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],[</span><span class="mi">5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],[</span><span class="mi">6</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">7</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">8</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">9</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">10</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span>
+<span class="n">eletab</span> <span class="o">=</span> <span class="p">[[</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],[</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">],[</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],[</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],[</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+          <span class="p">[</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">],[</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">],[</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],[</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">],[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],[</span><span class="mi">14</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">],[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">],[</span><span class="mi">17</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">],[</span><span class="mi">18</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">],[</span><span class="mi">19</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">],[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span><span class="mi">10</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">21</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">9</span><span class="p">],[</span><span class="mi">22</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span><span class="mi">10</span><span class="p">],[</span><span class="mi">23</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">],[</span><span class="mi">24</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">],[</span><span class="mi">25</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">]]</span>
+<span class="n">V</span><span class="o">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">nodtab</span><span class="o">=</span><span class="n">nodtab</span><span class="p">,</span> <span class="n">eletab</span><span class="o">=</span><span class="n">eletab</span><span class="p">)</span>
+
+<span class="c1"># Define element blocks</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
+
+<span class="c1"># Assign properties</span>
+<span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">333</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.033</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span>
+     <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span>
+     <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">]</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">Link3D2</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">)</span>
+
+<span class="c1"># Define boundary conditons</span>
+<span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Define concentrated loads</span>
+<span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span> <span class="o">-</span><span class="mi">5000</span><span class="p">,</span> <span class="mi">500</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">P1</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">X</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span>
+
+<span class="c1"># Solve and write results</span>
+<span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
+<span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;Truss2.exo&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-does-it-work">
+<h2>2.2.4. How does it work?<a class="headerlink" href="#how-does-it-work" title="Permalink to this headline">¶</a></h2>
+<p>The complete code can be found in the files <code class="docutils literal"><span class="pre">examples/Truss2.py</span></code>. We now examine the preceding program in detail.</p>
+<p>The first lines of the program,</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>import objects from the <code class="docutils literal"><span class="pre">numpy</span></code> and <code class="docutils literal"><span class="pre">pyfem2</span></code> namespaces in to the program.
+<a class="reference external" href="http://www.numpy.org">numpy</a> is a python package providing numerical data
+types and procedures. The key imports from the <code class="docutils literal"><span class="pre">pyfem2</span></code> library is
+the <code class="docutils literal"><span class="pre">TrussModel</span></code>.</p>
+<p>The statement</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span> <span class="o">=</span> <span class="n">TrussModel</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>creates the finite element model.  The finite element mesh is created by defining tables of nodes and elements (see <a class="reference internal" href="../ModelDefinition/Mesh.html#nodedefinition"><span>Nodes</span></a> and <a class="reference internal" href="../ModelDefinition/Mesh.html#elementdefinition"><span>Elements</span></a>) and passing them to the <code class="docutils literal"><span class="pre">Mesh</span></code> method:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">200</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">200</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],[</span><span class="mi">5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],[</span><span class="mi">6</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">7</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">8</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">9</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">10</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span>
+<span class="n">eletab</span> <span class="o">=</span> <span class="p">[[</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],[</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">],[</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],[</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],[</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+          <span class="p">[</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">],[</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">],[</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],[</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">],[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],[</span><span class="mi">14</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">],[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">],[</span><span class="mi">17</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">],[</span><span class="mi">18</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">],[</span><span class="mi">19</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">8</span><span class="p">],[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span><span class="mi">10</span><span class="p">],</span>
+          <span class="p">[</span><span class="mi">21</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">9</span><span class="p">],[</span><span class="mi">22</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span><span class="mi">10</span><span class="p">],[</span><span class="mi">23</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">],[</span><span class="mi">24</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">],[</span><span class="mi">25</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">]]</span>
+<span class="n">V</span><span class="o">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">nodtab</span><span class="o">=</span><span class="n">nodtab</span><span class="p">,</span> <span class="n">eletab</span><span class="o">=</span><span class="n">eletab</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The finite element model <code class="docutils literal"><span class="pre">V</span></code> requires that every element in the mesh be
+assigned an element type and material constitutive relations. The assignment
+occurs by grouping elements of the same type together in to element blocks and
+then assigning to those element blocks material and fabrication properties.
+For this problem, every element in the mesh is a <code class="docutils literal"><span class="pre">Link3D2</span></code> two-node elastic
+bar element (an elastic bar element with two degrees of freedom per node). The
+element block, named <code class="docutils literal"><span class="pre">ElementBlock1</span></code>, containing all of the elements in the
+mesh is created by:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The symbol <code class="docutils literal"><span class="pre">ALL</span></code> informs the <code class="docutils literal"><span class="pre">ElementBlock</span></code> method to assign all elements
+in the mesh to the block <code class="docutils literal"><span class="pre">ElementBlock1</span></code>. Material properties are defined by
+the <code class="docutils literal"><span class="pre">Material</span></code> method and elements in a block are assigned material and
+fabrication properties by the <code class="docutils literal"><span class="pre">AssignProperties</span></code> method:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">333</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.033</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span>
+     <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span>
+     <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">]</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">Link3D2</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The method <code class="docutils literal"><span class="pre">AssignProperties</span></code> takes as input the name of the element block
+to which properties are being assigned, the element type for elements in the
+block, the material model name, and any element fabrication properties. For
+<code class="docutils literal"><span class="pre">Link2D2</span></code> elements, the area <code class="docutils literal"><span class="pre">A</span></code> is the only fabrication property.</p>
+<p>The next step is to specify the boundary conditions <span class="math">\(u_{7}=u_{8}=u_9=u_{10}=0\)</span>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The point forces at nodes 1, 2, 3, and 6</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span> <span class="o">-</span><span class="mi">5000</span><span class="p">,</span> <span class="mi">500</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">P1</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">X</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, the unknown displacements are determined by solving the model and the model results are written to an ExodusII output file</p>
+<blockquote>
+<div>V.Solve()
+V.WriteResults(&#8216;Truss2.exo&#8217;)</div></blockquote>
+<p>The deformed geometry, viewed in <a class="reference external" href="http://www.paraview.org">ParaView</a>, is shown below</p>
+<div class="figure align-center">
+<img alt="../_images/SpaceTrussEx2.png" src="../_images/SpaceTrussEx2.png" />
+</div>
+<p>The deformed plots show contours of displacement magnitude.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Truss1.html">2.1. Plane truss</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">2.2. Space truss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Heat1.html">2.3. Diffusive Heat Transfer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Plane1.html">2.4. Plane Elasticity, 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Plane2.html">2.5. Plane Elasticity, 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Postprocessing.html">2.6. Post processing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a><ul>
+      <li>Previous: <a href="Truss1.html" title="previous chapter">2.1. Plane truss</a></li>
+      <li>Next: <a href="Heat1.html" title="next chapter">2.3. Diffusive Heat Transfer</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/Tutorials/Truss2.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

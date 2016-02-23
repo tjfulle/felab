@@ -1,0 +1,49 @@
+.. _ElementDefinition:
+
+Element definition
+==================
+
+Overview
+--------
+
+An element is a mathematical relation that defines how the degrees of
+freedom of a node relate to the next. An element definition consists of
+
+-  an element type,
+
+-  an element label, and
+
+-  list of node labels forming the element.
+
+The element type ID is a unique ID defined in ``pyfem``. See :ref:`ElementLibrary` for description of each element type.
+
+Defining elements
+-----------------
+
+An element label is a positive integer by which the element is
+identified. Element labels do not need to be numbered continuously.
+Individual element labels are consistently identified by symbols or .
+All external communication uses external element labels.
+
+The node labels forming the element refer to the external node labels.
+Node labels must be ordered as required by the element type.
+
+Elements are defined in a two-dimensional list where is a sublist
+defining the element label, element type, and external node labels of
+nodes forming element . For example, the definition for element in
+Figure [fig:nodandel.elem1] is
+
+.. figure:: Element1.png
+   :align: center
+
+   Element e
+
+.. code:: python
+
+    elem_e = [e, eletyp_e, i, j]
+
+and the collection of elements is
+
+.. code:: python
+
+    eletab = [elem_1, elem_2, ..., elem_e, ..., elem_M]
