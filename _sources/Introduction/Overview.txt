@@ -1,7 +1,7 @@
 Overview
 ========
 
-``pyfem2`` is a Python [1]_ package providing modules, classes, and functions
+``pyfem2`` is a Python [1]_, [2]_ package providing modules, classes, and functions
 for setting up and solving finite element models. It is implemented using
 object oriented programming techniques. The intended audience is students who
 have a familiarity with the finite element method and are interested in learning
@@ -23,3 +23,6 @@ introduction to the computational implementation of the finite element method.  
    `Anaconda <https://www.continuum.io/downloads>`__ Python distribution
    from `Continuum Analytics <https://continuum.io>`__. All source
    examples were written using Anaconda Python3.5.
+
+.. [2]
+   ``pyfem2`` is tested in Python 2.7 and Python 3.5

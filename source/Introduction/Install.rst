@@ -27,7 +27,19 @@ move the package to a location on your file system and add that location
 to your ``PYTHONPATH`` environment variable. For example, if ``pyfem2`` is downloaded
 and placed in the ``Documents`` folder in your home directory:
 
-- **Mac OS X or Linx:** add ``export PYTHONPATH=$HOME/Documents/pyfem2`` to your ``.bashrc`` (if using a variant of ``bash``) or ``setenv PYTHONPATH $HOME/Documents/pyfem2`` to your ``.cshrc`` (if using a variant of ``csh``)
+- **Mac OS X or Linux:** create a ``PYTHONPATH`` environment variable that points to ``$HOME/Documents/pyfem2``:
+
+  - For bash (or variant of bash) shell put the following in your ``.bashrc`` or ``.bash_profile``:
+
+    .. code:: shell
+
+       export PYTHONPATH=$HOME/Documents/pyfem2
+
+  - For csh (or variant of csh) shell put the following in your ``.cshrc``
+
+    .. code:: shell
+
+       setenv PYTHONPATH $HOME/Documents/pyfem2
 
 -  **Windows:** create a ``PYTHONPATH`` environment variable that points to ``%HOMEPATH%\My Documents\pyfem2``:
 
@@ -36,6 +48,8 @@ and placed in the ``Documents`` folder in your home directory:
    - Click ``Advanced System Settings``
    - Under the ``Advanced`` tab, click on ``Environment Variables``
    - Edit or create the ``PYTHONPATH`` environment variable.
+
+If you are using a Python IDE, like Spyder, you may also need to modify the python module search path within that application.
 
 Testing the installation
 ------------------------
