@@ -8,7 +8,7 @@ from constants import *
 # --------------------------------------------------------------------------- #
 class UserInputError(Exception):
     def __init__(self, message):
-        sys.tracebacklimit = -1
+        sys.tracebacklimit = 1
         super(UserInputError, self).__init__(message)
 
 def IX(*args):

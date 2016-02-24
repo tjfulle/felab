@@ -94,10 +94,10 @@ class Mesh(object):
         o2 = filename is not None
         o3 = p is not None and t is not None
         if not (o1 or o2 or o3):
-            raise ValueError('nodtab/eletab, filename, or p/t required')
+            raise UserInputError('nodtab/eletab, filename, or p/t required')
         elif len([x for x in (o1, o2, o3) if x]) > 1:
-            raise ValueError('nodtab/eletab, filename, an p/t are '
-                             'mutually exclusive')
+            raise UserInputError('nodtab/eletab, filename, an p/t are '
+                                 'mutually exclusive')
         if o1:
             # Format nodes and elements
             data = self.parse_nod_and_elem_tables(nodtab, eletab)
@@ -113,7 +113,7 @@ class Mesh(object):
             self.init1(nodmap, p, eletab)
 
         else:
-            raise ValueError('nodtab/eletab or filename required')
+            raise UserInputError('nodtab/eletab or filename required')
 
         self._bndry_nod2 = None
         self._free_edges = None
@@ -178,7 +178,7 @@ class Mesh(object):
                        exo.nodesets, exo.elemsets, exo.sidesets)
 
         else:
-            raise ValueError('Unknown file type')
+            raise UserInputError('Unknown file type')
 
     def get_internal_node_ids(self, label):
         if is_stringlike(label) and label in self.nodesets:
@@ -231,7 +231,7 @@ class Mesh(object):
         numnod, maxdim = len(nodtab), 0
         for (inode, noddef) in enumerate(nodtab):
             if noddef[0] in nodmap:
-                raise ValueError('Duplicate node label: {0}'.format(noddef[0]))
+                raise UserInputError('Duplicate node label: {0}'.format(noddef[0]))
             nodmap[noddef[0]] = inode
         maxdim = max(maxdim, len(noddef[1:]))
         coord = zeros((numnod, maxdim))
@@ -242,7 +242,8 @@ class Mesh(object):
         eletab1 = {}
         for (iel, eledef) in enumerate(eletab):
             if eledef[0] in eletab1:
-                raise ValueError('Duplicate element label: {0}'.format(eledef[0]))
+                raise UserInputError('Duplicate element label: '
+                                     '{0}'.format(eledef[0]))
             eletab1[eledef[0]] = [nodmap[n] for n in eledef[1:]]
 
         return nodmap, coord, eletab1
@@ -250,8 +251,8 @@ class Mesh(object):
     def find_edges(self):
         # Find edges
         if self.unassigned:
-            raise ValueError('Mesh element operations require all elements be '
-                             'assigned to an element block')
+            raise UserInputError('Mesh element operations require all elements be '
+                                 'assigned to an element block')
         if self._free_edges is not None:
             return self._free_edges
 
@@ -283,12 +284,12 @@ class Mesh(object):
             return [argmin(self.coord), argmax(self.coord)]
         elif self.numdim == 2:
             return self.boundary_nodes2()
-        raise ValueError('3D meshes not supported')
+        raise UserInputError('3D meshes not supported')
 
     def nodes_in_rectilinear_region(self, region, tol=1e-6):
         # Find nodes in region
         if region not in (ILO, IHI, JLO, JHI, KLO, KHI):
-            raise ValueError('unknown region {0!r}'.format(region))
+            raise UserInputError('unknown region {0!r}'.format(region))
         axis, fun = {ILO: (0, amin),
                      IHI: (0, amax),
                      JLO: (1, amin),
@@ -300,8 +301,8 @@ class Mesh(object):
 
     def find_surface(self, region):
         if self.unassigned:
-            raise ValueError('Mesh element operations require all elements be '
-                             'assigned to an element block')
+            raise UserInputError('Mesh element operations require all elements be '
+                                 'assigned to an element block')
         if is_stringlike(region) and region in self.surfaces:
             return self.surfaces[region]
         if region in (ILO, IHI, JLO, JHI, KLO, KHI):
@@ -311,7 +312,7 @@ class Mesh(object):
                 return self.find_surface2(region)
         # Check if region is a surface
         if not is_listlike(region):
-            raise ValueError('Unrecognized surface: {0}'.format(region))
+            raise UserInputError('Unrecognized surface: {0}'.format(region))
         surface = []
         for item in region:
             elem, edge = item
@@ -323,7 +324,7 @@ class Mesh(object):
 
     def find_surface1(self, region):
         if region not in (ILO, IHI):
-            raise ValueError('Incorrect 1D region')
+            raise UserInputError('Incorrect 1D region')
         if region == ILO:
             node = argmin(self.coord)
         else:
@@ -363,23 +364,23 @@ class Mesh(object):
 
     def NodeSet(self, name, region):
         if not is_stringlike(name):
-            raise ValueError('Name must be a string')
+            raise UserInputError('Name must be a string')
         self.nodesets[name] = self.get_internal_node_ids(region)
 
     def Surface(self, name, surface):
         if self.unassigned:
-            raise ValueError('Mesh element operations require all elements be '
-                             'assigned to an element block')
+            raise UserInputError('Mesh element operations require all elements be '
+                                 'assigned to an element block')
         if not is_stringlike(name):
-            raise ValueError('Name must be a string')
+            raise UserInputError('Name must be a string')
         self.surfaces[name] = self.find_surface(surface)
 
     def ElementSet(self, name, region):
         if self.unassigned:
-            raise ValueError('Mesh element operations require all elements be '
-                             'assigned to an element block')
+            raise UserInputError('Mesh element operations require all elements be '
+                                 'assigned to an element block')
         if not is_stringlike(name):
-            raise ValueError('Name must be a string')
+            raise UserInputError('Name must be a string')
         if region == ALL:
             ielems = range(self.numele)
         else:
@@ -391,7 +392,7 @@ class Mesh(object):
     def ElementBlock(self, name, elements):
 
         if name in self.element_blocks:
-            raise ValueError('{0!r} already an element block'.format(name))
+            raise UserInputError('{0!r} already an element block'.format(name))
         if elements == ALL:
             xelems = sorted(self.elemap.keys())
         else:
@@ -400,7 +401,7 @@ class Mesh(object):
             xelems = elements
 
         if not self.unassigned:
-            raise ValueError('All elements have been assigned')
+            raise UserInputError('All elements have been assigned')
 
         # Elements are numbered in the order the appear in element blocks,
         # we need to map from the temporary internal numbers
@@ -419,8 +420,8 @@ class Mesh(object):
             blkcon.append(elenod)
         if badel:
             badel = ',\n   '.join(str(e) for e in badel)
-            raise ValueError('The following elements have inconsistent element '
-                             'connectivity:\n   {0}'.format(badel))
+            raise UserInputError('The following elements have inconsistent element '
+                                 'connectivity:\n   {0}'.format(badel))
         blkcon = array(blkcon, dtype=int)
         elefam = ElementFamily(self.numdim, blkcon.shape[1])
         blk = ElementBlock(name, len(self.eleblx)+1, xelems, elefam, blkcon)
@@ -562,9 +563,9 @@ class Mesh(object):
 def GenRectilinearMesh2D(shape, lengths):
     nx, ny = shape
     if nx < 1:
-        raise ValueError('Requres at least 1 element in x')
+        raise UserInputError('Requres at least 1 element in x')
     if ny < 1:
-        raise ValueError('Requres at least 1 element in y')
+        raise UserInputError('Requres at least 1 element in y')
 
     shape = asarray([nx+1,ny+1])
     lx, ly = lengths
@@ -642,7 +643,7 @@ def INP2Genesis(filename):
             if kw == 'element':
                 name = opts.get('elset')
                 if name is None:
-                    raise ValueError('requires elements be put in elset')
+                    raise UserInputError('requires elements be put in elset')
                 eleblx[name] = []
             elif kw == 'nset':
                 name = opts['nset']

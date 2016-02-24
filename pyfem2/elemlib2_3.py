@@ -37,7 +37,8 @@ class IsoPTria3(IsoPElement):
         self.material = elemat
         self.t = elefab.get('t')
         if self.t is None:
-            raise ValueError('Incorrect number of element fabrication properties')
+            raise UserInputError('Incorrect number of element '
+                                 'fabrication properties')
 
     @property
     def area(self):
