@@ -1,5 +1,6 @@
 from numpy import *
-from isoplib import IsoPElement
+
+from .isoplib import IsoPElement
 
 __all__ = ['PlaneStressTria3', 'PlaneStrainTria3']
 

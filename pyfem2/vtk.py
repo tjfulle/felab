@@ -5,8 +5,8 @@ from os.path import join, isdir
 from numpy import *
 import xml.dom.minidom as xdom
 
-from elemlib1 import ElementFamily
-from constants import *
+from .constants import *
+from .elemlib1 import ElementFamily
 
 MESHD = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../meshes')
 assert os.path.isdir(MESHD)

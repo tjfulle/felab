@@ -20,4 +20,5 @@ V.Solve()
 
 V.WriteResults('Plane1.exo')
 
-V.Plot2D(show=1, deformed=1, colorby='Ux')
+if not os.getenv('NOGRAPHICS'):
+    V.Plot2D(show=1, deformed=1, colorby='Ux')

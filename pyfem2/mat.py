@@ -1,6 +1,6 @@
 from numpy import *
 from numpy.linalg import inv
-from elas import elas
+from .elas import elas
 
 __all__ = ['Material']
 

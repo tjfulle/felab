@@ -2,9 +2,9 @@ import os
 from numpy import *
 from argparse import ArgumentParser
 
-from constants import *
-from utilities import is_listlike
-from elemlib1 import ElementFamily
+from .constants import *
+from .utilities import is_listlike
+from .elemlib1 import ElementFamily
 
 __all__ = ['Mesh']
 
@@ -166,8 +166,8 @@ class Mesh(object):
         self.num_assigned = self.numele
 
     def init_from_file(self, filename):
-        import vtk
-        import exodusii
+        import pyfem2.vtk as vtk
+        import pyfem2.exodusii as exodusii
         if filename.endswith(('.vtk', '.vtu')):
             data = self.parse_nod_and_elem_tables(*vtk.ReadMesh(filename))
             self.init1(*data)
@@ -454,7 +454,6 @@ class Mesh(object):
         return cls(nodtab, eletab)
 
     def to_genesis(self, filename):
-        from exodusii import File
         exof = File(filename, mode='w')
         if not self.eleblx:
             # put in a single element block
@@ -552,7 +551,7 @@ class Mesh(object):
         return
 
     def PutNodalSolution(self, filename, u):
-        import exodusii
+        import pyfem2.exodusii as exodusii
         if not self.eleblx:
             self.ElementBlock('ElementBlock1', ALL)
         if not filename.endswith(('.exo', '.e')):
@@ -678,9 +677,3 @@ def INP2Genesis(filename):
     outfile = os.path.splitext(filename)[0] + '.g'
     mesh.to_genesis(outfile)
     return
-
-import glob
-d = os.path.realpath('../meshes')
-files = glob.glob(d + '/*.inp')
-for file in files:
-    INP2Genesis(file)

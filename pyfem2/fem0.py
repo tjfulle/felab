@@ -85,15 +85,3 @@ def UniformBar(xa, xb, A, E, p, q, numele=10):
         e[i] = du / he
 
     return u, e, elefor
-
-def test_1():
-    xa, xb = 0., 1.
-    A, E, p, q = 1, 1, 1, 0
-    u, e, f = UniformBar(xa, xb, A, E, p, q, numele=10)
-    assert abs(u[-1] - 1.) < 1e-12
-
-def test_2():
-    xa, xb = 0., 1.
-    A, E, p, q = 1, 1, 1, 1
-    u, e, f = UniformBar(xa, xb, A, E, p, q, numele=1000)
-    assert abs(u[-1] - 1.5) < 5e-4

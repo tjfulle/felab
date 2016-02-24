@@ -1,5 +1,6 @@
 from numpy import *
-from isoplib import IsoPElement, IsoPReduced
+
+from .isoplib import IsoPElement, IsoPReduced
 
 __all__ = ['PlaneStressQuad4', 'PlaneStrainQuad4', 'PlaneStrainQuad4Reduced',
            'PlaneStrainQuad4BBar']

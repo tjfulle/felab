@@ -1,6 +1,7 @@
 from numpy import *
-from utilities import *
-from elemlib1 import Element
+
+from .utilities import *
+from .elemlib1 import Element
 
 __all__ = ['DiffussiveHeatTransfer2D3']
 

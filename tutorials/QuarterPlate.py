@@ -33,5 +33,6 @@ for step in F.steps:
 # External and internal element numbers
 xel = max_p[1].label
 x = F.get_elem_coord(xel)
-print(max_p[0])
-V.Plot2D(deformed=1)
+if not os.getenv('NOGRAPHICS'):
+    print(max_p[0])
+    V.Plot2D(deformed=1)

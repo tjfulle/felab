@@ -2,7 +2,8 @@ from numpy import *
 from numpy.linalg import eigvalsh
 import logging
 from collections import OrderedDict
-from utilities import *
+
+from .utilities import *
 
 def component_labels(type, numdim, ndir, nshr):
     if type == SYMTENSOR:

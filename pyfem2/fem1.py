@@ -2,12 +2,14 @@ import os
 import logging
 from numpy import *
 import numpy.linalg as la
-from utilities import *
-from constants import *
-from data import TimeStepRepository
-from mesh import Mesh
-from data import TimeStepRepository
-from mat import Material
+
+from .utilities import *
+from .constants import *
+from .data import TimeStepRepository
+from .mesh import Mesh
+from .data import TimeStepRepository
+from .mat import Material
+from .exodusii import File
 
 __all__ = ['FiniteElementModel']
 
@@ -300,7 +302,6 @@ class FiniteElementModel(object):
         self.steps[-1].add_data(**kwds)
 
     def _write_steps(self, filename):
-        from exodusii import File
         if not filename.endswith(('.e', '.exo')):
             filename += '.exo'
         f = File(filename, mode='w')
@@ -1106,13 +1107,15 @@ class FiniteElementModel(object):
         if key1 in ('u', 'ux', 'uy', 'uz'):
             key1 = 'displ' + key1[1:]
         for (name, field) in self.steps[-1].field_outputs.items():
-            if key1 == name.lower():
+            if key1 == name.lower() or key.lower() == name.lower():
                 if field.type != SCALAR:
                     comps = ','.join(key+comp for comp in field.components)
                     msg = 'Non scalar plotting requires components be specified. '
                     msg += 'Try one of {0}'.format(comps)
                     raise UserInputError(msg)
                 return field.data
+            if key.lower() == name.lower():
+                key1 = key.lower()
             comps = [(field.key+c).lower() for c in field.components]
             if key1 in comps:
                 if field.position in (ELEMENT, INTEGRATION_POINT):

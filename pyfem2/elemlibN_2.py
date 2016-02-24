@@ -1,6 +1,6 @@
 from numpy import *
-from utilities import *
-from elemlib1 import Element
+from .utilities import *
+from .elemlib1 import Element
 
 __all__ = ['ElasticLink1D2', 'ElasticLink2D2', 'ElasticLink3D2', 'BeamColumn2D']
 
@@ -170,49 +170,3 @@ class BeamColumn2D(Element):
                                      [0., -6.,   -3.*h,   0.,  6.,  -3.*h  ],
                                      [0.,  3.*h,  h*h,    0., -3.*h, 2.*h*h]])
         return dot(dot(Te.T, K1+K2), Te)
-
-# --------------------------------------------------------------------------- #
-# --------------------------- ELEMENT TESTS --------------------------------- #
-# --------------------------------------------------------------------------- #
-def test_1():
-    """ElasticLink2 stiffness test"""
-    class mat: E = 1
-    El = ElasticLink1D2(1, [0, 1], [0, 1], mat, A=1)
-    K1D = El.stiffness()
-    assert allclose([[1,-1],[-1,1]], K1D)
-
-def test_2():
-    """ElasticLink2 stiffness test"""
-    class mat: E=1000
-    El = ElasticLink2D2(1, [0, 1], [[0,0], [30,40]], mat, A=5)
-    K2D = El.stiffness()
-    assert allclose([[ 36.,  48., -36., -48.],
-                     [ 48.,  64., -48., -64.],
-                     [-36., -48.,  36.,  48.],
-                     [-48., -64.,  48.,  64.]], K2D)
-
-def test_3():
-    """ElasticLink2 stiffness test"""
-    class mat: E = 343
-    El = ElasticLink3D2(1, [0, 1], [[0,0,0],[2,3,6]], mat, A=10)
-    K3D = El.stiffness()
-    assert allclose([[  40.,   60.,  120.,  -40.,  -60., -120.],
-                     [  60.,   90.,  180.,  -60.,  -90., -180.],
-                     [ 120.,  180.,  360., -120., -180., -360.],
-                     [ -40.,  -60., -120.,   40.,   60.,  120.],
-                     [ -60.,  -90., -180.,   60.,   90.,  180.],
-                     [-120., -180., -360.,  120.,  180.,  360.]], K3D)
-
-def test_4():
-    """Beam-Column stiffness test"""
-    coord = array([[0, 0], [3, 4]], dtype=float)
-    class mat: E = 100
-    A, Izz = 125, 250
-    El = BeamColumn2D(1, [0, 1], coord, mat, A=A, Izz=Izz)
-    Ke = El.stiffness()
-
-if __name__ == '__main__':
-    test_1()
-    test_2()
-    test_3()
-    test_4()

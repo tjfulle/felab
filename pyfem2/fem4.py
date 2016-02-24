@@ -1,9 +1,10 @@
 from numpy import *
 from numpy.linalg import solve, LinAlgError, det
-from constants import *
-from utilities import *
-from fem1 import FiniteElementModel
-from isoplib import IsoPElement
+
+from .constants import *
+from .utilities import *
+from .fem1 import FiniteElementModel
+from .isoplib import IsoPElement
 
 class Plane2DModel(FiniteElementModel):
     numdim = 2
@@ -46,20 +47,3 @@ class Plane2DModel(FiniteElementModel):
                 self.steps[-1].field_outputs['E'].data[ieb][iel] = e1
                 self.steps[-1].field_outputs['S'].data[ieb][iel] = s1
         return
-
-def gravity_load1():
-    from elemlib2_4 import PlaneStrainQuad4, PlaneStressQuad4
-    V = Plane2DModel()
-    V.RectilinearMesh((101, 11), (100, 10))
-    V.Material('Material-1')
-    V.materials['Material-1'].Density(1.)
-    V.materials['Material-1'].Elastic(E=10e6, Nu=.333)
-    V.ElementBlock('Block1', ALL)
-    V.AssignProperties('Block1', PlaneStrainQuad4, 'Material-1', t=1)
-    V.FixNodes(ILO)
-    V.GravityLoad(ALL, [0, -1e2])
-    V.Solve()
-    V.WriteResults('Job4')
-
-if __name__ == '__main__':
-    gravity_load1()

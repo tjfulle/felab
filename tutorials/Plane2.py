@@ -24,6 +24,7 @@ V.Solve()
 
 V.WriteResults('Plane2.exo')
 
-V.Plot2D(show=1, deformed=1)
+if not os.getenv('NOGRAPHICS'):
+    V.Plot2D(show=1, deformed=1)
 
 #PlotScalar2D(V.mesh.coord, V.mesh.elecon, V.dofs.flatten())

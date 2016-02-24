@@ -1,5 +1,5 @@
 from numpy import *
-from isoplib import IsoPElement
+from .isoplib import IsoPElement
 
 c = -sqrt(3./5.)
 __all__ = ['PlaneStrainQuad8', 'PlaneStressQuad8', 'PlaneStrainQuad8BBar']

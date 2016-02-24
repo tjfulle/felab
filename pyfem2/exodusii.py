@@ -4,10 +4,12 @@ import sys
 import datetime
 from numpy import *
 from os.path import basename, join, splitext, isfile
-from netcdf import NetCDFFile
-from elemlib1 import ElementFamily
-from data import TimeStepRepository
-from constants import *
+
+from .constants import *
+from .mesh import ElementBlock
+from .netcdf import NetCDFFile
+from .elemlib1 import ElementFamily
+from .data import TimeStepRepository
 
 __all__ = ['File', 'PutNodalSolution']
 
@@ -503,7 +505,6 @@ class EXOFileReader(EXOFile):
             self.read_results()
 
     def read(self):
-        from mesh import ElementBlock
         # --- Read in the mesh
 
         # Basic dimensioning information

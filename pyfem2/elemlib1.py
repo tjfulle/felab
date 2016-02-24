@@ -1,5 +1,6 @@
 from numpy import *
-from utilities import *
+
+from .utilities import *
 
 # --------------------------------------------------------------------------- #
 # -------------------------- BASE ELMENT CLASS ------------------------------ #

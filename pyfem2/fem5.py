@@ -4,9 +4,9 @@
 from numpy import *
 from numpy.linalg import solve, LinAlgError
 
-from constants import *
-from fem1 import FiniteElementModel
-from elemlibN_2 import ElasticLink2D2, BeamColumn2D
+from .constants import *
+from .fem1 import FiniteElementModel
+from .elemlibN_2 import ElasticLink2D2, BeamColumn2D
 
 # --------------------------------------------------------------------------- #
 # -------------------------- APPLICATION CODE ------------------------------- #
@@ -63,56 +63,3 @@ class PlaneBeamColumnTrussModel(FiniteElementModel):
                         rr[n] = R[ii]
                     ix += 1
         return ut, rt, ur, rr
-
-# --------------------------------------------------------------------------- #
-# --------------------------------- TESTS ----------------------------------- #
-# --------------------------------------------------------------------------- #
-def test_1():
-    nodtab = [[1,-4,3], [2,0,0], [3,0,3], [4,nan,nan], [5,4,3]]
-    eletab = [[1,1,3], [2,3,5], [3,1,2], [4,2,3], [5,2,5]]
-    V = PlaneBeamColumnTrussModel()
-    V.Mesh(nodtab=nodtab, eletab=eletab)
-    Ec, Em = 30000, 200000
-    V.Material('Material-1')
-    V.materials['Material-1'].Elastic(E=Ec, Nu=.3)
-    V.Material('Material-2')
-    V.materials['Material-2'].Elastic(E=Em, Nu=.3)
-    V.ElementBlock('B1', (1,2))
-    V.ElementBlock('B2', (3,5))
-    V.ElementBlock('B3', (4,))
-
-    V.AssignProperties('B1', BeamColumn2D, 'Material-1', A=.02, Izz=.004)
-    V.AssignProperties('B2', ElasticLink2D2, 'Material-2', A=.001)
-    V.AssignProperties('B3', ElasticLink2D2, 'Material-2', A=.003)
-
-    V.PrescribedBC(1, (X,Y,TZ))
-    V.PrescribedBC(5, Y)
-
-    V.ConcentratedLoad(2, Y, 100)
-    V.ConcentratedLoad(5, TZ, 200)
-    V.ConcentratedLoad(5, X, 300)
-
-    V.Solve()
-
-def test_2():
-    from mesh import Mesh
-    from mat import Material
-    nodtab = [[1,0,0], [2,3,4], [3,0,4]]
-    eletab = [[1,1,2], [2,1,3]]
-    V = PlaneBeamColumnTrussModel()
-    V.Mesh(nodtab=nodtab, eletab=eletab)
-    V.Material('Material-1')
-    V.materials['Material-1'].Elastic(E=70e9, Nu=.3)
-    V.ElementBlock('B1', ALL)
-    V.AssignProperties('B1', ElasticLink2D2, 'Material-1', A=5*.01*.01)
-    V.PrescribedBC(1, X, -.05)
-    V.PrescribedBC((2,3), (X,Y))
-    V.ConcentratedLoad(1, Y, 1000e3)
-    V.Solve()
-    assert allclose([[-0.05,     0.0882842],
-                     [ 0.,       0.,      ],
-                     [ 0.,       0.,      ]], V.u)
-
-if __name__ == '__main__':
-    test_1()
-    test_2()

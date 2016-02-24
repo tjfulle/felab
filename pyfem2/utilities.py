@@ -1,7 +1,7 @@
 import sys
 from numpy import *
 from math import log as logm
-from constants import *
+from .constants import *
 
 # --------------------------------------------------------------------------- #
 # -------------------------- UTILITY FUNCTIONS ------------------------------ #
