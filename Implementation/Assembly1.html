@@ -49,34 +49,35 @@ corresponding locations in the global equations. The assembler described
 constructs and merges one element at a time and adopts the following
 assumptions:</p>
 <ul class="simple">
-<li>nodes are ordered continuously from <span class="math">\(0\rightarrow n-1\)</span>, where
-<span class="math">\(n\)</span> is the total number of nodes,</li>
-<li>the number and type of degrees of freedom at each node is the same,</li>
-<li>there are no multifreedom constraints, and</li>
+<li>internal node numbers are ordered continuously from
+<span class="math">\(0\rightarrow n-1\)</span>, where <span class="math">\(n\)</span> is the total number of nodes (though
+external node labels can be assigned arbitrarily, see
+<a class="reference internal" href="InternalNodesAndElements.html#internalnodesandelements"><span>Nodes and elements</span></a>);</li>
+<li>the number and type of degrees of freedom at each node is the same;</li>
+<li>there are no multifreedom constraints; and</li>
 <li>the global stiffness matrix is stored as a full symmetric matrix.</li>
 </ul>
 </div>
 <div class="section" id="assembly-by-example">
 <h2>5.6.2. Assembly by Example<a class="headerlink" href="#assembly-by-example" title="Permalink to this headline">¶</a></h2>
-<p>Consider the truss in Figure [fig:ass.truss.1], each node has two
-degrees of freedom (translation in the <span class="math">\(x\)</span> and <span class="math">\(y\)</span>
-directions), giving <span class="math">\(3\)</span> nodes <span class="math">\(\times\)</span> 2 DOF/node = 6 DOF
-for the structure. The array of global displacements <span class="math">\(\{u\}\)</span> is
+<p>The assembly process is clearly described by example.  Consider the following truss:</p>
+<div class="figure align-center" id="id1">
+<a class="reference internal image-reference" href="../_images/Truss1.png"><img alt="../_images/Truss1.png" src="../_images/Truss1.png" style="width: 357.0px; height: 363.0px;" /></a>
+<p class="caption"><span class="caption-text">Example two element truss.</span></p>
+</div>
+<p>Each node has two degrees of freedom (translation in the <span class="math">\(x\)</span> and
+<span class="math">\(y\)</span> directions), giving <span class="math">\(3\)</span> nodes <span class="math">\(\times\)</span> 2 DOF/node = 6
+DOF for the structure. The array of generalized displacements <span class="math">\(\{u\}\)</span> is
 organized as</p>
 <div class="math">
-\[\begin{split}\label{eq:ass.ug.1}
-  \{u\} = \begin{Bmatrix}
+\[\begin{split}\{u\} = \begin{Bmatrix}
     u_x^0 \\ u_y^0 \\ u_x^1 \\ u_y^1 \\ u_x^2 \\ u_y^2
   \end{Bmatrix} =
   \begin{Bmatrix}
     u_0 \\ u_1 \\ u_2 \\ u_3 \\ u_4 \\ u_5
   \end{Bmatrix}\end{split}\]</div>
-<p>The associated global stiffness is a <span class="math">\(6\times6\)</span> matrix that we
+<p>The associated global stiffness <span class="math">\([K]\)</span> is a <span class="math">\(6\times6\)</span> matrix that we
 initialize with zeros:</p>
-<div class="figure align-center" id="id1">
-<a class="reference internal image-reference" href="../_images/Truss1.png"><img alt="../_images/Truss1.png" src="../_images/Truss1.png" style="width: 357.0px; height: 363.0px;" /></a>
-<p class="caption"><span class="caption-text">Example two element truss.</span></p>
-</div>
 <div class="math">
 \[\begin{split}\label{ass.K.1}
   \left[K\right] = \begin{bmatrix}
@@ -87,8 +88,8 @@ initialize with zeros:</p>
     0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0\\
     0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0
   \end{bmatrix}\end{split}\]</div>
-<p>Element 0 joins nodes 0 and 1. From , the local-to-global-DOF mapping
-for nodes 0 and 1 is:</p>
+<p>Element 0 joins nodes 0 and 1. From the definition of the generalized
+displacement array, the local-to-global-DOF mapping for nodes 0 and 1 is:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="23%" />
@@ -120,12 +121,18 @@ for nodes 0 and 1 is:</p>
 </tr>
 </tbody>
 </table>
-<p>The global degrees of freedom of an element are collected in the element
-freedom table: . The element stiffness matrix <span class="math">\(\left[k^0\right]\)</span>
-is a fully populated matrix given on the left below with the element
-freedom table entries marking the columns and rows. The result of
-merging the element stiffness <span class="math">\(\left[k^0\right]\)</span> in to the global
-stiffness <span class="math">\(\left[K\right]\)</span> is shown on the right.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The local to global degree of freedom mapping is stored in the &#8220;Element
+freedom table&#8221; <code class="docutils literal"><span class="pre">eft</span></code>, where <code class="docutils literal"><span class="pre">eft[i]</span></code> is the global degree of freedom
+for local degree of freedom <code class="docutils literal"><span class="pre">i</span></code>. For example, the <code class="docutils literal"><span class="pre">eft</span></code> for the
+preceding table is <code class="docutils literal"><span class="pre">eft=[0,1,2,3]</span></code>.</p>
+</div>
+<p>The element stiffness matrix <span class="math">\(\left[k^0\right]\)</span> is a fully populated
+matrix given on the left below with the element freedom table entries marking
+the columns and rows. The result of merging the element stiffness
+<span class="math">\(\left[k^0\right]\)</span> in to the global stiffness <span class="math">\(\left[K\right]\)</span> is
+shown on the right.</p>
 <div class="math">
 \[\begin{split}\label{ass.k1.1}
   \stackrel{\begin{matrix}
@@ -156,8 +163,7 @@ stiffness <span class="math">\(\left[K\right]\)</span> is shown on the right.</p
   \end{bmatrix}}\begin{matrix}0\\1\\2\\3\\4\\5\\ \end{matrix}\end{split}\]</div>
 <p>The local-to-global-DOF mapping can be generalized as:</p>
 <div class="math">
-\[\label{eq:ass.mapping}
-  \text{GLOBAL DOF} = \text{NUMBER OF DOF PER NODE}\times\text{NODE
+\[\text{GLOBAL DOF} = \text{NUMBER OF DOF PER NODE}\times\text{NODE
     NUMBER} + \text{LOCAL DOF}\]</div>
 <p><span class="math">\(\text{LOCAL DOF}\)</span> is one of the following integers:</p>
 <table border="1" class="docutils">
@@ -194,87 +200,162 @@ stiffness <span class="math">\(\left[K\right]\)</span> is shown on the right.</p
 </tr>
 </tbody>
 </table>
-<p>Applying to Element 1, the element freedom table is and
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This local-to-global-DOF mapping is only applicable for 0 based array
+indexing. For 1 based indexing, the mapping must be adjusted.</p>
+</div>
+<p>The element freedom table for element 1 is <code class="docutils literal"><span class="pre">eft=[0,1,4,5]</span></code> and
 <span class="math">\(\left[k^1\right]\)</span> and <span class="math">\(\left[K\right]\)</span> are:</p>
 <div class="math">
-\[\begin{split}\label{eq:ass.k1.2}
-  \stackrel{\begin{matrix}
-      \hphantom{k_{11}^0} &amp;
-      \hphantom{k_{12}^0} &amp;
-      \hphantom{k_{13}^0} &amp;
-      \hphantom{k_{14}^0} \\ 0 &amp; 1 &amp; 4 &amp; 5 \end{matrix}}{
-  \begin{bmatrix}
-    k_{11}^1 &amp; k_{12}^1 &amp; k_{13}^1 &amp; k_{14}^1 \\
-    k_{21}^1 &amp; k_{22}^1 &amp; k_{23}^1 &amp; k_{24}^1 \\
-    k_{31}^1 &amp; k_{32}^1 &amp; k_{33}^1 &amp; k_{34}^1 \\
-    k_{41}^1 &amp; k_{42}^1 &amp; k_{43}^1 &amp; k_{44}^1
-  \end{bmatrix}}\begin{matrix}0\\1\\4\\5\end{matrix} \longrightarrow
-  \stackrel{\begin{matrix}
-      \hphantom{k_{11}^0+k_{11}^1} &amp;
-      \hphantom{k_{12}^0+k_{11}^1} &amp;
-      \hphantom{k_{13}^0} &amp;
-      \hphantom{k_{14}^0} &amp;
-      \hphantom{k_{11}^1} &amp;
-      \hphantom{k_{11}^1} \\ 0 &amp; 1 &amp; 2 &amp; 3 &amp; 4 &amp; 5 \end{matrix}}{
-  \begin{bmatrix}
-    k_{11}^0+k_{11}^1 &amp; k_{12}^0+k_{11}^1 &amp; k_{13}^0 &amp; k_{14}^0 &amp; k_{13}^1 &amp; k_{23}^1 \\
-    k_{21}^0+k_{12}^1 &amp; k_{22}^0+k_{22}^1 &amp; k_{23}^0 &amp; k_{24}^0 &amp; k_{14}^1 &amp; k_{24}^1 \\
-    k_{31}^0 &amp; k_{32}^0 &amp; k_{33}^0 &amp; k_{34}^0 &amp; 0 &amp; 0\\
-    k_{41}^0 &amp; k_{42}^0 &amp; k_{43}^0 &amp; k_{44}^0 &amp; 0 &amp; 0\\
-    k_{31}^1 &amp; k_{32}^1 &amp; 0 &amp; 0 &amp; k_{33}^1 &amp; k_{34}^1\\
-    k_{41}^1 &amp; k_{42}^1 &amp; 0 &amp; 0 &amp; k_{43}^1 &amp; k_{44}^1\\
-  \end{bmatrix}}\begin{matrix}0\\1\\2\\3\\4\\5\\ \end{matrix}\end{split}\]</div>
-<p>[assembly] When assembling the global finite element stiffness, the
+\[\begin{split}\stackrel{\begin{matrix}
+    \hphantom{k_{11}^0} &amp;
+    \hphantom{k_{12}^0} &amp;
+    \hphantom{k_{13}^0} &amp;
+    \hphantom{k_{14}^0} \\ 0 &amp; 1 &amp; 4 &amp; 5 \end{matrix}}{
+\begin{bmatrix}
+  k_{11}^1 &amp; k_{12}^1 &amp; k_{13}^1 &amp; k_{14}^1 \\
+  k_{21}^1 &amp; k_{22}^1 &amp; k_{23}^1 &amp; k_{24}^1 \\
+  k_{31}^1 &amp; k_{32}^1 &amp; k_{33}^1 &amp; k_{34}^1 \\
+  k_{41}^1 &amp; k_{42}^1 &amp; k_{43}^1 &amp; k_{44}^1
+\end{bmatrix}}\begin{matrix}0\\1\\4\\5\end{matrix} \longrightarrow
+\stackrel{\begin{matrix}
+    \hphantom{k_{11}^0+k_{11}^1} &amp;
+    \hphantom{k_{12}^0+k_{11}^1} &amp;
+    \hphantom{k_{13}^0} &amp;
+    \hphantom{k_{14}^0} &amp;
+    \hphantom{k_{11}^1} &amp;
+    \hphantom{k_{11}^1} \\ 0 &amp; 1 &amp; 2 &amp; 3 &amp; 4 &amp; 5 \end{matrix}}{
+\begin{bmatrix}
+  k_{11}^0+k_{11}^1 &amp; k_{12}^0+k_{11}^1 &amp; k_{13}^0 &amp; k_{14}^0 &amp; k_{13}^1 &amp; k_{23}^1 \\
+  k_{21}^0+k_{12}^1 &amp; k_{22}^0+k_{22}^1 &amp; k_{23}^0 &amp; k_{24}^0 &amp; k_{14}^1 &amp; k_{24}^1 \\
+  k_{31}^0 &amp; k_{32}^0 &amp; k_{33}^0 &amp; k_{34}^0 &amp; 0 &amp; 0\\
+  k_{41}^0 &amp; k_{42}^0 &amp; k_{43}^0 &amp; k_{44}^0 &amp; 0 &amp; 0\\
+  k_{31}^1 &amp; k_{32}^1 &amp; 0 &amp; 0 &amp; k_{33}^1 &amp; k_{34}^1\\
+  k_{41}^1 &amp; k_{42}^1 &amp; 0 &amp; 0 &amp; k_{43}^1 &amp; k_{44}^1\\
+\end{bmatrix}}\begin{matrix}0\\1\\2\\3\\4\\5\\ \end{matrix}\end{split}\]</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>When assembling the global finite element stiffness, the
 following questions must be answered in the affirmitive:</p>
-<ul class="simple">
+<ul class="last simple">
 <li>Is the value of <span class="math">\(K_{II}\)</span> equal to the sum of all elements
 connected to node <span class="math">\(I\)</span>?</li>
 <li>Is the value of <span class="math">\(K_{IJ}\)</span>, <span class="math">\(I\ne J\)</span>, equal to the negative
 of all elements connecting nodes <span class="math">\(I\)</span> and <span class="math">\(J\)</span>?</li>
 <li>Is the stiffness symmetric?</li>
 </ul>
+</div>
 <p>Looking at the global system in , it is clear that each of the three
 preceding questions can be answered in the affirmitive.</p>
 </div>
 <div class="section" id="assembler-computational-implementation">
 <h2>5.6.3. Assembler Computational Implementation<a class="headerlink" href="#assembler-computational-implementation" title="Permalink to this headline">¶</a></h2>
-<p>Assemblers for the global stiffness and global force are presented.</p>
+<p>Algorithms for assemblers for the global stiffness and global force are presented.</p>
 <div class="section" id="global-stiffness">
 <h3>5.6.3.1. Global Stiffness<a class="headerlink" href="#global-stiffness" title="Permalink to this headline">¶</a></h3>
-<p>Assembly of the global stiffness is performed in , shown in Listing
-[lst:ass.ass.1]. stands for “Uniform Degree of Freedom”. is defined in
-and is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="n">AssembleGlobalStiffnessUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span><span class="n">elemap</span><span class="p">,</span><span class="n">eletyp</span><span class="p">,</span><span class="n">elecon</span><span class="p">,</span><span class="n">elemat</span><span class="p">,</span><span class="n">elefab</span><span class="p">)</span>
+<p>The algorithm for assembling the global stiffness is</p>
+<ol class="arabic">
+<li><p class="first"><strong>TASK</strong>: Assemble the global stiffness <code class="docutils literal"><span class="pre">K</span></code></p>
+<ol class="arabic">
+<li><p class="first"><strong>INITIALIZE</strong></p>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">N</span></code> = number of nodes in the mesh</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">m</span></code> = number of degrees of freedom per node</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">K[N*m,N*m]</span></code> = 0</li>
+</ul>
+</li>
+<li><p class="first"><strong>FOR EACH</strong> element <strong>DO</strong></p>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">Ke</span></code> = element stiffness</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">n</span></code> = number of nodes on element</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">nodes[n]</span></code> = node numbers of the element</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">eft[n*m]</span></code> = 0</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = 0</li>
+</ul>
+<p><strong>COMMENT</strong>: Construct the element freedom table</p>
+<ol class="arabic">
+<li><p class="first"><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">i</span></code> &lt; <code class="docutils literal"><span class="pre">n</span></code></p>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">ni</span></code> = <code class="docutils literal"><span class="pre">nodes[i]</span></code></li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">0</span></code></li>
+</ul>
+<ol class="arabic simple">
+<li><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">j</span></code> &lt; <code class="docutils literal"><span class="pre">m</span></code>:<ul>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">eft[i+j]</span></code> = <code class="docutils literal"><span class="pre">ni*m</span></code> + <code class="docutils literal"><span class="pre">j</span></code></li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">j</span></code> + 1</li>
+</ul>
+</li>
+</ol>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = <code class="docutils literal"><span class="pre">i</span></code> + 1</li>
+</ul>
+</li>
+</ol>
+<p><strong>COMMENT</strong> Map the local degrees of freedom to the global</p>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = 0</li>
+</ul>
+<ol class="arabic">
+<li><p class="first"><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">i</span></code> &lt; <code class="docutils literal"><span class="pre">n*m</span></code></p>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">I</span></code> = <code class="docutils literal"><span class="pre">eft[i]</span></code></li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">i</span></code></li>
+</ul>
+<ol class="arabic simple">
+<li><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">j</span></code> &lt; <code class="docutils literal"><span class="pre">n*m</span></code><ul>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">J</span></code> = <code class="docutils literal"><span class="pre">eft[j]</span></code></li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">K[I,J]</span></code> = <code class="docutils literal"><span class="pre">K[I,J]</span></code> + <code class="docutils literal"><span class="pre">Ke[i,j]</span></code></li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">K[J,</span> <span class="pre">I]</span></code> = <code class="docutils literal"><span class="pre">K[I,</span> <span class="pre">J]</span></code></li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">j</span></code> + 1</li>
+</ul>
+</li>
+</ol>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = <code class="docutils literal"><span class="pre">i</span></code> + 1</li>
+</ul>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<p>In <code class="docutils literal"><span class="pre">pyfem2</span></code>, assembly of the global stiffness is performed in the method
+<code class="docutils literal"><span class="pre">FiniteElementModel.assemble_global_stiffness_udof</span></code> (<code class="docutils literal"><span class="pre">udof</span></code> stands for
+&#8220;uniform degree of freedom&#8221;).</p>
+<p>The heart of the assembly process is constructing the element freedom table,
+represented by the symbol <code class="docutils literal"><span class="pre">eft</span></code>. The element freedom table contains the global
+degree of freedom number for the nodes in the element. For elements having
+uniform degrees of freedom, this table can be constructed on the fly using, as shown.</p>
+<div class="section" id="stiffness-assembler-example">
+<h4>Stiffness assembler example<a class="headerlink" href="#stiffness-assembler-example" title="Permalink to this headline">¶</a></h4>
+<p>A representative python code that performs stiffness assembly is the function
+<code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code>, shown below. <code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code> is invoked as</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="n">AssemblePlaneTrussStiffness</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The arguments to are:</p>
+<p>The arguments <code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code> to are:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="14%" />
-<col width="86%" />
+<col width="12%" />
+<col width="88%" />
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">coord</span></code></td>
-<td>Nodal coordinates. is the ith coordinate of node n.</td>
+<td>Nodal coordinates. <code class="docutils literal"><span class="pre">coord[n,i]</span></code> is the ith coordinate of node n.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">elemap</span></code></td>
-<td>Element label map. is the internal node number of the external node label xelem.</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">elecon</span></code></td>
-<td>Element connectivity. is the nth internal node label of element e.</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">eletyp</span></code></td>
-<td>Element types. is the element type of element .</td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">elecon</span></code></td>
+<td>Element connectivity. <code class="docutils literal"><span class="pre">elecon[e,n]</span></code> is the nth internal node label of element e.</td>
 </tr>
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">elemat</span></code></td>
-<td>Element material properties. is the nth material property of element e.</td>
+<td>Element material properties. <code class="docutils literal"><span class="pre">elemat[e]</span></code> are the material properties of element e.</td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">elefab</span></code></td>
-<td>Element fabrication properties. is the nth element fabrication property of element e.</td>
+<td>Element fabrication properties. <code class="docutils literal"><span class="pre">elefab[e]</span></code> are the element fabrication properties of element e.</td>
 </tr>
 </tbody>
 </table>
-<p>The output from is:</p>
+<p>The output is:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="5%" />
@@ -282,208 +363,132 @@ and is invoked as</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">K</span></code></td>
-<td>Global stiffness matrix stored as a full (nd*n, nd*n) symmetric matrix, where nd is the number of degrees of freedom per node and n the total number of nodes.</td>
+<td>Global stiffness matrix stored as a full (N*m, N*m) symmetric matrix, where m is the number of degrees of freedom per node and N the total number of nodes.</td>
 </tr>
 </tbody>
 </table>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">AssembleGlobalStiffnessUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span>
-                                <span class="n">elefab</span><span class="p">,</span> <span class="n">dltags</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dlvals</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">coord</span><span class="p">),</span> <span class="n">asarray</span><span class="p">(</span><span class="n">elecon</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">AssemblePlaneTrussStiffness</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">):</span>
+    <span class="n">coord</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+    <span class="n">elecon</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">elecon</span><span class="p">)</span>
+
     <span class="c1"># number of nodes and degrees of freedom per node</span>
-    <span class="n">numnod</span> <span class="o">=</span> <span class="n">coord</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">ndof</span> <span class="o">=</span> <span class="n">NumberOfDOFPerNode</span><span class="p">(</span><span class="n">eletyp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="c1"># Default surface tags/values</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">coord</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">numele</span> <span class="o">=</span> <span class="n">elecon</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
     <span class="c1"># compute the element stiffness and scatter to global array</span>
-    <span class="n">K</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">((</span><span class="n">ndof</span><span class="o">*</span><span class="n">numnod</span><span class="p">,</span> <span class="n">ndof</span><span class="o">*</span><span class="n">numnod</span><span class="p">))</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">elecon</span><span class="p">):</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="o">*</span><span class="n">m</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="n">m</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numele</span><span class="p">):</span>
+
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">elecon</span><span class="p">[</span><span class="n">e</span><span class="p">]</span>  <span class="c1"># element connectivity</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">coord</span><span class="p">[</span><span class="n">nodes</span><span class="p">]</span>  <span class="c1"># nodal coordinates</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>  <span class="c1"># number of nodes on element</span>
+
         <span class="c1"># Element stiffness</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="p">[:</span><span class="n">NodesPerElement</span><span class="p">(</span><span class="n">eletyp</span><span class="p">[</span><span class="n">e</span><span class="p">])]</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">elemat</span><span class="p">[</span><span class="n">e</span><span class="p">],</span> <span class="n">elefab</span><span class="p">[</span><span class="n">e</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">dltags</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">args</span> <span class="o">+=</span> <span class="p">(</span><span class="n">dltags</span><span class="p">[</span><span class="n">e</span><span class="p">],</span> <span class="n">dlvals</span><span class="p">[</span><span class="n">e</span><span class="p">])</span>
-        <span class="n">Ke</span> <span class="o">=</span> <span class="n">ElementStiffness</span><span class="p">(</span><span class="n">eletyp</span><span class="p">[</span><span class="n">e</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">Ke</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">xel</span> <span class="o">=</span> <span class="n">elemap</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">elemap</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">iel</span><span class="p">)]</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Element </span><span class="si">%d</span><span class="s1"> has unkown element type&#39;</span> <span class="o">%</span> <span class="n">xel</span><span class="p">)</span>
-        <span class="c1"># GLOBAL DOF = NUMBER OF DOF PER NODExNODE NUMBER + LOCAL DOF</span>
-        <span class="n">eft</span> <span class="o">=</span> <span class="n">Flatten</span><span class="p">([[</span><span class="n">ndof</span><span class="o">*</span><span class="n">ni</span><span class="o">+</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndof</span><span class="p">)]</span> <span class="k">for</span> <span class="n">ni</span> <span class="ow">in</span> <span class="n">c</span><span class="p">])</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Ke</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-            <span class="n">ii</span> <span class="o">=</span> <span class="n">eft</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Ke</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-                <span class="n">jj</span> <span class="o">=</span> <span class="n">eft</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
-                <span class="n">K</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Ke</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
-                <span class="n">K</span><span class="p">[</span><span class="n">jj</span><span class="p">,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">K</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">]</span>
+        <span class="n">Ke</span> <span class="o">=</span> <span class="n">PlaneTrussElementStiffness</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">elemat</span><span class="p">[</span><span class="n">e</span><span class="p">],</span> <span class="n">elefab</span><span class="p">[</span><span class="n">e</span><span class="p">])</span>
+
+        <span class="c1"># Element freedom table</span>
+        <span class="n">eft</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">m</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">ni</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+                <span class="n">eft</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">ni</span><span class="o">*</span><span class="n">m</span> <span class="o">+</span> <span class="n">j</span>
+
+        <span class="c1"># Merge element stiffness in to global</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">m</span><span class="p">):</span>
+            <span class="n">I</span> <span class="o">=</span> <span class="n">eft</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="o">*</span><span class="n">m</span><span class="p">):</span>
+                <span class="n">J</span> <span class="o">=</span> <span class="n">eft</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">K</span><span class="p">[</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Ke</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">K</span><span class="p">[</span><span class="n">J</span><span class="p">,</span> <span class="n">I</span><span class="p">]</span> <span class="o">=</span> <span class="n">K</span><span class="p">[</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">K</span>
 </pre></div>
 </div>
-<p>The subordinate function computes the element stiffness matrix. is shown
-in Listing [lst:ass.elemstiff]. Details of each element stiffness are
-presented in Appendix [app:elem.lib]. The heart of the assembly process
-is constructing the element freedom table, represented by the symbol .
-The element freedom table contains the global degree of freedom number
-for the nodes in the element. For elements having uniform degrees of
-freedom, this table can be constructed on the fly using . In , the
-element freedom table is constructed by creating a nested list of global
-DOF for each node on the element and flattening it. For example, for an
-element having 2 degrees of freedom per node and having nodes and , the
-element freedom table is formed by</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">ElementStiffness</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">eletyp</span> <span class="ow">in</span> <span class="p">(</span><span class="n">L1D2</span><span class="p">,</span> <span class="n">L2D2</span><span class="p">,</span> <span class="n">L3D2</span><span class="p">):</span>
-        <span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span> <span class="o">=</span> <span class="n">args</span>
-        <span class="k">return</span> <span class="n">Link2Stiffness</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">eletyp</span> <span class="o">==</span> <span class="n">B1D2</span><span class="p">:</span>
-        <span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Izz</span><span class="p">)</span> <span class="o">=</span> <span class="n">args</span>
-        <span class="k">return</span> <span class="n">Beam2Stiffness</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Izz</span><span class="p">))</span>
-    <span class="k">elif</span> <span class="n">eletyp</span> <span class="o">==</span> <span class="n">B2D2</span><span class="p">:</span>
-        <span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Izz</span><span class="p">)</span> <span class="o">=</span> <span class="n">args</span>
-        <span class="k">return</span> <span class="n">BeamColumn2Stiffness</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Izz</span><span class="p">))</span>
-    <span class="k">elif</span> <span class="n">eletyp</span> <span class="ow">in</span> <span class="p">(</span><span class="n">H2D3</span><span class="p">,):</span>
-        <span class="n">xc</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">dltags</span><span class="p">,</span> <span class="n">dlvals</span> <span class="o">=</span> <span class="n">args</span>
-        <span class="n">Ke</span> <span class="o">=</span> <span class="n">HeatConductionStiffness</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="n">xc</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-        <span class="c1"># Convection contribution</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">EdgesPerElement</span><span class="p">(</span><span class="n">eletyp</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="n">dltags</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="n">QCONV</span><span class="p">:</span>
-                <span class="n">Ke</span> <span class="o">+=</span> <span class="n">HeatConvectionStiffness</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="n">xc</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">dlvals</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">Ke</span>
-    <span class="k">return</span> <span class="bp">None</span>
+<p>The subordinate function <code class="docutils literal"><span class="pre">PlaneTrussElementStiffness</span></code> computes the element stiffness matrix (see <a class="reference internal" href="../ElementLibrary/Link.html#barelements"><span>Elastic bar elements</span></a>):</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">PlaneTrussElementStiffness</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">v</span> <span class="o">/</span> <span class="n">h</span>
+    <span class="n">nn</span> <span class="o">=</span> <span class="n">outer</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+    <span class="c1"># Assemble element stiffness</span>
+    <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+    <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span>  <span class="n">nn</span> <span class="c1"># upper left and lower right 2x2</span>
+    <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">nn</span> <span class="c1"># lower left and upper right 2x2</span>
+    <span class="k">return</span> <span class="n">A</span> <span class="o">*</span> <span class="n">E</span> <span class="o">/</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k</span>
 </pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code> is valid only for plane truss elements.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Clarity of code was chosen over performance in the implementation of
+<code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code>. The process of creating the element freedom
+table and merging element equations in to the global equations can be
+optimized greatly.</p>
+</div>
 </div>
 </div>
 <div class="section" id="global-force">
 <h3>5.6.3.2. Global Force<a class="headerlink" href="#global-force" title="Permalink to this headline">¶</a></h3>
-<p>Assembly of the global force is performed in , shown in Listing
-[lst:ass.ass.2]. is defined in and is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">F</span> <span class="o">=</span> <span class="n">AssembleGlobalForceUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">,</span>
-                            <span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">dltags</span><span class="o">=</span><span class="n">dltags</span><span class="p">,</span> <span class="n">dlvals</span><span class="o">=</span><span class="n">dlvals</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The arguments to are</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="9%" />
-<col width="91%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">coord</span></code></td>
-<td>Nodal coordinates. is the ith coordinate of node n.</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">elemap</span></code></td>
-<td>Element label map. is the internal node number of the external node label xelem.</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">elecon</span></code></td>
-<td>Element connectivity. is the nth internal node label of element e.</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">eletyp</span></code></td>
-<td>Element types. is the element type of element .</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">doftags</span></code></td>
-<td>Degree of freedom tags. if the jth degree of freedom of node i has a known (prescribed) displacement, otherwise the node has a known force and .</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">dofvals</span></code></td>
-<td>Degree of freedom values. is the magnitude of the cooresponding to the prescribed condition indicated by .</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">f</span></code></td>
-<td>Node source. is the magnitude of the source contribution at a node.</td>
-</tr>
-</tbody>
-</table>
-<p>The output from is:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="6%" />
-<col width="94%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">F</span></code></td>
-<td>Global force array stored as a full nd*n array, where nd is the number of degrees of freedom per node and n the total number of nodes.</td>
-</tr>
-</tbody>
-</table>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">AssembleGlobalForceUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">,</span>
-                            <span class="n">f</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dltags</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dlvals</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">doftags</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">doftags</span> <span class="o">=</span> <span class="n">doftags</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">dofvals</span> <span class="o">=</span> <span class="n">dofvals</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">coord</span><span class="p">),</span> <span class="n">asarray</span><span class="p">(</span><span class="n">elecon</span><span class="p">)</span>
-    <span class="c1"># number of nodes and degrees of freedom per node</span>
-    <span class="n">numnod</span> <span class="o">=</span> <span class="n">coord</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">ndof</span> <span class="o">=</span> <span class="n">NumberOfDOFPerNode</span><span class="p">(</span><span class="n">eletyp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-
-    <span class="c1"># Force contribution on Neummann boundary</span>
-    <span class="n">Q</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="n">dofvals</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="k">if</span> <span class="n">doftags</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="n">NEUMANN</span> <span class="k">else</span> <span class="mf">0.</span>
-               <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numnod</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndof</span><span class="p">)])</span>
-
-    <span class="c1"># compute contribution from element sources and boundary fluxes</span>
-    <span class="n">F</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">ndof</span><span class="o">*</span><span class="n">numnod</span><span class="p">)</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">elecon</span><span class="p">):</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="p">[:</span><span class="n">NodesPerElement</span><span class="p">(</span><span class="n">eletyp</span><span class="p">[</span><span class="n">e</span><span class="p">])]</span>
-        <span class="n">fc</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">f</span><span class="p">[</span><span class="n">c</span><span class="p">]</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">fc</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">dltags</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">args</span> <span class="o">+=</span> <span class="p">(</span><span class="n">dltags</span><span class="p">[</span><span class="n">e</span><span class="p">],</span> <span class="n">dlvals</span><span class="p">[</span><span class="n">e</span><span class="p">])</span>
-        <span class="n">Fe</span> <span class="o">=</span> <span class="n">ElementForce</span><span class="p">(</span><span class="n">eletyp</span><span class="p">[</span><span class="n">e</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">Fe</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">xel</span> <span class="o">=</span> <span class="n">elemap</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">elemap</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">iel</span><span class="p">)]</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Element </span><span class="si">%d</span><span class="s1"> has unkown element type&#39;</span> <span class="o">%</span> <span class="n">xel</span><span class="p">)</span>
-
-        <span class="c1"># GLOBAL DOF = NUMBER OF DOF PER NODExNODE NUMBER + LOCAL DOF</span>
-        <span class="n">eft</span> <span class="o">=</span> <span class="n">Flatten</span><span class="p">([[</span><span class="n">ndof</span><span class="o">*</span><span class="n">ni</span><span class="o">+</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndof</span><span class="p">)]</span> <span class="k">for</span> <span class="n">ni</span> <span class="ow">in</span> <span class="n">c</span><span class="p">])</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Fe</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-            <span class="n">F</span><span class="p">[</span><span class="n">eft</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">Fe</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-
-    <span class="k">return</span> <span class="n">F</span><span class="p">,</span> <span class="n">Q</span>
-</pre></div>
-</div>
-<p>The subordinate function computes the element force array due to sources
-and distributed loads. is shown shown in Listing [lst:ass.elemforce].
-Details of each element force are presented in Appendix [app:elem.lib].</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">ElementForce</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-    <span class="n">xc</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">args</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-    <span class="c1"># Source array</span>
-    <span class="n">Fe</span> <span class="o">=</span> <span class="n">ElementSourceArray</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="n">xc</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">Fe</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">None</span>
-    <span class="k">if</span> <span class="n">eletyp</span> <span class="o">==</span> <span class="n">H2D3</span><span class="p">:</span>
-        <span class="n">dltags</span><span class="p">,</span> <span class="n">dlvals</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">EdgesPerElement</span><span class="p">(</span><span class="n">eletyp</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="n">dltags</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="n">QCOND</span><span class="p">:</span>
-                <span class="c1"># evaluate the boundary flux contribution</span>
-                <span class="n">Fe</span> <span class="o">+=</span> <span class="n">ConductionFluxArray</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="n">xc</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">dlvals</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
-            <span class="k">elif</span> <span class="n">dltags</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="n">QCONV</span><span class="p">:</span>
-                <span class="c1"># evaluate the convection contribution</span>
-                <span class="n">Fe</span> <span class="o">+=</span> <span class="n">ConvectionFluxArray</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="n">xc</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">dlvals</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">Fe</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="section" id="verification-of-program-units">
-<h2>5.6.4. Verification of Program Units<a class="headerlink" href="#verification-of-program-units" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="assembly-verification">
-<h3>5.6.4.1. Assembly Verification<a class="headerlink" href="#assembly-verification" title="Permalink to this headline">¶</a></h3>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span>coord = [[0,0,0], [10,0,0], [10,10,0]]
-elemap = {1:0, 2:1, 3:2}
-elecon = [[0,1], [1,2], [0,2]]
-eletyp = [L3D2, L3D2, L3D2]
-elemat = [100] * 3
-elefab = [1, .5, 2*sqrt(2.)]
-K = AssembleGlobalStiffnessUDOF(coord,elemap,eletyp,elecon,elemat,elefab)
-assert(array([[ 20.,  10.,   0., -10.,   0.,   0., -10., -10.,   0.],
-              [ 10.,  10.,   0.,   0.,   0.,   0., -10., -10.,   0.],
-              [  0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.],
-              [-10.,   0.,   0.,  10.,   0.,   0.,   0.,   0.,   0.],
-              [  0.,   0.,   0.,   0.,   5.,   0.,   0.,  -5.,   0.],
-              [  0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.],
-              [-10., -10.,   0.,   0.,   0.,   0.,  10.,  10.,   0.],
-              [-10., -10.,   0.,   0.,  -5.,   0.,  10.,  15.,   0.],
-              [  0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.]], K)
-</pre></div>
-</div>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">v</span> <span class="o">=</span> <span class="n">eigvals</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
-<span class="k">assert</span><span class="p">([</span> <span class="mf">45.3577</span><span class="p">,</span><span class="mf">16.74031</span><span class="p">,</span><span class="mf">7.902</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">],</span> <span class="n">v</span><span class="p">)</span>
-</pre></div>
-</div>
+<p>The algorithm for assembling the global force follows closely that of assembling the global stiffness:</p>
+<ol class="arabic">
+<li><p class="first"><strong>TASK</strong>: Assemble the global force <code class="docutils literal"><span class="pre">F</span></code></p>
+<ol class="arabic">
+<li><p class="first"><strong>INITIALIZE</strong></p>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">N</span></code> = number of nodes in the mesh</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">m</span></code> = number of degrees of freedom per node</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">F[N*m]</span></code> = 0</li>
+</ul>
+</li>
+<li><p class="first"><strong>FOR EACH</strong> element <strong>DO</strong></p>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">Fe</span></code> = element force</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">n</span></code> = number of nodes on element</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">nodes[n]</span></code> = node numbers of the element</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">eft[n*m]</span></code> = 0</li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = 0</li>
+</ul>
+<p><strong>COMMENT</strong>: Construct the element freedom table</p>
+<ol class="arabic">
+<li><p class="first"><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">i</span></code> &lt; <code class="docutils literal"><span class="pre">n</span></code></p>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">ni</span></code> = <code class="docutils literal"><span class="pre">nodes[i]</span></code></li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">0</span></code></li>
+</ul>
+<ol class="arabic simple">
+<li><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">j</span></code> &lt; <code class="docutils literal"><span class="pre">m</span></code>:<ul>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">eft[i+j]</span></code> = <code class="docutils literal"><span class="pre">ni*m</span></code> + <code class="docutils literal"><span class="pre">j</span></code></li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">j</span></code> + 1</li>
+</ul>
+</li>
+</ol>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = <code class="docutils literal"><span class="pre">i</span></code> + 1</li>
+</ul>
+</li>
+</ol>
+<p><strong>COMMENT</strong> Map the local degrees of freedom to the global</p>
+<ul class="simple">
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = 0</li>
+</ul>
+<ol class="arabic simple">
+<li><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">i</span></code> &lt; <code class="docutils literal"><span class="pre">n*m</span></code><ul>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">I</span></code> = <code class="docutils literal"><span class="pre">eft[i]</span></code></li>
+<li><strong>SET</strong> <code class="docutils literal"><span class="pre">F[I]</span></code> = <code class="docutils literal"><span class="pre">F[I]</span></code> + <code class="docutils literal"><span class="pre">Fe[i]</span></code></li>
+</ul>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<p>In <code class="docutils literal"><span class="pre">pyfem2</span></code>, assembly of the global stiffness is performed in the method
+<code class="docutils literal"><span class="pre">FiniteElementModel.assemble_global_force_udof</span></code>.</p>
 </div>
 </div>
 </div>
