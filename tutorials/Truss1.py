@@ -32,7 +32,7 @@ A = [Abot, Abot, Abot, Abot, Abot, Abot,
      Atop, Atop, Atop, Atop, Atop, Atop,
      Abat, Abat, Abat, Abat, Abat,
      Adia, Adia, Adia, Adia]
-V.AssignProperties('ElementBlock1', Link2D2, 'Material-1', A=A)
+V.AssignProperties('ElementBlock1', ElasticLink2D2, 'Material-1', A=A)
 
 # Apply boundary conditions
 V.PrescribedBC(1, (X,Y))

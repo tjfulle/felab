@@ -23,7 +23,7 @@ class IsoPQuad8(IsoPElement):
                [0]
 
     """
-    signature = 1100000
+    signature = (1,1,0,0,0,0,0)
     numdim, numnod, ndof = 2, 8, 2
     gaussp = array([[c,  c], [0,  c], [-c,  c],
                     [c,  0], [0,  0], [-c,  0],

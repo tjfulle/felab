@@ -3,7 +3,6 @@ import sys
 sys.path.insert(0, '../')
 from numpy import *
 from pyfem2 import *
-import matplotlib.pyplot as plt
 
 V = Plane2DModel()
 V.GenesisMesh('../meshes/PlateWithHoleQuad4.g')
@@ -21,4 +20,4 @@ V.Solve()
 
 V.WriteResults('Plane1.exo')
 
-V.Plot2D(show=1, deformed=1)
+V.Plot2D(show=1, deformed=1, colorby='Ux')

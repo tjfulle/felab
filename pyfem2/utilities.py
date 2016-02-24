@@ -6,6 +6,11 @@ from constants import *
 # --------------------------------------------------------------------------- #
 # -------------------------- UTILITY FUNCTIONS ------------------------------ #
 # --------------------------------------------------------------------------- #
+class UserInputError(Exception):
+    def __init__(self, message):
+        sys.tracebacklimit = -1
+        super(UserInputError, self).__init__(message)
+
 def IX(*args):
     out = []
     nd = len(args)
@@ -19,6 +24,9 @@ def IX(*args):
 
 def Flatten(seq):
     return [a for b in seq for a in b]
+
+def is_stringlike(a):
+    return hasattr(a, 'strip')
 
 def is_listlike(a):
     return (not hasattr(a, 'strip') and

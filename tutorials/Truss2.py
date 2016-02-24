@@ -23,7 +23,7 @@ A = [0.033, 2.015, 2.015, 2.015, 2.015, 2.823, 2.823, 2.823, 2.823, 0.01,
      0.01, 0.014, 0.014, 0.98, 0.98, 0.98, 0.98, 1.76, 1.76, 1.76, 1.76,
      2.44, 2.44, 2.44, 2.44]
 V.ElementBlock('ElementBlock1', ALL)
-V.AssignProperties('ElementBlock1', Link3D2, 'Material-1', A=A)
+V.AssignProperties('ElementBlock1', ElasticLink3D2, 'Material-1', A=A)
 
 # Define boundary conditons
 V.FixNodes((7, 8, 9, 10))

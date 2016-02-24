@@ -15,7 +15,7 @@ V.SurfaceLoad(IHI, [1,0])
 V.Solve()
 V.WriteResults('PlateWithHoleQuad4.exo')
 
-F = File('PlateQuad.exo')
+F = File('PlateWithHoleQuad4.exo')
 max_p = [0., None]
 max_u = [0., None]
 for step in F.steps:

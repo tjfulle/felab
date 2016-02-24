@@ -1,5 +1,6 @@
 import re
 import os
+import sys
 import datetime
 from numpy import *
 from os.path import basename, join, splitext, isfile
@@ -10,22 +11,24 @@ from constants import *
 
 __all__ = ['File', 'PutNodalSolution']
 
+# True if we are running on Python 3.
+PY3 = sys.version_info[0] == 3
+
 def cat(*args):
-    return ''.join(str(a).strip() for a in args)
+    return ''.join('{0}'.format(a).strip() for a in args)
 
 def adjstr(string):
-    return '{0:32s}'.format(string)[:32]
+    return '{0:33s}'.format(string)[:33]
+
+def stringify2(a):
+    return [''.join(b.decode() for b in row if b.split()) for row in a]
 
 def stringify(a):
-    try:
-        return ''.join(a).strip()
-    except TypeError:
-        return [''.join(row).strip() for row in a]
+    return ''.join(a.decode().strip())
 
 def aindex(arr, ij):
     a = arr.tolist()
     return array([a.index(i) for i in ij])
-
 
 def sortexoname(key):
     if len(key) == 1:
@@ -456,30 +459,35 @@ class EXOFileWriter(EXOFile):
         self.fh.variables[VAR_TIME_WHOLE][count] = step.value
         self.fh.variables[VALS_GLO_VAR][count] = step.increment
 
-        nodvars = stringify(self.fh.variables.get(VAR_NAME_NOD_VAR, ''))
-        for fo in step.field_outputs.values():
-            if fo.position != NODE:
-                continue
-            if fo.type == SCALAR: labels = [fo.key]
-            else: labels = [fo.key + c for c in fo.components]
-            for (k, label) in enumerate(labels):
-                i = nodvars.index(label) + 1
-                self.fh.variables[VALS_NOD_VAR(i)][count] = fo.data[:,k]
+        nodvars = self.fh.variables.get(VAR_NAME_NOD_VAR)
+        if nodvars is not None:
+            nodvars = stringify2(nodvars)
+            for fo in step.field_outputs.values():
+                if fo.position != NODE:
+                    continue
+                if fo.type == SCALAR: labels = [fo.key]
+                else: labels = [fo.key + c for c in fo.components]
+                for (k, label) in enumerate(labels):
+                    i = nodvars.index(label) + 1
+                    self.fh.variables[VALS_NOD_VAR(i)][count] = fo.data[:,k]
 
-        elevars = stringify(self.fh.variables.get(VAR_NAME_ELE_VAR, ''))
-        ebs = stringify(self.fh.variables[VAR_EB_NAMES])
-        for fo in step.field_outputs.values():
-            if fo.position == NODE:
-                continue
-            if fo.type == SCALAR: labels = [fo.key]
-            else: labels = [fo.key + c for c in fo.components]
-            data = fo.get_data(position=ELEMENT)
+        elevars = self.fh.variables.get(VAR_NAME_ELE_VAR)
+        if elevars is not None:
+            elevars = stringify2(elevars)
+            ebs = stringify2(self.fh.variables[VAR_EB_NAMES][:])
+            for fo in step.field_outputs.values():
+                if fo.position == NODE:
+                    continue
+                if fo.type == SCALAR: labels = [fo.key]
+                else: labels = [fo.key + c for c in fo.components]
+                data = fo.get_data(position=ELEMENT)
 
-            for (i, label) in enumerate(labels):
-                j = elevars.index(label) + 1
-                # break the data up by element block
-                for (ieb, eb) in enumerate(ebs):
-                    self.fh.variables[VALS_ELE_VAR(j,ieb+1)][count] = data[ieb][:,i]
+                for (i, label) in enumerate(labels):
+                    j = elevars.index(label) + 1
+                    # break the data up by element block
+                    for (ieb, eb) in enumerate(ebs):
+                        dat = data[ieb][:,i]
+                        self.fh.variables[VALS_ELE_VAR(j,ieb+1)][count] = dat
 
         self.count += 1
 
@@ -542,10 +550,10 @@ class EXOFileReader(EXOFile):
         # ------------------------------------------------------------------- #
         eleblx = []
         elemsets = {}
-        blknams = self.fh.variables[VAR_EB_NAMES]
+        blknams = stringify2(self.fh.variables[VAR_EB_NAMES][:])
         k = 0
         for ieb in range(numblk):
-            name = stringify(blknams[ieb])
+            name = blknams[ieb]
             blkcon = self.fh.variables[VAR_BLKCON(ieb+1)][:]-1
             ix = arange(k, k+blkcon.shape[0])
             elefam = ElementFamily(numdim, blkcon.shape[1])
@@ -559,9 +567,9 @@ class EXOFileReader(EXOFile):
         # ------------------------------------------------------------------- #
         elemsets = {}
         if numes:
-            esnames = self.fh.variables[VAR_ES_NAMES]
+            esnames = stringify2(self.fh.variables[VAR_ES_NAMES][:])
             for ies in range(numes):
-                name = stringify(esnames[ies])
+                name = esnames[ies]
                 elemsets[name] = self.fh.variables[VAR_ELE_ES(ies+1)][:] - 1
 
         # ------------------------------------------------------------------- #
@@ -569,9 +577,9 @@ class EXOFileReader(EXOFile):
         # ------------------------------------------------------------------- #
         nodesets = {}
         if numns:
-            nsnames = self.fh.variables[VAR_NS_NAMES]
+            nsnames = stringify2(self.fh.variables[VAR_NS_NAMES][:])
             for ins in range(numns):
-                name = stringify(nsnames[ins])
+                name = nsnames[ins]
                 nodesets[name] = self.fh.variables[VAR_NOD_NS(ins+1)][:] - 1
 
         # ------------------------------------------------------------------- #
@@ -579,9 +587,9 @@ class EXOFileReader(EXOFile):
         # ------------------------------------------------------------------- #
         sidesets = {}
         if numss:
-            ssnames = self.fh.variables[VAR_SS_NAMES]
+            ssnames = stringify2(self.fh.variables[VAR_SS_NAMES][:])
             for iss in range(numss):
-                name = stringify(ssnames[iss])
+                name = ssnames[iss]
                 ss_elems = self.fh.variables[VAR_ELE_SS(iss+1)][:] - 1
                 ss_sides = self.fh.variables[VAR_SIDE_SS(iss+1)][:] - 1
                 sidesets[name] = zip(ss_elems, ss_sides)
@@ -648,8 +656,16 @@ class EXOFileReader(EXOFile):
 
         times = self.fh.variables[VAR_TIME_WHOLE][:]
         dtimes = self.fh.variables[VALS_GLO_VAR][:]
-        elevarnames = stringify(self.fh.variables.get(VAR_NAME_ELE_VAR, ''))
-        nodvarnames = stringify(self.fh.variables.get(VAR_NAME_NOD_VAR, ''))
+        elevarnames = self.fh.variables.get(VAR_NAME_ELE_VAR)
+        if elevarnames is not None:
+            elevarnames = stringify2(elevarnames)
+        else:
+            elevarnames = ''
+        nodvarnames = self.fh.variables.get(VAR_NAME_NOD_VAR)[:]
+        if nodvarnames is not None:
+            nodvarnames = stringify2(nodvarnames)
+        else:
+            nodvarnames = ''
         numstep = len(times)
 
         scalars1, vectors1, tensors1 = self.parse_names_and_components(nodvarnames)
@@ -742,30 +758,3 @@ def PutNodalSolution(filename, nodmap, elemap, coord, eleblx, u):
 
     exo.update()
     exo.close()
-
-if __name__ == '__main__':
-    from femlib.mesh import Mesh
-    from femlib.funspace import FunctionSpace, Function
-    from femlib.element import Element
-    mesh = Mesh(type='uniform', ox=0., lx=1., nx=10)
-    mesh.ElementBlock(name='Block-1', elements='all')
-    mesh.extend(1., 10, block='Block-2')
-    V = FunctionSpace(mesh, {'Block-1': Element(type='link2'),
-                             'Block-2': Element(type='link2')})
-    u = Function(V)
-    u += linspace(1., 10., len(u.vector))
-    field_outputs = u.steps.values()[0].frames[-1].field_outputs
-    f = File('myfile', mode='w')
-    f.initialize(mesh.numdim, mesh.numnod, mesh.nodes, mesh.coord,
-                 mesh.num_elem, mesh.elements, mesh.connect, mesh.element_blocks,
-                 field_outputs)
-    for step in u.steps.values():
-        f.put_step(step)
-
-    f.close()
-
-    f = File('myfile', mode='r')
-    steps = f.get_steps()
-    for step in steps.values():
-        for frame in step.frames:
-            print step.name, frame.time, frame.increment

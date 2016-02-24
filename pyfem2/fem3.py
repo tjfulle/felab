@@ -3,7 +3,7 @@ from numpy.linalg import solve, LinAlgError
 from constants import *
 from utilities import *
 from fem1 import FiniteElementModel
-from elemlib1 import DiffussiveHeatTransfer2D3
+from elemlib2_3T import DiffussiveHeatTransfer2D3
 
 class HeatTransfer2DModel(FiniteElementModel):
     numdim = 2
@@ -27,7 +27,7 @@ class HeatTransfer2DModel(FiniteElementModel):
         self.T = self.dofs
 
 def plate_with_hole():
-    from elemlib1 import DiffussiveHeatTransfer2D3
+    from elemlib2_3T import DiffussiveHeatTransfer2D3
     V = HeatTransfer2DModel()
     V.GenesisMesh('../meshes/PlateWithHoleTria3Fine.g')
     k, h, Too = 12, 250, 25
@@ -45,7 +45,7 @@ def plate_with_hole():
 
 def test_1():
     from numpy import sin, sinh, mean
-    from elemlib1 import DiffussiveHeatTransfer2D3
+    from elemlib2_3T import DiffussiveHeatTransfer2D3
     def solution(x, N=20):
         def fun(k):
             a = sin(k * pi * (1 + x[:,0]) / 2.) / (k ** 3 * sinh(k * pi))
@@ -67,7 +67,7 @@ def test_1():
 
 def test_2():
     from numpy import mean
-    from elemlib1 import DiffussiveHeatTransfer2D3
+    from elemlib2_3T import DiffussiveHeatTransfer2D3
     def solution(x):
         return 2. * (1. + x[:,1]) / ((3. + x[:,0])**2 + (1 + x[:,1])**2)
     V = HeatTransfer2DModel()
@@ -85,7 +85,7 @@ def test_2():
 def test_3():
     from numpy import mean, random, where, sin, sinh
     from distmesh import drectangle, distmesh2d, huniform
-    from elemlib1 import DiffussiveHeatTransfer2D3
+    from elemlib2_3T import DiffussiveHeatTransfer2D3
     def solution(x, N=20):
         def fun(n):
             return sin(2.*n*pi/3.)/n**2/sinh(n*pi)*sin(n*pi*x[:,0])*sinh(n*pi*x[:,1])
@@ -114,7 +114,7 @@ def test_3():
 
 def test_4():
     from numpy import cos, cosh, mean
-    from elemlib1 import DiffussiveHeatTransfer2D3
+    from elemlib2_3T import DiffussiveHeatTransfer2D3
     def solution(x, q0=1., k=1., N=20):
         def fun(n):
             al = .5 * (2. * n - 1.) * pi
@@ -145,7 +145,7 @@ def test_5():
     from numpy import mean, random, where, sin, sinh
     from distmesh import drectangle, distmesh2d, huniform
     from numpy import cos, cosh, mean
-    from elemlib1 import DiffussiveHeatTransfer2D3
+    from elemlib2_3T import DiffussiveHeatTransfer2D3
     def solution(x, q0=1., k=1., N=20):
         def fun(n):
             al = .5 * (2. * n - 1.) * pi
@@ -173,7 +173,7 @@ def test_5():
     assert err < 1e-4
 
 def plate_with_hole2():
-    from elemlib1 import DiffussiveHeatTransfer2D3
+    from elemlib2_3T import DiffussiveHeatTransfer2D3
     k, h, Too = 12, 250, 25
     V = HeatTransfer2DModel()
     V.GenesisMesh('../meshes/PlateWithHoleTria3.g')

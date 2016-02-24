@@ -6,7 +6,7 @@ from numpy.linalg import solve, LinAlgError
 
 from constants import *
 from fem1 import FiniteElementModel
-from elemlib1 import Link2D2, BeamColumn2D
+from elemlibN_2 import ElasticLink2D2, BeamColumn2D
 
 # --------------------------------------------------------------------------- #
 # -------------------------- APPLICATION CODE ------------------------------- #
@@ -22,7 +22,7 @@ class PlaneBeamColumnTrussModel(FiniteElementModel):
 
     def Solve(self):
         # active DOF set dynamically
-        self.validate((Link2D2, BeamColumn2D))
+        self.validate((ElasticLink2D2, BeamColumn2D))
 
         # Assemble the global stiffness and force
         K = self.assemble_global_stiffness()
@@ -82,8 +82,8 @@ def test_1():
     V.ElementBlock('B3', (4,))
 
     V.AssignProperties('B1', BeamColumn2D, 'Material-1', A=.02, Izz=.004)
-    V.AssignProperties('B2', Link2D2, 'Material-2', A=.001)
-    V.AssignProperties('B3', Link2D2, 'Material-2', A=.003)
+    V.AssignProperties('B2', ElasticLink2D2, 'Material-2', A=.001)
+    V.AssignProperties('B3', ElasticLink2D2, 'Material-2', A=.003)
 
     V.PrescribedBC(1, (X,Y,TZ))
     V.PrescribedBC(5, Y)
@@ -104,7 +104,7 @@ def test_2():
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=70e9, Nu=.3)
     V.ElementBlock('B1', ALL)
-    V.AssignProperties('B1', Link2D2, 'Material-1', A=5*.01*.01)
+    V.AssignProperties('B1', ElasticLink2D2, 'Material-1', A=5*.01*.01)
     V.PrescribedBC(1, X, -.05)
     V.PrescribedBC((2,3), (X,Y))
     V.ConcentratedLoad(1, Y, 1000e3)

@@ -23,7 +23,7 @@ class IsoPQuad4(IsoPElement):
                [0]
 
     """
-    signature = 1100000
+    signature = (1,1,0,0,0,0,0)
     numdim, numnod, ndof = 2, 4, 2
     gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
     gaussw = ones(4)

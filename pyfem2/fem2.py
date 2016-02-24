@@ -1,7 +1,7 @@
 from numpy import array, dot, zeros
 from numpy.linalg import solve, LinAlgError
 from fem1 import FiniteElementModel
-from elemlib1 import LinknD2
+from elemlibN_2 import ElasticLinknD2
 from constants import *
 
 __all__ = ['TrussModel']
@@ -22,7 +22,7 @@ class TrussModel(FiniteElementModel):
         """
         # active DOF set dynamically
         self.active_dof = range(self.elements[0].ndof)
-        self.validate(LinknD2, one=True)
+        self.validate(ElasticLinknD2, one=True)
         # Assemble the global stiffness and force
         K = self.assemble_global_stiffness()
         F, Q = self.assemble_global_force()
@@ -66,7 +66,7 @@ class TrussModel(FiniteElementModel):
 
         See Also
         --------
-        pyfem2.elemlib1.LinknD2.internal_force
+        pyfem2.elemlibN_2.ElasticLinknD2.internal_force
 
         """
         p = zeros(self.numele)
@@ -101,7 +101,7 @@ class TrussModel(FiniteElementModel):
 # --------------------------------------------------------------------------- #
 def test_1():
     from numpy import allclose
-    from elemlib1 import Link3D2
+    from elemlibN_2 import ElasticLink3D2
     from constants import ALL, X, Y, Z
     nodtab = [[1,0,0,0], [2,10,5,0], [3,10,0,0], [4,20,8,0], [5,20,0,0],
               [6,30,9,0], [7,30,0,0], [8,40,8,0], [9,40,0,0], [10,50,5,0],
@@ -120,7 +120,7 @@ def test_1():
          Abat, Abat, Abat, Abat, Abat,
          Adia, Adia, Adia, Adia]
     V.ElementBlock('ElementBlock-1', ALL)
-    V.AssignProperties('ElementBlock-1', Link3D2, 'Material-1', A=A)
+    V.AssignProperties('ElementBlock-1', ElasticLink3D2, 'Material-1', A=A)
 
     V.PrescribedBC(1, (X,Y))
     V.PrescribedBC(12, Y)
@@ -159,7 +159,7 @@ def test_1():
 
 def test_1a():
     from numpy import allclose
-    from elemlib1 import Link2D2
+    from elemlibN_2 import ElasticLink2D2
     from constants import ALL, X, Y, Z
     nodtab = [[1,0,0], [2,10,5], [3,10,0], [4,20,8], [5,20,0],
               [6,30,9], [7,30,0], [8,40,8], [9,40,0], [10,50,5],
@@ -178,7 +178,7 @@ def test_1a():
          Abat, Abat, Abat, Abat, Abat,
          Adia, Adia, Adia, Adia]
     V.ElementBlock('ElementBlock-1', ALL)
-    V.AssignProperties('ElementBlock-1', Link2D2, 'Material-1', A=A)
+    V.AssignProperties('ElementBlock-1', ElasticLink2D2, 'Material-1', A=A)
 
     V.PrescribedBC(1, (X,Y))
     V.PrescribedBC(12, Y)
@@ -217,7 +217,7 @@ def test_1a():
 def test_2a():
     from constants import ALL, X, Y, Z
     from numpy import allclose
-    from elemlib1 import Link2D2
+    from elemlibN_2 import ElasticLink2D2
     nodtab = [[1, 0., 0.], [2, 3., 4.], [3, 0., 4.]]
     eletab = [[1, 1, 2], [2, 1, 3]]
     V = TrussModel()
@@ -226,7 +226,7 @@ def test_2a():
     V.materials['Material-1'].Elastic(E=70e9, Nu=.333)
     A = 5 * .01 * .01
     V.ElementBlock('ElementBlock-1', ALL)
-    V.AssignProperties('ElementBlock-1', Link2D2, 'Material-1', A=A)
+    V.AssignProperties('ElementBlock-1', ElasticLink2D2, 'Material-1', A=A)
     V.FixNodes((2,3))
     V.PrescribedBC(1, X, -.05)
     V.ConcentratedLoad(1, Y, 1000e3)
@@ -239,7 +239,7 @@ def test_2a():
 def test_2b():
     from constants import ALL, X, Y, Z
     from numpy import allclose
-    from elemlib1 import Link3D2
+    from elemlibN_2 import ElasticLink3D2
     nodtab = [[1, 0., 0., 0.], [2, 3., 4., 0.], [3, 0., 4., 0.]]
     eletab = [[1, 1, 2], [2, 1, 3]]
     V = TrussModel()
@@ -248,7 +248,7 @@ def test_2b():
     V.materials['Material-1'].Elastic(E=70e9, Nu=.333)
     A = 5 * .01 * .01
     V.ElementBlock('ElementBlock-1', ALL)
-    V.AssignProperties('ElementBlock-1', Link3D2, 'Material-1', A=A)
+    V.AssignProperties('ElementBlock-1', ElasticLink3D2, 'Material-1', A=A)
     V.FixNodes((2,3))
     V.PrescribedBC(1, X, -.05)
     V.PrescribedBC(1, Z)
@@ -262,7 +262,7 @@ def test_2b():
 def test_3():
     from constants import ALL, X, Y, Z
     from numpy import allclose
-    from elemlib1 import Link3D2
+    from elemlibN_2 import ElasticLink3D2
     nodtab = [[1, 72, 0, 0], [2, 0, 36, 0], [3, 0, 36, 72], [4, 0, 0, -48]]
     eletab = [[1, 1, 2], [2, 1, 3], [3, 1, 4]]
     V = TrussModel()
@@ -271,7 +271,7 @@ def test_3():
     V.materials['Material-1'].Elastic(E=10e4, Nu=.333)
     A = [.302, .729, .187]
     V.ElementBlock('ElementBlock-1', ALL)
-    V.AssignProperties('ElementBlock-1', Link3D2, 'Material-1', A=A)
+    V.AssignProperties('ElementBlock-1', ElasticLink3D2, 'Material-1', A=A)
     # Boundary conditions
     V.FixNodes((2,3,4))
     V.PrescribedBC(1, Y)
@@ -288,7 +288,7 @@ def test_3():
 def test_4():
     from constants import ALL, X, Y, Z
     from numpy import allclose
-    from elemlib1 import Link3D2
+    from elemlibN_2 import ElasticLink3D2
     # Set up problem space
     nodtab = [[1,-37.5,0,200],[2,37.5,0,200],[3,-37.5,37.5,100],
               [4,37.5,37.5,100],[5,37.5,-37.5,100],[6,-37.5,-37.5,100],
@@ -308,7 +308,7 @@ def test_4():
          0.01, 0.014, 0.014, 0.98, 0.98, 0.98, 0.98, 1.76, 1.76, 1.76, 1.76,
          2.44, 2.44, 2.44, 2.44]
     V.ElementBlock('ElementBlock-1', ALL)
-    V.AssignProperties('ElementBlock-1', Link3D2, 'Material-1', A=A)
+    V.AssignProperties('ElementBlock-1', ElasticLink3D2, 'Material-1', A=A)
 
     # Define boundary conditons
     V.FixNodes([7, 8, 9, 10])

@@ -1,4 +1,5 @@
 import os
+import logging
 from numpy import *
 import numpy.linalg as la
 from utilities import *
@@ -46,7 +47,8 @@ class FiniteElementModel(object):
         pyfem2.mesh.Mesh
 
         """
-        assert os.path.isfile(filename), 'No such file {0!r}'.format(filename)
+        if not os.path.isfile(filename):
+            raise UserInputError('No such file {0!r}'.format(filename))
         self.mesh = Mesh(filename=filename)
         self._initialize_geometry()
 
@@ -69,7 +71,8 @@ class FiniteElementModel(object):
         pyfem2.mesh.Mesh
 
         """
-        assert os.path.isfile(filename), 'No such file {0!r}'.format(filename)
+        if not os.path.isfile(filename):
+            raise UserInputError('No such file {0!r}'.format(filename))
         self.mesh = Mesh(filename=filename)
         self._initialize_geometry()
 
@@ -117,10 +120,11 @@ class FiniteElementModel(object):
         self._initialize_geometry()
 
     def _initialize_geometry(self):
-        assert self.mesh is not None
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
 
         if self.numdim is not None and self.mesh.numdim != self.numdim:
-            raise ValueError('Incorrect mesh dimension')
+            raise UserInputError('Incorrect mesh dimension')
 
         self.numele = self.mesh.numele
         self.elements = empty(self.numele, dtype=object)
@@ -152,15 +156,46 @@ class FiniteElementModel(object):
         return [iel for (iel, el) in enumerate(self.elements) if el is None]
 
     def validate(self, eletyp=None, one=False):
+
         # Validate user input
+
         if self.orphaned_elements:
-            raise RuntimeError('All elements must be assigned to an element block')
+            raise UserInputError('All elements must be assigned to an element block')
+
         if eletyp is not None:
             if not all([isinstance(el, eletyp) for el in self.elements]):
-                raise TypeError('Incorrect element type')
+                raise UserInputError('Incorrect element type')
+
         if one:
             if len(set([type(el) for el in self.elements])) != 1:
-                raise ValueError('TrussSolution expected only 1 element type')
+                raise UserInputError('Expected only 1 element type')
+
+        # Check consistent loading
+        nod_with_bc = {}
+        for (i,tag) in enumerate(self.doftags):
+            if [t for t in tag[:3] if t == DIRICHLET]:
+                nod_with_bc[i] = tag[:3]
+
+        # Now that we know which nodes have bc's, check if any elements have
+        # loads applied to that node
+        for (iel, el) in enumerate(self.elements):
+            if not any(in1d(el.nodes, nod_with_bc.keys())):
+                continue
+            d = self.sload[iel]
+            for (iedge, edge) in enumerate(el.edges):
+                if not any(d[iedge]):
+                    continue
+                # there is a load on this edge
+                for nod in el.nodes[edge]:
+                    if nod not in nod_with_bc:
+                        continue
+                    # node is on edge with force, check DOF
+                    for (j, v) in enumerate(d[iedge]):
+                        if v and nod_with_bc[nod][j] == DIRICHLET:
+                            msg = 'Attempting to apply load and displacement '
+                            msg += 'on same DOF'
+                            logging.warn(msg)
+                            #raise UserInputError(msg)
 
         # Do elements have variable degrees of freedom?
         self.vdof = len(set([el.signature for el in self.elements])) > 1
@@ -169,7 +204,7 @@ class FiniteElementModel(object):
             # Node freedom association table
             self.nodfat = zeros((self.numnod, MDOF), dtype=int)
             for el in self.elements:
-                nfs = IntegerDigits(el.signature)
+                nfs = el.signature
                 for node in el.nodes:
                     nf = [max(nfs[j], self.nodfat[node,j]) for j in range(MDOF)]
                     self.nodfat[node] = nf
@@ -188,7 +223,7 @@ class FiniteElementModel(object):
             # Active degrees of freedom
             self.active_dof = [None] * MDOF
             for eb in self.mesh.eleblx:
-                nfs = IntegerDigits(eb.eletyp.signature)
+                nfs = eb.eletyp.signature
                 for (i, j) in enumerate(nfs):
                     if j:
                         self.active_dof[i] = i
@@ -197,7 +232,7 @@ class FiniteElementModel(object):
         else:
 
             # Node freedom association table
-            nfs = IntegerDigits(self.elements[0].signature)
+            nfs = self.elements[0].signature
             self.nodfat = array([nfs for i in range(self.numnod)])
             # Total number of degrees of freedom
             self.numdof = self.numnod * self.elements[0].ndof
@@ -237,25 +272,27 @@ class FiniteElementModel(object):
                     if nfs1[j] > 0:
                         sx[j] = ix
                         ix += 1
-                nfs2 = IntegerDigits(el.signature)
+                nfs2 = el.signature
                 for j in range(MDOF):
                     if nfs2[j] > 0:
                         if nfs1[j] > 0:
                             eft[k] = self.nodfmt[inode] + sx[j]
                             count += 1
                         k += 1
-            if eft is None:
-                raise ValueError('Zero entry in eftab for '
-                                 'element {0}'.format(el.label))
+            if all(eft==0.):
+                raise UserInputError('Zero entry in eftab for '
+                                     'element {0}'.format(el.label))
             eftab.append(eft)
         return eftab
 
     def request_output_variable(self, name, type, position):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         self.steps[0].FieldOutput(name, type, position)
 
     def create_step(self, dtime=1.):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         # new time step
         ts = self.steps.TimeStep(dtime, copy=1)
 
@@ -318,7 +355,8 @@ class FiniteElementModel(object):
               ...
 
         """
-
+        if not self.validated:
+            raise PyFEM2Error('Problem must be validated before assembly')
         if self.vdof:
             return self.assemble_global_stiffness_vdof(*args)
         else:
@@ -369,6 +407,8 @@ class FiniteElementModel(object):
               ...
 
         """
+        if not self.validated:
+            raise PyFEM2Error('Problem must be validated before assembly')
         if self.vdof:
             return self.assemble_global_force_vdof(*args)
         else:
@@ -642,7 +682,7 @@ class FiniteElementModel(object):
 
         """
         if name in self.materials:
-            raise ValueError('Duplicate material {0!r}'.format(name))
+            raise UserInputError('Duplicate material {0!r}'.format(name))
         self.materials[name] = Material(name)
 
     # ----------------------------------------------------------------------- #
@@ -664,7 +704,8 @@ class FiniteElementModel(object):
         All active displacement and rotation degrees of freedom are set to 0.
 
         """
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         self.assign_dof(DIRICHLET, nodes, self.active_dof, 0.)
     FixDOF = FixNodes
 
@@ -684,7 +725,8 @@ class FiniteElementModel(object):
         All active displacement degrees of freedom are set to 0.
 
         """
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         dof = [x for x in (X,Y,Z) if x in self.active_dof]
         self.assign_dof(DIRICHLET, nodes, dof, 0.)
 
@@ -731,7 +773,8 @@ class FiniteElementModel(object):
              self.PrescribedBC(ILO, X, fun)
 
         """
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         self.assign_dof(DIRICHLET, nodes, dof, amplitude)
     PrescribedDOF = PrescribedBC
 
@@ -745,12 +788,22 @@ class FiniteElementModel(object):
             a = ones(len(inodes)) * amplitude
         else:
             if len(amplitude) != len(inodes):
-                raise ValueError('Incorrect amplitude length')
+                raise UserInputError('Incorrect amplitude length')
             # amplitude is a list of amplitudes
             a = asarray(amplitude)
         dofs = dof if is_listlike(dof) else [dof]
         for (i,inode) in enumerate(inodes):
             for j in dofs:
+                if (doftype == DIRICHLET and
+                    (self.doftags[inode,j] == NEUMANN and
+                     abs(self.doftags[inode,j])>1e-12)):
+                    msg = 'Attempting to apply load and displacement '
+                    msg += 'on same DOF'
+                    raise UserInputError(msg)
+                elif doftype == NEUMANN and self.doftags[inode,j]==DIRICHLET:
+                    msg = 'Attempting to apply load and displacement '
+                    msg += 'on same DOF'
+                    raise UserInputError(msg)
                 self.doftags[inode, j] = doftype
                 self.dofvals[inode, j] = float(a[i])
 
@@ -758,40 +811,43 @@ class FiniteElementModel(object):
     # --- LOADING CONDITIONS ------------------------------------------------ #
     # ----------------------------------------------------------------------- #
     def ConcentratedLoad(self, nodes, dof, amplitude=0.):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         self.assign_dof(NEUMANN, nodes, dof, amplitude)
 
     def GravityLoad(self, region, components):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         orphans = self.orphaned_elements
         if region == ALL:
             ielems = range(self.numele)
         else:
             ielems = [self.mesh.elemap[el] for el in region]
         if not is_listlike(components):
-            raise ValueError('Expected gravity load vector')
+            raise UserInputError('Expected gravity load vector')
         if len(components) != self.numdim:
-            raise ValueError('Expected {0} gravity load '
-                             'components'.format(len(self.active_dof)))
+            raise UserInputError('Expected {0} gravity load '
+                                 'components'.format(len(self.active_dof)))
         a = asarray(components)
         for ielem in ielems:
             if ielem in orphans:
-                raise ValueError('Element blocks must be assigned '
-                                 'before gravity loads')
+                raise UserInputError('Element blocks must be assigned '
+                                     'before gravity loads')
             el = self.elements[ielem]
             rho = el.material.density
             if rho is None:
-                raise ValueError('Element material density must be assigned '
-                                 'before gravity loads')
+                raise UserInputError('Element material density must be assigned '
+                                     'before gravity loads')
             self.dload[ielem] += rho * a
 
     def DistributedLoad(self, region, components):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         if not is_listlike(components):
-            raise ValueError('Expected distributed load vector')
+            raise UserInputError('Expected distributed load vector')
         if len(components) != self.numdim:
-            raise ValueError('Expected {0} distributed load '
-                             'components'.format(len(self.active_dof)))
+            raise UserInputError('Expected {0} distributed load '
+                                 'components'.format(len(self.active_dof)))
         if region == ALL:
             ielems = range(self.numele)
         elif not is_listlike(region):
@@ -799,34 +855,36 @@ class FiniteElementModel(object):
         else:
             ielems = [self.mesh.elemap[el] for el in region]
         if any(in1d(ielems, self.orphaned_elements)):
-            raise ValueError('Element properties must be assigned '
-                             'before DistributedLoad')
+            raise UserInputError('Element properties must be assigned '
+                                 'before DistributedLoad')
         self.dload[ielems] += asarray(components)
 
     def SurfaceLoad(self, surface, components):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         if not is_listlike(components):
-            raise ValueError('Expected surface load vector')
+            raise UserInputError('Expected surface load vector')
         if len(components) != self.numdim:
-            raise ValueError('Expected {0} surface load '
-                             'components'.format(len(self.active_dof)))
+            raise UserInputError('Expected {0} surface load '
+                                 'components'.format(len(self.active_dof)))
         surface = self.mesh.find_surface(surface)
         orphans = self.orphaned_elements
         for (iel, iedge) in surface:
             if iel in orphans:
-                raise ValueError('Element properties must be assigned '
-                                 'before SurfaceLoad')
+                raise UserInputError('Element properties must be assigned '
+                                     'before SurfaceLoad')
             self.sload[iel, iedge, :] = components
 
     def SurfaceLoadN(self, surface, amplitude):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         surface = self.mesh.find_surface(surface)
         orphans = self.orphaned_elements
         for (iel, edge) in surface:
             # determine the normal to the edge
             if iel in orphans:
-                raise ValueError('Element properties must be assigned '
-                                 'before SurfaceLoadN')
+                raise UserInputError('Element properties must be assigned '
+                                     'before SurfaceLoadN')
             el = self.elements[iel]
             edgenod = el.edges[edge]
             if self.numdim == 2 and len(edgenod) > 2:
@@ -839,26 +897,30 @@ class FiniteElementModel(object):
             self.sload[iel, edge, :] = amplitude * n
 
     def Pressure(self, surface, amplitude):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         self.SurfaceLoadN(surface, -amplitude)
 
     # ----------------------------------------------------------------------- #
     # --- HEAT TRANSFER LOADINGS -------------------------------------------- #
     # ----------------------------------------------------------------------- #
     def SurfaceFlux(self, surface, qn):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         surf = self.mesh.find_surface(surface)
         for (iel, edge) in surf:
             self.sflux[iel, edge] = qn
 
     def SurfaceConvection(self, surface, Too, h):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         surf = self.mesh.find_surface(surface)
         for (iel, edge) in surf:
             self.sfilm[iel, edge, :] = [Too, h]
 
     def HeatGeneration(self, region, amplitude):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         if region == ALL:
             xelems = sorted(self.mesh.elemap.keys())
         else:
@@ -877,8 +939,8 @@ class FiniteElementModel(object):
             a = amplitude * ones(len(inodes))
         else:
             if len(amplitude) != len(inodes):
-                raise ValueError('Heat generation amplitude must have '
-                                 'length {0}'.format(len(inodes)))
+                raise UserInputError('Heat generation amplitude must have '
+                                     'length {0}'.format(len(inodes)))
             a = asarray(amplitude)
         nodmap = dict(zip(inodes, range(inodes.shape[0])))
         for xelem in xelems:
@@ -887,7 +949,8 @@ class FiniteElementModel(object):
             self.src[ielem] += a[ix]
 
     def InitialTemperature(self, nodes, amplitude):
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         inodes = self.mesh.get_internal_node_ids(nodes)
         if hasattr(amplitude, '__call__'):
             # amplitude is a function
@@ -897,7 +960,7 @@ class FiniteElementModel(object):
             a = ones(len(inodes)) * amplitude
         else:
             if len(amplitude) != len(inodes):
-                raise ValueError('Incorrect amplitude length')
+                raise UserInputError('Incorrect amplitude length')
             # amplitude is a list of amplitudes
             a = asarray(amplitude)
         self.initial_temp = a
@@ -920,7 +983,8 @@ class FiniteElementModel(object):
         pyfem2.mesh.Mesh.ElementBlock
 
         """
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         blk = self.mesh.ElementBlock(name, elements)
         return blk
 
@@ -950,16 +1014,18 @@ class FiniteElementModel(object):
         ``t`` be specified but plane heat transfer elements do not
 
         """
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         if elemat not in self.materials:
-            raise ValueError('No such material {0!r}'.format(elemat))
+            raise UserInputError('No such material {0!r}'.format(elemat))
         elemat = self.materials[elemat]
         if blknam not in self.mesh.element_blocks:
-            raise ValueError('No such elemenb block {0!r}'.format(blknam))
+            print(blknam, self.mesh.element_blocks)
+            raise UserInputError('No such element block {0!r}'.format(blknam))
         blk = self.mesh.element_blocks[blknam]
         blk.eletyp = eletyp
         if eletyp.numnod != blk.elecon.shape[1]:
-            raise ValueError('Node type not consistent with element block')
+            raise UserInputError('Node type not consistent with element block')
 
         if elefab:
             # element fabrication properties given, make sure there is one
@@ -993,7 +1059,8 @@ class FiniteElementModel(object):
         pyfem2.mesh.Mesh.NodeSet
 
         """
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         self.mesh.NodeSet(name, region)
 
     def Surface(self, name, surface):
@@ -1011,7 +1078,8 @@ class FiniteElementModel(object):
         pyfem2.mesh.Mesh.Surface
 
         """
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         self.mesh.Surface(name, surface)
 
     def ElementSet(self, name, region):
@@ -1029,10 +1097,30 @@ class FiniteElementModel(object):
         pyfem2.mesh.Mesh.ElementSet
 
         """
-        assert self.mesh is not None, 'Mesh must first be created'
+        if self.mesh is None:
+            raise UserInputError('Mesh must first be created')
         self.mesh.ElementSet(name, region)
 
-    def Plot2D(self, deformed=False, color=None, **kwds):
+    def _get_field(self, key):
+        key1 = key.lower()
+        if key1 in ('u', 'ux', 'uy', 'uz'):
+            key1 = 'displ' + key1[1:]
+        for (name, field) in self.steps[-1].field_outputs.items():
+            if key1 == name.lower():
+                if field.type != SCALAR:
+                    comps = ','.join(key+comp for comp in field.components)
+                    msg = 'Non scalar plotting requires components be specified. '
+                    msg += 'Try one of {0}'.format(comps)
+                    raise UserInputError(msg)
+                return field.data
+            comps = [(field.key+c).lower() for c in field.components]
+            if key1 in comps:
+                if field.position in (ELEMENT, INTEGRATION_POINT):
+                    raise NotImplementedError('Plotting element data not done')
+                return field.data[:,comps.index(key1)]
+        raise UserInputError('No such field {0!r}'.format(key))
+
+    def Plot2D(self, deformed=False, color=None, colorby=None, **kwds):
         """Create a 2D plot
 
         Parameters
@@ -1054,13 +1142,19 @@ class FiniteElementModel(object):
 
         """
         assert self.numdim == 2
+        if self.numdim != 2:
+            raise UserInputError('Plot2D is only applicable to 2D problems')
         xy = array(self.mesh.coord)
         if deformed:
             xy += self.dofs.reshape(xy.shape)
         elecon = []
         for blk in self.mesh.eleblx:
             elecon.extend(blk.elecon)
-        return self.mesh.Plot2D(xy=xy, elecon=array(elecon), color=color, **kwds)
+
+        if colorby and is_stringlike(colorby):
+            colorby = self._get_field(colorby)
+        return self.mesh.Plot2D(xy=xy, elecon=array(elecon), color=color,
+                                colorby=colorby, **kwds)
 
     def WriteResults(self, filename):
         """Write the finite element results to a file
