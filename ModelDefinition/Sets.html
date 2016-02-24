@@ -51,23 +51,23 @@ individual entitities.</p>
 <div class="section" id="node-sets">
 <span id="nodesets"></span><h2>3.6.2. Node sets<a class="headerlink" href="#node-sets" title="Permalink to this headline">¶</a></h2>
 <p>A node set is a group of nodes to which boundary conditions and concentrated loads can be applied.  A node set is created by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">NodeSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nset</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">NodeSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nset</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">name</span></code> is a unique character string by which the set is referenced and <code class="docutils literal"><span class="pre">nset</span></code> is one of the following:</p>
 <ul>
 <li><p class="first">a single external node label:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">NodeSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">NodeSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">a list of external node labels:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">NodeSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="o">...</span><span class="p">))</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">NodeSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="o">...</span><span class="p">))</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">a symbolic constant:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">NodeSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">CONSTANT</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">NodeSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">CONSTANT</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">CONSTANT</span></code> is one of the following symbolic constants:</p>
@@ -106,23 +106,23 @@ individual entitities.</p>
 <div class="section" id="element-sets">
 <h2>3.6.3. Element sets<a class="headerlink" href="#element-sets" title="Permalink to this headline">¶</a></h2>
 <p>An element set is a group of elements to which distributed loads can be applied.  A element set is created by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">ElementSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">elset</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">ElementSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">elset</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">name</span></code> is a unique character string by which the set is referenced and <code class="docutils literal"><span class="pre">elset</span></code> is one of the following:</p>
 <ul>
 <li><p class="first">a single external element label:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">ElementSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">ElementSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">a list of external element labels:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">ElementSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="o">...</span><span class="p">))</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">ElementSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="o">...</span><span class="p">))</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">a symbolic constant:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">ElementSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">CONSTANT</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">ElementSet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">CONSTANT</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">CONSTANT</span></code> is one of the following symbolic constants:</p>
@@ -146,19 +146,19 @@ individual entitities.</p>
 <div class="section" id="surfaces">
 <h2>3.6.4. Surfaces<a class="headerlink" href="#surfaces" title="Permalink to this headline">¶</a></h2>
 <p>A surface is a group of element/face pairs to which surface loads can be applied.  A surface is created by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Surface</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">surface</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Surface</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">surface</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">name</span></code> is a unique character string by which the surface is referenced and <code class="docutils literal"><span class="pre">surface</span></code> is one of the following:</p>
 <ul>
 <li><p class="first">a single external element label/face ID pair:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Surface</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">S1</span><span class="p">))</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Surface</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">S1</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>which specifies that the surface is defined by the face <code class="docutils literal"><span class="pre">S1</span></code> of element 1. In general, the symbolic constant <code class="docutils literal"><span class="pre">Sn</span></code> represents the <code class="docutils literal"><span class="pre">n</span></code>th face of the element.</p>
 </li>
 <li><p class="first">a list of external element labels/face IDs:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Surface</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">S1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">S1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">S1</span><span class="p">),</span> <span class="o">...</span><span class="p">))</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Surface</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">S1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">S1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">S1</span><span class="p">),</span> <span class="o">...</span><span class="p">))</span>
 </pre></div>
 </div>
 </li>

@@ -24,24 +24,24 @@ The truss element theory is described in :ref:`BarElements`.
 
 .. _Link1D2:
 
-``Link1D2``
-~~~~~~~~~~~
+``ElasticLink1D2``
+~~~~~~~~~~~~~~~~~~
 
 - **Active degrees of freedom:** ``X``
 - **Valid loads:** :ref:`ConcentratedLoad`
 
 .. _Link2D2:
 
-``Link2D2``
-~~~~~~~~~~~
+``ElasticLink2D2``
+~~~~~~~~~~~~~~~~~~
 
 - **Active degrees of freedom:** ``X,Y``
 - **Valid loads:** :ref:`ConcentratedLoad`
 
 .. _Link3D2:
 
-``Link3D2``
-~~~~~~~~~~~
+``ElasticLink3D2``
+~~~~~~~~~~~~~~~~~~
 
 - **Active degrees of freedom:** ``X,Y,Z``
 - **Valid loads:** :ref:`ConcentratedLoad`

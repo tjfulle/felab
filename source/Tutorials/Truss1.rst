@@ -58,7 +58,7 @@ The problem is defined and solved in ``pyfem2`` as follows:
         Atop, Atop, Atop, Atop, Atop, Atop,
         Abat, Abat, Abat, Abat, Abat,
         Adia, Adia, Adia, Adia]
-   V.AssignProperties('ElementBlock1', Link2D2, 'Material-1', A=A)
+   V.AssignProperties('ElementBlock1', ElasticLink2D2, 'Material-1', A=A)
 
    # Apply boundary conditions
    V.PrescribedBC(1, (X,Y))
@@ -129,10 +129,10 @@ The finite element model ``V`` requires that every element in the mesh be
 assigned an element type and material constitutive relations. The assignment
 occurs by grouping elements of the same type together in to element blocks and
 then assigning to those element blocks material and fabrication properties.
-For this problem, every element in the mesh is a ``Link3D2`` two-node elastic
-bar element (an elastic bar element with two degrees of freedom per node). The
-element block, named ``ElementBlock1``, containing all of the elements in the
-mesh is created by:
+For this problem, every element in the mesh is a ``ElasticLink3D2`` two-node
+elastic bar element (an elastic bar element with two degrees of freedom per
+node). The element block, named ``ElementBlock1``, containing all of the
+elements in the mesh is created by:
 
 
 .. code:: python
@@ -153,12 +153,12 @@ fabrication properties by the ``AssignProperties`` method:
         Atop, Atop, Atop, Atop, Atop, Atop,
         Abat, Abat, Abat, Abat, Abat,
         Adia, Adia, Adia, Adia]
-   V.AssignProperties('ElementBlock1', Link2D2, 'Material-1', A=A)
+   V.AssignProperties('ElementBlock1', ElasticLink2D2, 'Material-1', A=A)
 
 The method ``AssignProperties`` takes as input the name of the element block
 to which properties are being assigned, the element type for elements in the
 block, the material model name, and any element fabrication properties. For
-``Link2D2`` elements, the area ``A`` is the only fabrication property.
+``ElasticLink2D2`` elements, the area ``A`` is the only fabrication property.
 
 The next step is to specify the boundary conditions :math:`u_{1x}=u_{1y}=0`, and :math:`u_{12y}=0`:
 

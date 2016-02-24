@@ -54,7 +54,7 @@
 <div class="section" id="model-script">
 <h2>2.5.3. Model Script<a class="headerlink" href="#model-script" title="Permalink to this headline">¶</a></h2>
 <p>The problem is defined and solved in <code class="docutils literal"><span class="pre">pyfem2</span></code> as follows:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">pyfem2 tutorial demo program: Plane strain elasticity</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
@@ -92,7 +92,7 @@
 <h2>2.5.4. How does it work?<a class="headerlink" href="#how-does-it-work" title="Permalink to this headline">¶</a></h2>
 <p>The complete code can be found in the file <code class="docutils literal"><span class="pre">tutorials/Plane1.py</span></code>. We now examine the preceding program in detail.</p>
 <p>The first lines of the program,</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
 </pre></div>
 </div>
@@ -100,11 +100,11 @@
 <a class="reference external" href="http://www.numpy.org">numpy</a> is a python package providing numerical data
 types and procedures. The key import from the <code class="docutils literal"><span class="pre">pyfem2</span></code> library is <code class="docutils literal"><span class="pre">Plane2DModel</span></code>.</p>
 <p>The statement</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span> <span class="o">=</span> <span class="n">Plane2DModel</span><span class="p">()</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span> <span class="o">=</span> <span class="n">Plane2DModel</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>creates the finite element model.  The mesh is assigned to the model by</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">GenesisMesh</span><span class="p">(</span><span class="s1">&#39;../meshes/QuarterCylinderQuad4.g&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">GenesisMesh</span><span class="p">(</span><span class="s1">&#39;../meshes/QuarterCylinderQuad4.g&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>which reads the mesh parameters from a
@@ -118,14 +118,14 @@ For this problem, every element in the mesh is a <code class="docutils literal">
 plane strain element (a quadralateral element with two degrees of freedom per
 node). The element block, named <code class="docutils literal"><span class="pre">ElementBlock1</span></code>, containing all of the
 elements in the mesh is created by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The symbol <code class="docutils literal"><span class="pre">ALL</span></code> informs the <code class="docutils literal"><span class="pre">ElementBlock</span></code> method to assign all elements
 in the mesh to the block <code class="docutils literal"><span class="pre">ElementBlock1</span></code>. Material properties are defined by
 the <code class="docutils literal"><span class="pre">Material</span></code> method and elements in a block are assigned material and
 fabrication properties by the <code class="docutils literal"><span class="pre">AssignProperties</span></code> method:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
 <span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">Mu</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">499</span><span class="p">)</span>
 <span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
@@ -137,28 +137,28 @@ block, the material model name, and any element fabrication properties. For
 property.</p>
 <p>The next step is to specify the boundary conditions <span class="math">\(u_x(x=0,y)=0\)</span> and
 <span class="math">\(u_y(x,y=0)=0\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-200&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-200&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
 <span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-201&#39;</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The nodesets <code class="docutils literal"><span class="pre">Nodeset-200</span></code> and <code class="docutils literal"><span class="pre">Nodeset-201</span></code> are defined in the mesh file.</p>
 <p>The pressure on the inside surface of the cylinder is defined by</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Pressure</span><span class="p">(</span><span class="s1">&#39;Surface-1&#39;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Pressure</span><span class="p">(</span><span class="s1">&#39;Surface-1&#39;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Finally, the unknown displacements are determined by solving the model and the model results are written to an ExodusII output file</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Perhaps the easiest way to view results is by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Plot2D</span><span class="p">(</span><span class="n">deformed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Plot2D</span><span class="p">(</span><span class="n">deformed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>With the <code class="docutils literal"><span class="pre">deformed</span></code> keyword, the deformed coordinates are plotted.</p>
 <a class="reference internal image-reference" href="../_images/plane1_3.png"><img alt="../_images/plane1_3.png" class="align-center" src="../_images/plane1_3.png" style="width: 480.0px; height: 360.0px;" /></a>
 <p>The results can also be written to an ExodusII file and viewed in
 <a class="reference external" href="http://www.paraview.org">ParaView</a></p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;PlaneElasticity.exo&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;PlaneElasticity.exo&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/plane1_4.png" class="align-center" src="../_images/plane1_4.png" />

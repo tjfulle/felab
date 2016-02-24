@@ -244,7 +244,7 @@ preceding questions can be answered in the affirmitive.</p>
 <p>Assembly of the global stiffness is performed in , shown in Listing
 [lst:ass.ass.1]. stands for “Uniform Degree of Freedom”. is defined in
 and is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K</span> <span class="o">=</span> <span class="n">AssembleGlobalStiffnessUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span><span class="n">elemap</span><span class="p">,</span><span class="n">eletyp</span><span class="p">,</span><span class="n">elecon</span><span class="p">,</span><span class="n">elemat</span><span class="p">,</span><span class="n">elefab</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="n">AssembleGlobalStiffnessUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span><span class="n">elemap</span><span class="p">,</span><span class="n">eletyp</span><span class="p">,</span><span class="n">elecon</span><span class="p">,</span><span class="n">elemat</span><span class="p">,</span><span class="n">elefab</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The arguments to are:</p>
@@ -286,7 +286,7 @@ and is invoked as</p>
 </tr>
 </tbody>
 </table>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">AssembleGlobalStiffnessUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">AssembleGlobalStiffnessUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span>
                                 <span class="n">elefab</span><span class="p">,</span> <span class="n">dltags</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dlvals</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">coord</span><span class="p">),</span> <span class="n">asarray</span><span class="p">(</span><span class="n">elecon</span><span class="p">)</span>
     <span class="c1"># number of nodes and degrees of freedom per node</span>
@@ -328,7 +328,7 @@ element freedom table is constructed by creating a nested list of global
 DOF for each node on the element and flattening it. For example, for an
 element having 2 degrees of freedom per node and having nodes and , the
 element freedom table is formed by</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">ElementStiffness</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">ElementStiffness</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">eletyp</span> <span class="ow">in</span> <span class="p">(</span><span class="n">L1D2</span><span class="p">,</span> <span class="n">L2D2</span><span class="p">,</span> <span class="n">L3D2</span><span class="p">):</span>
         <span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span> <span class="o">=</span> <span class="n">args</span>
         <span class="k">return</span> <span class="n">Link2Stiffness</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
@@ -354,7 +354,7 @@ element freedom table is formed by</p>
 <h3>5.6.3.2. Global Force<a class="headerlink" href="#global-force" title="Permalink to this headline">¶</a></h3>
 <p>Assembly of the global force is performed in , shown in Listing
 [lst:ass.ass.2]. is defined in and is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">F</span> <span class="o">=</span> <span class="n">AssembleGlobalForceUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">,</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">F</span> <span class="o">=</span> <span class="n">AssembleGlobalForceUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">,</span>
                             <span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">dltags</span><span class="o">=</span><span class="n">dltags</span><span class="p">,</span> <span class="n">dlvals</span><span class="o">=</span><span class="n">dlvals</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -400,7 +400,7 @@ element freedom table is formed by</p>
 </tr>
 </tbody>
 </table>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">AssembleGlobalForceUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">,</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">AssembleGlobalForceUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">,</span>
                             <span class="n">f</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dltags</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dlvals</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">doftags</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">doftags</span> <span class="o">=</span> <span class="n">doftags</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
@@ -438,7 +438,7 @@ element freedom table is formed by</p>
 <p>The subordinate function computes the element force array due to sources
 and distributed loads. is shown shown in Listing [lst:ass.elemforce].
 Details of each element force are presented in Appendix [app:elem.lib].</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">ElementForce</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">ElementForce</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
     <span class="n">xc</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">args</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
     <span class="c1"># Source array</span>
     <span class="n">Fe</span> <span class="o">=</span> <span class="n">ElementSourceArray</span><span class="p">(</span><span class="n">eletyp</span><span class="p">,</span> <span class="n">xc</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
@@ -462,7 +462,7 @@ Details of each element force are presented in Appendix [app:elem.lib].</p>
 <h2>5.6.4. Verification of Program Units<a class="headerlink" href="#verification-of-program-units" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="assembly-verification">
 <h3>5.6.4.1. Assembly Verification<a class="headerlink" href="#assembly-verification" title="Permalink to this headline">¶</a></h3>
-<div class="code python highlight-python"><div class="highlight"><pre>coord = [[0,0,0], [10,0,0], [10,10,0]]
+<div class="code python highlight-python"><div class="highlight"><pre><span></span>coord = [[0,0,0], [10,0,0], [10,10,0]]
 elemap = {1:0, 2:1, 3:2}
 elecon = [[0,1], [1,2], [0,2]]
 eletyp = [L3D2, L3D2, L3D2]
@@ -480,7 +480,7 @@ assert(array([[ 20.,  10.,   0., -10.,   0.,   0., -10., -10.,   0.],
               [  0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.,   0.]], K)
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">v</span> <span class="o">=</span> <span class="n">eigvals</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">v</span> <span class="o">=</span> <span class="n">eigvals</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
 <span class="k">assert</span><span class="p">([</span> <span class="mf">45.3577</span><span class="p">,</span><span class="mf">16.74031</span><span class="p">,</span><span class="mf">7.902</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">],</span> <span class="n">v</span><span class="p">)</span>
 </pre></div>
 </div>
