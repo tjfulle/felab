@@ -251,87 +251,19 @@ preceding questions can be answered in the affirmitive.</p>
 </div>
 <div class="section" id="assembler-computational-implementation">
 <h2>5.6.3. Assembler Computational Implementation<a class="headerlink" href="#assembler-computational-implementation" title="Permalink to this headline">¶</a></h2>
-<p>Algorithms for assemblers for the global stiffness and global force are presented.</p>
-<div class="section" id="global-stiffness">
-<h3>5.6.3.1. Global Stiffness<a class="headerlink" href="#global-stiffness" title="Permalink to this headline">¶</a></h3>
-<p>The algorithm for assembling the global stiffness is</p>
-<ol class="arabic">
-<li><p class="first"><strong>TASK</strong>: Assemble the global stiffness <code class="docutils literal"><span class="pre">K</span></code></p>
-<ol class="arabic">
-<li><p class="first"><strong>INITIALIZE</strong></p>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">N</span></code> = number of nodes in the mesh</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">m</span></code> = number of degrees of freedom per node</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">K[N*m,N*m]</span></code> = 0</li>
-</ul>
-</li>
-<li><p class="first"><strong>FOR EACH</strong> element <strong>DO</strong></p>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">Ke</span></code> = element stiffness</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">n</span></code> = number of nodes on element</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">nodes[n]</span></code> = node numbers of the element</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">eft[n*m]</span></code> = 0</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = 0</li>
-</ul>
-<p><strong>COMMENT</strong>: Construct the element freedom table</p>
-<ol class="arabic">
-<li><p class="first"><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">i</span></code> &lt; <code class="docutils literal"><span class="pre">n</span></code></p>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">ni</span></code> = <code class="docutils literal"><span class="pre">nodes[i]</span></code></li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">0</span></code></li>
-</ul>
-<ol class="arabic simple">
-<li><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">j</span></code> &lt; <code class="docutils literal"><span class="pre">m</span></code>:<ul>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">eft[i+j]</span></code> = <code class="docutils literal"><span class="pre">ni*m</span></code> + <code class="docutils literal"><span class="pre">j</span></code></li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">j</span></code> + 1</li>
-</ul>
-</li>
-</ol>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = <code class="docutils literal"><span class="pre">i</span></code> + 1</li>
-</ul>
-</li>
-</ol>
-<p><strong>COMMENT</strong> Map the local degrees of freedom to the global</p>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = 0</li>
-</ul>
-<ol class="arabic">
-<li><p class="first"><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">i</span></code> &lt; <code class="docutils literal"><span class="pre">n*m</span></code></p>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">I</span></code> = <code class="docutils literal"><span class="pre">eft[i]</span></code></li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">i</span></code></li>
-</ul>
-<ol class="arabic simple">
-<li><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">j</span></code> &lt; <code class="docutils literal"><span class="pre">n*m</span></code><ul>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">J</span></code> = <code class="docutils literal"><span class="pre">eft[j]</span></code></li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">K[I,J]</span></code> = <code class="docutils literal"><span class="pre">K[I,J]</span></code> + <code class="docutils literal"><span class="pre">Ke[i,j]</span></code></li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">K[J,</span> <span class="pre">I]</span></code> = <code class="docutils literal"><span class="pre">K[I,</span> <span class="pre">J]</span></code></li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">j</span></code> + 1</li>
-</ul>
-</li>
-</ol>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = <code class="docutils literal"><span class="pre">i</span></code> + 1</li>
-</ul>
-</li>
-</ol>
-</li>
-</ol>
-</li>
-</ol>
+<div class="section" id="stiffness-assembler">
+<h3>5.6.3.1. Stiffness assembler<a class="headerlink" href="#stiffness-assembler" title="Permalink to this headline">¶</a></h3>
 <p>In <code class="docutils literal"><span class="pre">pyfem2</span></code>, assembly of the global stiffness is performed in the method
 <code class="docutils literal"><span class="pre">FiniteElementModel.assemble_global_stiffness_udof</span></code> (<code class="docutils literal"><span class="pre">udof</span></code> stands for
 &#8220;uniform degree of freedom&#8221;).</p>
 <p>The heart of the assembly process is constructing the element freedom table,
-represented by the symbol <code class="docutils literal"><span class="pre">eft</span></code>. The element freedom table contains the global
-degree of freedom number for the nodes in the element. For elements having
-uniform degrees of freedom, this table can be constructed on the fly using, as shown.</p>
-<div class="section" id="stiffness-assembler-example">
-<h4>Stiffness assembler example<a class="headerlink" href="#stiffness-assembler-example" title="Permalink to this headline">¶</a></h4>
+represented by the symbol <code class="docutils literal"><span class="pre">eft</span></code>. The element freedom table contains the
+global degree of freedom number for the nodes in the element. For elements
+having uniform degrees of freedom, this table can be constructed on the fly
+using, as shown.</p>
 <p>A representative python code that performs stiffness assembly is the function
 <code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code>, shown below. <code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code> is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="n">AssemblePlaneTrussStiffness</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K</span> <span class="o">=</span> <span class="n">AssemblePlaneTrussStiffness</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The arguments <code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code> to are:</p>
@@ -367,7 +299,7 @@ uniform degrees of freedom, this table can be constructed on the fly using, as s
 </tr>
 </tbody>
 </table>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">AssemblePlaneTrussStiffness</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">AssemblePlaneTrussStiffness</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">):</span>
     <span class="n">coord</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
     <span class="n">elecon</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">elecon</span><span class="p">)</span>
 
@@ -405,7 +337,7 @@ uniform degrees of freedom, this table can be constructed on the fly using, as s
 </pre></div>
 </div>
 <p>The subordinate function <code class="docutils literal"><span class="pre">PlaneTrussElementStiffness</span></code> computes the element stiffness matrix (see <a class="reference internal" href="../ElementLibrary/Link.html#barelements"><span>Elastic bar elements</span></a>):</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">PlaneTrussElementStiffness</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">PlaneTrussElementStiffness</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
     <span class="n">v</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">h</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">v</span> <span class="o">/</span> <span class="n">h</span>
@@ -431,64 +363,104 @@ table and merging element equations in to the global equations can be
 optimized greatly.</p>
 </div>
 </div>
-</div>
-<div class="section" id="global-force">
-<h3>5.6.3.2. Global Force<a class="headerlink" href="#global-force" title="Permalink to this headline">¶</a></h3>
-<p>The algorithm for assembling the global force follows closely that of assembling the global stiffness:</p>
-<ol class="arabic">
-<li><p class="first"><strong>TASK</strong>: Assemble the global force <code class="docutils literal"><span class="pre">F</span></code></p>
-<ol class="arabic">
-<li><p class="first"><strong>INITIALIZE</strong></p>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">N</span></code> = number of nodes in the mesh</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">m</span></code> = number of degrees of freedom per node</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">F[N*m]</span></code> = 0</li>
-</ul>
-</li>
-<li><p class="first"><strong>FOR EACH</strong> element <strong>DO</strong></p>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">Fe</span></code> = element force</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">n</span></code> = number of nodes on element</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">nodes[n]</span></code> = node numbers of the element</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">eft[n*m]</span></code> = 0</li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = 0</li>
-</ul>
-<p><strong>COMMENT</strong>: Construct the element freedom table</p>
-<ol class="arabic">
-<li><p class="first"><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">i</span></code> &lt; <code class="docutils literal"><span class="pre">n</span></code></p>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">ni</span></code> = <code class="docutils literal"><span class="pre">nodes[i]</span></code></li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">0</span></code></li>
-</ul>
-<ol class="arabic simple">
-<li><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">j</span></code> &lt; <code class="docutils literal"><span class="pre">m</span></code>:<ul>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">eft[i+j]</span></code> = <code class="docutils literal"><span class="pre">ni*m</span></code> + <code class="docutils literal"><span class="pre">j</span></code></li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">j</span></code> = <code class="docutils literal"><span class="pre">j</span></code> + 1</li>
-</ul>
-</li>
-</ol>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = <code class="docutils literal"><span class="pre">i</span></code> + 1</li>
-</ul>
-</li>
-</ol>
-<p><strong>COMMENT</strong> Map the local degrees of freedom to the global</p>
-<ul class="simple">
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">i</span></code> = 0</li>
-</ul>
-<ol class="arabic simple">
-<li><strong>DO WHILE</strong> <code class="docutils literal"><span class="pre">i</span></code> &lt; <code class="docutils literal"><span class="pre">n*m</span></code><ul>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">I</span></code> = <code class="docutils literal"><span class="pre">eft[i]</span></code></li>
-<li><strong>SET</strong> <code class="docutils literal"><span class="pre">F[I]</span></code> = <code class="docutils literal"><span class="pre">F[I]</span></code> + <code class="docutils literal"><span class="pre">Fe[i]</span></code></li>
-</ul>
-</li>
-</ol>
-</li>
-</ol>
-</li>
-</ol>
+<div class="section" id="force-assembler">
+<h3>5.6.3.2. Force assembler<a class="headerlink" href="#force-assembler" title="Permalink to this headline">¶</a></h3>
 <p>In <code class="docutils literal"><span class="pre">pyfem2</span></code>, assembly of the global stiffness is performed in the method
 <code class="docutils literal"><span class="pre">FiniteElementModel.assemble_global_force_udof</span></code>.</p>
+<p>A representative python code that performs stiffness assembly is the function
+<code class="docutils literal"><span class="pre">AssemblePlaneTrussForce</span></code>, shown below. <code class="docutils literal"><span class="pre">AssemblePlaneTrussForce</span></code> is invoked as</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">F</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">AssemblePlaneTrussForce</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The arguments <code class="docutils literal"><span class="pre">AssemblePlaneTrussForce</span></code> to are:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="86%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">coord</span></code></td>
+<td>Nodal coordinates. <code class="docutils literal"><span class="pre">coord[n,i]</span></code> is the ith coordinate of node n.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">elecon</span></code></td>
+<td>Element connectivity. <code class="docutils literal"><span class="pre">elecon[e,n]</span></code> is the nth internal node label of element e.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">doftags</span></code></td>
+<td>Degree of freedom tags</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">dofvals</span></code></td>
+<td>Degree of freedom values</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">q</span></code></td>
+<td>Distributed load.  <code class="docutils literal"><span class="pre">q[e]</span></code> is the distributed load on element e.</td>
+</tr>
+</tbody>
+</table>
+<p>The output is:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="6%" />
+<col width="94%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">F</span></code></td>
+<td>Global force array with dimensions *N*m, where m is the number of degrees of freedom per node and N the total number of nodes.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">Q</span></code></td>
+<td>Force contribution on the Nuemmann boundary.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The assembler below also produces the array <code class="docutils literal"><span class="pre">Q</span></code> of forces on the Neummann boundary.</p>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">AssemblePlaneTrussForce</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">):</span>
+
+    <span class="n">coord</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+    <span class="n">elecon</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">elecon</span><span class="p">)</span>
+
+    <span class="c1"># Total number of nodes and degrees of freedom per node</span>
+    <span class="n">N</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">doftags</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">numele</span> <span class="o">=</span> <span class="n">elecon</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Force contribution on Neummann boundary</span>
+    <span class="n">Q</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="o">*</span><span class="n">m</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">doftags</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">I</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">m</span> <span class="o">+</span> <span class="n">j</span>
+                <span class="n">Q</span><span class="p">[</span><span class="n">I</span><span class="p">]</span> <span class="o">=</span> <span class="n">dofvals</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
+
+    <span class="c1"># Compute contribution from element sources and boundary loads</span>
+    <span class="n">F</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">ndof</span><span class="o">*</span><span class="n">numnod</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numele</span><span class="p">):</span>
+
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">elecon</span><span class="p">[</span><span class="n">e</span><span class="p">]</span>  <span class="c1"># element connectivity</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">coord</span><span class="p">[</span><span class="n">nodes</span><span class="p">]</span>  <span class="c1"># nodal coordinates</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>  <span class="c1"># number of nodes on element</span>
+        <span class="n">Fe</span> <span class="o">=</span> <span class="n">PlaneTrussElementForce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">q</span><span class="p">[</span><span class="n">e</span><span class="p">])</span>
+
+        <span class="c1"># Element freedom table</span>
+        <span class="n">eft</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">m</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">ni</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+                <span class="n">eft</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">ni</span><span class="o">*</span><span class="n">m</span> <span class="o">+</span> <span class="n">j</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">m</span><span class="p">):</span>
+            <span class="n">F</span><span class="p">[</span><span class="n">eft</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">Fe</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">F</span><span class="p">,</span> <span class="n">Q</span>
+</pre></div>
+</div>
+<p>The subordinate function <code class="docutils literal"><span class="pre">PlaneTrussElementForce</span></code> computes the element force array:</p>
+<div class="code highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">PlaneTrussElementForce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">q</span> <span class="o">*</span> <span class="n">h</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">])</span>
+</pre></div>
+</div>
 </div>
 </div>
 </div>

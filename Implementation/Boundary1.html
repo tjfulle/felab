@@ -60,7 +60,7 @@ force boundary conditions.</li>
 example. Consider the space truss:</p>
 <a class="reference internal image-reference" href="../_images/SpaceTruss1.jpeg"><img alt="../_images/SpaceTruss1.jpeg" class="align-center" src="../_images/SpaceTruss1.jpeg" style="width: 363.5px; height: 360.5px;" /></a>
 <p>The boundary conditions and concentrated loads are defined by</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Boundary conditions</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c1"># Boundary conditions</span>
 <span class="n">V</span><span class="o">.</span><span class="n">PinNodes</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
 <span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 <span class="c1"># Concentrated force in &#39;z&#39; direction on node 1</span>
@@ -71,7 +71,7 @@ example. Consider the space truss:</p>
 explicitly specified. Internally, nodes on which displacements or point forces
 are not explicitly prescribed are assumed to have a point force of 0 applied.</p>
 <p>The corresponding <code class="docutils literal"><span class="pre">doftags</span></code> and <code class="docutils literal"><span class="pre">dofvals</span></code> arrays are:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">doftags</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">doftags</span>
 <span class="go">[[0  1  0  0  0  0  0]</span>
 <span class="go"> [1  1  1  0  0  0  0]</span>
 <span class="go"> [1  1  1  0  0  0  0]</span>

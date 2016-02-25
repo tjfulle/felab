@@ -96,19 +96,19 @@ corresponding low and high boundaries.</li>
 <div class="section" id="examples">
 <h4>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h4>
 <p>Heat source of magnitude <span class="math">\(10\)</span> to all nodes in the domain</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">ALL</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">ALL</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>Heat source given by to nodes on the bottom edge of a rectangular
 domain:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fun</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">fun</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="mf">2.</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">((</span><span class="mf">3.</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
 <span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">JLO</span><span class="p">,</span> <span class="n">fun</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>Gravity load in the <span class="math">\([1,0,0]\)</span> direction for a material having
 density <span class="math">\(\rho=0\)</span>.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">GRAV</span><span class="p">,</span> <span class="n">ALL</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">GRAV</span><span class="p">,</span> <span class="n">ALL</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -119,7 +119,7 @@ density <span class="math">\(\rho=0\)</span>.</p>
 stored in a single array . is generated from the user defined
 containersby the function , shown in Listing [lst:src.src.1]. is defined
 in and is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="n">FormatSourceTermsUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">f</span> <span class="o">=</span> <span class="n">FormatSourceTermsUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The arguments to have been described in previous sections. The output
@@ -135,7 +135,7 @@ from is:</p>
 </tr>
 </tbody>
 </table>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">FormatSourceTermsUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">FormatSourceTermsUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
     <span class="n">numele</span> <span class="o">=</span> <span class="n">elecon</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">numnod</span> <span class="o">=</span> <span class="n">coord</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">ndof</span> <span class="o">=</span> <span class="n">NumberOfDOFPerNode</span><span class="p">(</span><span class="n">eletyp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -244,17 +244,17 @@ corresponding low and high boundaries.</li>
 <h4>Examples<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <p>Heat conduction with <span class="math">\(q_n=2000\)</span> on the top boundary of a
 rectangular domain:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">QCOND</span><span class="p">,</span> <span class="n">JHI</span><span class="p">,</span> <span class="mi">2000</span><span class="p">]</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">QCOND</span><span class="p">,</span> <span class="n">JHI</span><span class="p">,</span> <span class="mi">2000</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>Heat convection with <span class="math">\(h=250\)</span> and <span class="math">\(T_{\infty}=25\)</span> on the
 bottom of a rectangular domain:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">QCONV</span><span class="p">,</span> <span class="n">JLO</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">25</span><span class="p">]</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">QCONV</span><span class="p">,</span> <span class="n">JLO</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">25</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>Surface traction on edge 1 of elements 1, 2, and 5 with magnitude
 <span class="math">\(qn=2000\)</span>.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">TRAC</span><span class="p">,</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="n">S1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">S1</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">S1</span><span class="p">)],</span> <span class="mi">2000</span><span class="p">]</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">TRAC</span><span class="p">,</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="n">S1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">S1</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">S1</span><span class="p">)],</span> <span class="mi">2000</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -269,7 +269,7 @@ bottom of a rectangular domain:</p>
 </ul>
 <p>and are generated from the user defined container by the function ,
 shown in Listing [lst:src.fmtdl]. is defined in and is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">dltags</span><span class="p">,</span> <span class="n">dlvals</span> <span class="o">=</span> <span class="n">FormatDistributedLoadsUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">dltags</span><span class="p">,</span> <span class="n">dlvals</span> <span class="o">=</span> <span class="n">FormatDistributedLoadsUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span>
                                             <span class="n">elecon</span><span class="p">,</span> <span class="n">dload</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -277,7 +277,7 @@ shown in Listing [lst:src.fmtdl]. is defined in and is invoked as</p>
 <p>The outputs from are the containers and . and are best explained by
 example. Consider the triangular element with distributed load in Figure
 [fig:src.dload]. The element connectivity is</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">elecon</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">elecon</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">40</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
@@ -285,7 +285,7 @@ example. Consider the triangular element with distributed load in Figure
 </pre></div>
 </div>
 <p>The list is:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Distributed load</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c1"># Distributed load</span>
 <span class="n">dload</span> <span class="o">=</span> <span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="p">[(</span><span class="mi">40</span><span class="p">,</span> <span class="n">S2</span><span class="p">)],</span> <span class="n">qn</span><span class="p">]]</span>
 </pre></div>
 </div>
@@ -294,7 +294,7 @@ example. Consider the triangular element with distributed load in Figure
 <p class="caption"><span class="caption-text">Distributed load example.</span></p>
 </div>
 <p>The corresponding and containers are:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">dltags</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">dltags</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
@@ -311,7 +311,7 @@ indicates that no distributed load is applied over that edge and a
 distributed is applied, otherwise.</p>
 <p>is the k<span class="math">\(^{\rm th}\)</span> distributed load specifier for edge j of
 element i.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">FormatDistributedLoadsUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">dload</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">FormatDistributedLoadsUDOF</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elemap</span><span class="p">,</span> <span class="n">eletyp</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">dload</span><span class="p">):</span>
     <span class="kn">from</span> <span class="nn">mesh</span> <span class="kn">import</span> <span class="n">FindSurface</span>
     <span class="n">numele</span><span class="p">,</span> <span class="n">numnod</span> <span class="o">=</span> <span class="n">elecon</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">coord</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="c1"># Surface load tags and vals</span>

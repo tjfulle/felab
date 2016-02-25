@@ -106,7 +106,7 @@ node numbers <code class="docutils literal"><span class="pre">elemap1</span></co
 <p class="caption"><span class="caption-text">Example space truss</span></p>
 </div>
 <p>The node and element tables are</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">72</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>   <span class="mi">0</span><span class="p">],</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">72</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>   <span class="mi">0</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">2</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span>   <span class="mi">0</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">3</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span>  <span class="mi">72</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">4</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">48</span><span class="p">]]</span>
@@ -116,7 +116,7 @@ node numbers <code class="docutils literal"><span class="pre">elemap1</span></co
 </pre></div>
 </div>
 <p>The corresponding <code class="docutils literal"><span class="pre">coord</span></code> array and <code class="docutils literal"><span class="pre">nodtab</span></code> mapping are:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">coord</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">coord</span>
 <span class="go">[[72.  0.   0.],</span>
 <span class="go"> [ 0. 36.   0.],</span>
 <span class="go"> [ 0. 36.  72.],</span>
@@ -126,7 +126,7 @@ node numbers <code class="docutils literal"><span class="pre">elemap1</span></co
 </pre></div>
 </div>
 <p>As noted, the mapping from external to internal element numbers cannot be created until after elements have been assigned to element blocks.  The mapping <code class="docutils literal"><span class="pre">elemap1</span></code> is:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">elemap1</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">elemap1</span>
 <span class="go">{1: [0, 1],</span>
 <span class="go"> 2: [0, 2],</span>
 <span class="go"> 3: [0, 3]}</span>

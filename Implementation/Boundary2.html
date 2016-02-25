@@ -45,7 +45,7 @@
 <div class="section" id="overview">
 <h2>5.7.1. Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <p>After assembly, the global system of equations <span class="math">\([K]\{u\}=\{F\}\)</span>
-that describe the finite element problem is singular, meaning that, the
+that describe the finite element problem is singular. Meaning that, the
 equations for the unknown degrees of freedom are non-invertible. This
 situation arises when there are no solutions or infinite solutions to a
 problem. Boundary conditions must be applied to make the system
@@ -56,6 +56,7 @@ non-singular.</p>
 boundaries, and</li>
 <li>modifying the global force on Neummann boundaries.</li>
 </ul>
+<p>The method shown adopts the same assumptions as the assembler in <a class="reference internal" href="Assembly1.html#assembly1"><span>Assembly, Part I</span></a>.</p>
 </div>
 <div class="section" id="example">
 <h2>5.7.2. Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
@@ -144,12 +145,54 @@ F_j = \begin{cases}
 </div>
 <div class="section" id="computational-implementation">
 <h2>5.7.3. Computational Implementation<a class="headerlink" href="#computational-implementation" title="Permalink to this headline">¶</a></h2>
-<p>Boundary conditions are applied to the global stiffness and force arrays in
-the method <a class="reference internal" href="../apidoc/fem1.html#apply-bc"><span>apply_bc</span></a>. The technique used has the advantage
-that the global stiffness matrix remains symmetric after the application of
-boundary conditions. The boundary conditions are assumed to constrain only a
-single degree of freedom (multi-point constraints are not considered).
-Homogeneous and nonhomogeneous are treated.</p>
+<p>In <code class="docutils literal"><span class="pre">pyfem2</span></code>, application of the boundary conditions is performed in the method
+<a class="reference internal" href="../apidoc/fem1.html#apply-bc"><span>FiniteElementModel.apply_bc_udof</span></a>. (<code class="docutils literal"><span class="pre">udof</span></code> stands for
+&#8220;uniform degree of freedom&#8221;).</p>
+<p>A representative python code that applies boundary conditions is the function
+<code class="docutils literal"><span class="pre">ApplyBoundaryConditions</span></code>, shown below. <code class="docutils literal"><span class="pre">ApplyBoundaryConditions</span></code> is invoked as</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">Kbc</span><span class="p">,</span> <span class="n">Fbc</span> <span class="o">=</span> <span class="n">ApplyBoundaryConditions</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The arguments <code class="docutils literal"><span class="pre">ApplyBoundaryConditions</span></code> have been described in <a class="reference internal" href="Assembly1.html#assembly1"><span>Assembly, Part I</span></a>.</p>
+<p>The output is:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="84%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">Kbc</span></code></td>
+<td>Boundary condition modified global stiffness</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">Fbc</span></code></td>
+<td>Boundary condition modified global force</td>
+</tr>
+</tbody>
+</table>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">ApplyBoundaryConditions</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">):</span>
+
+    <span class="n">N</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">doftags</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">Kbc</span><span class="p">,</span> <span class="n">Fbc</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">F</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="c1"># Dirichlet boundary conditions</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">doftags</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">I</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">m</span> <span class="o">+</span> <span class="n">j</span>
+                <span class="n">Fbc</span> <span class="o">-=</span> <span class="p">[</span><span class="n">K</span><span class="p">[</span><span class="n">k</span><span class="p">,</span><span class="n">I</span><span class="p">]</span> <span class="o">*</span> <span class="n">dofvals</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="o">*</span><span class="n">m</span><span class="p">)]</span>
+                <span class="n">Kbc</span><span class="p">[</span><span class="n">I</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">Kbc</span><span class="p">[:,</span> <span class="n">I</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">Kbc</span><span class="p">[</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># Further modify RHS for Dirichlet boundary</span>
+    <span class="c1"># This must be done after the loop above.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">doftags</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">Fbc</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">m</span><span class="o">+</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">dofvals</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">Kbc</span><span class="p">,</span> <span class="n">Fbc</span>
+</pre></div>
+</div>
 </div>
 </div>
 

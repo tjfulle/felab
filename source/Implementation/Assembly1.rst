@@ -203,72 +203,18 @@ preceding questions can be answered in the affirmitive.
 Assembler Computational Implementation
 --------------------------------------
 
-Algorithms for assemblers for the global stiffness and global force are presented.
-
-Global Stiffness
-~~~~~~~~~~~~~~~~
-
-The algorithm for assembling the global stiffness is
-
-#. **TASK**: Assemble the global stiffness ``K``
-
-   #. **INITIALIZE**
-
-      - **SET** ``N`` = number of nodes in the mesh
-      - **SET** ``m`` = number of degrees of freedom per node
-      - **SET** ``K[N*m,N*m]`` = 0
-
-   #. **FOR EACH** element **DO**
-
-      - **SET** ``Ke`` = element stiffness
-      - **SET** ``n`` = number of nodes on element
-      - **SET** ``nodes[n]`` = node numbers of the element
-      - **SET** ``eft[n*m]`` = 0
-      - **SET** ``i`` = 0
-
-      **COMMENT**: Construct the element freedom table
-
-      #. **DO WHILE** ``i`` < ``n``
-
-         - **SET** ``ni`` = ``nodes[i]``
-	 - **SET** ``j`` = ``0``
-
-	 #. **DO WHILE** ``j`` < ``m``:
-
-	    - **SET** ``eft[i+j]`` = ``ni*m`` + ``j``
-	    - **SET** ``j`` = ``j`` + 1
-
-	 - **SET** ``i`` = ``i`` + 1
-
-      **COMMENT** Map the local degrees of freedom to the global
-
-      - **SET** ``i`` = 0
-
-      #. **DO WHILE** ``i`` < ``n*m``
-
-	 - **SET** ``I`` = ``eft[i]``
-         - **SET** ``j`` = ``i``
-
-	 #. **DO WHILE** ``j`` < ``n*m``
-
-	    - **SET** ``J`` = ``eft[j]``
-            - **SET** ``K[I,J]`` = ``K[I,J]`` + ``Ke[i,j]``
-            - **SET** ``K[J, I]`` = ``K[I, J]``
-	    - **SET** ``j`` = ``j`` + 1
-
-         - **SET** ``i`` = ``i`` + 1
+Stiffness assembler
+~~~~~~~~~~~~~~~~~~~
 
 In ``pyfem2``, assembly of the global stiffness is performed in the method
 ``FiniteElementModel.assemble_global_stiffness_udof`` (``udof`` stands for
 "uniform degree of freedom").
 
 The heart of the assembly process is constructing the element freedom table,
-represented by the symbol ``eft``. The element freedom table contains the global
-degree of freedom number for the nodes in the element. For elements having
-uniform degrees of freedom, this table can be constructed on the fly using, as shown.
-
-Stiffness assembler example
-...........................
+represented by the symbol ``eft``. The element freedom table contains the
+global degree of freedom number for the nodes in the element. For elements
+having uniform degrees of freedom, this table can be constructed on the fly
+using, as shown.
 
 A representative python code that performs stiffness assembly is the function
 ``AssemblePlaneTrussStiffness``, shown below. ``AssemblePlaneTrussStiffness`` is invoked as
@@ -361,49 +307,90 @@ The subordinate function ``PlaneTrussElementStiffness`` computes the element sti
   table and merging element equations in to the global equations can be
   optimized greatly.
 
-Global Force
-~~~~~~~~~~~~
-
-The algorithm for assembling the global force follows closely that of assembling the global stiffness:
-
-#. **TASK**: Assemble the global force ``F``
-
-   #. **INITIALIZE**
-
-      - **SET** ``N`` = number of nodes in the mesh
-      - **SET** ``m`` = number of degrees of freedom per node
-      - **SET** ``F[N*m]`` = 0
-
-   #. **FOR EACH** element **DO**
-
-      - **SET** ``Fe`` = element force
-      - **SET** ``n`` = number of nodes on element
-      - **SET** ``nodes[n]`` = node numbers of the element
-      - **SET** ``eft[n*m]`` = 0
-      - **SET** ``i`` = 0
-
-      **COMMENT**: Construct the element freedom table
-
-      #. **DO WHILE** ``i`` < ``n``
-
-         - **SET** ``ni`` = ``nodes[i]``
-	 - **SET** ``j`` = ``0``
-
-	 #. **DO WHILE** ``j`` < ``m``:
-
-	    - **SET** ``eft[i+j]`` = ``ni*m`` + ``j``
-	    - **SET** ``j`` = ``j`` + 1
-
-	 - **SET** ``i`` = ``i`` + 1
-
-      **COMMENT** Map the local degrees of freedom to the global
-
-      - **SET** ``i`` = 0
-
-      #. **DO WHILE** ``i`` < ``n*m``
-
-	 - **SET** ``I`` = ``eft[i]``
-         - **SET** ``F[I]`` = ``F[I]`` + ``Fe[i]``
+Force assembler
+~~~~~~~~~~~~~~~
 
 In ``pyfem2``, assembly of the global stiffness is performed in the method
 ``FiniteElementModel.assemble_global_force_udof``.
+
+A representative python code that performs stiffness assembly is the function
+``AssemblePlaneTrussForce``, shown below. ``AssemblePlaneTrussForce`` is invoked as
+
+.. code:: python
+
+   F, Q = AssemblePlaneTrussForce(coord, elecon, doftags, dofvals, q)
+
+The arguments ``AssemblePlaneTrussForce`` to are:
+
++--------------+------------------------------------------------------------------------------------+
+| ``coord``    | Nodal coordinates. ``coord[n,i]`` is the ith coordinate of node n.                 |
++--------------+------------------------------------------------------------------------------------+
+| ``elecon``   | Element connectivity. ``elecon[e,n]`` is the nth internal node label of element e. |
++--------------+------------------------------------------------------------------------------------+
+| ``doftags``  | Degree of freedom tags                                                             |
++--------------+------------------------------------------------------------------------------------+
+| ``dofvals``  | Degree of freedom values                                                           |
++--------------+------------------------------------------------------------------------------------+
+| ``q``        | Distributed load.  ``q[e]`` is the distributed load on element e.                  |
++--------------+------------------------------------------------------------------------------------+
+
+The output is:
+
++---------+----------------------------------------------------------------------------------------------------------------------------------+
+| ``F``   | Global force array with dimensions \*N\*m, where m is the number of degrees of freedom per node and N the total number of nodes. |
++---------+----------------------------------------------------------------------------------------------------------------------------------+
+| ``Q``   | Force contribution on the Nuemmann boundary.                                                                                     |
++---------+----------------------------------------------------------------------------------------------------------------------------------+
+
+.. note::
+
+   The assembler below also produces the array ``Q`` of forces on the Neummann boundary.
+
+.. code:: python
+
+    def AssemblePlaneTrussForce(coord, elecon, doftags, dofvals):
+
+	coord = asarray(coord)
+	elecon = asarray(elecon)
+
+        # Total number of nodes and degrees of freedom per node
+        N, m = doftags.shape
+        numele = elecon.shape[0]
+
+        # Force contribution on Neummann boundary
+        Q = zeros(N*m)
+	for i in range(N):
+	    for j in range(m):
+	        if doftags[i,j] == 0:
+		    I = i * m + j
+		    Q[I] = dofvals[i,j]
+
+        # Compute contribution from element sources and boundary loads
+        F = zeros(ndof*numnod)
+        for e in range(numele):
+
+	    nodes = elecon[e]  # element connectivity
+	    x = coord[nodes]  # nodal coordinates
+	    n = len(nodes)  # number of nodes on element
+            Fe = PlaneTrussElementForce(x, q[e])
+
+            # Element freedom table
+	    eft = zeros(n*m, dtype=int)
+	    for i in range(n):
+	        ni = nodes[i]
+		for j in range(m):
+		    eft[i+j] = ni*m + j
+
+            for i in range(n*m):
+                F[eft[i]] += Fe[i]
+
+        return F, Q
+
+The subordinate function ``PlaneTrussElementForce`` computes the element force array:
+
+.. code::
+
+    def PlaneTrussElementForce(x, q):
+        v = x[1] - x[0]
+        h = sqrt(dot(v, v))
+	return q * h / 2 * array([1., 1.])

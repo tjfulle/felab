@@ -110,7 +110,7 @@ program <code class="docutils literal"><span class="pre">UniformBar</span></code
 computational implementation of the preprocessing, processing, and
 postprocessing steps outlined above.</p>
 <p>The program is invoked as:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">u</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">elefor</span> <span class="o">=</span> <span class="n">UniformBar</span><span class="p">(</span><span class="n">xa</span><span class="p">,</span> <span class="n">xb</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">q0</span><span class="p">,</span> <span class="n">numele</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">elefor</span> <span class="o">=</span> <span class="n">UniformBar</span><span class="p">(</span><span class="n">xa</span><span class="p">,</span> <span class="n">xb</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">q0</span><span class="p">,</span> <span class="n">numele</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The arguments to <code class="docutils literal"><span class="pre">UniformBar</span></code> are:</p>
@@ -161,7 +161,7 @@ postprocessing steps outlined above.</p>
 </tr>
 </tbody>
 </table>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">solve</span>
 <span class="k">def</span> <span class="nf">UniformBar</span><span class="p">(</span><span class="n">xa</span><span class="p">,</span> <span class="n">xb</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">q0</span><span class="p">,</span> <span class="n">numele</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
     <span class="n">numnod</span> <span class="o">=</span> <span class="n">numele</span> <span class="o">+</span> <span class="mi">1</span>
@@ -210,18 +210,18 @@ postprocessing steps outlined above.</p>
 <div class="section" id="how-does-it-work">
 <h3>5.2.2.2. How Does it Work?<a class="headerlink" href="#how-does-it-work" title="Permalink to this headline">¶</a></h3>
 <p>This section describes each part of <code class="docutils literal"><span class="pre">UniformBar</span></code>.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">solve</span>
 </pre></div>
 </div>
 <p>These statements make the objects and the linear solver accessible to
 the program.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span>def UniformBar(xa, xb, A, E, f, q0, numele=10):
+<div class="code python highlight-python"><div class="highlight"><pre>def UniformBar(xa, xb, A, E, f, q0, numele=10):
 </pre></div>
 </div>
 <p>This statement defines the function to be a function of and (with the
 default being 10).</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">numnod</span> <span class="o">=</span> <span class="n">numele</span> <span class="o">+</span> <span class="mi">1</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">numnod</span> <span class="o">=</span> <span class="n">numele</span> <span class="o">+</span> <span class="mi">1</span>
 <span class="n">coord</span> <span class="o">=</span> <span class="n">linspace</span><span class="p">(</span><span class="n">xa</span><span class="p">,</span> <span class="n">xb</span><span class="p">,</span> <span class="n">numnod</span><span class="p">)</span>
 <span class="n">elecon</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="n">el</span><span class="p">,</span> <span class="n">el</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numele</span><span class="p">)])</span>
 </pre></div>
@@ -229,7 +229,7 @@ default being 10).</p>
 <p>These statements declare the number of nodes (one more than the number
 of elements), initialize the array of nodal coordinates, and initialize
 the element connectivity.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">((</span><span class="n">numnod</span><span class="p">,</span> <span class="n">numnod</span><span class="p">))</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">((</span><span class="n">numnod</span><span class="p">,</span> <span class="n">numnod</span><span class="p">))</span>
 <span class="n">F</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">numnod</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -239,7 +239,7 @@ formed and merged in to the global stiffness and force. The merging maps
 the appropriate local degrees of freedom to their global counterparts.
 Since nodes and elements are ordered continuously, the global DOF is the
 local DOF.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">iel</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numele</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">iel</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numele</span><span class="p">):</span>
     <span class="n">nodes</span> <span class="o">=</span> <span class="n">elecon</span><span class="p">[</span><span class="n">iel</span><span class="p">]</span>
     <span class="n">xe</span> <span class="o">=</span> <span class="n">coord</span><span class="p">[</span><span class="n">nodes</span><span class="p">]</span>
     <span class="n">he</span> <span class="o">=</span> <span class="n">xe</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xe</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -260,18 +260,18 @@ set to 1 and the first component of the global force is set to 0, in
 accordance to the displacement boundary condition at the bar’s origin.
 Finally, the point force is added to the last component of the global
 force.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">0.</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">0.</span>
 <span class="n">K</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
 <span class="n">F</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
 <span class="n">F</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">f</span>
 </pre></div>
 </div>
 <p>Nodal displacements are computed.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">u</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">F</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">u</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">F</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Finally, the element forces and strains are determined and returned</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">elefor</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">numele</span><span class="p">),</span> <span class="n">zeros</span><span class="p">(</span><span class="n">numele</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">elefor</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">numele</span><span class="p">),</span> <span class="n">zeros</span><span class="p">(</span><span class="n">numele</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numele</span><span class="p">):</span>
     <span class="n">du</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">u</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
     <span class="n">dx</span> <span class="o">=</span> <span class="n">coord</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>

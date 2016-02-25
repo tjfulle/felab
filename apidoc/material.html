@@ -69,13 +69,13 @@ assigned to the material by different methods.</p>
 <ul>
 <li><p class="first">Create a linear elastic material with Young&#8217;s modulus
 <span class="math">\(E=10\times 10^6\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu=.29\)</span></p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
 <span class="n">mat</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">Create a material with isotropic heat conduction <span class="math">\(\kappa=12\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
 <span class="n">mat</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -122,12 +122,12 @@ elastic stiffness assumed).</p>
 <p class="rubric">Examples</p>
 <ul>
 <li><p class="first">Young&#8217;s modulus <span class="math">\(E=10\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu=.29\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">Bulk modulus <span class="math">\(K=10\)</span> and shear modulus <span class="math">\(G=6\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">K</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">K</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>

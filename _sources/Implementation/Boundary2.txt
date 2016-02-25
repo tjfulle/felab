@@ -5,7 +5,7 @@ Overview
 --------
 
 After assembly, the global system of equations :math:`[K]\{u\}=\{F\}`
-that describe the finite element problem is singular, meaning that, the
+that describe the finite element problem is singular. Meaning that, the
 equations for the unknown degrees of freedom are non-invertible. This
 situation arises when there are no solutions or infinite solutions to a
 problem. Boundary conditions must be applied to make the system
@@ -17,6 +17,8 @@ Boundary conditions are applied by
    boundaries, and
 
 -  modifying the global force on Neummann boundaries.
+
+The method shown adopts the same assumptions as the assembler in :ref:`Assembly1`.
 
 Example
 -------
@@ -127,9 +129,48 @@ where :math:`\delta_{ij}` is the Kronecker delta.
 Computational Implementation
 ----------------------------
 
-Boundary conditions are applied to the global stiffness and force arrays in
-the method :ref:`apply_bc <apply_bc>`. The technique used has the advantage
-that the global stiffness matrix remains symmetric after the application of
-boundary conditions. The boundary conditions are assumed to constrain only a
-single degree of freedom (multi-point constraints are not considered).
-Homogeneous and nonhomogeneous are treated.
+In ``pyfem2``, application of the boundary conditions is performed in the method
+:ref:`FiniteElementModel.apply_bc_udof <apply_bc>`. (``udof`` stands for
+"uniform degree of freedom").
+
+A representative python code that applies boundary conditions is the function
+``ApplyBoundaryConditions``, shown below. ``ApplyBoundaryConditions`` is invoked as
+
+.. code:: python
+
+   Kbc, Fbc = ApplyBoundaryConditions(K, F, doftags, dofvals)
+
+The arguments ``ApplyBoundaryConditions`` have been described in :ref:`Assembly1`.
+
+The output is:
+
++---------+------------------------------------------------+
+| ``Kbc`` | Boundary condition modified global stiffness   |
++---------+------------------------------------------------+
+| ``Fbc`` | Boundary condition modified global force       |
++---------+------------------------------------------------+
+
+.. code:: python
+
+    def ApplyBoundaryConditions(K, F, doftags, dofvals):
+
+        N, m = doftags.shape
+        Kbc, Fbc = K.copy(), F.copy()
+
+        # Dirichlet boundary conditions
+        for i in range(N):
+            for j in range(m):
+                if doftags[i,j] == 0:
+                    I = i * m + j
+                    Fbc -= [K[k,I] * dofvals[i,j] for k in range(N*m)]
+                    Kbc[I, :] = Kbc[:, I] = 0
+                    Kbc[I, I] = 1
+
+        # Further modify RHS for Dirichlet boundary
+        # This must be done after the loop above.
+        for i in range(N):
+            for j in range(m):
+                if doftags[i,j] == 0:
+                    Fbc[i*m+j] = dofvals[i,j]
+
+        return Kbc, Fbc
