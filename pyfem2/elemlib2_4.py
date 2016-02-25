@@ -15,13 +15,13 @@ class IsoPQuad4(IsoPElement):
     -----
     Node and element face numbering
 
-               [2]
-            3-------2
-            |       |
-       [3]  |       | [1]
-            |       |
-            0-------1
-               [0]
+              [2]
+           3-------2
+           |       |
+       [3] |       | [1]
+           |       |
+           0-------1
+              [0]
 
     """
     signature = (1,1,0,0,0,0,0)

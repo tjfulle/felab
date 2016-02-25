@@ -197,20 +197,22 @@ class IsoPElement(object):
 class IsoPReduced(IsoPElement):
 
     def stiffness(self, *args):
+
+        # Get the nominal stiffness
         Kel = super(IsoPReduced, self).stiffness(*args)
 
-        # perform hourglass correction
+        # Perform hourglass correction
         Khg = zeros(Kel.shape)
         for (npt, xi) in enumerate(self.hglassp):
             dN = self.shapegradx(self.xc, xi)
             J = self.jacobian(self.xc, xi)
 
-            # hourglass base vectors
+            # Hourglass base vectors
             g = self.hglassv[npt]
             for i in range(len(xi)):
                 xi[i] = dot(g, self.xc[:,i])
 
-            # correct the base vectors to ensure orthogonality
+            # Correct the base vectors to ensure orthogonality
             scale = 0.
             for a in range(self.numnod):
                 for i in range(self.numdim):
