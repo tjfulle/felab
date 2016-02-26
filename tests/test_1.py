@@ -5,8 +5,9 @@ import glob
 import pytest
 import shutil
 from subprocess import Popen
-from os.path import join, dirname, realpath, isfile, isdir
+from os.path import join, dirname, realpath, isfile, isdir, basename
 from numpy import cos, cosh, mean, random, where, sin, sinh, allclose
+from conf import *
 try:
     import distmesh as dm
 except ImportError:
@@ -18,19 +19,6 @@ if D is None:
     D = dirname(dirname(realpath(__file__)))
 sys.path.insert(0, D)
 from pyfem2 import *
-
-def teardown_module(module):
-    def remove(a):
-        if isfile(a): os.remove(a)
-        elif isdir(a): shutil.rmtree(a)
-    for filename in glob.glob('*.exo'):
-        remove(filename)
-    for filename in glob.glob('*.pvd'):
-        remove(filename)
-    for filename in glob.glob('*.vtu.d'):
-        remove(filename)
-    for filename in glob.glob('*.pyc'):
-        remove(filename)
 
 # --------------------------------------------------------------------------- #
 # --------------------------------- TESTS ----------------------------------- #
@@ -94,7 +82,7 @@ def test_fem4_1_gravity_load1():
 @pytest.mark.heat
 def test_fem3_plate_with_hole():
     V = HeatTransfer2DModel()
-    V.GenesisMesh('../meshes/PlateWithHoleTria3Fine.g')
+    V.GenesisMesh(join(D, 'meshes/PlateWithHoleTria3Fine.g'))
     k, h, Too = 12, 250, 25
     fun = lambda x: 1000 / sqrt(x[:,0] ** 2 + x[:,1] ** 2)
     V.Material('Material-1')
@@ -118,7 +106,7 @@ def test_fem3_1():
         u = (1-x[:,0]**2)/2.-16./pi**3*sum([fun(k) for k in range(1, N, 2)],0)
         return u
     V = HeatTransfer2DModel()
-    V.GenesisMesh('../meshes/UniformPlateTria3Fine.g')
+    V.GenesisMesh(join(D, 'meshes/UniformPlateTria3Fine.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
@@ -134,7 +122,7 @@ def test_fem3_2():
     def solution(x):
         return 2. * (1. + x[:,1]) / ((3. + x[:,0])**2 + (1 + x[:,1])**2)
     V = HeatTransfer2DModel()
-    V.GenesisMesh('../meshes/UniformPlateTria3.g')
+    V.GenesisMesh(join(D, 'meshes/UniformPlateTria3.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
@@ -235,7 +223,7 @@ def test_fem3_5():
 def test_fem3_plate_with_hole2():
     k, h, Too = 12, 250, 25
     V = HeatTransfer2DModel()
-    V.GenesisMesh('../meshes/PlateWithHoleTria3.g')
+    V.GenesisMesh(join(D, 'meshes/PlateWithHoleTria3.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(k)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
@@ -526,12 +514,17 @@ def test_tutorials():
     env['PYTHONPATH'] = D
     env['NOGRAPHICS'] = '1'
     failed = []
+    cwd = os.getcwd()
+    os.chdir(d)
     for filename in glob.glob(join(d, '*.py')):
+        if basename(filename) == 'Runall.py':
+            continue
         proc = Popen(['python', filename], env=env)
         proc.wait()
         if proc.returncode != 0:
             failed.append(filename)
-    if failed and PY3:
-        if len(failed) == 1 and join(d, 'QuarterPlate.py') in failed:
-            failed = []
+    os.chdir(cwd)
     assert not failed
+
+if __name__ == '__main__':
+    test_fem3_2()

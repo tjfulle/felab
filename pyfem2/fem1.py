@@ -54,6 +54,30 @@ class FiniteElementModel(object):
         self.mesh = Mesh(filename=filename)
         self._initialize_geometry()
 
+    def AbaqusMesh(self, filename):
+        """
+        Generates a finite element mesh from a Abaqus input file.
+
+        Parameters
+        ----------
+        filename : str
+            The path to a valid Genesis file
+
+        Notes
+        -----
+        This method calls ``mesh.Mesh`` with the ``filename`` keyword and
+        stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
+
+        See Also
+        --------
+        pyfem2.mesh.Mesh
+
+        """
+        if not os.path.isfile(filename):
+            raise UserInputError('No such file {0!r}'.format(filename))
+        self.mesh = Mesh(filename=filename)
+        self._initialize_geometry()
+
     def VTKMesh(self, filename):
         """
         Generates a finite element mesh from a vtk .vtu file.
@@ -181,7 +205,7 @@ class FiniteElementModel(object):
         # Now that we know which nodes have bc's, check if any elements have
         # loads applied to that node
         for (iel, el) in enumerate(self.elements):
-            if not any(in1d(el.nodes, nod_with_bc.keys())):
+            if not any(in1d(el.nodes, list(nod_with_bc.keys()))):
                 continue
             d = self.sload[iel]
             for (iedge, edge) in enumerate(el.edges):
@@ -1154,7 +1178,7 @@ class FiniteElementModel(object):
         for blk in self.mesh.eleblx:
             elecon.extend(blk.elecon)
 
-        if colorby and is_stringlike(colorby):
+        if colorby is not None and is_stringlike(colorby):
             colorby = self._get_field(colorby)
         return self.mesh.Plot2D(xy=xy, elecon=array(elecon), color=color,
                                 colorby=colorby, **kwds)

@@ -200,6 +200,7 @@ class IsoPReduced(IsoPElement):
 
         # Get the nominal stiffness
         Kel = super(IsoPReduced, self).stiffness(*args)
+        return Kel
 
         # Perform hourglass correction
         Khg = zeros(Kel.shape)

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import sys
-sys.path.insert(0, '../')
 from pyfem2 import *
 import matplotlib.pyplot as plt
 
@@ -81,5 +80,6 @@ ax = LinearSolution(ax)
 QuadraticSolution()
 
 if not os.environ.get('NOGRAPHICS'):
-    plt.legend()
-    plt.show()
+    pass
+#plt.legend()
+#plt.show()

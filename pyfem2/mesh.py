@@ -166,6 +166,7 @@ class Mesh(object):
         self.num_assigned = self.numele
 
     def init_from_file(self, filename):
+        import pyfem2.aba as aba
         import pyfem2.vtk as vtk
         import pyfem2.exodusii as exodusii
         if filename.endswith(('.vtk', '.vtu')):
@@ -176,6 +177,20 @@ class Mesh(object):
             exo = exodusii.File(filename, mode='r')
             self.init2(exo.nodmap, exo.coord, exo.elemap, exo.eleblx,
                        exo.nodesets, exo.elemsets, exo.sidesets)
+
+        elif filename.endswith('.inp'):
+            data = aba.ReadInput(filename)
+            nodtab, eletab, nodesets, elemsets, surfaces, eleblx = data
+            nodmap, coord, eletab1 = self.parse_nod_and_elem_tables(nodtab, eletab)
+            self.init1(nodmap, coord, eletab1)
+            for (name, (et, elems)) in eleblx.items():
+                self.ElementBlock(name, elems)
+            for (name, nodes) in nodesets.items():
+                self.NodeSet(name, nodes)
+            for (name, elems) in elemsets.items():
+                self.ElementSet(name, elems)
+            for (name, surf) in surfaces.items():
+                self.Surface(name, surf)
 
         else:
             raise UserInputError('Unknown file type')
@@ -387,7 +402,7 @@ class Mesh(object):
             if not is_listlike(region):
                 region = [region]
             ielems = [self.elemap[el] for el in region]
-        self.elemsets[name] = ielems
+        self.elemsets[name] = array(ielems, dtype=int)
 
     def ElementBlock(self, name, elements):
 

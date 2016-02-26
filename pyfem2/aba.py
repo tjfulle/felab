@@ -7,9 +7,11 @@
 # Copyright (C) 2008-2011, Eli Bendersky
 # License: BSD
 #-----------------------------------------------------------------
+import os
 import re
 import sys
 import ply.lex
+import logging
 from ply.lex import TOKEN
 import ply.yacc
 
@@ -351,6 +353,14 @@ class Keyword(object):
         self.params = params
         self.data = data
 
+    def get(self, name):
+        if self.params is None:
+            return None
+        for p in self.params:
+            if p.name.lower() == name.lower():
+                return p
+        return None
+
     def __str__(self):
         kwd_str_list = ['Keyword:{0}'.format(self.keyword),]
         kwd_str_list.append('\n')
@@ -453,7 +463,8 @@ class AbaqusParser(PLYParser):
             text = text.decode()
         except AttributeError:
             pass
-        return self.cparser.parse(text, lexer=self.clex, debug=debuglevel)
+        t = self.cparser.parse(text, lexer=self.clex, debug=debuglevel)
+        return t
 
     ######################--   PRIVATE   --######################
 
@@ -572,8 +583,20 @@ class AbaqusParser(PLYParser):
         else:
             self._parse_error('At end of input', '')
 
-def ReadMesh(filename):
-    import os
+def ElementType(name):
+    import pyfem2.elemlib as elemlib
+    name = name.upper()
+    if name == 'CPE4':
+        return elemlib.PlaneStrainQuad4
+    elif name == 'CPS4':
+        return elemlib.PlaneStressQuad4
+    elif name == 'CPE3':
+        return elemlib.PlaneStrainTria3
+    elif name == 'CPS3':
+        return elemlib.PlaneStressTria3
+    raise ValueError('Unknown element type {0}'.format(name))
+
+def ReadInput(filename):
     f = os.path.basename(filename)
     parser = AbaqusParser()
     buf = open(filename).read()
@@ -587,8 +610,11 @@ def ReadMesh(filename):
     elemsets = {}
     surfaces = {}
     solidsec = []
+
+    notread = []
     for item in t:
         kw = ' '.join(item.keyword.split()).lower()
+
         if kw == 'node':
             nodes = []
             for row in item.data:
@@ -667,6 +693,9 @@ def ReadMesh(filename):
             name = [p.name for p in item.params if p.name.lower()=='name'][0]
             surfaces.setdefault(name.upper(), []).extend(surf)
 
+        else:
+            notread.append(kw)
+
     # Check solid sections for consistency with element block requirement of
     # single element type
     for (elset, mat) in solidsec:
@@ -675,7 +704,16 @@ def ReadMesh(filename):
         if len(set([eletyp[e] for e in els])) != 1:
             raise ValueError('pyfem2 solid sections must contain '
                              'only one element type')
-        eleblx['ElementBlock-{0}'.format(len(eleblx)+1)] = els
+        et = ElementType(list(s)[0])
+        eleblx['EALL'.format(len(eleblx)+1)] = (et, els)
+
+    if notread:
+        logging.warn('The following keywords and their data were not read:\n'
+                     '{0}'.format(', '.join(notread)))
+
+    # Generate the mesh info
+    eletab = [[key]+eletab[key] for key in sorted(eletab)]
+    return nodtab, eletab, nodesets, elemsets, surfaces, eleblx
 
 if __name__ == "__main1__":
     import pprint
@@ -752,5 +790,7 @@ if __name__ == "__main1__":
         #~ print type(tok)
         print([tok.value, tok.type, tok.lineno, clex.filename, tok.lexpos])
 
-filename = '/Users/timmy/Downloads/AbqParse-master/tests/data/mmxmn.inp'
-ReadMesh(filename)
+if __name__ == '__main__':
+    filename = '/Users/timmy/Downloads/AbqParse-master/tests/data/mmxmn.inp'
+    filename = '../meshes/ece4sfp1.inp'
+    ReadInput(filename)

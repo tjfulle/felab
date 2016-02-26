@@ -1,29 +1,43 @@
 import re
 import os
 import sys
+import logging
 import datetime
 from numpy import *
 from os.path import basename, join, splitext, isfile
 
 from .constants import *
 from .mesh import ElementBlock
-from .netcdf import NetCDFFile
+
+# True if we are running on Python 3.
+PY3 = sys.version_info[0] == 3
+try:
+    NETCDF4 = True
+    from netCDF4 import Dataset
+except ImportError:
+    NETCDF4 = False
+    if PY3:
+        logging.warn('Using scipy.io.netcdf library to write ExodusII files.  '
+                     'Install netcdf4 for better reliability.')
+    from .netcdf import netcdf_file as Dataset
+
 from .elemlib1 import ElementFamily
 from .data import TimeStepRepository
 
 __all__ = ['File', 'PutNodalSolution']
 
-# True if we are running on Python 3.
-PY3 = sys.version_info[0] == 3
-
 def cat(*args):
     return ''.join('{0}'.format(a).strip() for a in args)
 
-def adjstr(string):
-    return '{0:33s}'.format(string)[:33]
-
 def stringify2(a):
-    return [''.join(b.decode() for b in row if b.split()) for row in a]
+    try:
+        a = a.tolist()
+    except AttributeError:
+        pass
+    try:
+        return [''.join(b.decode() for b in row if b.split()) for row in a]
+    except AttributeError:
+        return ['']
 
 def stringify(a):
     return ''.join(a.decode().strip())
@@ -86,6 +100,15 @@ def labels_and_data(key, data, numdim, numnod=None):
         raise KeyError(key)
     return tuple(labels), data
 
+def stringtoarr(string, NUMCHARS):
+    # function to convert a string to a array of NUMCHARS characters
+    arr = zeros(NUMCHARS, 'S1')
+    arr[0:len(string)] = tuple(string)
+    return arr
+
+def adjstr(string):
+    return '{0:{1}s}'.format(string, LEN_STRING)[:LEN_STRING]
+
 # --- Data types
 FLOAT = 'f'
 CHAR = 'c'
@@ -93,6 +116,7 @@ INT = 'i'
 
 # --- Global dimensions and variables
 DIM_LEN_STRING     = 'len_string'
+LEN_STRING         = 33
 DIM_LEN_LINE       = 'len_line'
 DIM_FOUR           = 'four'
 DIM_NUM_DIM        = 'num_dim'
@@ -197,6 +221,32 @@ class EXOFile(object):
     def close(self):
         self.fh.close()
 
+    def getdim(self, name, default=None):
+        try:
+            x = self.fh.dimensions[name]
+        except KeyError:
+            return default
+        if NETCDF4:
+            dim = x.size
+        else:
+            dim = x
+        if dim is None and name != DIM_TIME_STEP:
+            return 0
+        return int(dim)
+
+    def setncattr(self, variable, name, value):
+        if NETCDF4:
+            self.fh.variables[variable].setncattr(name, value)
+        else:
+            setattr(self.fh.variables[variable], name, value)
+
+    def open_file(self, filename, mode='r'):
+        if NETCDF4:
+            fh = Dataset(filename, mode=mode, format='NETCDF4_CLASSIC')
+        else:
+            fh = Dataset(filename, mode=mode)
+        return fh
+
 class EXOFileWriter(EXOFile):
     mode = 'w'
     def __init__(self, filename):
@@ -208,7 +258,7 @@ class EXOFileWriter(EXOFile):
         minus the prefix 'ex_'.
 
         '''
-        self.fh = NetCDFFile(filename, mode='w')
+        self.fh = self.open_file(filename, mode='w')
         self.jobid = splitext(basename(filename))[0]
         self.filename = filename
         self.initialized = False
@@ -232,6 +282,12 @@ class EXOFileWriter(EXOFile):
         elemap1 = array(sorted(elemap.keys(), key=lambda k: elemap[k]))
 
         # ------------------------------------------------------------------- #
+        # ------------------------------------------------- record arrays --- #
+        # ------------------------------------------------------------------- #
+        self.fh.createDimension(DIM_TIME_STEP, None)
+        self.fh.createVariable(VAR_TIME_WHOLE, FLOAT, (DIM_TIME_STEP,))
+
+        # ------------------------------------------------------------------- #
         # -------------------------------- standard ExodusII dimensioning --- #
         # ------------------------------------------------------------------- #
         self.fh.floating_point_word_size = 4
@@ -243,7 +299,7 @@ class EXOFileWriter(EXOFile):
         self.fh.filename = basename(self.filename)
         self.fh.jobid = self.jobid
 
-        self.fh.createDimension(DIM_LEN_STRING, 33)
+        self.fh.createDimension(DIM_LEN_STRING, LEN_STRING)
         self.fh.createDimension(DIM_LEN_LINE, 81)
         self.fh.createDimension(DIM_FOUR, 4)
 
@@ -270,17 +326,11 @@ class EXOFileWriter(EXOFile):
         self.fh.variables[VAR_QA_RECORDS][0, 3, :] = adjstr(hour)
 
         # ------------------------------------------------------------------- #
-        # ------------------------------------------------- record arrays --- #
-        # ------------------------------------------------------------------- #
-        self.fh.createDimension(DIM_TIME_STEP, None)
-        self.fh.createVariable(VAR_TIME_WHOLE, FLOAT, (DIM_TIME_STEP,))
-
-        # ------------------------------------------------------------------- #
         # ------------------------------------------ node coordinate data --- #
         # ------------------------------------------------------------------- #
         self.fh.createVariable(VAR_COOR_NAMES, CHAR, (DIM_NUM_DIM, DIM_LEN_STRING))
-        for i in range(self.fh.dimensions[DIM_NUM_DIM]):
-            self.fh.variables[VAR_COOR_NAMES][i][:] = adjstr(VAR_COOR_NAME(i))
+        for i in range(numdim):
+            self.fh.variables[VAR_COOR_NAMES][i,:] = adjstr(VAR_COOR_NAME(i))
             self.fh.createVariable(VAR_COOR_NAME(i), FLOAT, (DIM_NUM_NOD,))
             self.fh.variables[VAR_COOR_NAME(i)][:] = coord[:, i]
 
@@ -293,7 +343,7 @@ class EXOFileWriter(EXOFile):
         self.fh.createDimension(DIM_NUM_ELEBLK, num_el_blk)
 
         self.fh.createVariable(VAR_EB_PROP1, INT, (DIM_NUM_ELEBLK,))
-        self.fh.variables[VAR_EB_PROP1].name = 'ID'
+        self.setncattr(VAR_EB_PROP1, 'name', 'ID')
 
         self.fh.createVariable(VAR_ELE_MAP(1), INT, (DIM_NUM_ELE,))
         self.fh.variables[VAR_ELE_MAP(1)][:] = elemap1
@@ -303,7 +353,7 @@ class EXOFileWriter(EXOFile):
 
         self.fh.createVariable(VAR_EB_NAMES, CHAR, (DIM_NUM_ELEBLK, DIM_LEN_STRING))
         for (ieb, eb) in enumerate(eleblx, start=1):
-            self.fh.variables[VAR_EB_NAMES][ieb-1][:] = adjstr(eb.name)
+            self.fh.variables[VAR_EB_NAMES][ieb-1,:] = adjstr(eb.name)
             self.fh.variables[VAR_EB_PROP1][ieb-1] = eb.id
 
             # block connect
@@ -331,12 +381,12 @@ class EXOFileWriter(EXOFile):
             prop1 = arange(nes, dtype=int32) + 1
             self.fh.createVariable(VAR_ES_PROP1, INT, (DIM_NUM_ES,))
             self.fh.variables[VAR_ES_PROP1][:] = prop1
-            self.fh.variables[VAR_ES_PROP1].name = 'ID'
+            self.setncattr(VAR_ES_PROP1, 'name', 'ID')
             self.fh.createVariable(VAR_ES_NAMES, CHAR,
                                    (DIM_NUM_ES, DIM_LEN_STRING))
             i = 1
             for (name, elems) in elemsets.items():
-                self.fh.variables[VAR_ES_NAMES][i-1][:] = adjstr(name)
+                self.fh.variables[VAR_ES_NAMES][i-1,:] = adjstr(name)
                 self.fh.createDimension(DIM_NUM_ELE_ES(i), len(elems))
                 self.fh.createVariable(VAR_ELE_ES(i), INT, (DIM_NUM_ELE_ES(i),))
                 self.fh.variables[VAR_ELE_ES(i)][:] = elems + 1
@@ -352,12 +402,12 @@ class EXOFileWriter(EXOFile):
             prop1 = arange(nns, dtype=int32) + 1
             self.fh.createVariable(VAR_NS_PROP1, INT, (DIM_NUM_NS,))
             self.fh.variables[VAR_NS_PROP1][:] = prop1
-            self.fh.variables[VAR_NS_PROP1].name = 'ID'
+            self.setncattr(VAR_NS_PROP1, 'name', 'ID')
             self.fh.createVariable(VAR_NS_NAMES, CHAR,
                                    (DIM_NUM_NS, DIM_LEN_STRING))
             i = 1
             for (name, nodes) in nodesets.items():
-                self.fh.variables[VAR_NS_NAMES][i-1][:] = adjstr(name)
+                self.fh.variables[VAR_NS_NAMES][i-1,:] = adjstr(name)
                 self.fh.createDimension(DIM_NUM_NOD_NS(i), len(nodes))
                 self.fh.createVariable(VAR_NOD_NS(i), INT, (DIM_NUM_NOD_NS(i),))
                 self.fh.variables[VAR_NOD_NS(i)][:] = nodes + 1
@@ -373,13 +423,13 @@ class EXOFileWriter(EXOFile):
             prop1 = arange(nss, dtype=int32) + 1
             self.fh.createVariable(VAR_SS_PROP1, INT, (DIM_NUM_SS,))
             self.fh.variables[VAR_SS_PROP1][:] = prop1
-            self.fh.variables[VAR_SS_PROP1].name = 'ID'
+            self.setncattr(VAR_SS_PROP1, 'name', 'ID')
             self.fh.createVariable(VAR_SS_NAMES, CHAR, (DIM_NUM_SS, DIM_LEN_STRING))
             i = 1
             for (name, ss) in sidesets.items():
                 ss_elems = [s[0]+1 for s in ss]
                 ss_sides = [s[1]+1 for s in ss]
-                self.fh.variables[VAR_SS_NAMES][i-1][:] = adjstr(name)
+                self.fh.variables[VAR_SS_NAMES][i-1,:] = adjstr(name)
 
                 self.fh.createDimension(DIM_NUM_SIDE_SS(i), len(ss_sides))
                 self.fh.createVariable(VAR_SIDE_SS(i), INT, (DIM_NUM_SIDE_SS(i),))
@@ -393,6 +443,7 @@ class EXOFileWriter(EXOFile):
     def initialize(self, nodvarnames, elevarnames):
         '''Writes the initialization parameters to the EXODUS II file'''
 
+        numblk = self.getdim(DIM_NUM_ELEBLK)
         # ------------------------------------------------------------------- #
         # ------------------------------------------ global variable data --- #
         # ------------------------------------------------------------------- #
@@ -420,7 +471,6 @@ class EXOFileWriter(EXOFile):
         # -------------------------------------------------- element data --- #
         # ------------------------------------------------------------------- #
         if elevarnames:
-            numblk = self.fh.dimensions[DIM_NUM_ELEBLK]
             numelevar = len(elevarnames)
             elevarnames = sorted(elevarnames, key=sortexoname)
             self.fh.createDimension(DIM_NUM_ELE_VAR, numelevar)
@@ -451,10 +501,10 @@ class EXOFileWriter(EXOFile):
                     elevarnames.extend(labels)
             self.initialize(nodvarnames, elevarnames)
 
-        numele = self.fh.dimensions[DIM_NUM_ELE]
-        numnod = self.fh.dimensions[DIM_NUM_NOD]
-        numblk = self.fh.dimensions[DIM_NUM_ELEBLK]
-        numdim = self.fh.dimensions[DIM_NUM_DIM]
+        numele = self.getdim(DIM_NUM_ELE)
+        numnod = self.getdim(DIM_NUM_NOD)
+        numblk = self.getdim(DIM_NUM_ELEBLK)
+        numdim = self.getdim(DIM_NUM_DIM)
 
         # write time value
         count = self.count
@@ -499,7 +549,7 @@ class EXOFileReader(EXOFile):
         if not isfile(filename):
             raise IOError('no such file: {0}'.format(repr(filename)))
         self.filename = filename
-        self.fh = NetCDFFile(filename, mode='r')
+        self.fh = self.open_file(filename, mode='r')
         self.read()
         if self.numnodvar or self.numelevar:
             self.read_results()
@@ -508,15 +558,14 @@ class EXOFileReader(EXOFile):
         # --- Read in the mesh
 
         # Basic dimensioning information
-        numnod = self.fh.dimensions[DIM_NUM_NOD]
-        numdim = self.fh.dimensions[DIM_NUM_DIM]
-        numele = self.fh.dimensions[DIM_NUM_ELE]
-        numblk = self.fh.dimensions[DIM_NUM_ELEBLK]
-        numns = self.fh.dimensions.get(DIM_NUM_NS, 0)
-        numes = self.fh.dimensions.get(DIM_NUM_ES, 0)
-        numss = self.fh.dimensions.get(DIM_NUM_SS, 0)
-        maxnod = max([self.fh.dimensions[DIM_NUM_NOD_PER_EL(i+1)]
-                      for i in range(numblk)])
+        numnod = self.getdim(DIM_NUM_NOD)
+        numdim = self.getdim(DIM_NUM_DIM)
+        numele = self.getdim(DIM_NUM_ELE)
+        numblk = self.getdim(DIM_NUM_ELEBLK)
+        numns = self.getdim(DIM_NUM_NS, 0)
+        numes = self.getdim(DIM_NUM_ES, 0)
+        numss = self.getdim(DIM_NUM_SS, 0)
+        maxnod = max([self.getdim(DIM_NUM_NOD_PER_EL(i+1)) for i in range(numblk)])
 
         # Node and element maps
         # maps from external to internal numbers
@@ -593,7 +642,7 @@ class EXOFileReader(EXOFile):
                 name = ssnames[iss]
                 ss_elems = self.fh.variables[VAR_ELE_SS(iss+1)][:] - 1
                 ss_sides = self.fh.variables[VAR_SIDE_SS(iss+1)][:] - 1
-                sidesets[name] = zip(ss_elems, ss_sides)
+                sidesets[name] = list(zip(ss_elems, ss_sides))
 
         # Save information read to self
         self.nodmap = nodmap
@@ -612,8 +661,8 @@ class EXOFileReader(EXOFile):
         self.numns = numns
         self.numes = numes
         self.numss = numss
-        self.numelevar = self.fh.dimensions.get(DIM_NUM_ELE_VAR, 0)
-        self.numnodvar = self.fh.dimensions.get(DIM_NUM_NOD_VAR, 0)
+        self.numelevar = self.getdim(DIM_NUM_ELE_VAR,0)
+        self.numnodvar = self.getdim(DIM_NUM_NOD_VAR,0)
         self.inodmap = sorted(nodmap.keys(), key=lambda k: nodmap[k])
         self.ielemap = sorted(elemap.keys(), key=lambda k: elemap[k])
 

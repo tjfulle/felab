@@ -46,7 +46,7 @@ class Quad8(Element):
     numdim, numnod = 2, 8
     edges = array([[0, 1, 4], [1, 2, 5], [2, 3, 6], [3, 0, 7]])
 
-def ElementFamily(numdim, numnod):
+def ElementFamily(numdim, numnod, abaname=None):
     if numnod == 2:
         return LinknD2
     elif numdim == 2 and numnod == 3:
