@@ -181,55 +181,6 @@ class IsoPElement(object):
             else:
                 raise NotImplementedError
 
-            continue
-
-            for (p, xi) in enumerate(self.bgaussp):
-                # evaluate the shape functions on this edge
-                if self.numdim == 2:
-                    i = [0, 1, 0, 1][iedge]
-                    xi = array([[xi,-1.],[1.,xi],[xi,1.],[-1.,xi]][iedge])
-                    dNdxi = self.shapegrad(xi)[i,ix_(edgenod)]
-                    dxdxi = dot(dNdxi, xb)
-                    Je = sqrt(dxdxi[0,0] ** 2 + dxdxi[0,1] ** 2)
-                elif self.numdim == 3:
-                    raise NotImplementedError
-                    a = (dxdxi[0,1] * dxdxi[1,2]) - (dxdxi[1,1] * dxdxi[0,2])
-                    b = (dxdxi[0,0] * dxdxi[1,2]) - (dxdxi[1,0] * dxdxi[0,2])
-                    c = (dxdxi[0,0] * dxdxi[1,1]) - (dxdxi[1,0] * dxdxi[0,1])
-                    Je = sqrt(a ** 2 + b ** 2 + c ** 2)
-                N = self.shape(xi)
-                Pe = self.pmatrix(N)
-                ff1 = Je * self.bgaussw[p] * dot(Pe.T, qe)
-                Fe += Je * self.bgaussw[p] * dot(Pe.T, qe)
-                print(ff)
-                print(Fe)
-                print()
-
-        return Fe
-
-        # EXPLICIT METHOD:
-        for (iedge, edgenod) in enumerate(self.edges):
-            # Boundary contribution
-            qe = sload[iedge]
-            if dot(qe, qe) <= 1e-12:
-                continue
-            xb = self.xc[edgenod]
-            for (p, xi) in enumerate(self.bgaussp):
-                w = self.bgaussw[p]
-                N = self.bshape(xi)
-                dNdxi = self.bshapegrad(xi)
-                dxdxi = dot(dNdxi, xb)
-                if self.numdim == 2:
-                    Je = sqrt(dxdxi[0] ** 2 + dxdxi[1] ** 2)
-                elif self.numdim == 3:
-                    a = (dxdxi[0,1] * dxdxi[1,2]) - (dxdxi[1,1] * dxdxi[0,2])
-                    b = (dxdxi[0,0] * dxdxi[1,2]) - (dxdxi[1,0] * dxdxi[0,2])
-                    c = (dxdxi[0,0] * dxdxi[1,1]) - (dxdxi[1,0] * dxdxi[0,1])
-                    Je = sqrt(a ** 2 + b ** 2 + c ** 2)
-                for (i, ni) in enumerate(edgenod):
-                    for j in range(self.ndof):
-                        I = ni*self.ndof + j
-                        Fe[I] += self.bgaussw[p] * Je * N[i] * qe[j]
         return Fe
 
     def update_state(self, u, e, s):
