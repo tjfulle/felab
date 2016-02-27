@@ -40,6 +40,7 @@ def LinearSolution():
     V.SurfaceLoad('Surface-300', [0, -1])
     V.Solve()
     V.WriteResults('ShearLocking.Linear')
+    V.Plot2D(deformed=1,show=1)
 
 WriteAnalyticSolution()
 LinearSolution()

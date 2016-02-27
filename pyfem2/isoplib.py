@@ -1,16 +1,27 @@
+import logging
 from numpy import *
 from numpy.linalg import det, inv
 
 # --------------------------------------------------------------------------- #
 # ------------------------ ISOPARAMETRIC ELEMENTS --------------------------- #
 # --------------------------------------------------------------------------- #
+def GaussQuadrature1D(a, b, order, f):
+    if order == 1:
+        x, w = [0.], [2.]
+    elif order == 2:
+        x, w = [-sqrt(3.), sqrt(3.)], [1., 1.]
+    elif order == 3:
+        x, w = [-sqrt(3./5.), 0, sqrt(3./5.)], [5./9., 8./9., 5./9.]
+    return (b-a)/2.*sum([w[i]*f((b-a)/2.*x[i]+(a+b)/2.) for i in range(order)],0)
+
+
 class IsoPElement(object):
     nfab = 0
     ndof, numnod, numdim = None, None, None
     signature = None
     edges = []
 
-    def smatrix(self, N):
+    def pmatrix(self, N):
         S = zeros((self.ndof, self.numnod*self.ndof))
         for i in range(self.numdim):
             S[i, i::self.numdim] = N
@@ -148,12 +159,55 @@ class IsoPElement(object):
         for (p, xi) in enumerate(self.gaussp):
             # Body force contribution
             Je = self.jacobian(self.xc, xi)
-            Se = self.smatrix(self.shape(xi))
-            Fe += Je * self.gaussw[p] * dot(Se.T, dload)
+            Pe = self.pmatrix(self.shape(xi))
+            Fe += Je * self.gaussw[p] * dot(Pe.T, dload)
 
         if not any([dot(qe, qe) >= 1e-12 for qe in sload]):
             return Fe
 
+        for (iedge, edgenod) in enumerate(self.edges):
+            # Boundary contribution
+            qe = sload[iedge]
+            if dot(qe, qe) <= 1e-12:
+                continue
+            xb = self.xc[edgenod]
+            if self.numdim == 2:
+                he = sqrt((xb[1,1]-xb[0,1])**2+(xb[1,0]-xb[0,0])**2)
+                def f(x):
+                    xi = array([[x,-1.],[1.,x],[x,1.],[-1.,x]][iedge])
+                    Pe = self.pmatrix(self.shape(xi))
+                    return dot(Pe.T, qe)
+                Fe += GaussQuadrature1D(0., he, len(edgenod), f)
+            else:
+                raise NotImplementedError
+
+            continue
+
+            for (p, xi) in enumerate(self.bgaussp):
+                # evaluate the shape functions on this edge
+                if self.numdim == 2:
+                    i = [0, 1, 0, 1][iedge]
+                    xi = array([[xi,-1.],[1.,xi],[xi,1.],[-1.,xi]][iedge])
+                    dNdxi = self.shapegrad(xi)[i,ix_(edgenod)]
+                    dxdxi = dot(dNdxi, xb)
+                    Je = sqrt(dxdxi[0,0] ** 2 + dxdxi[0,1] ** 2)
+                elif self.numdim == 3:
+                    raise NotImplementedError
+                    a = (dxdxi[0,1] * dxdxi[1,2]) - (dxdxi[1,1] * dxdxi[0,2])
+                    b = (dxdxi[0,0] * dxdxi[1,2]) - (dxdxi[1,0] * dxdxi[0,2])
+                    c = (dxdxi[0,0] * dxdxi[1,1]) - (dxdxi[1,0] * dxdxi[0,1])
+                    Je = sqrt(a ** 2 + b ** 2 + c ** 2)
+                N = self.shape(xi)
+                Pe = self.pmatrix(N)
+                ff1 = Je * self.bgaussw[p] * dot(Pe.T, qe)
+                Fe += Je * self.bgaussw[p] * dot(Pe.T, qe)
+                print(ff)
+                print(Fe)
+                print()
+
+        return Fe
+
+        # EXPLICIT METHOD:
         for (iedge, edgenod) in enumerate(self.edges):
             # Boundary contribution
             qe = sload[iedge]
@@ -200,13 +254,12 @@ class IsoPReduced(IsoPElement):
 
         # Get the nominal stiffness
         Kel = super(IsoPReduced, self).stiffness(*args)
-        return Kel
 
         # Perform hourglass correction
         Khg = zeros(Kel.shape)
         for (npt, xi) in enumerate(self.hglassp):
             dN = self.shapegradx(self.xc, xi)
-            J = self.jacobian(self.xc, xi)
+            Je = self.jacobian(self.xc, xi)
 
             # Hourglass base vectors
             g = self.hglassv[npt]
@@ -227,5 +280,5 @@ class IsoPReduced(IsoPElement):
                         for j in range(self.ndof):
                             K = self.ndof * a + i
                             L = self.ndof * b + j
-                            Khg[K,L] += scale * g[a] * g[b] * J * 4.
+                            Khg[K,L] += scale * g[a] * g[b] * Je * 4.
         return Kel + Khg

@@ -80,6 +80,5 @@ ax = LinearSolution(ax)
 QuadraticSolution()
 
 if not os.environ.get('NOGRAPHICS'):
-    pass
-#plt.legend()
-#plt.show()
+    plt.legend()
+    plt.show()
