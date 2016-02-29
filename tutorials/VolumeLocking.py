@@ -54,7 +54,6 @@ def QuadraticSolution(ax=None):
     V.SurfaceLoad("Surface-303", [0.98078528, 0.195090322])
     V.Solve()
     V.WriteResults('VolumeLocking.Quadratic')
-    return ax
 
 def WriteAnalyticSolution(ax=None):
     mesh = Mesh(filename='../meshes/QuarterCylinderQuad4.g')
@@ -75,7 +74,7 @@ def WriteAnalyticSolution(ax=None):
 
 ax = None
 ax = WriteAnalyticSolution(ax)
-ax = ReducedIntegrationSolution(ax)
+#ax = ReducedIntegrationSolution(ax)
 ax = LinearSolution(ax)
 QuadraticSolution()
 

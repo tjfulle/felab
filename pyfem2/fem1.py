@@ -1147,7 +1147,7 @@ class FiniteElementModel(object):
                 return field.data[:,comps.index(key1)]
         raise UserInputError('No such field {0!r}'.format(key))
 
-    def Plot2D(self, deformed=False, color=None, colorby=None, **kwds):
+    def Plot2D(self, deformed=False, color=None, colorby=None, scale=1., **kwds):
         """Create a 2D plot
 
         Parameters
@@ -1173,10 +1173,13 @@ class FiniteElementModel(object):
             raise UserInputError('Plot2D is only applicable to 2D problems')
         xy = array(self.mesh.coord)
         if deformed:
-            xy += self.dofs.reshape(xy.shape)
+            xy += scale * self.dofs.reshape(xy.shape)
         elecon = []
         for blk in self.mesh.eleblx:
-            elecon.extend(blk.elecon)
+            if (blk.eletyp.numdim, blk.eletyp.numnod) == (2,8):
+                raise NotImplementedError('Plotting valid only for linear element')
+            else:
+                elecon.extend(blk.elecon)
 
         if colorby is not None and is_stringlike(colorby):
             colorby = self._get_field(colorby)

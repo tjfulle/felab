@@ -24,6 +24,7 @@ class IsoPQuad4(IsoPElement):
               [0]
 
     """
+    elefab = {'t':1.}
     signature = (1,1,0,0,0,0,0)
     numdim, numnod, ndof = 2, 4, 2
     gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
@@ -34,14 +35,6 @@ class IsoPQuad4(IsoPElement):
     bgaussw = ones(2)
     bgaussp = array([-1., 1.]) / sqrt(3.)
     edges = array([[0, 1], [1, 2], [2, 3], [3, 0]])
-    def __init__(self, label, elenod, elecoord, elemat, **elefab):
-        self.label = label
-        self.nodes = elenod
-        self.xc = elecoord
-        self.material = elemat
-        self.t = elefab.get('t')
-        if self.t is None:
-            raise ValueError('Incorrect number of element fabrication properties')
 
     @property
     def area(self):
@@ -57,7 +50,10 @@ class IsoPQuad4(IsoPElement):
     def isop_map(self, xi):
         raise NotImplementedError
 
-    def shape(self, xi):
+    def shape(self, xi, edge=None):
+        if edge is not None:
+            # Evaluate shape function on specific edge
+            xi = array([[xi,-1.],[1.,xi],[xi,1.],[-1.,xi]][edge])
         N = array([(1. - xi[0]) * (1. - xi[1]),
                    (1. + xi[0]) * (1. - xi[1]),
                    (1. + xi[0]) * (1. + xi[1]),
@@ -69,11 +65,19 @@ class IsoPQuad4(IsoPElement):
                     [-1. + xi[0], -1. - xi[0], 1. + xi[0],  1. - xi[0]]]) / 4.
         return dN
 
-    def bshape(self, xi):
-        return array([1. - xi, 1. + xi]) / 2.
-
-    def bshapegrad(self, xi):
-        return array([-1., 1.]) / 2.
+    def surface_force(self, edge, qe):
+        edgenod = self.edges[edge]
+        xb = self.xc[edgenod]
+        gw = ones(2)
+        gp = array([-1./sqrt(3.), 1./sqrt(3.)])
+        he = sqrt((xb[1,1]-xb[0,1])**2+(xb[1,0]-xb[0,0])**2)
+        Fe = zeros(8)
+        for (p, xi) in enumerate(gp):
+            # Form Gauss point on specific edge
+            Ne = self.shape(xi, edge=edge)
+            Pe = self.pmatrix(Ne)
+            Fe += he / 2. * gw[p] * dot(Pe.T, qe)
+        return Fe
 
 # --------------------------------------------------------------------------- #
 # ------------------------ USER ELEMENT TYPES ------------------------------- #

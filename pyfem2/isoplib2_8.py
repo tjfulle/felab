@@ -23,30 +23,19 @@ class IsoPQuad8(IsoPElement):
                [0]
 
     """
+    elefab = {'t':1.}
     signature = (1,1,0,0,0,0,0)
     numdim, numnod, ndof = 2, 8, 2
     gaussp = array([[c,  c], [0,  c], [-c,  c],
                     [c,  0], [0,  0], [-c,  0],
                     [c, -c], [0, -c], [-c, -c]])
-    gaussw = ones(4)
     gaussw = array([0.30864197, 0.49382716, 0.30864197,
                     0.49382716, 0.79012346, 0.49382716,
                     0.30864197, 0.49382716, 0.30864198])
     cp = array([0, 0], dtype=float64)
     xp = array([[-1, -1], [1, -1], [1, 1], [-1, 1],
                 [0, -1], [1, 0], [0, 1], [-1, 0]], dtype=float64),
-    bgaussw = array([0.5555555556, 0.8888888889, 0.5555555556])
-    bgaussp = array([c, 0, -c])
     edges = array([[0, 1, 4], [1, 2, 5], [2, 3, 6], [3, 0, 7]])
-
-    def __init__(self, label, elenod, elecoord, elemat, **elefab):
-        self.label = label
-        self.nodes = elenod
-        self.xc = elecoord
-        self.material = elemat
-        self.t = elefab.get('t')
-        if self.t is None:
-            raise ValueError("Missing required element fabrication property 't'")
 
     @property
     def area(self):
@@ -62,7 +51,10 @@ class IsoPQuad8(IsoPElement):
     def isop_map(self, xi):
         raise NotImplementedError
 
-    def shape(self, xi):
+    def shape(self, xi, edge=None):
+        if edge is not None:
+            # Evaluate shape function on specific edge
+            xi = array([[xi,-1.],[1.,xi],[xi,1.],[-1.,xi]][edge])
         x, y = xi[:2]
         N = zeros(8)
         # corner nodes
@@ -99,13 +91,20 @@ class IsoPQuad8(IsoPElement):
         dN[1,7] = -(1. - x) * y
         return dN
 
-    def bshape(self, xi):
-        return array([-0.5 * xi * (1. - xi),
-                       0.5 * xi * (1. + xi),
-                       (1. - xi) * (1. + xi)])
-
-    def bshapegrad(self, xi):
-        return array([-.5+xi, .5+xi, -2*xi])
+    def surface_force(self, edge, qe):
+        edgenod = self.edges[edge]
+        xb = self.xc[edgenod]
+        gp = array([c, 0, -c])
+        gw = array([0.5555555556, 0.8888888889, 0.5555555556])
+        Fe = zeros(16)
+        for (p, xi) in enumerate(gp):
+            # Evaluate shape function on edge
+            dxdxi = dot([[-.5 + xi, .5 + xi, -2. * xi]], xb)
+            Jac = sqrt(dxdxi[0, 0] ** 2 + dxdxi[0, 1] ** 2)
+            Ne = self.shape(xi, edge=edge)
+            Pe = self.pmatrix(Ne)
+            Fe += Jac * gw[p] * dot(Pe.T, qe)
+        return Fe
 
 # --------------------------------------------------------------------------- #
 # ------------------------ USER ELEMENT TYPES ------------------------------- #

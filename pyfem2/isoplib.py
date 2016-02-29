@@ -5,21 +5,27 @@ from numpy.linalg import det, inv
 # --------------------------------------------------------------------------- #
 # ------------------------ ISOPARAMETRIC ELEMENTS --------------------------- #
 # --------------------------------------------------------------------------- #
-def GaussQuadrature1D(a, b, order, f):
-    if order == 1:
-        x, w = [0.], [2.]
-    elif order == 2:
-        x, w = [-sqrt(3.), sqrt(3.)], [1., 1.]
-    elif order == 3:
-        x, w = [-sqrt(3./5.), 0, sqrt(3./5.)], [5./9., 8./9., 5./9.]
-    return (b-a)/2.*sum([w[i]*f((b-a)/2.*x[i]+(a+b)/2.) for i in range(order)],0)
-
-
 class IsoPElement(object):
-    nfab = 0
+    elefab = {}
     ndof, numnod, numdim = None, None, None
     signature = None
     edges = []
+
+    def __init__(self, label, elenod, elecoord, elemat, **elefab):
+        self.label = label
+        self.nodes = elenod
+        self.xc = elecoord
+        self.material = elemat
+        unknown = [key for key in elefab if key not in self.elefab]
+        if unknown:
+            raise UserInputError('Unrecognized element fabrication '
+                                 'properties: {0}'.format(','.join(unknown)))
+        for (name, default) in self.elefab.items():
+            p = elefab.get(name, default)
+            setattr(self, name, p)
+
+    def surface_force(self, *args):
+        raise NotImplementedError
 
     def pmatrix(self, N):
         S = zeros((self.ndof, self.numnod*self.ndof))
@@ -165,22 +171,13 @@ class IsoPElement(object):
         if not any([dot(qe, qe) >= 1e-12 for qe in sload]):
             return Fe
 
-        for (iedge, edgenod) in enumerate(self.edges):
+        for i in range(self.edges.shape[0]):
             # Boundary contribution
-            qe = sload[iedge]
+            qe = sload[i]
             if dot(qe, qe) <= 1e-12:
+                # No force
                 continue
-            xb = self.xc[edgenod]
-            if self.numdim == 2:
-                he = sqrt((xb[1,1]-xb[0,1])**2+(xb[1,0]-xb[0,0])**2)
-                def f(x):
-                    xi = array([[x,-1.],[1.,x],[x,1.],[-1.,x]][iedge])
-                    Pe = self.pmatrix(self.shape(xi))
-                    return dot(Pe.T, qe)
-                Fe += GaussQuadrature1D(0., he, len(edgenod), f)
-            else:
-                raise NotImplementedError
-
+            Fe += self.surface_force(i, qe)
         return Fe
 
     def update_state(self, u, e, s):
