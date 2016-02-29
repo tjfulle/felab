@@ -627,21 +627,45 @@ def ReadMesh(filename):
             solidsec.append([elset, material])
 
         elif kw == 'elset':
-            els = [int(e) for row in item.data for e in row]
+            generate = 'generate' in [p.name.lower() for p in item.params]
+            if not generate:
+                els = [int(e) for row in item.data for e in row]
+            else:
+                els = []
+                for row in item.data:
+                    start, stop, step = [int(n) for n in row]
+                    els.extend(range(start, stop+1, step))
             name = [p.value for p in item.params if p.name.lower()=='elset'][0]
             elemsets.setdefault(name.upper(), []).extend(els)
 
         elif kw == 'nset':
-            nodes = [int(n) for row in item.data for n in row]
+            generate = 'generate' in [p.name.lower() for p in item.params]
+            if not generate:
+                nodes = [int(n) for row in item.data for n in row]
+            else:
+                nodes = []
+                for row in item.data:
+                    start, stop, step = [int(n) for n in row]
+                    nodes.extend(range(start, stop+1, step))
             name = [p.name for p in item.params if p.name.lower()=='nset'][0]
             nodesets.setdefault(name.upper(), []).extend(nodes)
 
         elif kw == 'surface':
             d = dict(zip(('S1','S2','S3','S4','S5','S6','S7','S8'),range(8)))
-            surf = [[eval(x,d,d) for x in row] for row in item.data]
+            surf = []
+            for row in item.data:
+                el, face = row
+                if el.upper() in elemsets:
+                    els = elemsets[el.upper()]
+                else:
+                    els = [el]
+                for el in els:
+                    if face.upper().startswith('S'):
+                        surf.append((int(el), eval(face, d, d)))
+                    else:
+                        surf.append((int(el), int(face)-1))
             name = [p.name for p in item.params if p.name.lower()=='name'][0]
             surfaces.setdefault(name.upper(), []).extend(surf)
-    print(surfaces)
 
     # Check solid sections for consistency with element block requirement of
     # single element type
