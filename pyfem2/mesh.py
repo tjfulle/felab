@@ -200,12 +200,9 @@ class Mesh(object):
             raise UserInputError('Unknown file type')
 
     def get_internal_node_ids(self, label):
-        if is_stringlike(label):
-            if label.upper() in self.nodesets:
-                return self.nodesets[label.upper()]
-            else:
-                raise UserInputError('No such node set {0!r}'.format(label))
-        if isinstance(label, int):
+        if is_stringlike(label) and label.upper() in self.nodesets:
+            return self.nodesets[label.upper()]
+        elif isinstance(label, int):
             inodes = [self.nodmap[label]]
         elif label == ALL:
             inodes = range(self.numnod)
@@ -213,6 +210,8 @@ class Mesh(object):
             inodes = self.boundary_nodes()
         elif label in (ILO, IHI, JLO, JHI, KLO, KHI):
             inodes = self.nodes_in_rectilinear_region(label)
+        elif is_stringlike(label):
+            raise UserInputError('No such node set {0!r}'.format(label))
         else:
             inodes = [self.nodmap[xn] for xn in label]
         return array(inodes, dtype=int)
@@ -325,16 +324,15 @@ class Mesh(object):
         if self.unassigned:
             raise UserInputError('Mesh element operations require all elements be '
                                  'assigned to an element block')
-        if is_stringlike(region):
-            if region.upper() in self.surfaces:
-                return self.surfaces[region.upper()]
-            else:
-                raise UserInputError('No such surface {0!r}'.format(region))
+        if is_stringlike(region) and region.upper() in self.surfaces:
+            return self.surfaces[region.upper()]
         if region in (ILO, IHI, JLO, JHI, KLO, KHI):
             if self.numdim == 1:
                 return self.find_surface1(region)
             if self.numdim == 2:
                 return self.find_surface2(region)
+        elif is_stringlike(label):
+            raise UserInputError('No such surface {0!r}'.format(region))
         # Check if region is a surface
         if not is_listlike(region):
             raise UserInputError('Unrecognized surface: {0}'.format(region))
