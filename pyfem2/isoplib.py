@@ -24,6 +24,10 @@ class IsoPElement(object):
             p = elefab.get(name, default)
             setattr(self, name, p)
 
+        if self.gaussp is None:
+            raise NotImplementedError('Gauss points have not been implemented '
+                                      'for this element')
+
     def surface_force(self, *args):
         raise NotImplementedError
 

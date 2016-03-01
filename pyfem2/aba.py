@@ -602,7 +602,7 @@ def ElementType(name):
 
 def ReadInput(filename):
     f = os.path.basename(filename)
-    parser = AbaqusParser()
+    parser = AbaqusParser(lex_optimize=False, yacc_optimize=False)
     buf = open(filename).read()
     t = parser.parse(buf, f, debuglevel=0)
 
