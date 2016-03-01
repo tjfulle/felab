@@ -230,3 +230,13 @@ class IsoPReduced(IsoPElement):
                             L = self.ndof * b + j
                             Khg[K,L] += scale * g[a] * g[b] * Je * 4.
         return Kel + Khg
+
+# --------------------------------------------------------------------------- #
+# ---------- SELECTIVE REDUCED INTEGRATION ISOPARAMETRIC ELEMENTS ----------- #
+# --------------------------------------------------------------------------- #
+class IsoPSelectiveReduced(IsoPElement):
+
+    def stiffness(self, *args):
+        """Assemble the element stiffness"""
+        raise NotImplementedError
+        # COMPLETE THE STIFFNESS DEFINITION

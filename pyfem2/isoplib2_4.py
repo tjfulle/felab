@@ -1,9 +1,9 @@
 from numpy import *
 
-from .isoplib import IsoPElement, IsoPReduced
+from .isoplib import IsoPElement, IsoPReduced, IsoPSelectiveReduced
 
 __all__ = ['PlaneStressQuad4', 'PlaneStrainQuad4', 'PlaneStrainQuad4Reduced',
-           'PlaneStrainQuad4BBar']
+           'PlaneStrainQuad4BBar', 'PlaneStrainQuad4SelectiveReduced']
 
 # --------------------------------------------------------------------------- #
 # --------------------- QUADRATIC ISOPARAMETRIC ELEMENTS -------------------- #
@@ -126,3 +126,7 @@ class PlaneStrainQuad4Reduced(IsoPQuad4, IsoPReduced):
         B[0, 0::2] = B[3, 1::2] = dN[0, :]
         B[1, 1::2] = B[3, 0::2] = dN[1, :]
         return B
+
+class PlaneStrainQuad4SelectiveReduced(PlaneStrainQuad4, IsoPSelectiveReduced):
+    rgaussp = array([[0., 0.]])
+    rgaussw = array([4.])

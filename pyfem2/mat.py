@@ -103,6 +103,8 @@ class Material(object):
         props = elas(**kwds)
         self.E, self.Nu = props['E'], props['Nu']
         self.G, self.K = props['G'], props['K']
+        self.Mu = self.G
+        self.Lambda = props['Lame']
 
     def IsotropicThermalConductivity(self, k):
         """Assign the coefficient of thermal conductivity
@@ -119,12 +121,13 @@ class Material(object):
         """The isotropic thermal conductivity matrix"""
         return self.k * eye(ndim)
 
-    def stiffness(self, ndir, nshr):
+    def stiffness(self, ndir, nshr, disp=None):
         if self.E is None:
             raise ValueError('Elastic modulus not set')
         if self.Nu is None:
             raise ValueError("Poisson's ration not set")
-        D = self.elastic_stiffness()
+        D = self.isotropic_elastic_stiffness()
+
         if nshr == 1:
             # Modify the stiffness for 2D according to:
             # 1) Plane strain: Remove rows and columns of the stiffness
@@ -141,14 +144,23 @@ class Material(object):
                 # plane strain
                 idx = [[[0], [1], [2], [3]], [0, 1, 2, 3]]
                 D = D[idx]
-        return D
 
-    def elastic_stiffness(self):
+        if disp is None:
+            return D
+
+        ntens = ndir + nshr
+        if disp == 2:
+            D1, D2 = zeros((ntens, ntens)), eye(ntens)
+            D1[:ndir,:ndir] = D[0,1]
+            return D1, D-D1
+
+        raise NotImplementedError
+
+    def isotropic_elastic_stiffness(self):
         """Tangent elastic stiffness"""
-        fac = self.E / (1. + self.Nu) / (1. - 2. * self.Nu)
-        c11 = fac * (1. - self.Nu)
-        c12 = fac * self.Nu
-        c44 = fac * (1. - 2. * self.Nu) / 2.
+        c11 = self.Lambda + 2*self.Mu
+        c12 = self.Lambda
+        c44 = self.Mu
         C = array([[c11, c12, c12, 0,   0,   0  ],
                    [c12, c11, c12, 0,   0,   0  ],
                    [c12, c12, c11, 0,   0,   0  ],
