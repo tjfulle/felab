@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>6.1. UniformBar &mdash; pyfem2 3.0 documentation</title>
+    <title>7.1. UniformBar &mdash; pyfem2 3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -25,9 +25,9 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
-    <link rel="up" title="6. pyfem2 Source" href="index.html" />
-    <link rel="next" title="6.2. FiniteElementModel" href="fem1.html" />
-    <link rel="prev" title="6. pyfem2 Source" href="index.html" />
+    <link rel="up" title="7. pyfem2 Source" href="index.html" />
+    <link rel="next" title="7.2. FiniteElementModel" href="fem1.html" />
+    <link rel="prev" title="7. pyfem2 Source" href="index.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -41,7 +41,7 @@
           <div class="body" role="main">
             
   <div class="section" id="module-pyfem2.fem0">
-<span id="uniformbar"></span><h1>6.1. UniformBar<a class="headerlink" href="#module-pyfem2.fem0" title="Permalink to this headline">¶</a></h1>
+<span id="uniformbar"></span><h1>7.1. UniformBar<a class="headerlink" href="#module-pyfem2.fem0" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="pyfem2.fem0.UniformBar">
 <code class="descclassname">pyfem2.fem0.</code><code class="descname">UniformBar</code><span class="sig-paren">(</span><em>xa</em>, <em>xb</em>, <em>A</em>, <em>E</em>, <em>p</em>, <em>q</em>, <em>numele=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem0.UniformBar" title="Permalink to this definition">¶</a></dt>
@@ -94,7 +94,7 @@ force applied to its right, using the finite element method.</p>
 <p>Define a uniform bar on the interval <span class="math">\(x\in (0, 1)\)</span> with cross
 sectional area <span class="math">\(A=1\)</span>, Young&#8217;s modulus <span class="math">\(E=1\)</span>, point force
 <span class="math">\(p=1\)</span>, and distributed load <span class="math">\(q=0\)</span>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">xa</span><span class="p">,</span> <span class="n">xb</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">xa</span><span class="p">,</span> <span class="n">xb</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">,</span> <span class="n">E</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="p">,</span> <span class="n">q</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">u</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">UniformBar</span><span class="p">(</span><span class="n">xa</span><span class="p">,</span> <span class="n">xb</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">numele</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -132,13 +132,14 @@ sectional area <span class="math">\(A=1\)</span>, Young&#8217;s modulus <span cl
 <li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="">6.1. UniformBar</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fem1.html">6.2. FiniteElementModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fem2.html">6.3. TrussModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mesh.html">6.4. Mesh</a></li>
-<li class="toctree-l2"><a class="reference internal" href="material.html">6.5. Material</a></li>
-<li class="toctree-l2"><a class="reference internal" href="elemlib1.html">6.6. Element Library, 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">7.1. UniformBar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem1.html">7.2. FiniteElementModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem2.html">7.3. TrussModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">7.4. Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="material.html">7.5. Material</a></li>
+<li class="toctree-l2"><a class="reference internal" href="elemlib1.html">7.6. Element Library, 1</a></li>
 </ul>
 </li>
 </ul>
@@ -147,9 +148,9 @@ sectional area <span class="math">\(A=1\)</span>, Young&#8217;s modulus <span cl
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-  <li><a href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
-      <li>Previous: <a href="index.html" title="previous chapter">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
-      <li>Next: <a href="fem1.html" title="next chapter">6.2. FiniteElementModel</a></li>
+  <li><a href="index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+      <li>Next: <a href="fem1.html" title="next chapter">7.2. FiniteElementModel</a></li>
   </ul></li>
   </ul></li>
 </ul>

@@ -263,7 +263,7 @@ having uniform degrees of freedom, this table can be constructed on the fly
 using, as shown.</p>
 <p>A representative python code that performs stiffness assembly is the function
 <code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code>, shown below. <code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code> is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K</span> <span class="o">=</span> <span class="n">AssemblePlaneTrussStiffness</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="n">AssemblePlaneTrussStiffness</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The arguments <code class="docutils literal"><span class="pre">AssemblePlaneTrussStiffness</span></code> to are:</p>
@@ -299,7 +299,7 @@ using, as shown.</p>
 </tr>
 </tbody>
 </table>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">AssemblePlaneTrussStiffness</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">AssemblePlaneTrussStiffness</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">elemat</span><span class="p">,</span> <span class="n">elefab</span><span class="p">):</span>
     <span class="n">coord</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
     <span class="n">elecon</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">elecon</span><span class="p">)</span>
 
@@ -337,7 +337,7 @@ using, as shown.</p>
 </pre></div>
 </div>
 <p>The subordinate function <code class="docutils literal"><span class="pre">PlaneTrussElementStiffness</span></code> computes the element stiffness matrix (see <a class="reference internal" href="../ElementLibrary/Link.html#barelements"><span>Elastic bar elements</span></a>):</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">PlaneTrussElementStiffness</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">PlaneTrussElementStiffness</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
     <span class="n">v</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">h</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">v</span> <span class="o">/</span> <span class="n">h</span>
@@ -369,7 +369,7 @@ optimized greatly.</p>
 <code class="docutils literal"><span class="pre">FiniteElementModel.assemble_global_force_udof</span></code>.</p>
 <p>A representative python code that performs stiffness assembly is the function
 <code class="docutils literal"><span class="pre">AssemblePlaneTrussForce</span></code>, shown below. <code class="docutils literal"><span class="pre">AssemblePlaneTrussForce</span></code> is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">F</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">AssemblePlaneTrussForce</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">F</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">AssemblePlaneTrussForce</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The arguments <code class="docutils literal"><span class="pre">AssemblePlaneTrussForce</span></code> to are:</p>
@@ -415,7 +415,7 @@ optimized greatly.</p>
 <p class="first admonition-title">Note</p>
 <p class="last">The assembler below also produces the array <code class="docutils literal"><span class="pre">Q</span></code> of forces on the Neummann boundary.</p>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">AssemblePlaneTrussForce</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">AssemblePlaneTrussForce</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">elecon</span><span class="p">,</span> <span class="n">doftags</span><span class="p">,</span> <span class="n">dofvals</span><span class="p">):</span>
 
     <span class="n">coord</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
     <span class="n">elecon</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">elecon</span><span class="p">)</span>
@@ -455,7 +455,7 @@ optimized greatly.</p>
 </pre></div>
 </div>
 <p>The subordinate function <code class="docutils literal"><span class="pre">PlaneTrussElementForce</span></code> computes the element force array:</p>
-<div class="code highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">PlaneTrussElementForce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+<div class="code highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">PlaneTrussElementForce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
     <span class="n">v</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">h</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">q</span> <span class="o">*</span> <span class="n">h</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">])</span>
@@ -497,12 +497,18 @@ optimized greatly.</p>
 <li class="toctree-l2"><a class="reference internal" href="InternalNodesAndElements.html">5.3. Nodes and elements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Boundary1.html">5.4. Boundary conditions and concentrated loads</a></li>
 <li class="toctree-l2"><a class="reference internal" href="DistributedLoads.html">5.5. Source terms and Distributed Loads</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">5.6. Assembly, Part I</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">5.6. Assembly, Part I</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">5.6.1. Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#assembly-by-example">5.6.2. Assembly by Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#assembler-computational-implementation">5.6.3. Assembler Computational Implementation</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="Boundary2.html">5.7. Application of Boundary Conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Truss1.html">5.8. TrussModel: A Complete Truss Program</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
 </ul>
 
 <div class="relations">

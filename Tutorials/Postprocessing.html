@@ -49,7 +49,7 @@
 <div class="section" id="problem-description">
 <h2>2.6.2. Problem description<a class="headerlink" href="#problem-description" title="Permalink to this headline">¶</a></h2>
 <p>Determine the maximum principal stress in the plate with hole and compare with the analytic solution.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">V</span> <span class="o">=</span> <span class="n">Plane2DModel</span><span class="p">()</span>
 <span class="n">V</span><span class="o">.</span><span class="n">GenesisMesh</span><span class="p">(</span><span class="s1">&#39;../meshes/PlateWithHoleQuad4QuarterSym.g&#39;</span><span class="p">)</span>
@@ -116,13 +116,18 @@
 <li class="toctree-l2"><a class="reference internal" href="Heat1.html">2.3. Diffusive Heat Transfer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Plane1.html">2.4. Plane Elasticity, 1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Plane2.html">2.5. Plane Elasticity, 2</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">2.6. Post processing</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">2.6. Post processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#objective">2.6.1. Objective</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#problem-description">2.6.2. Problem description</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
 </ul>
 
 <div class="relations">

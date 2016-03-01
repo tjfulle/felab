@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>6.2. FiniteElementModel &mdash; pyfem2 3.0 documentation</title>
+    <title>7.2. FiniteElementModel &mdash; pyfem2 3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -25,9 +25,9 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
-    <link rel="up" title="6. pyfem2 Source" href="index.html" />
-    <link rel="next" title="6.3. TrussModel" href="fem2.html" />
-    <link rel="prev" title="6.1. UniformBar" href="fem0.html" />
+    <link rel="up" title="7. pyfem2 Source" href="index.html" />
+    <link rel="next" title="7.3. TrussModel" href="fem2.html" />
+    <link rel="prev" title="7.1. UniformBar" href="fem0.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -41,7 +41,7 @@
           <div class="body" role="main">
             
   <div class="section" id="module-pyfem2.fem1">
-<span id="finiteelementmodel"></span><span id="apifiniteelementmodel"></span><h1>6.2. FiniteElementModel<a class="headerlink" href="#module-pyfem2.fem1" title="Permalink to this headline">¶</a></h1>
+<span id="finiteelementmodel"></span><span id="apifiniteelementmodel"></span><h1>7.2. FiniteElementModel<a class="headerlink" href="#module-pyfem2.fem1" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="pyfem2.fem1.FiniteElementModel">
 <em class="property">class </em><code class="descclassname">pyfem2.fem1.</code><code class="descname">FiniteElementModel</code><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel" title="Permalink to this definition">¶</a></dt>
@@ -51,6 +51,31 @@ directly. It is a base class from which other finite element models can be
 derived. Specifically, this base class does not provide the <code class="docutils literal"><span class="pre">Solve</span></code> method
 needed to solve a finite element model. The <code class="docutils literal"><span class="pre">Solve</span></code> method must be
 implemented in class&#8217; derived from this one.</p>
+<dl class="method">
+<dt id="pyfem2.fem1.FiniteElementModel.AbaqusMesh">
+<code class="descname">AbaqusMesh</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.AbaqusMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a finite element mesh from a Abaqus input file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : str</p>
+<blockquote class="last">
+<div><p>The path to a valid Genesis file</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="mesh.html#pyfem2.mesh.Mesh" title="pyfem2.mesh.Mesh"><code class="xref py py-obj docutils literal"><span class="pre">pyfem2.mesh.Mesh</span></code></a></p>
+</div>
+<p class="rubric">Notes</p>
+<p>This method calls <code class="docutils literal"><span class="pre">mesh.Mesh</span></code> with the <code class="docutils literal"><span class="pre">filename</span></code> keyword and
+stores the returned mesh as the <code class="docutils literal"><span class="pre">FiniteElementModel.mesh</span></code> attribute.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pyfem2.fem1.FiniteElementModel.AssignProperties">
 <code class="descname">AssignProperties</code><span class="sig-paren">(</span><em>blknam</em>, <em>eletyp</em>, <em>elemat</em>, <em>**elefab</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.AssignProperties" title="Permalink to this definition">¶</a></dt>
@@ -299,7 +324,7 @@ labels, or one of the region symbolic constants.</p>
 
 <dl class="method">
 <dt id="pyfem2.fem1.FiniteElementModel.Plot2D">
-<code class="descname">Plot2D</code><span class="sig-paren">(</span><em>deformed=False</em>, <em>color=None</em>, <em>colorby=None</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.Plot2D" title="Permalink to this definition">¶</a></dt>
+<code class="descname">Plot2D</code><span class="sig-paren">(</span><em>deformed=False</em>, <em>color=None</em>, <em>colorby=None</em>, <em>scale=1.0</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.fem1.FiniteElementModel.Plot2D" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a 2D plot</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -366,14 +391,14 @@ all nodes are sent to the function as a n-dimensional column vector.</p>
 <ul>
 <li><p class="first">Assign constant amplitude BC to the <span class="math">\(x\)</span> displacement of all
 nodes on left side of domain:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">Assign variable amplitude BC to the <span class="math">\(x\)</span> displacement of all
 nodes on left side of domain. The variable amplitude function is
 <span class="math">\(\Delta_x=y^2\)</span>.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
 <span class="bp">self</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -417,14 +442,14 @@ all nodes are sent to the function as a n-dimensional column vector.</p>
 <ul>
 <li><p class="first">Assign constant amplitude BC to the <span class="math">\(x\)</span> displacement of all
 nodes on left side of domain:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">Assign variable amplitude BC to the <span class="math">\(x\)</span> displacement of all
 nodes on left side of domain. The variable amplitude function is
 <span class="math">\(\Delta_x=y^2\)</span>.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
 <span class="bp">self</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -641,11 +666,11 @@ the number of elements in the mesh;</li>
 <p>For example, for a plane stress-displacement problem the arguments
 sent are the arrays of distributed and surface loads, <code class="docutils literal"><span class="pre">dloads</span></code> and
 <code class="docutils literal"><span class="pre">sloads</span></code>, respectively:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assemble_global_force</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dloads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sloads</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assemble_global_force</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dloads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sloads</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This method then calls each element force as:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="p">(</span><span class="n">iel</span><span class="p">,</span> <span class="n">el</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="p">(</span><span class="n">iel</span><span class="p">,</span> <span class="n">el</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">):</span>
    <span class="o">...</span>
    <span class="n">Fe</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">force</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dloads</span><span class="p">[</span><span class="n">iel</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">sloads</span><span class="p">[</span><span class="n">iel</span><span class="p">])</span>
    <span class="o">...</span>
@@ -731,11 +756,11 @@ the number of elements in the mesh;</li>
 <p>For example, for a diffusive heat-transfer
 problem the argument sent is the array of film coefficients
 <code class="docutils literal"><span class="pre">sfilm</span></code>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assemble_global_stiffness</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sfilm</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assemble_global_stiffness</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sfilm</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This method then calls each element stiffness as:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="p">(</span><span class="n">iel</span><span class="p">,</span> <span class="n">el</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="p">(</span><span class="n">iel</span><span class="p">,</span> <span class="n">el</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">):</span>
    <span class="o">...</span>
    <span class="n">Ke</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">stiffness</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">film</span><span class="p">[</span><span class="n">iel</span><span class="p">])</span>
    <span class="o">...</span>
@@ -816,13 +841,14 @@ that adopts the following assumptions:</p>
 <li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="fem0.html">6.1. UniformBar</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">6.2. FiniteElementModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fem2.html">6.3. TrussModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mesh.html">6.4. Mesh</a></li>
-<li class="toctree-l2"><a class="reference internal" href="material.html">6.5. Material</a></li>
-<li class="toctree-l2"><a class="reference internal" href="elemlib1.html">6.6. Element Library, 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="fem0.html">7.1. UniformBar</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">7.2. FiniteElementModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem2.html">7.3. TrussModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">7.4. Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="material.html">7.5. Material</a></li>
+<li class="toctree-l2"><a class="reference internal" href="elemlib1.html">7.6. Element Library, 1</a></li>
 </ul>
 </li>
 </ul>
@@ -831,9 +857,9 @@ that adopts the following assumptions:</p>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-  <li><a href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
-      <li>Previous: <a href="fem0.html" title="previous chapter">6.1. UniformBar</a></li>
-      <li>Next: <a href="fem2.html" title="next chapter">6.3. TrussModel</a></li>
+  <li><a href="index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+      <li>Previous: <a href="fem0.html" title="previous chapter">7.1. UniformBar</a></li>
+      <li>Next: <a href="fem2.html" title="next chapter">7.3. TrussModel</a></li>
   </ul></li>
   </ul></li>
 </ul>

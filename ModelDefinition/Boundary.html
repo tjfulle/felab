@@ -53,7 +53,7 @@
 <div class="section" id="prescribing-degrees-of-freedom">
 <span id="prescribedbc"></span><h2>3.7.2. Prescribing degrees of freedom<a class="headerlink" href="#prescribing-degrees-of-freedom" title="Permalink to this headline">¶</a></h2>
 <p>Degrees of freedom can be prescribed by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre>V.PrescribedBC(region, dof[, amplitude=0])
+<div class="code python highlight-python"><div class="highlight"><pre><span></span>V.PrescribedBC(region, dof[, amplitude=0])
 </pre></div>
 </div>
 <ul>
@@ -94,11 +94,11 @@
 </li>
 </ul>
 <p>For example, to fix the <span class="math">\(x\)</span> displacement of the node set <code class="docutils literal"><span class="pre">Nodeset-1</span></code> do:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-1&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-1&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Or, to prescribe a temperature in the <span class="math">\(x\)</span> and <span class="math">\(y\)</span> given by <span class="math">\(2\frac{1+y}{(3+x)^2+(1+y)^2}\)</span> on the boundary of a mesh do:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">fun</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fun</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="mf">2.</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">((</span><span class="mf">3.</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">BOUNDARY</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
@@ -107,7 +107,7 @@
 <div class="section" id="pinning-displacement-degrees-of-freedom">
 <span id="pinnodes"></span><h3>3.7.2.1. Pinning displacement degrees of freedom<a class="headerlink" href="#pinning-displacement-degrees-of-freedom" title="Permalink to this headline">¶</a></h3>
 <p>Displacement degrees of freedom can be fixed by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">PinNodes</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">PinNodes</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">region</span></code> is a node label, list of node labels, node set, or symbolic constant (see <a class="reference internal" href="#prescribedbc"><span>Prescribing degrees of freedom</span></a>.)</p>
@@ -115,7 +115,7 @@
 <div class="section" id="fixing-displacement-degrees-of-freedom">
 <span id="fixnodes"></span><h3>3.7.2.2. Fixing displacement degrees of freedom<a class="headerlink" href="#fixing-displacement-degrees-of-freedom" title="Permalink to this headline">¶</a></h3>
 <p>Displacement and rotation degrees of freedom can be fixed by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">region</span></code> is a node label, list of node labels, node set, or symbolic constant (see <a class="reference internal" href="#prescribedbc"><span>Prescribing degrees of freedom</span></a>.)</p>
@@ -124,7 +124,7 @@
 <div class="section" id="initial-temperature">
 <span id="initialtemperature"></span><h2>3.7.3. Initial temperature<a class="headerlink" href="#initial-temperature" title="Permalink to this headline">¶</a></h2>
 <p>The initial temperature at nodes can be set by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">InitialTemperature</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">InitialTemperature</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -161,13 +161,19 @@
 <li class="toctree-l2"><a class="reference internal" href="Materials.html">3.4. Material models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Properties.html">3.5. Element Properties</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Sets.html">3.6. Entity sets</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">3.7. Boundary conditions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">3.7. Boundary conditions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">3.7.1. Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prescribing-degrees-of-freedom">3.7.2. Prescribing degrees of freedom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#initial-temperature">3.7.3. Initial temperature</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="Loading.html">3.8. Loading conditions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
 </ul>
 
 <div class="relations">

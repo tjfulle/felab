@@ -57,7 +57,7 @@
 <div class="section" id="model-script">
 <h2>2.2.3. Model script<a class="headerlink" href="#model-script" title="Permalink to this headline">¶</a></h2>
 <p>The problem is defined and solved in <code class="docutils literal"><span class="pre">pyfem2</span></code> as follows:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">pyfem2 tutorial demo program: Plane truss.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
@@ -111,7 +111,7 @@
 <h2>2.2.4. How does it work?<a class="headerlink" href="#how-does-it-work" title="Permalink to this headline">¶</a></h2>
 <p>The complete code can be found in the files <code class="docutils literal"><span class="pre">tutorials/Truss2.py</span></code>. We now examine the preceding program in detail.</p>
 <p>The first lines of the program,</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
 </pre></div>
 </div>
@@ -120,11 +120,11 @@
 types and procedures. The key imports from the <code class="docutils literal"><span class="pre">pyfem2</span></code> library is
 the <code class="docutils literal"><span class="pre">TrussModel</span></code>.</p>
 <p>The statement</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span> <span class="o">=</span> <span class="n">TrussModel</span><span class="p">()</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span> <span class="o">=</span> <span class="n">TrussModel</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>creates the finite element model.  The finite element mesh is created by defining tables of nodes and elements (see <a class="reference internal" href="../ModelDefinition/Mesh.html#nodedefinition"><span>Nodes</span></a> and <a class="reference internal" href="../ModelDefinition/Mesh.html#elementdefinition"><span>Elements</span></a>) and passing them to the <code class="docutils literal"><span class="pre">Mesh</span></code> method:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">200</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">200</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">200</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">200</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],[</span><span class="mi">5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],[</span><span class="mi">6</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">7</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">8</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">9</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">10</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span>
 <span class="n">eletab</span> <span class="o">=</span> <span class="p">[[</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],[</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">],[</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],[</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],[</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
@@ -143,14 +143,14 @@ For this problem, every element in the mesh is a <code class="docutils literal">
 elastic bar element (an elastic bar element with two degrees of freedom per
 node). The element block, named <code class="docutils literal"><span class="pre">ElementBlock1</span></code>, containing all of the
 elements in the mesh is created by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The symbol <code class="docutils literal"><span class="pre">ALL</span></code> informs the <code class="docutils literal"><span class="pre">ElementBlock</span></code> method to assign all elements
 in the mesh to the block <code class="docutils literal"><span class="pre">ElementBlock1</span></code>. Material properties are defined by
 the <code class="docutils literal"><span class="pre">Material</span></code> method and elements in a block are assigned material and
 fabrication properties by the <code class="docutils literal"><span class="pre">AssignProperties</span></code> method:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
 <span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">333</span><span class="p">)</span>
 <span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.033</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span>
      <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span>
@@ -163,11 +163,11 @@ to which properties are being assigned, the element type for elements in the
 block, the material model name, and any element fabrication properties. For
 <code class="docutils literal"><span class="pre">ElasticLink2D2</span></code> elements, the area <code class="docutils literal"><span class="pre">A</span></code> is the only fabrication property.</p>
 <p>The next step is to specify the boundary conditions <span class="math">\(u_{7}=u_{8}=u_9=u_{10}=0\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>The point forces at nodes 1, 2, 3, and 6</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span> <span class="o">-</span><span class="mi">5000</span><span class="p">,</span> <span class="mi">500</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span> <span class="o">-</span><span class="mi">5000</span><span class="p">,</span> <span class="mi">500</span>
 <span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">P1</span><span class="p">)</span>
 <span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
 <span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
@@ -213,7 +213,13 @@ V.WriteResults(&#8216;Truss2.exo&#8217;)</div></blockquote>
 <li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="Truss1.html">2.1. Plane truss</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">2.2. Space truss</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">2.2. Space truss</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#objective">2.2.1. Objective</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#problem-description">2.2.2. Problem description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model-script">2.2.3. Model script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-does-it-work">2.2.4. How does it work?</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="Heat1.html">2.3. Diffusive Heat Transfer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Plane1.html">2.4. Plane Elasticity, 1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Plane2.html">2.5. Plane Elasticity, 2</a></li>
@@ -223,7 +229,8 @@ V.WriteResults(&#8216;Truss2.exo&#8217;)</div></blockquote>
 <li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
 </ul>
 
 <div class="relations">

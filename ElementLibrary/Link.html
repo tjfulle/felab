@@ -182,7 +182,7 @@ outer product of vectors <span class="math">\(\boldsymbol{a}\)</span> and
 <h2>4.2.3. Element stiffness function<a class="headerlink" href="#element-stiffness-function" title="Permalink to this headline">¶</a></h2>
 <p>The computation of stiffness matrix for the two-node elastic bar is
 performed in the function , given in Listing [lst:stiff1]. is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">ke</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">ke</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Arguments to the are</p>
@@ -215,7 +215,7 @@ performed in the function , given in Listing [lst:stiff1]. is invoked as</p>
 </tr>
 </tbody>
 </table>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">Link2Stiffness</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">Link2Stiffness</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
     <span class="c1"># Element dimensionality</span>
     <span class="n">xc</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">xc</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">xc</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -250,18 +250,18 @@ if all elements in two test arrays are close to within a toloerance,
 otherwise it evaluates to .</p>
 <div class="section" id="verification-of-the-n-dimensional-elastic-bar-stiffness">
 <h3>4.2.4.1. Verification of the n-Dimensional Elastic Bar Stiffness<a class="headerlink" href="#verification-of-the-n-dimensional-elastic-bar-stiffness" title="Permalink to this headline">¶</a></h3>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K1D</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K1D</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">allclose</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]],</span> <span class="n">K1D</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K2D</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span><span class="mi">40</span><span class="p">]],</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K2D</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span><span class="mi">40</span><span class="p">]],</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">allclose</span><span class="p">([[</span> <span class="mf">36.</span><span class="p">,</span>  <span class="mf">48.</span><span class="p">,</span> <span class="o">-</span><span class="mf">36.</span><span class="p">,</span> <span class="o">-</span><span class="mf">48.</span><span class="p">],</span>
                  <span class="p">[</span> <span class="mf">48.</span><span class="p">,</span>  <span class="mf">64.</span><span class="p">,</span> <span class="o">-</span><span class="mf">48.</span><span class="p">,</span> <span class="o">-</span><span class="mf">64.</span><span class="p">],</span>
                  <span class="p">[</span><span class="o">-</span><span class="mf">36.</span><span class="p">,</span> <span class="o">-</span><span class="mf">48.</span><span class="p">,</span>  <span class="mf">36.</span><span class="p">,</span>  <span class="mf">48.</span><span class="p">],</span>
                  <span class="p">[</span><span class="o">-</span><span class="mf">48.</span><span class="p">,</span> <span class="o">-</span><span class="mf">64.</span><span class="p">,</span>  <span class="mf">48.</span><span class="p">,</span>  <span class="mf">64.</span><span class="p">]],</span> <span class="n">K2D</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">K3D</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">]],</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">343</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">K3D</span> <span class="o">=</span> <span class="n">Link2Stiffness</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">]],</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">343</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">allclose</span><span class="p">([[</span>  <span class="mf">40.</span><span class="p">,</span>   <span class="mf">60.</span><span class="p">,</span>  <span class="mf">120.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">40.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">60.</span><span class="p">,</span> <span class="o">-</span><span class="mf">120.</span><span class="p">],</span>
                  <span class="p">[</span>  <span class="mf">60.</span><span class="p">,</span>   <span class="mf">90.</span><span class="p">,</span>  <span class="mf">180.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">60.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">90.</span><span class="p">,</span> <span class="o">-</span><span class="mf">180.</span><span class="p">],</span>
                  <span class="p">[</span> <span class="mf">120.</span><span class="p">,</span>  <span class="mf">180.</span><span class="p">,</span>  <span class="mf">360.</span><span class="p">,</span> <span class="o">-</span><span class="mf">120.</span><span class="p">,</span> <span class="o">-</span><span class="mf">180.</span><span class="p">,</span> <span class="o">-</span><span class="mf">360.</span><span class="p">],</span>
@@ -301,11 +301,18 @@ otherwise it evaluates to .</p>
 <li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">4. Element Library</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="Overview.html">4.1. Overview</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">4.2. Elastic bar elements</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">4.2. Elastic bar elements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#active-degrees-of-freedom">4.2.1. Active degrees of freedom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#element-formulation">4.2.2. Element formulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#element-stiffness-function">4.2.3. Element stiffness function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#verification-of-program-units">4.2.4. Verification of Program Units</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
 </ul>
 
 <div class="relations">

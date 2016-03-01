@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>6.2. Reduced integration elements &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="6. Topics in FEM" href="index.html" />
+    <link rel="next" title="6.3. Selective reduced integration elements" href="SelectiveReducedIntegration.html" />
+    <link rel="prev" title="6.1. Volume Locking" href="VolumeLocking.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="reduced-integration-elements">
+<span id="reducedintegration"></span><h1>6.2. Reduced integration elements<a class="headerlink" href="#reduced-integration-elements" title="Permalink to this headline">¶</a></h1>
+<h2> References </h2><ul class="simple">
+<li><a class="reference external" href="http://solidmechanics.org/Text/Chapter8_6/Chapter8_6.php#Sect8_6_2">Applied Mechanics of Solids, Chapter 8</a></li>
+</ul>
+<div class="section" id="overview">
+<h2>6.2.1. Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Reduced integration elements:</p>
+<ul class="simple">
+<li>form the element stiffness by integrating at fewer integration points than the standard;</li>
+<li>reduce the computational footprint of an element;</li>
+<li>reduce volumetric locking in quadratic elements; and</li>
+<li>suffer from &#8220;hourglassing&#8221; in linear elements.</li>
+</ul>
+</div>
+<div class="section" id="reduced-integration-points">
+<h2>6.2.2. Reduced integration points<a class="headerlink" href="#reduced-integration-points" title="Permalink to this headline">¶</a></h2>
+<p>Reduced integration elements enjoy widespread adoption in most production
+finite element codes. The concept behind reduced integration elements is
+straight forward: form the element stiffness using an integration scheme that
+is one order less accurate than standard. Typical choices for the number of
+reduced integration points for various element types are</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="22%" />
+<col width="48%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Element type</td>
+<td>Number of nodes</td>
+<td>Number of reduced integration points</td>
+</tr>
+<tr class="row-even"><td>Linear triangle</td>
+<td>3</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>Quadratic triangle</td>
+<td>6</td>
+<td>3</td>
+</tr>
+<tr class="row-even"><td>Bilinear quadrilateral</td>
+<td>4</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td rowspan="2">Quadratic quadrilateral</td>
+<td rowspan="2">8</td>
+<td rowspan="2">4</td>
+</tr>
+<tr class="row-even"></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="reduced-integration-elements-and-volumetric-locking">
+<h2>6.2.3. Reduced integration elements and volumetric locking<a class="headerlink" href="#reduced-integration-elements-and-volumetric-locking" title="Permalink to this headline">¶</a></h2>
+<p>For the quadratic quadralateral element, reduced integration resolves
+volumetric locking and even improves solution accuracy.</p>
+</div>
+<div class="section" id="hourglassing">
+<h2>6.2.4. Hourglassing<a class="headerlink" href="#hourglassing" title="Permalink to this headline">¶</a></h2>
+<p>Linear reduced integration elements suffer from what is known as
+&#8220;hourglassing&#8221; (for obvious reasons), as shown:</p>
+<div class="figure align-center" id="id1">
+<img alt="../_images/VolumeLocking_HG.png" src="../_images/VolumeLocking_HG.png" />
+<p class="caption"><span class="caption-text">Hourglassing in bilinear quadrateral elements. The deformation is scaled by
+.001 in this figure (otherwise the hourglass deformation dominates).</span></p>
+</div>
+<p>Hourglassing is caused by weakly constrained deformation modes that lead to a
+nealy singular stiffness matrix. Hourglassing must be controlled by an
+<a class="reference internal" href="HourglassControl.html#hourglasscontrol"><span>hour glass control</span></a> scheme.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">6. Topics in FEM</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="VolumeLocking.html">6.1. Volume Locking</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">6.2. Reduced integration elements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">6.2.1. Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reduced-integration-points">6.2.2. Reduced integration points</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reduced-integration-elements-and-volumetric-locking">6.2.3. Reduced integration elements and volumetric locking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hourglassing">6.2.4. Hourglassing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="SelectiveReducedIntegration.html">6.3. Selective reduced integration elements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="HourglassControl.html">6.4. Hourglass Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">6. Topics in FEM</a><ul>
+      <li>Previous: <a href="VolumeLocking.html" title="previous chapter">6.1. Volume Locking</a></li>
+      <li>Next: <a href="SelectiveReducedIntegration.html" title="next chapter">6.3. Selective reduced integration elements</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/Topics/ReducedIntegration.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

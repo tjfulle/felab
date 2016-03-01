@@ -50,7 +50,7 @@ the relevant property data.</p>
 <div class="section" id="defining-the-material-behavior">
 <h2>3.4.2. Defining the material behavior<a class="headerlink" href="#defining-the-material-behavior" title="Permalink to this headline">¶</a></h2>
 <p>Material properties are assigned the <code class="docutils literal"><span class="pre">FiniteElementModel</span></code> object by the <code class="docutils literal"><span class="pre">Material</span></code> method as:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where the string <code class="docutils literal"><span class="pre">name</span></code> is a name unique to the material. This command
@@ -60,7 +60,7 @@ done directly on <code class="docutils literal"><span class="pre">V.materials[na
 <div class="section" id="isotropic-elastic-properties">
 <h3>3.4.2.1. Isotropic elastic properties<a class="headerlink" href="#isotropic-elastic-properties" title="Permalink to this headline">¶</a></h3>
 <p>Isotropic elastic properties are assigned to the material object by the <code class="docutils literal"><span class="pre">Elastic</span></code> method.  <code class="docutils literal"><span class="pre">Elastic</span></code> takes as input any two independent elastic constants.  For example, for a material having a Young&#8217;s modulus <span class="math">\(E=1\times10^6\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu=.29\)</span>, the elastic properties are assigned</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The following elastic constants are recognized by <code class="docutils literal"><span class="pre">Elastic</span></code>:</p>
@@ -97,14 +97,14 @@ done directly on <code class="docutils literal"><span class="pre">V.materials[na
 <div class="section" id="thermal-conductivity">
 <h3>3.4.2.2. Thermal conductivity<a class="headerlink" href="#thermal-conductivity" title="Permalink to this headline">¶</a></h3>
 <p>For thermally conductive materials, the coefficient of isotropic thermal conductivity <span class="math">\(k\)</span> is assigned by the <code class="docutils literal"><span class="pre">IsotropicThermalConductivity</span></code> method as:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="density">
 <h3>3.4.2.3. Density<a class="headerlink" href="#density" title="Permalink to this headline">¶</a></h3>
 <p>The mass density <span class="math">\(\rho\)</span> of any material is assigned as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">Density</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">Density</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -139,7 +139,11 @@ done directly on <code class="docutils literal"><span class="pre">V.materials[na
 <li class="toctree-l2"><a class="reference internal" href="Model.html">3.1. The finite element model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Mesh.html">3.2. The finite element mesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="ElementBlocks.html">3.3. Element blocks</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">3.4. Material models</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">3.4. Material models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">3.4.1. Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#defining-the-material-behavior">3.4.2. Defining the material behavior</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="Properties.html">3.5. Element Properties</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Sets.html">3.6. Entity sets</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Boundary.html">3.7. Boundary conditions</a></li>
@@ -148,7 +152,8 @@ done directly on <code class="docutils literal"><span class="pre">V.materials[na
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
 </ul>
 
 <div class="relations">

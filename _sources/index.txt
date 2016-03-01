@@ -2,7 +2,7 @@
 ########################
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :numbered: 4
 
    Introduction/index
@@ -10,6 +10,7 @@
    ModelDefinition/index
    ElementLibrary/index
    Implementation/index
+   Topics/index
    apidoc/index
 
 Indices and tables

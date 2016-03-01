@@ -1,0 +1,62 @@
+.. _VolumeLocking:
+
+Volume Locking
+==============
+
+.. raw:: html
+
+   <h2> References </h2>
+
+- `solidmechanics.org <http://solidmechanics.org/Text/Chapter8_6/Chapter8_6.php#Sect8_6_2>`__
+
+Overview
+--------
+
+Reduced integration elements
+
+- are used to reduce the number of integration points in an element; and
+- can effectively reduce volumetric locking in incompressible materials;
+
+Background
+----------
+
+Consider the thick-wall cylinder with internal radius :math:`r_1` and external radius of :math:`r_2` shown.
+
+
+.. image:: ThickCylinder1.png
+   :align: center
+
+A cylinder of this type, loaded by an internal pressure :math:`p` and having
+no end caps, deforms in plane strain. If the cylinder is formed by a linear
+elastic material with Young's modulus :math:`E` and Poisson's ratio
+:math:`\nu` the displacement at any point in the cylinder, as a function of
+the radius :math:`r` is
+
+.. math::
+
+   u_r = \frac{(1+\nu)r_1^2r_2^2}{E\left(r_2^2-r_1^2\right)}
+         \left[\frac{p}{r} + \left(1-2\nu\right)p\right]
+
+The figures below compare the analytical solution to a finite element solution with standard 4 noded plane strain quadrilateral elements.  Results are shown for two values of Poisson’s ratio ν
+ν.  The dashed lines show the analytical solution, while the solid line shows the FEA solution.
+
+
+The two solutions agree well for ν=0.3
+ν
+0.3
+, but the finite element solution grossly underestimates the displacements as Poisson’s ratio is increased towards 0.5 (recall that the material is incompressible in the limit ν=0.5
+ν
+0.5
+ ).  In this limit, the finite element displacements tend to zero –
+ this is known as `volumetric locking’
+
+The error in the finite element solution occurs because the finite element interpolation functions are unable to properly approximate a volume preserving strain field. In the incompressible limit, a nonzero volumetric strain at any of the integration points gives rise to a very large contribution to the virtual power.  The interpolation functions can make the volumetric strain vanish at some, but not all, the integration points in the element.
+
+Volumetric locking is a much more serious problem than shear locking, because it cannot be avoided by refining the mesh.  In addition, all the standard fully integrated finite elements will lock in the incompressible limit; and some elements show very poor performance even for Poisson’s ratios as small as 0.45
+0.45
+.  Fortunately, most materials have Poisson’s ratios around 0.3 or less, so the standard elements can be used for most linear elasticity and small-strain plasticity problems.   To model rubbers, or to solve problems involving large plastic strains, the elements must be redesigned to avoid locking.
+
+.. toctree::
+   :maxdepth: 1
+
+   SelectiveReducedIntegration

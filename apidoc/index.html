@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>6. pyfem2 Source &mdash; pyfem2 3.0 documentation</title>
+    <title>7. pyfem2 Source &mdash; pyfem2 3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -25,8 +25,8 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
-    <link rel="next" title="6.1. UniformBar" href="fem0.html" />
-    <link rel="prev" title="5.8. TrussModel: A Complete Truss Program" href="../Implementation/Truss1.html" />
+    <link rel="next" title="7.1. UniformBar" href="fem0.html" />
+    <link rel="prev" title="6.4. Hourglass Control" href="../Topics/HourglassControl.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -40,17 +40,17 @@
           <div class="body" role="main">
             
   <div class="section" id="pyfem2-source">
-<h1>6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source<a class="headerlink" href="#pyfem2-source" title="Permalink to this headline">¶</a></h1>
+<h1>7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source<a class="headerlink" href="#pyfem2-source" title="Permalink to this headline">¶</a></h1>
 <p><code class="docutils literal"><span class="pre">pyfem2</span></code> is a Python <a class="footnote-reference" href="#id2" id="id1">[1]</a> package providing modules, classes, and functions
 for setting up and solving finite element models.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="fem0.html">6.1. UniformBar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fem1.html">6.2. FiniteElementModel</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fem2.html">6.3. TrussModel</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mesh.html">6.4. Mesh</a></li>
-<li class="toctree-l1"><a class="reference internal" href="material.html">6.5. Material</a></li>
-<li class="toctree-l1"><a class="reference internal" href="elemlib1.html">6.6. Element Library, 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fem0.html">7.1. UniformBar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fem1.html">7.2. FiniteElementModel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fem2.html">7.3. TrussModel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mesh.html">7.4. Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="material.html">7.5. Material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="elemlib1.html">7.6. Element Library, 1</a></li>
 </ul>
 </div>
 <table class="docutils footnote" frame="void" id="id2" rules="none">
@@ -99,13 +99,14 @@ examples were written using Anaconda Python3.5.</td></tr>
 <li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="fem0.html">6.1. UniformBar</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fem1.html">6.2. FiniteElementModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fem2.html">6.3. TrussModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mesh.html">6.4. Mesh</a></li>
-<li class="toctree-l2"><a class="reference internal" href="material.html">6.5. Material</a></li>
-<li class="toctree-l2"><a class="reference internal" href="elemlib1.html">6.6. Element Library, 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fem0.html">7.1. UniformBar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem1.html">7.2. FiniteElementModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem2.html">7.3. TrussModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">7.4. Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="material.html">7.5. Material</a></li>
+<li class="toctree-l2"><a class="reference internal" href="elemlib1.html">7.6. Element Library, 1</a></li>
 </ul>
 </li>
 </ul>
@@ -114,8 +115,8 @@ examples were written using Anaconda Python3.5.</td></tr>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="../Implementation/Truss1.html" title="previous chapter">5.8. TrussModel: A Complete Truss Program</a></li>
-      <li>Next: <a href="fem0.html" title="next chapter">6.1. UniformBar</a></li>
+      <li>Previous: <a href="../Topics/HourglassControl.html" title="previous chapter">6.4. Hourglass Control</a></li>
+      <li>Next: <a href="fem0.html" title="next chapter">7.1. UniformBar</a></li>
   </ul></li>
 </ul>
 </div>

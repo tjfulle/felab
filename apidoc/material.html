@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>6.5. Material &mdash; pyfem2 3.0 documentation</title>
+    <title>7.5. Material &mdash; pyfem2 3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -25,9 +25,9 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
-    <link rel="up" title="6. pyfem2 Source" href="index.html" />
-    <link rel="next" title="6.6. Element Library, 1" href="elemlib1.html" />
-    <link rel="prev" title="6.4. Mesh" href="mesh.html" />
+    <link rel="up" title="7. pyfem2 Source" href="index.html" />
+    <link rel="next" title="7.6. Element Library, 1" href="elemlib1.html" />
+    <link rel="prev" title="7.4. Mesh" href="mesh.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -41,7 +41,7 @@
           <div class="body" role="main">
             
   <div class="section" id="module-pyfem2.mat">
-<span id="material"></span><h1>6.5. Material<a class="headerlink" href="#module-pyfem2.mat" title="Permalink to this headline">¶</a></h1>
+<span id="material"></span><h1>7.5. Material<a class="headerlink" href="#module-pyfem2.mat" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="pyfem2.mat.Material">
 <em class="property">class </em><code class="descclassname">pyfem2.mat.</code><code class="descname">Material</code><span class="sig-paren">(</span><em>name</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mat.Material" title="Permalink to this definition">¶</a></dt>
@@ -69,13 +69,13 @@ assigned to the material by different methods.</p>
 <ul>
 <li><p class="first">Create a linear elastic material with Young&#8217;s modulus
 <span class="math">\(E=10\times 10^6\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu=.29\)</span></p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
 <span class="n">mat</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">Create a material with isotropic heat conduction <span class="math">\(\kappa=12\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
 <span class="n">mat</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -122,12 +122,12 @@ elastic stiffness assumed).</p>
 <p class="rubric">Examples</p>
 <ul>
 <li><p class="first">Young&#8217;s modulus <span class="math">\(E=10\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu=.29\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">Bulk modulus <span class="math">\(K=10\)</span> and shear modulus <span class="math">\(G=6\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">K</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">K</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
@@ -195,13 +195,14 @@ elastic stiffness assumed).</p>
 <li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="fem0.html">6.1. UniformBar</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fem1.html">6.2. FiniteElementModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fem2.html">6.3. TrussModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mesh.html">6.4. Mesh</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">6.5. Material</a></li>
-<li class="toctree-l2"><a class="reference internal" href="elemlib1.html">6.6. Element Library, 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="fem0.html">7.1. UniformBar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem1.html">7.2. FiniteElementModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fem2.html">7.3. TrussModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">7.4. Mesh</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">7.5. Material</a></li>
+<li class="toctree-l2"><a class="reference internal" href="elemlib1.html">7.6. Element Library, 1</a></li>
 </ul>
 </li>
 </ul>
@@ -210,9 +211,9 @@ elastic stiffness assumed).</p>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-  <li><a href="index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
-      <li>Previous: <a href="mesh.html" title="previous chapter">6.4. Mesh</a></li>
-      <li>Next: <a href="elemlib1.html" title="next chapter">6.6. Element Library, 1</a></li>
+  <li><a href="index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
+      <li>Previous: <a href="mesh.html" title="previous chapter">7.4. Mesh</a></li>
+      <li>Next: <a href="elemlib1.html" title="next chapter">7.6. Element Library, 1</a></li>
   </ul></li>
   </ul></li>
 </ul>

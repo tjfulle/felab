@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>6.3. Selective reduced integration elements &mdash; pyfem2 3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
+    <link rel="up" title="6. Topics in FEM" href="index.html" />
+    <link rel="next" title="6.4. Hourglass Control" href="HourglassControl.html" />
+    <link rel="prev" title="6.2. Reduced integration elements" href="ReducedIntegration.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="selective-reduced-integration-elements">
+<span id="selectivereducedintegration"></span><h1>6.3. Selective reduced integration elements<a class="headerlink" href="#selective-reduced-integration-elements" title="Permalink to this headline">¶</a></h1>
+<h2> References </h2><div class="section" id="overview">
+<h2>6.3.1. Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Selective-reduced integration elements:</p>
+<ul class="simple">
+<li>form the element stiffness by integrating the deviatoric and isotropic parts of the element stiffness separately;</li>
+<li>reduce volumetric locking in linear and quadratic elements; and</li>
+<li>are the &#8220;fully integrated&#8221; elements in many production codes (see, for example, the <a class="reference external" href="http://abaqus.software.polimi.it/v6.14/books/stm/default.htm">Abaqus Theory Guide, Ch. 3.2.4</a>).</li>
+</ul>
+</div>
+<div class="section" id="isotropic-deviatoric-split">
+<h2>6.3.2. Isotropic-deviatoric split<a class="headerlink" href="#isotropic-deviatoric-split" title="Permalink to this headline">¶</a></h2>
+<p>The stress tensor <span class="math">\(\sigma_{ij}\)</span> (actually, any second-order tensor) can
+be split additively in to isotropic and deviatoric parts:</p>
+<div class="math">
+\[\sigma_{ij} = \sigma_{ij}^{\rm iso} + \sigma_{ij}^{\rm dev}\]</div>
+<p>where</p>
+<div class="math">
+\[\begin{split}\sigma_{ij}^{\rm iso} = \frac{\sigma_{ii}}{3}\delta_{ij} = -p\delta_{ij}, \quad
+\delta_{ij} = \begin{cases}1 &amp; i=j\\0 &amp; i\ne j\end{cases}\end{split}\]</div>
+<p><span class="math">\(p\)</span> is the the pressure, and</p>
+<div class="math">
+\[\sigma_{ij}^{\rm dev} = \sigma_{ij} - \sigma_{ij}^{\rm dev}\]</div>
+<p>Summation conventions have been used wherein repeated subscripts imply summation from 1-3.</p>
+<p>Substituting this form of the stress tensor in to the linear elastic
+constitutive equation and the finite element interpolation functions into the
+weak form of the momentum equation, it can be shown that the element stiffness
+matrix is</p>
+<div class="math">
+\[\left[k^e\right] = \int_{\Omega^e}
+    \left[B\right]^T\left(\left[D\right] - \left[\overline{D}\right]\right)\left[B\right] dV +
+\int_{\Omega^e}
+    \left[B\right]^T\left[\overline{D}\right]\left[B\right] dV\]</div>
+<p>where <span class="math">\(\left[D\right]\)</span> is the material elastic stiffness and
+<span class="math">\(\left[\overline{D}\right]\)</span> is</p>
+<div class="math">
+\[\overline{D}_{ij} = \frac{1}{n} \delta_i \delta_{k} D_{kj}\]</div>
+<p>where <span class="math">\(n\)</span> is the number of element dimensions and</p>
+<div class="math">
+\[\begin{split}\delta_i = \begin{cases}
+    [1, 1, 0, 0]^T &amp; n = 2 \\
+    [1, 1, 1, 0, 0, 0]^T &amp; n = 3 \\
+\end{cases}\end{split}\]</div>
+</div>
+<div class="section" id="selective-reduced-integration">
+<h2>6.3.3. Selective reduced integration<a class="headerlink" href="#selective-reduced-integration" title="Permalink to this headline">¶</a></h2>
+<p>In a selectively reduced integration element, the first volume integral
+appearing in the expression of the element stiffness is evaluated using full
+integration and the second using reduced integration.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">pyfem2</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=tjfulle&repo=pyfem2&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../Introduction/index.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Tutorials/index.html">2. <code class="docutils literal"><span class="pre">pyfem2</span></code> Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ModelDefinition/index.html">3. Defining a Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">6. Topics in FEM</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="VolumeLocking.html">6.1. Volume Locking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ReducedIntegration.html">6.2. Reduced integration elements</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">6.3. Selective reduced integration elements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">6.3.1. Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isotropic-deviatoric-split">6.3.2. Isotropic-deviatoric split</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#selective-reduced-integration">6.3.3. Selective reduced integration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="HourglassControl.html">6.4. Hourglass Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">6. Topics in FEM</a><ul>
+      <li>Previous: <a href="ReducedIntegration.html" title="previous chapter">6.2. Reduced integration elements</a></li>
+      <li>Next: <a href="HourglassControl.html" title="next chapter">6.4. Hourglass Control</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Tim Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="../_sources/Topics/SelectiveReducedIntegration.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

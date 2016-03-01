@@ -49,15 +49,15 @@
 <div class="section" id="assigning-element-properties">
 <h2>3.5.2. Assigning element properties<a class="headerlink" href="#assigning-element-properties" title="Permalink to this headline">¶</a></h2>
 <p>Assignment of material and element fabrication properties requires the specification of an element block name, element type, material model name, and element fabrication properties:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="n">block_name</span><span class="p">,</span> <span class="n">elem_type</span><span class="p">,</span> <span class="n">material_name</span><span class="p">,</span> <span class="o">**</span><span class="n">elem_fab</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="n">block_name</span><span class="p">,</span> <span class="n">elem_type</span><span class="p">,</span> <span class="n">material_name</span><span class="p">,</span> <span class="o">**</span><span class="n">elem_fab</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>For example, to assign elements in element block <code class="docutils literal"><span class="pre">ElementBlock-1</span></code> to have element type <code class="docutils literal"><span class="pre">PlaneStrainQuad4</span></code>, material <code class="docutils literal"><span class="pre">Material-1</span></code>, and thickness <code class="docutils literal"><span class="pre">t=1</span></code> use:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock-1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock-1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Or, to assign elements in element block <code class="docutils literal"><span class="pre">HeatElements</span></code> to have element type <code class="docutils literal"><span class="pre">DiffusiveHeatTransfer2D3</span></code> and material <code class="docutils literal"><span class="pre">Material-1</span></code> use:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;HeatElements&#39;</span><span class="p">,</span> <span class="n">DiffusiveHeatTransfer2D3</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;HeatElements&#39;</span><span class="p">,</span> <span class="n">DiffusiveHeatTransfer2D3</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -97,7 +97,12 @@
 <li class="toctree-l2"><a class="reference internal" href="Mesh.html">3.2. The finite element mesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="ElementBlocks.html">3.3. Element blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Materials.html">3.4. Material models</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">3.5. Element Properties</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">3.5. Element Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">3.5.1. Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#assigning-element-properties">3.5.2. Assigning element properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#a-note-on-fabrication-properties">3.5.3. A note on fabrication properties</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="Sets.html">3.6. Entity sets</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Boundary.html">3.7. Boundary conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Loading.html">3.8. Loading conditions</a></li>
@@ -105,7 +110,8 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../ElementLibrary/index.html">4. Element Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Implementation/index.html">5. Implementation Details</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
 </ul>
 
 <div class="relations">

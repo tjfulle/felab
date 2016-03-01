@@ -26,7 +26,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
     <link rel="up" title="5. Implementation Details" href="index.html" />
-    <link rel="next" title="6. pyfem2 Source" href="../apidoc/index.html" />
+    <link rel="next" title="6. Topics in FEM" href="../Topics/index.html" />
     <link rel="prev" title="5.7. Application of Boundary Conditions" href="Boundary2.html" />
    
   
@@ -91,7 +91,7 @@ elastic bars,</li>
 <p><code class="docutils literal"><span class="pre">TrussModel</span></code> is a finite element program that inherits from the
 <a class="reference internal" href="../apidoc/fem1.html#apifiniteelementmodel"><span>FiniteElementModel</span></a> base class.  As such, it need only define the <code class="docutils literal"><span class="pre">init</span></code> and <code class="docutils literal"><span class="pre">Solve</span></code> methods.</p>
 <p>The entire <code class="docutils literal"><span class="pre">TrussModel</span></code> script is found in <code class="docutils literal"><span class="pre">pyfem2/fem2.py</span></code> and is repeated here:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">TrussModel</span><span class="p">(</span><span class="n">FiniteElementModel</span><span class="p">):</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TrussModel</span><span class="p">(</span><span class="n">FiniteElementModel</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Request allocation of field variables</span>
@@ -148,7 +148,7 @@ the axial internal forces of truss members.  <code class="docutils literal"><spa
 <p>The method <code class="docutils literal"><span class="pre">WriteResults</span></code> writes the results to a ExodusII finite element database. ExodusII files and are viewable in several commercial and open source
 visualization products, including the open source
 <a class="reference external" href="http://www.paraview.org">ParaView</a>.  <code class="docutils literal"><span class="pre">WriteResults</span></code> is invoked as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">V</span><span class="o">.</span><span class="n">WriteFEResults</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">WriteFEResults</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">filename</span></code> is the name of the file.  The extension &#8216;.exo&#8217; is appended to <code class="docutils literal"><span class="pre">filename</span></code> if it is not already present.</p>
@@ -164,7 +164,7 @@ visualization products, including the open source
 <p class="caption"><span class="caption-text">Example space truss</span></p>
 </div>
 <p>The model driver for this problem is</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">V</span> <span class="o">=</span> <span class="n">TrussModel</span><span class="p">()</span>
 <span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">72</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">72</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">48</span><span class="p">]]</span>
 <span class="n">eletab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">]]</span>
@@ -194,7 +194,7 @@ visualization products, including the open source
 <p class="caption"><span class="caption-text">Six-bay bridge plane truss. (a) physical problem; (b) finite element idealization. (Credit: <a class="reference external" href="http://www.colorado.edu/engineering/CAS/courses.d/IFEM.d/IFEM.Ch21.d/IFEM.Ch21.pdf">Ch. 21</a> of Prof. Felippa’s introductory finite element course materials)</span></p>
 </div>
 <p>The user model definition script is</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">6</span><span class="p">,</span><span class="mi">30</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span><span class="mi">30</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span><span class="mi">40</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span><span class="mi">40</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">50</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
           <span class="p">[</span><span class="mi">11</span><span class="p">,</span><span class="mi">50</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">12</span><span class="p">,</span><span class="mi">60</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span>
 <span class="n">eletab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span><span class="mi">11</span><span class="p">,</span><span class="mi">12</span><span class="p">],</span>
@@ -221,7 +221,7 @@ visualization products, including the open source
 </pre></div>
 </div>
 <p>The computed displacement and nodal reactions are</p>
-<div class="code python highlight-python"><div class="highlight"><pre>nodal displacements               nodal reactions
+<div class="code python highlight-python"><div class="highlight"><pre><span></span>nodal displacements               nodal reactions
 [[ 0.       0.       0.     ]     [[  0.  28.   0.]
  [ 0.80954 -1.7756   0.     ]      [  0.   0.   0.]
  [ 0.28    -1.79226  0.     ]      [  0.   0.   0.]
@@ -249,7 +249,7 @@ contours of <span class="math">\(y\)</span> displacement and magnitude of the re
 <img alt="../_images/TrussExample2.jpg" src="../_images/TrussExample2.jpg" />
 <p class="caption"><span class="caption-text">Truss example 3</span></p>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">E</span><span class="p">,</span> <span class="n">A</span> <span class="o">=</span> <span class="mf">70e9</span><span class="p">,</span> <span class="mi">5</span> <span class="o">*</span> <span class="o">.</span><span class="mo">01</span> <span class="o">*</span> <span class="o">.</span><span class="mo">01</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">E</span><span class="p">,</span> <span class="n">A</span> <span class="o">=</span> <span class="mf">70e9</span><span class="p">,</span> <span class="mi">5</span> <span class="o">*</span> <span class="o">.</span><span class="mo">01</span> <span class="o">*</span> <span class="o">.</span><span class="mo">01</span>
 <span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">]]</span>
 <span class="n">eletab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]</span>
 <span class="n">V</span> <span class="o">=</span> <span class="n">TrussModel</span><span class="p">()</span>
@@ -265,7 +265,7 @@ contours of <span class="math">\(y\)</span> displacement and magnitude of the re
 </pre></div>
 </div>
 <p>The nodal displacements are</p>
-<div class="code python highlight-python"><div class="highlight"><pre>[[-0.05     0.08828]
+<div class="code python highlight-python"><div class="highlight"><pre><span></span>[[-0.05     0.08828]
  [ 0.       0.     ]
  [ 0.       0.     ]]
 </pre></div>
@@ -308,10 +308,18 @@ contours of <span class="math">\(y\)</span> displacement and magnitude of the re
 <li class="toctree-l2"><a class="reference internal" href="DistributedLoads.html">5.5. Source terms and Distributed Loads</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Assembly1.html">5.6. Assembly, Part I</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Boundary2.html">5.7. Application of Boundary Conditions</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">5.8. TrussModel: A Complete Truss Program</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">5.8. TrussModel: A Complete Truss Program</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#references">5.8.1. References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">5.8.2. Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#element-types">5.8.3. Element types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-trussproblem-program">5.8.4. The TrussProblem program</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-model-drivers">5.8.5. Example model drivers</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../Topics/index.html">6. Topics in FEM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidoc/index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
 </ul>
 
 <div class="relations">
@@ -320,7 +328,7 @@ contours of <span class="math">\(y\)</span> displacement and magnitude of the re
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">5. Implementation Details</a><ul>
       <li>Previous: <a href="Boundary2.html" title="previous chapter">5.7. Application of Boundary Conditions</a></li>
-      <li>Next: <a href="../apidoc/index.html" title="next chapter">6. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a></li>
+      <li>Next: <a href="../Topics/index.html" title="next chapter">6. Topics in FEM</a></li>
   </ul></li>
   </ul></li>
 </ul>
