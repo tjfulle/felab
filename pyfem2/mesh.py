@@ -331,7 +331,7 @@ class Mesh(object):
                 return self.find_surface1(region)
             if self.numdim == 2:
                 return self.find_surface2(region)
-        elif is_stringlike(label):
+        elif is_stringlike(region):
             raise UserInputError('No such surface {0!r}'.format(region))
         # Check if region is a surface
         if not is_listlike(region):
