@@ -480,7 +480,7 @@ class Mesh(object):
 
     def Plot2D(self, xy=None, elecon=None, u=None, color=None, ax=None, show=0,
                weight=None, colorby=None, linestyle='-', label=None, xlim=None,
-               ylim=None, **kwds):
+               ylim=None, filename=None, **kwds):
         assert self.numdim == 2
         from matplotlib.patches import Polygon
         import matplotlib.lines as mlines
@@ -545,6 +545,12 @@ class Mesh(object):
 
         if show:
             plt.show()
+
+        if filename is not None:
+            plt.legend()
+            plt.savefig(filename, transparent=True,
+                        bbox_inches="tight", pad_inches=0)
+
         return ax
 
     def PlotScalar2D(self, u, show=0):
