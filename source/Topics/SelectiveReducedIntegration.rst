@@ -8,6 +8,8 @@ Selective reduced integration elements
 
 	 <h2> References </h2>
 
+- `The Finite Element Method, Ch 4.4 <https://books.google.com/books?id=cHH2n_qBK0IC&pg=PA221&lpg=PA221&dq=hughes+selective+reduced+integration+google+book&source=bl&ots=vrupu77YTR&sig=Yps9ajb6yVA_lOnqbkF2C1XwhWI&hl=en&sa=X&ved=0ahUKEwiv_NSjgaDLAhVI8x4KHSf0BaMQ6AEIUjAJ#v=onepage&q=hughes%20selective%20reduced%20integration%20google%20book&f=false>`__
+
 Overview
 --------
 
@@ -18,62 +20,96 @@ Selective-reduced integration elements:
 - are the "fully integrated" elements in many production codes (see, for example, the `Abaqus Theory Guide, Ch. 3.2.4 <http://abaqus.software.polimi.it/v6.14/books/stm/default.htm>`__).
 
 
-Isotropic-deviatoric split
---------------------------
+Selective reduced integration
+-----------------------------
 
-The stress tensor :math:`\sigma_{ij}` (actually, any second-order tensor) can
-be split additively in to isotropic and deviatoric parts:
+The element stiffness :math:`\left[k^e\right]` is given by
 
 .. math::
 
-   \sigma_{ij} = \sigma_{ij}^{\rm iso} + \sigma_{ij}^{\rm dev}
+   \boldsymbol{k}_{ij} =
+   \int_{\Omega^e}\boldsymbol{B}_i^T\boldsymbol{D}\boldsymbol{B}_j\, d\Omega
+
+The matrix of material properties can split additively in to distortional and dilatational parts as
+
+.. math::
+
+   \boldsymbol{D} = \overline{\boldsymbol{D}} + \hat{\boldsymbol{D}}
+
+where
+
+- **Plane strain**
+
+  .. math::
+
+     \overline{\boldsymbol{D}} = \mu \begin{bmatrix}
+        2 &   &   &   \\
+          & 2 &   &   \\
+          &   & 2 &   \\
+          &   &   & 1
+     \end{bmatrix}
+     \quad
+     \hat{\boldsymbol{D}} = \lambda \begin{bmatrix}
+        1 & 1 & 1 & 0 \\
+        1 & 1 & 1 & 0 \\
+        1 & 1 & 1 & 0 \\
+        0 & 0 & 0 & 0
+     \end{bmatrix}
+
+- **Three dimensions**
+
+  .. math::
+
+     \overline{\boldsymbol{D}} = \mu \begin{bmatrix}
+        2 &   &   &   &   &  \\
+          & 2 &   &   &   &  \\
+          &   & 2 &   &   &  \\
+          &   &   & 1 &   &  \\
+          &   &   &   & 1 &  \\
+          &   &   &   &   & 1
+     \end{bmatrix}
+     \quad
+     \hat{\boldsymbol{D}} = \lambda \begin{bmatrix}
+        1 & 1 & 1 & 0 & 0 & 0 \\
+        1 & 1 & 1 & 0 & 0 & 0 \\
+        1 & 1 & 1 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0
+     \end{bmatrix}
+
+where :math:`\mu` is the shear modulus :math:`\mu=\frac{E}{2(1+\nu)}` and
+:math:`\lambda` is the first Lame parameter
+:math:`\lambda=\frac{E\nu}{(1+\nu)(1-2\nu)}`
+
+.. note::
+
+   The additive split shown is valid for strain tensors stored as :math:`\boldsymbol{\epsilon}=\begin{bmatrix} \epsilon_{xx} & \epsilon_{yy} & \epsilon_{zz} & 2\epsilon_{xy}\end{bmatrix}^T` for plane strain and :math:`\boldsymbol{\epsilon}=\begin{bmatrix} \epsilon_{xx} & \epsilon_{yy} & \epsilon_{zz} & 2\epsilon_{xy} & 2\epsilon_{yz} & 2\epsilon_{xz}\end{bmatrix}^T` for three dimensions.
+
+With this decomposition, the element stiffness can be expressed as
+
+.. math::
+
+   \boldsymbol{k}_{ij} = \overline{\boldsymbol{k}}_{ij} + \hat{\boldsymbol{k}}_{ij}
 
 where
 
 .. math::
 
-   \sigma_{ij}^{\rm iso} = \frac{\sigma_{ii}}{3}\delta_{ij} = -p\delta_{ij}, \quad
-   \delta_{ij} = \begin{cases}1 & i=j\\0 & i\ne j\end{cases}
-
-:math:`p` is the the pressure, and
+   \overline{\boldsymbol{k}}_{ij} =
+   \int_{\Omega^e}\boldsymbol{B}_i^T\overline{\boldsymbol{D}}\boldsymbol{B}_j\, d\Omega
 
 .. math::
 
-   \sigma_{ij}^{\rm dev} = \sigma_{ij} - \sigma_{ij}^{\rm dev}
+   \hat{\boldsymbol{k}}_{ij} =
+   \int_{\Omega^e}\boldsymbol{B}_i^T\hat{\boldsymbol{D}}\boldsymbol{B}_j\, d\Omega
 
-Summation conventions have been used wherein repeated subscripts imply summation from 1-3.
-
-Substituting this form of the stress tensor in to the linear elastic
-constitutive equation and the finite element interpolation functions into the
-weak form of the momentum equation, it can be shown that the element stiffness
-matrix is
-
-.. math::
-
-   \left[k^e\right] = \int_{\Omega^e}
-       \left[B\right]^T\left(\left[D\right] - \left[\overline{D}\right]\right)\left[B\right] dV +
-   \int_{\Omega^e}
-       \left[B\right]^T\left[\overline{D}\right]\left[B\right] dV
-
-where :math:`\left[D\right]` is the material elastic stiffness and
-:math:`\left[\overline{D}\right]` is
-
-.. math::
-
-   \overline{D}_{ij} = \frac{1}{n} \delta_i \delta_{k} D_{kj}
-
-where :math:`n` is the number of element dimensions and
-
-.. math::
-
-   \delta_i = \begin{cases}
-       [1, 1, 0, 0]^T & n = 2 \\
-       [1, 1, 1, 0, 0, 0]^T & n = 3 \\
-   \end{cases}
-
-Selective reduced integration
------------------------------
-
-In a selectively reduced integration element, the first volume integral
-appearing in the expression of the element stiffness is evaluated using full
-integration and the second using reduced integration.
+For nearly incompressible materials, since :math:`\lambda/\mu >> 1`, the
+numerical values of :math:`\hat{\boldsymbol{k}}` tend to be much greater than
+those of :math:`\overline{\boldsymbol{k}}`. Consequently,
+:math:`\hat{\boldsymbol{k}}` dominates the element response and leads to
+volumetric locking if nonzero volumetric strains are computed at any of the
+element's integration points. A simple method of alleviating this tendency is
+to reduce the order of numerical quadrature used to evaluate
+:math:`\hat{\boldsymbol{k}}`. This technique is known as **selective reduced
+integration**.

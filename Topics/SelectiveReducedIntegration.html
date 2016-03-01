@@ -42,7 +42,10 @@
             
   <div class="section" id="selective-reduced-integration-elements">
 <span id="selectivereducedintegration"></span><h1>6.3. Selective reduced integration elements<a class="headerlink" href="#selective-reduced-integration-elements" title="Permalink to this headline">¶</a></h1>
-<h2> References </h2><div class="section" id="overview">
+<h2> References </h2><ul class="simple">
+<li><a class="reference external" href="https://books.google.com/books?id=cHH2n_qBK0IC&amp;pg=PA221&amp;lpg=PA221&amp;dq=hughes+selective+reduced+integration+google+book&amp;source=bl&amp;ots=vrupu77YTR&amp;sig=Yps9ajb6yVA_lOnqbkF2C1XwhWI&amp;hl=en&amp;sa=X&amp;ved=0ahUKEwiv_NSjgaDLAhVI8x4KHSf0BaMQ6AEIUjAJ#v=onepage&amp;q=hughes%20selective%20reduced%20integration%20google%20book&amp;f=false">The Finite Element Method, Ch 4.4</a></li>
+</ul>
+<div class="section" id="overview">
 <h2>6.3.1. Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <p>Selective-reduced integration elements:</p>
 <ul class="simple">
@@ -51,45 +54,80 @@
 <li>are the &#8220;fully integrated&#8221; elements in many production codes (see, for example, the <a class="reference external" href="http://abaqus.software.polimi.it/v6.14/books/stm/default.htm">Abaqus Theory Guide, Ch. 3.2.4</a>).</li>
 </ul>
 </div>
-<div class="section" id="isotropic-deviatoric-split">
-<h2>6.3.2. Isotropic-deviatoric split<a class="headerlink" href="#isotropic-deviatoric-split" title="Permalink to this headline">¶</a></h2>
-<p>The stress tensor <span class="math">\(\sigma_{ij}\)</span> (actually, any second-order tensor) can
-be split additively in to isotropic and deviatoric parts:</p>
+<div class="section" id="selective-reduced-integration">
+<h2>6.3.2. Selective reduced integration<a class="headerlink" href="#selective-reduced-integration" title="Permalink to this headline">¶</a></h2>
+<p>The element stiffness <span class="math">\(\left[k^e\right]\)</span> is given by</p>
 <div class="math">
-\[\sigma_{ij} = \sigma_{ij}^{\rm iso} + \sigma_{ij}^{\rm dev}\]</div>
+\[\boldsymbol{k}_{ij} =
+\int_{\Omega^e}\boldsymbol{B}_i^T\boldsymbol{D}\boldsymbol{B}_j\, d\Omega\]</div>
+<p>The matrix of material properties can split additively in to distortional and dilatational parts as</p>
+<div class="math">
+\[\boldsymbol{D} = \overline{\boldsymbol{D}} + \hat{\boldsymbol{D}}\]</div>
+<p>where</p>
+<ul>
+<li><p class="first"><strong>Plane strain</strong></p>
+<div class="math">
+\[\begin{split}\overline{\boldsymbol{D}} = \mu \begin{bmatrix}
+   2 &amp;   &amp;   &amp;   \\
+     &amp; 2 &amp;   &amp;   \\
+     &amp;   &amp; 2 &amp;   \\
+     &amp;   &amp;   &amp; 1
+\end{bmatrix}
+\quad
+\hat{\boldsymbol{D}} = \lambda \begin{bmatrix}
+   1 &amp; 1 &amp; 1 &amp; 0 \\
+   1 &amp; 1 &amp; 1 &amp; 0 \\
+   1 &amp; 1 &amp; 1 &amp; 0 \\
+   0 &amp; 0 &amp; 0 &amp; 0
+\end{bmatrix}\end{split}\]</div>
+</li>
+<li><p class="first"><strong>Three dimensions</strong></p>
+<div class="math">
+\[\begin{split}\overline{\boldsymbol{D}} = \mu \begin{bmatrix}
+   2 &amp;   &amp;   &amp;   &amp;   &amp;  \\
+     &amp; 2 &amp;   &amp;   &amp;   &amp;  \\
+     &amp;   &amp; 2 &amp;   &amp;   &amp;  \\
+     &amp;   &amp;   &amp; 1 &amp;   &amp;  \\
+     &amp;   &amp;   &amp;   &amp; 1 &amp;  \\
+     &amp;   &amp;   &amp;   &amp;   &amp; 1
+\end{bmatrix}
+\quad
+\hat{\boldsymbol{D}} = \lambda \begin{bmatrix}
+   1 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 \\
+   1 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 \\
+   1 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 \\
+   0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+   0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+   0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\end{bmatrix}\end{split}\]</div>
+</li>
+</ul>
+<p>where <span class="math">\(\mu\)</span> is the shear modulus <span class="math">\(\mu=\frac{E}{2(1+\nu)}\)</span> and
+<span class="math">\(\lambda\)</span> is the first Lame parameter
+<span class="math">\(\lambda=\frac{E\nu}{(1+\nu)(1-2\nu)}\)</span></p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The additive split shown is valid for strain tensors stored as <span class="math">\(\boldsymbol{\epsilon}=\begin{bmatrix} \epsilon_{xx} &amp; \epsilon_{yy} &amp; \epsilon_{zz} &amp; 2\epsilon_{xy}\end{bmatrix}^T\)</span> for plane strain and <span class="math">\(\boldsymbol{\epsilon}=\begin{bmatrix} \epsilon_{xx} &amp; \epsilon_{yy} &amp; \epsilon_{zz} &amp; 2\epsilon_{xy} &amp; 2\epsilon_{yz} &amp; 2\epsilon_{xz}\end{bmatrix}^T\)</span> for three dimensions.</p>
+</div>
+<p>With this decomposition, the element stiffness can be expressed as</p>
+<div class="math">
+\[\boldsymbol{k}_{ij} = \overline{\boldsymbol{k}}_{ij} + \hat{\boldsymbol{k}}_{ij}\]</div>
 <p>where</p>
 <div class="math">
-\[\begin{split}\sigma_{ij}^{\rm iso} = \frac{\sigma_{ii}}{3}\delta_{ij} = -p\delta_{ij}, \quad
-\delta_{ij} = \begin{cases}1 &amp; i=j\\0 &amp; i\ne j\end{cases}\end{split}\]</div>
-<p><span class="math">\(p\)</span> is the the pressure, and</p>
+\[\overline{\boldsymbol{k}}_{ij} =
+\int_{\Omega^e}\boldsymbol{B}_i^T\overline{\boldsymbol{D}}\boldsymbol{B}_j\, d\Omega\]</div>
 <div class="math">
-\[\sigma_{ij}^{\rm dev} = \sigma_{ij} - \sigma_{ij}^{\rm dev}\]</div>
-<p>Summation conventions have been used wherein repeated subscripts imply summation from 1-3.</p>
-<p>Substituting this form of the stress tensor in to the linear elastic
-constitutive equation and the finite element interpolation functions into the
-weak form of the momentum equation, it can be shown that the element stiffness
-matrix is</p>
-<div class="math">
-\[\left[k^e\right] = \int_{\Omega^e}
-    \left[B\right]^T\left(\left[D\right] - \left[\overline{D}\right]\right)\left[B\right] dV +
-\int_{\Omega^e}
-    \left[B\right]^T\left[\overline{D}\right]\left[B\right] dV\]</div>
-<p>where <span class="math">\(\left[D\right]\)</span> is the material elastic stiffness and
-<span class="math">\(\left[\overline{D}\right]\)</span> is</p>
-<div class="math">
-\[\overline{D}_{ij} = \frac{1}{n} \delta_i \delta_{k} D_{kj}\]</div>
-<p>where <span class="math">\(n\)</span> is the number of element dimensions and</p>
-<div class="math">
-\[\begin{split}\delta_i = \begin{cases}
-    [1, 1, 0, 0]^T &amp; n = 2 \\
-    [1, 1, 1, 0, 0, 0]^T &amp; n = 3 \\
-\end{cases}\end{split}\]</div>
-</div>
-<div class="section" id="selective-reduced-integration">
-<h2>6.3.3. Selective reduced integration<a class="headerlink" href="#selective-reduced-integration" title="Permalink to this headline">¶</a></h2>
-<p>In a selectively reduced integration element, the first volume integral
-appearing in the expression of the element stiffness is evaluated using full
-integration and the second using reduced integration.</p>
+\[\hat{\boldsymbol{k}}_{ij} =
+\int_{\Omega^e}\boldsymbol{B}_i^T\hat{\boldsymbol{D}}\boldsymbol{B}_j\, d\Omega\]</div>
+<p>For nearly incompressible materials, since <span class="math">\(\lambda/\mu &gt;&gt; 1\)</span>, the
+numerical values of <span class="math">\(\hat{\boldsymbol{k}}\)</span> tend to be much greater than
+those of <span class="math">\(\overline{\boldsymbol{k}}\)</span>. Consequently,
+<span class="math">\(\hat{\boldsymbol{k}}\)</span> dominates the element response and leads to
+volumetric locking if nonzero volumetric strains are computed at any of the
+element&#8217;s integration points. A simple method of alleviating this tendency is
+to reduce the order of numerical quadrature used to evaluate
+<span class="math">\(\hat{\boldsymbol{k}}\)</span>. This technique is known as <strong>selective reduced
+integration</strong>.</p>
 </div>
 </div>
 
@@ -125,8 +163,7 @@ integration and the second using reduced integration.</p>
 <li class="toctree-l2"><a class="reference internal" href="ReducedIntegration.html">6.2. Reduced integration elements</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="">6.3. Selective reduced integration elements</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#overview">6.3.1. Overview</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#isotropic-deviatoric-split">6.3.2. Isotropic-deviatoric split</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#selective-reduced-integration">6.3.3. Selective reduced integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#selective-reduced-integration">6.3.2. Selective reduced integration</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="HourglassControl.html">6.4. Hourglass Control</a></li>

@@ -55,48 +55,59 @@
 <li>suffer from &#8220;hourglassing&#8221; in linear elements.</li>
 </ul>
 </div>
-<div class="section" id="reduced-integration-points">
-<h2>6.2.2. Reduced integration points<a class="headerlink" href="#reduced-integration-points" title="Permalink to this headline">¶</a></h2>
-<p>Reduced integration elements enjoy widespread adoption in most production
-finite element codes. The concept behind reduced integration elements is
-straight forward: form the element stiffness using an integration scheme that
-is one order less accurate than standard. Typical choices for the number of
+<div class="section" id="reduced-integration">
+<h2>6.2.2. Reduced integration<a class="headerlink" href="#reduced-integration" title="Permalink to this headline">¶</a></h2>
+<p>The element stiffness <span class="math">\(\left[k^e\right]\)</span> is given by</p>
+<div class="math">
+\[\boldsymbol{k}_{ij} =
+\int_{\Omega^e}\boldsymbol{B}_i^T\boldsymbol{D}\boldsymbol{B}_j\, d\Omega\]</div>
+<p>The concept behind reduced integration elements is straight forward: integrate
+the element stiffness using a reduced order of numerical quadrature (typically
+one order less accurate than standard). Typical choices for the number of
 reduced integration points for various element types are</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="30%" />
-<col width="22%" />
-<col width="48%" />
+<col width="38%" />
+<col width="20%" />
+<col width="18%" />
+<col width="24%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td>Element type</td>
-<td>Number of nodes</td>
-<td>Number of reduced integration points</td>
+<tr class="row-odd"><td>&nbsp;</td>
+<td>Displacement
+interpolation</td>
+<td>Full Gaussian
+quadrature</td>
+<td>Reduced Gaussian
+quadrature</td>
 </tr>
-<tr class="row-even"><td>Linear triangle</td>
-<td>3</td>
-<td>1</td>
+<tr class="row-even"><td><img alt="../_images/TriaReduced.png" class="first last" src="../_images/TriaReduced.png" />
+</td>
+<td>Linear</td>
+<td>1 point</td>
+<td>1 point</td>
 </tr>
-<tr class="row-odd"><td>Quadratic triangle</td>
-<td>6</td>
-<td>3</td>
+<tr class="row-odd"><td><img alt="../_images/QuadReduced.png" class="first last" src="../_images/QuadReduced.png" />
+</td>
+<td>Bilinear</td>
+<td>2x2</td>
+<td>1 point</td>
 </tr>
-<tr class="row-even"><td>Bilinear quadrilateral</td>
-<td>4</td>
-<td>1</td>
+<tr class="row-even"><td><img alt="../_images/Quad8Reduced.png" class="first last" src="../_images/Quad8Reduced.png" />
+</td>
+<td>Quadratic</td>
+<td>3x3</td>
+<td>2x2</td>
 </tr>
-<tr class="row-odd"><td rowspan="2">Quadratic quadrilateral</td>
-<td rowspan="2">8</td>
-<td rowspan="2">4</td>
-</tr>
-<tr class="row-even"></tr>
 </tbody>
 </table>
+<p>Due to the reduced computational footprint of reduced integration elements,
+they enjoy widespread adoption in most production finite element codes.</p>
 </div>
 <div class="section" id="reduced-integration-elements-and-volumetric-locking">
 <h2>6.2.3. Reduced integration elements and volumetric locking<a class="headerlink" href="#reduced-integration-elements-and-volumetric-locking" title="Permalink to this headline">¶</a></h2>
-<p>For the quadratic quadralateral element, reduced integration resolves
-volumetric locking and even improves solution accuracy.</p>
+<p>For quadratic, and higher order, elements, reduced integration resolves
+volumetric locking and can even improve solution accuracy.</p>
 </div>
 <div class="section" id="hourglassing">
 <h2>6.2.4. Hourglassing<a class="headerlink" href="#hourglassing" title="Permalink to this headline">¶</a></h2>
@@ -144,7 +155,7 @@ nealy singular stiffness matrix. Hourglassing must be controlled by an
 <li class="toctree-l2"><a class="reference internal" href="VolumeLocking.html">6.1. Volume Locking</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="">6.2. Reduced integration elements</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#overview">6.2.1. Overview</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#reduced-integration-points">6.2.2. Reduced integration points</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reduced-integration">6.2.2. Reduced integration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#reduced-integration-elements-and-volumetric-locking">6.2.3. Reduced integration elements and volumetric locking</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#hourglassing">6.2.4. Hourglassing</a></li>
 </ul>

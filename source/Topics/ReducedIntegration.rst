@@ -19,32 +19,40 @@ Reduced integration elements:
 - reduce volumetric locking in quadratic elements; and
 - suffer from "hourglassing" in linear elements.
 
-Reduced integration points
---------------------------
+Reduced integration
+-------------------
 
-Reduced integration elements enjoy widespread adoption in most production
-finite element codes. The concept behind reduced integration elements is
-straight forward: form the element stiffness using an integration scheme that
-is one order less accurate than standard. Typical choices for the number of
+The element stiffness :math:`\left[k^e\right]` is given by
+
+.. math::
+
+   \boldsymbol{k}_{ij} =
+   \int_{\Omega^e}\boldsymbol{B}_i^T\boldsymbol{D}\boldsymbol{B}_j\, d\Omega
+
+The concept behind reduced integration elements is straight forward: integrate
+the element stiffness using a reduced order of numerical quadrature (typically
+one order less accurate than standard). Typical choices for the number of
 reduced integration points for various element types are
 
-+-------------------------+------------------+---------------------------------------+
-|Element type             | Number of nodes  | Number of reduced integration points  |
-+-------------------------+------------------+---------------------------------------+
-| Linear triangle         | 3                | 1                                     |
-+-------------------------+------------------+---------------------------------------+
-| Quadratic triangle      | 6                | 3                                     |
-+-------------------------+------------------+---------------------------------------+
-| Bilinear quadrilateral  | 4                | 1                                     |
-+-------------------------+------------------+---------------------------------------+
-+ Quadratic quadrilateral | 8                | 4                                     |
-+-------------------------+------------------+---------------------------------------+
++----------------------------------+------------------+----------------+----------------------+
+|                                  | Displacement     | Full Gaussian  |  Reduced Gaussian    |
+|                                  | interpolation    | quadrature     |  quadrature          |
++----------------------------------+------------------+----------------+----------------------+
+| .. image:: TriaReduced.png       | Linear           | 1 point        |  1 point             |
++----------------------------------+------------------+----------------+----------------------+
+| .. image:: QuadReduced.png       | Bilinear         | 2x2            |  1 point             |
++----------------------------------+------------------+----------------+----------------------+
+| .. image:: Quad8Reduced.png      | Quadratic        | 3x3            |  2x2                 |
++----------------------------------+------------------+----------------+----------------------+
+
+Due to the reduced computational footprint of reduced integration elements,
+they enjoy widespread adoption in most production finite element codes.
 
 Reduced integration elements and volumetric locking
 ---------------------------------------------------
 
-For the quadratic quadralateral element, reduced integration resolves
-volumetric locking and even improves solution accuracy.
+For quadratic, and higher order, elements, reduced integration resolves
+volumetric locking and can even improve solution accuracy.
 
 Hourglassing
 ------------
