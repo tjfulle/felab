@@ -2,7 +2,8 @@ from numpy import *
 from .isoplib import IsoPElement
 
 c = -sqrt(3./5.)
-__all__ = ['PlaneStrainQuad8', 'PlaneStressQuad8', 'PlaneStrainQuad8BBar']
+__all__ = ['PlaneStrainQuad8', 'PlaneStressQuad8', 'PlaneStrainQuad8BBar',
+           'PlaneStrainQuad8Reduced']
 
 # --------------------------------------------------------------------------- #
 # --------------------- QUADRATIC ISOPARAMETRIC ELEMENTS -------------------- #
@@ -143,4 +144,15 @@ class PlaneStressQuad8(IsoPQuad8):
         B = zeros((3, 16))
         B[0, 0::2] = B[2, 1::2] = dN[0, :]
         B[1, 1::2] = B[2, 0::2] = dN[1, :]
+        return B
+
+class PlaneStrainQuad8Reduced(IsoPQuad8):
+    ndir, nshr = 3, 1
+    gaussp = None  # FILL IN CORRECT GAUSS POINTS FOR 2x2 SCHEME
+    gaussw = None  # FILL IN CORRECT GAUSS WEIGHTS FOR 2x2 SCHEME
+    def bmatrix(self, dN):
+        """Assemble and return the B matrix"""
+        B = zeros((4, 16))
+        B[0, 0::2] = B[3, 1::2] = dN[0, :]
+        B[1, 1::2] = B[3, 0::2] = dN[1, :]
         return B

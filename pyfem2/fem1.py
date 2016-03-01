@@ -1044,10 +1044,9 @@ class FiniteElementModel(object):
         if elemat not in self.materials:
             raise UserInputError('No such material {0!r}'.format(elemat))
         elemat = self.materials[elemat]
-        if blknam not in self.mesh.element_blocks:
-            print(blknam, self.mesh.element_blocks)
+        if blknam.upper() not in self.mesh.element_blocks:
             raise UserInputError('No such element block {0!r}'.format(blknam))
-        blk = self.mesh.element_blocks[blknam]
+        blk = self.mesh.element_blocks[blknam.upper()]
         blk.eletyp = eletyp
         if eletyp.numnod != blk.elecon.shape[1]:
             raise UserInputError('Node type not consistent with element block')

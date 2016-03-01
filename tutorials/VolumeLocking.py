@@ -43,7 +43,7 @@ def QuadraticSolution(ax=None):
     V.GenesisMesh('../meshes/QuarterCylinderQuad8.g')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad8BBar, 'Material-1', t=1)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad8, 'Material-1', t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
@@ -74,8 +74,8 @@ def WriteAnalyticSolution(ax=None):
 
 ax = None
 ax = WriteAnalyticSolution(ax)
-#ax = ReducedIntegrationSolution(ax)
-ax = LinearSolution(ax)
+ax = ReducedIntegrationSolution(ax)
+#ax = LinearSolution(ax)
 QuadraticSolution()
 
 if not os.environ.get('NOGRAPHICS'):

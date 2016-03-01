@@ -13,8 +13,7 @@ def LinearSolution(ax=None):
     V.GenesisMesh('../meshes/ThickCylinder_Linear.inp')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
-    V.ElementBlock('EB-1', 'All')
-    V.AssignProperties('EB-1', PlaneStrainQuad4, 'Material-1', t=1)
+    V.AssignProperties('ALL', PlaneStrainQuad4, 'Material-1', t=1)
     V.PrescribedBC('SymYZ', X)
     V.PrescribedBC('SymXZ', Y)
     # Pressure on inside face
@@ -30,8 +29,7 @@ def QuadraticSolution(ax=None):
     V.GenesisMesh('../meshes/ThickCylinder_Quadratic.inp')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
-    V.ElementBlock('EB-1', 'All')
-    V.AssignProperties('EB-1', PlaneStrainQuad8BBar, 'Material-1', t=1)
+    V.AssignProperties('ALL', PlaneStrainQuad8BBar, 'Material-1', t=1)
     V.PrescribedBC('SymYZ', X)
     V.PrescribedBC('SymXZ', Y)
     # Pressure on inside face
@@ -42,8 +40,9 @@ def QuadraticSolution(ax=None):
 
 def WriteAnalyticSolution(ax=None):
     mesh = Mesh(filename='../meshes/ThickCylinder_Linear.inp')
-    a = mesh.coord[0, 1]
-    b = mesh.coord[-1, 0]
+    ix = where(mesh.coord[:,1]<=1e-12)
+    a = mesh.coord[ix][:,0].min()
+    b = mesh.coord[ix][:,0].max()
     p = 1.
     u = zeros_like(mesh.coord)
     for (i, x) in enumerate(mesh.coord):
@@ -53,7 +52,7 @@ def WriteAnalyticSolution(ax=None):
         ur = term1 * term2
         u[i, :] = ur * x[:] / r
     mesh.PutNodalSolution('VolumeLocking.Analytic', u)
-    ax = mesh.Plot2D(xy=u+mesh.coord, ax=ax, color='orange', weight=8,
+    ax = mesh.Plot2D(xy=u+mesh.coord, ax=ax, color='orange', weight=6,
                      label='Analytic')
     return ax
 

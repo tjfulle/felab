@@ -119,9 +119,9 @@
 24, 35, 25,  9, 26, 87, 92, 93, 90
 *Elset, elset=All, generate
   1,  24,   1
-** Section: Section-1
-*Solid Section, elset=All, material=Material-1
-,
+** Section: Section1
+*Solid Section, elset=All, material=Material1
+1.,
 *Nset, nset=SymXZ
   5,  7,  8, 21, 22, 56, 65, 74, 80
 *Nset, nset=SymYZ
@@ -133,4 +133,4 @@
 **
 ** MATERIALS
 **
-*Material, name=Material-1
+*Material, name=Material1

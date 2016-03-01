@@ -3,7 +3,7 @@ from numpy import *
 from argparse import ArgumentParser
 
 from .constants import *
-from .utilities import is_listlike
+from .utilities import is_listlike, UserInputError
 from .elemlib1 import ElementFamily
 
 __all__ = ['Mesh']
@@ -17,7 +17,7 @@ def is_stringlike(s):
 
 class ElementBlock:
     def __init__(self, name, id, labels, elefam, elecon):
-        self.name = name
+        self.name = name.upper()
         self.id = id
         self.labels = labels
         self.elefam = elefam
@@ -156,12 +156,16 @@ class Mesh(object):
         self.numele = len(self.elemap)
         self.ielemap = array(sorted(elemap.keys(), key=lambda k: elemap[k]))
 
-        self.nodesets = nodesets
-        self.elemsets = elemsets
-        self.surfaces = sidesets
+        self.nodesets, self.elemsets, self.surfaces = {}, {}, {}
+        for (name, nodes) in nodesets.items():
+            self.nodesets[name.upper()] = nodes
+        for (name, elems) in elemsets.items():
+            self.elemsets[name.upper()] = elems
+        for (name, surf) in sidesets.items():
+            self.surfaces[name.upper()] = surf
 
         self.eleblx = eleblx
-        self.element_blocks = dict([(eb.name, eb) for eb in eleblx])
+        self.element_blocks = dict([(eb.name.upper(), eb) for eb in eleblx])
         self.maxedge = max([len(eb.elefam.edges) for eb in eleblx])
         self.num_assigned = self.numele
 
@@ -196,8 +200,11 @@ class Mesh(object):
             raise UserInputError('Unknown file type')
 
     def get_internal_node_ids(self, label):
-        if is_stringlike(label) and label in self.nodesets:
-            return self.nodesets[label]
+        if is_stringlike(label):
+            if label.upper() in self.nodesets:
+                return self.nodesets[label.upper()]
+            else:
+                raise UserInputError('No such node set {0!r}'.format(label))
         if isinstance(label, int):
             inodes = [self.nodmap[label]]
         elif label == ALL:
@@ -318,8 +325,11 @@ class Mesh(object):
         if self.unassigned:
             raise UserInputError('Mesh element operations require all elements be '
                                  'assigned to an element block')
-        if is_stringlike(region) and region in self.surfaces:
-            return self.surfaces[region]
+        if is_stringlike(region):
+            if region.upper() in self.surfaces:
+                return self.surfaces[region.upper()]
+            else:
+                raise UserInputError('No such surface {0!r}'.format(region))
         if region in (ILO, IHI, JLO, JHI, KLO, KHI):
             if self.numdim == 1:
                 return self.find_surface1(region)
@@ -380,7 +390,7 @@ class Mesh(object):
     def NodeSet(self, name, region):
         if not is_stringlike(name):
             raise UserInputError('Name must be a string')
-        self.nodesets[name] = self.get_internal_node_ids(region)
+        self.nodesets[name.upper()] = self.get_internal_node_ids(region)
 
     def Surface(self, name, surface):
         if self.unassigned:
@@ -388,7 +398,7 @@ class Mesh(object):
                                  'assigned to an element block')
         if not is_stringlike(name):
             raise UserInputError('Name must be a string')
-        self.surfaces[name] = self.find_surface(surface)
+        self.surfaces[name.upper()] = self.find_surface(surface)
 
     def ElementSet(self, name, region):
         if self.unassigned:
@@ -402,11 +412,11 @@ class Mesh(object):
             if not is_listlike(region):
                 region = [region]
             ielems = [self.elemap[el] for el in region]
-        self.elemsets[name] = array(ielems, dtype=int)
+        self.elemsets[name.upper()] = array(ielems, dtype=int)
 
     def ElementBlock(self, name, elements):
 
-        if name in self.element_blocks:
+        if name.upper() in self.element_blocks:
             raise UserInputError('{0!r} already an element block'.format(name))
         if elements == ALL:
             xelems = sorted(self.elemap.keys())
@@ -664,12 +674,12 @@ def INP2Genesis(filename):
                 name = opts.get('elset')
                 if name is None:
                     raise UserInputError('requires elements be put in elset')
-                eleblx[name] = []
+                eleblx[name.upper()] = []
             elif kw == 'nset':
                 name = opts['nset']
-                nodesets[name] = []
+                nodesets[name.upper()] = []
             elif kw == 'elset':
-                elemsets[name] = []
+                elemsets[name.upper()] = []
             continue
         if kw is None:
             continue
@@ -683,10 +693,12 @@ def INP2Genesis(filename):
             eleblx[name].append(eledef[0])
             continue
         elif kw == 'nset':
-            nodesets[name].extend([int(n) for n in line.split(',') if n.split()])
+            nodesets[name.upper()].extend([int(n) for n in line.split(',')
+                                           if n.split()])
             continue
         elif kw == 'elset':
-            elemsets[name].extend([int(n) for n in line.split(',') if n.split()])
+            elemsets[name.upper()].extend([int(n) for n in line.split(',')
+                                           if n.split()])
             continue
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
     for (name, elems) in eleblx.items():

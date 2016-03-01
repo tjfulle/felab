@@ -588,12 +588,16 @@ def ElementType(name):
     name = name.upper()
     if name == 'CPE4':
         return elemlib.PlaneStrainQuad4
-    elif name == 'CPS4':
+    if name == 'CPE4R':
+        return elemlib.PlaneStrainQuad4Reduced
+    elif name in ('CPS4', 'CPS4R'):
         return elemlib.PlaneStressQuad4
     elif name == 'CPE3':
         return elemlib.PlaneStrainTria3
     elif name == 'CPS3':
         return elemlib.PlaneStressTria3
+    if name[:4] == 'CPE8':
+        return elemlib.PlaneStrainQuad8
     raise ValueError('Unknown element type {0}'.format(name))
 
 def ReadInput(filename):
@@ -645,7 +649,7 @@ def ReadInput(filename):
         elif kw == 'solid section':
             for p in item.params:
                 pn = p.name.lower()
-                pv = p.value.upper()
+                pv = p.value
                 if pn == 'elset':
                     elset = pv.upper()
                 elif pn == 'material':
@@ -673,7 +677,7 @@ def ReadInput(filename):
                 for row in item.data:
                     start, stop, step = [int(n) for n in row]
                     nodes.extend(range(start, stop+1, step))
-            name = [p.name for p in item.params if p.name.lower()=='nset'][0]
+            name = [p.value for p in item.params if p.name.lower()=='nset'][0]
             nodesets.setdefault(name.upper(), []).extend(nodes)
 
         elif kw == 'surface':
@@ -690,7 +694,7 @@ def ReadInput(filename):
                         surf.append((int(el), eval(face, d, d)))
                     else:
                         surf.append((int(el), int(face)-1))
-            name = [p.name for p in item.params if p.name.lower()=='name'][0]
+            name = [p.value for p in item.params if p.name.lower()=='name'][0]
             surfaces.setdefault(name.upper(), []).extend(surf)
 
         else:
@@ -705,7 +709,7 @@ def ReadInput(filename):
             raise ValueError('pyfem2 solid sections must contain '
                              'only one element type')
         et = ElementType(list(s)[0])
-        eleblx['EALL'.format(len(eleblx)+1)] = (et, els)
+        eleblx[elset] = (et, els)
 
     if notread:
         logging.warn('The following keywords and their data were not read:\n'
