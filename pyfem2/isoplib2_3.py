@@ -66,7 +66,7 @@ class IsoPTria3(IsoPElement):
         for (p, xi) in enumerate(gp):
             # Evaluate shape function on edge. Since edges are not defined on
             # [-1, 1], the Gauss point must be transformed.
-            Ne = self.shape(he/2.+xi+he/2., edge=edge)
+            Ne = self.shape(he/2.+xi*he/2., edge=edge)
             Pe = self.pmatrix(Ne)
             Fe += he / 2. * gw[p] * dot(Pe.T, qe)
         return Fe
