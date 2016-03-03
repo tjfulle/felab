@@ -10,3 +10,5 @@ Topics in FEM
    ReducedIntegration
    SelectiveReducedIntegration
    HourglassControl
+   ShearLocking
+   IncompatibleModes
