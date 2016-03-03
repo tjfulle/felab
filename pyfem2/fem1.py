@@ -912,8 +912,6 @@ class FiniteElementModel(object):
                                      'before SurfaceLoadN')
             el = self.elements[iel]
             edgenod = el.edges[edge]
-            if self.numdim == 2 and len(edgenod) > 2:
-                edgenod = edgenod[[0,-1]]
             xb = el.xc[edgenod]
             if self.numdim == 2:
                 n = normal2d(xb)

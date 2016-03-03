@@ -47,11 +47,11 @@ def QuadraticSolution(ax=None):
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
-    #V.Pressure('Surface-1', 1.)
-    V.SurfaceLoad("Surface-300", [0.195090322, 0.98078528])
-    V.SurfaceLoad("Surface-301", [0.555570233, 0.831469612])
-    V.SurfaceLoad("Surface-302", [0.831469612, 0.555570233])
-    V.SurfaceLoad("Surface-303", [0.98078528, 0.195090322])
+    V.Pressure('Surface-1', 1.)
+    #V.SurfaceLoad("Surface-300", [0.195090322, 0.98078528])
+    #V.SurfaceLoad("Surface-301", [0.555570233, 0.831469612])
+    #V.SurfaceLoad("Surface-302", [0.831469612, 0.555570233])
+    #V.SurfaceLoad("Surface-303", [0.98078528, 0.195090322])
     V.Solve()
     V.WriteResults('VolumeLocking.Quadratic')
 
@@ -75,7 +75,7 @@ def WriteAnalyticSolution(ax=None):
 ax = None
 ax = WriteAnalyticSolution(ax)
 ax = ReducedIntegrationSolution(ax)
-#ax = LinearSolution(ax)
+ax = LinearSolution(ax)
 QuadraticSolution()
 
 if not os.environ.get('NOGRAPHICS'):

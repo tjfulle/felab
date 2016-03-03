@@ -54,8 +54,15 @@ def sign(a, b=None):
 def count_digits(seq, d=1):
     return len([i for i in seq if i == d])
 
-def normal2d(xp):
-    xp = asarray(xp)
-    dx, dy = xp[1,:] - xp[0,:]
-    n = array([dy, -dx], dtype=float)
+def normal2d(xc):
+    xc = asarray(xc)
+    if xc.shape[0] == 2:
+        # linear element
+        dx, dy  = xc[1,:] - xc[0,:]
+        n = array([dy, -dx], dtype=float)
+    elif xc.shape[0] == 3:
+        p = poly1d(polyfit(xc[:,0], xc[:,1], 2))
+        dp = polyder(p)
+        dy = average([dp(xc[1,0]), dp(xc[0,0]), dp(xc[2,0])])
+        n = array([dy, -1.], dtype=float)
     return n / sqrt(dot(n, n))
