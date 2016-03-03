@@ -145,25 +145,30 @@ class PlaneStressQuad4Incompat(PlaneStressQuad4, IsoPIncompatibleModes):
 
     def gmatrix(self, xi):
         """Assemble and return the G matrix"""
-        raise NotImplementedError
         # Algorithm in
         # The Finite Element Method: Its Basis and Fundamentals
         # By Olek C Zienkiewicz, Robert L Taylor, J.Z. Zhu
-
         # Jacobian at element centroid
 
         # compute the shape function at the centroid (self.cp)
+        dNdxi = self.shapegrad(self.cp)
 
         # compute the deformation gradient at centroid (coordinates are self.xc)
-        # and the jacobian
+        dxdxi = dot(dNdxi, self.xc)
+        dxidx = inv(dxdxi)
+        J0 = det(dxdxi)
 
-        # compute the jacobian of the element
+        J = self.jacobian(self.xc, xi)
 
-        # compute dNdxi associated with the incompatible modes and then from it
-        # and the jacobians computed above compute dNdx
+        dNdxi = array([[-2. * xi[0], 0.], [0., -2. * xi[1]]])
+        dNdx = J0 / J * dot(dxidx, dNdxi)
 
-        # form the incompatible G matrix
-        # this is BI in the pdf file
-        G = zeros((3, 4))
+        G1 = array([[dNdx[0, 0],  0],
+                    [0,  dNdx[0, 1]],
+                    [dNdx[0, 1], dNdx[0, 0]]])
 
+        G2 = array([[dNdx[1, 0],  0],
+                    [0,  dNdx[1, 1]],
+                    [dNdx[1, 1], dNdx[1, 0]]])
+        G = concatenate((G1, G2), axis=1)
         return G

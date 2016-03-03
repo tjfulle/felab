@@ -261,3 +261,32 @@ class IsoPSelectiveReduced(IsoPElement):
             # Add contribution of function call to integral
             Ke += dot(dot(B.T, D1), B) * J * self.rgaussw[p]
         return Ke
+
+# --------------------------------------------------------------------------- #
+# ---------------- INCOMPATIBLE MODES ISOPARAMETRIC ELEMENTS ---------------- #
+# --------------------------------------------------------------------------- #
+class IsoPIncompatibleModes(IsoPElement):
+    numincomp = None
+    def gmatrix(self, xi): raise NotImplementedError
+    def stiffness(self, *args):
+        """Assemble the element stiffness"""
+        # incompatible modes stiffnesses
+        Kcc = zeros((self.ndof * self.numnod, self.ndof * self.numnod))
+        Kci = zeros((self.ndof*self.numnod, self.numdim*self.ndof))
+        Kii = zeros((self.numdim*self.ndof, self.numdim*self.ndof))
+
+        for (p, xi) in enumerate(self.gaussp):
+            # Update material state
+            J = self.jacobian(self.xc, xi)
+            dNdx = self.shapegradx(self.xc, xi)
+            B = self.bmatrix(dNdx)
+            G = self.gmatrix(xi)
+            D = self.material.stiffness(self.ndir, self.nshr)
+            # Add contribution of function call to integral
+            Kcc += dot(dot(B.T, D), B) * J * self.gaussw[p]
+            Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]
+            Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
+
+        Ke = Kcc  - dot(dot(Kci, inv(Kii)), Kci.T)
+
+        return Ke
