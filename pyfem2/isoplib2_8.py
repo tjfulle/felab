@@ -148,8 +148,8 @@ class PlaneStressQuad8(IsoPQuad8):
 
 class PlaneStrainQuad8Reduced(IsoPQuad8):
     ndir, nshr = 3, 1
-    gaussp = None  # FILL IN CORRECT GAUSS POINTS FOR 2x2 SCHEME
-    gaussw = None  # FILL IN CORRECT GAUSS WEIGHTS FOR 2x2 SCHEME
+    gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
+    gaussw = ones(4)
     def bmatrix(self, dN):
         """Assemble and return the B matrix"""
         B = zeros((4, 16))

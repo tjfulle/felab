@@ -242,5 +242,22 @@ class IsoPSelectiveReduced(IsoPElement):
 
     def stiffness(self, *args):
         """Assemble the element stiffness"""
-        raise NotImplementedError
-        # COMPLETE THE STIFFNESS DEFINITION
+        # compute integration point data
+        Ke = zeros((self.ndof * self.numnod, self.ndof * self.numnod))
+        for (p, xi) in enumerate(self.gaussp):
+            # Update material state
+            J = self.jacobian(self.xc, xi)
+            dNdx = self.shapegradx(self.xc, xi)
+            B = self.bmatrix(dNdx)
+            D1, D2 = self.material.stiffness(self.ndir, self.nshr, disp=2)
+            # Add contribution of function call to integral
+            Ke += dot(dot(B.T, D2), B) * J * self.gaussw[p]
+        for (p, xi) in enumerate(self.rgaussp):
+            # Update material state
+            J = self.jacobian(self.xc, xi)
+            dNdx = self.shapegradx(self.xc, xi)
+            B = self.bmatrix(dNdx)
+            D1, D2 = self.material.stiffness(self.ndir, self.nshr, disp=2)
+            # Add contribution of function call to integral
+            Ke += dot(dot(B.T, D1), B) * J * self.rgaussw[p]
+        return Ke
