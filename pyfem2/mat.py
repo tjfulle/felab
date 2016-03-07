@@ -1,6 +1,8 @@
+import logging
 from numpy import *
 from numpy.linalg import inv
 from .elas import elas
+from .utilities import UserInputError
 
 __all__ = ['Material']
 
@@ -39,17 +41,30 @@ class Material(object):
     """
     def __init__(self, name, **kwds):
         self.name = name
+
         # Young's modulus and Poisson's ratio
         self.E, self.Nu = None, None
+
         # Thermal conductivity
         self.k = None
+
         # Density
         self.density = None
-        for (k, v) in kwds.items():
+        for (kwd, v) in kwds.items():
+            k = kwd.lower()
             if k in ('density', 'rho'):
                 self.density = v
+            elif k == 'elastic':
+                try:
+                    self.Elastic(**v)
+                except TypeError:
+                    raise UserInputError('elastic properties must be a '
+                                         'dict, not {0}'.format(type(v)))
+            elif k == 'isotropic_thermal_conductivity':
+                self.IsotropicThermalConductivity(v)
             else:
-                setattr(self, k, v)
+                logging.warn('Setting unknown material property {0!r}'.format(kwd))
+                setattr(self, kwd, v)
 
     def Density(self, rho):
         """Assign mass density
