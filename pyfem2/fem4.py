@@ -34,16 +34,18 @@ class Plane2DModel(FiniteElementModel):
         self.snapshot(U=u, R=R)
 
     def update_state(self):
-        # compute the element stiffness and scatter to global array
         for (ieb, eb) in enumerate(self.mesh.eleblx):
-            E = self.steps[-1].field_outputs['E'][ieb]
-            S = self.steps[-1].field_outputs['S'][ieb]
+            frame = self.steps['Step-1'].frames[0]
+            E = frame.field_outputs[eb.name, 'E']
+            S = frame.field_outputs[eb.name, 'S']
             for (e, xel) in enumerate(eb.labels):
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
                 u = self.dofs[el.nodes]
-                de1, e1, s1 = el.update_state(u, E[e], S[e])
+                de1, e1, s1 = el.update_state(u, E.data[0,e], S.data[0,e])
+                frame.field_outputs[eb.name, 'E'].add_data(e1)
                 self.steps[-1].field_outputs['DE'].data[ieb][iel] = de1
                 self.steps[-1].field_outputs['E'].data[ieb][iel] = e1
                 self.steps[-1].field_outputs['S'].data[ieb][iel] = s1
+
         return

@@ -5,7 +5,7 @@ import numpy.linalg as la
 
 from .utilities import *
 from .constants import *
-from .data import TimeStepRepository
+from .data import StepRepository
 from .mesh import Mesh
 from .mat import Material
 from .exodusii import File
@@ -51,7 +51,7 @@ class FiniteElementModel(object):
         if not os.path.isfile(filename):
             raise UserInputError('No such file {0!r}'.format(filename))
         self.mesh = Mesh(filename=filename)
-        self._initialize_geometry()
+        self._initialize()
 
     def AbaqusMesh(self, filename):
         """
@@ -75,7 +75,7 @@ class FiniteElementModel(object):
         if not os.path.isfile(filename):
             raise UserInputError('No such file {0!r}'.format(filename))
         self.mesh = Mesh(filename=filename)
-        self._initialize_geometry()
+        self._initialize()
 
     def VTKMesh(self, filename):
         """
@@ -99,7 +99,7 @@ class FiniteElementModel(object):
         if not os.path.isfile(filename):
             raise UserInputError('No such file {0!r}'.format(filename))
         self.mesh = Mesh(filename=filename)
-        self._initialize_geometry()
+        self._initialize()
 
     def RectilinearMesh(self, shape, lengths):
         """
@@ -125,7 +125,7 @@ class FiniteElementModel(object):
 
         """
         self.mesh = Mesh.RectilinearMesh2D(shape, lengths)
-        self._initialize_geometry()
+        self._initialize()
 
     def Mesh(self, **kwds):
         """
@@ -142,9 +142,10 @@ class FiniteElementModel(object):
 
         """
         self.mesh = Mesh(**kwds)
-        self._initialize_geometry()
+        self._initialize()
 
-    def _initialize_geometry(self):
+    def _initialize(self):
+
         if self.mesh is None:
             raise UserInputError('Mesh must first be created')
 
@@ -274,16 +275,29 @@ class FiniteElementModel(object):
 
             active_dof = [i for i in range(MDOF) if nfs[i]]
 
-        self.steps = TimeStepRepository(self.mesh)
-        self.init()
-        self.create_step()
-        if self.initial_temp is not None:
-            self.steps[0].field_outputs['T'].add_data(self.initial_temp)
-
         self.active_dof = array(active_dof)
         self.dofs = zeros((self.numnod, self.active_dof.shape[0]))
 
         self.validated = True
+
+        node_labels = sorted(self.mesh.nodmap, key=lambda k: self.mesh.nodmap[k])
+
+        self.steps = StepRepository()
+        self.steps.Step('Step-1')
+
+        # Node data
+        nd = self.numdim
+        self.steps['Step-1'].frames[0].ScalarField('T', NODE, node_labels)
+        self.steps['Step-1'].frames[0].VectorField('U', NODE, node_labels, nd)
+        #if self.initial_temp is not None:
+        #    self.steps[0].field_outputs['T'].add_data(self.initial_temp)
+
+        for eb in self.mesh.eleblx:
+            args = (INTEGRATION_POINT, eb.labels,
+                    eb.eletyp.ndir, eb.eletyp.nshr, eb.eletyp.ngauss(), eb.name)
+            self.steps['Step-1'].frames[0].SymmetricTensorField('S', *args)
+            self.steps['Step-1'].frames[0].SymmetricTensorField('E', *args)
+            self.steps['Step-1'].frames[0].SymmetricTensorField('DE', *args)
 
     def _element_freedom_table(self):
         eftab = []
@@ -315,12 +329,6 @@ class FiniteElementModel(object):
             raise UserInputError('Mesh must first be created')
         self.steps[0].FieldOutput(name, type, position)
 
-    def create_step(self, dtime=1.):
-        if self.mesh is None:
-            raise UserInputError('Mesh must first be created')
-        # new time step
-        ts = self.steps.TimeStep(dtime, copy=1)
-
     def snapshot(self, **kwds):
         self.steps[-1].add_data(**kwds)
 
@@ -333,6 +341,17 @@ class FiniteElementModel(object):
                   elemsets=self.mesh.elemsets, sidesets=self.mesh.surfaces)
         for step in self.steps:
             f.snapshot(step)
+
+        fn = os.path.splitext(filename)[0] + '-1.exo'
+        f = File(filename, mode='w')
+        f.genesis(self.mesh.nodmap, self.mesh.elemap, self.mesh.coord,
+                  self.mesh.eleblx, nodesets=self.mesh.nodesets,
+                  elemsets=self.mesh.elemsets, sidesets=self.mesh.surfaces)
+        f.put(self.noddat, self.ebdat)
+
+        self.noddat.advance()
+        for (key, d) in self.ebdat.items():
+            d.advance()
 
     def assemble_global_stiffness(self, *args):
         """Assembles the global stiffness matrix

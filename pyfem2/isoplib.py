@@ -11,6 +11,10 @@ class IsoPElement(object):
     signature = None
     edges = []
 
+    @classmethod
+    def ngauss(cls):
+        return len(cls.gaussp)
+
     def __init__(self, label, elenod, elecoord, elemat, **elefab):
         self.label = label
         self.nodes = elenod

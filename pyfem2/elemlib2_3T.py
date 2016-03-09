@@ -9,6 +9,7 @@ __all__ = ['DiffussiveHeatTransfer2D3']
 # ------------------------ HEAT TRANSFER ELEMENT ---------------------------- #
 # --------------------------------------------------------------------------- #
 class DiffussiveHeatTransfer2D3(Element):
+    ngauss = 0
     ndof, numdim, numnod = 1, 2, 3
     signature = (0,0,0,0,0,0,1)  # 3 NODE 2D HEAT TRANSFER
     edges = array([[0,1], [1,2], [2,0]])

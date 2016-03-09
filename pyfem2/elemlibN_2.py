@@ -25,6 +25,8 @@ class ElasticLinknD2(Element):
 
     """
     nfab = 1
+    ngauss = 0
+    ndir, nshr = 1, 0
     def __init__(self, label, elenod, elecoord, elemat, **elefab):
         self.label = label
         self.nodes = asarray(elenod, dtype=int)
@@ -134,9 +136,10 @@ class BeamColumn2D(Element):
 
     """
     nfab = 2
+    ngauss = 0
+    ndir, nshr = 1, 0
     numdim, ndof, numnod = 2, 3, 2
     signature = (1,1,0,0,0,1,0)
-
     def __init__(self, label, elenod, elecoord, elemat, **elefab):
         self.label = label
         self.nodes = asarray(elenod, dtype=int)

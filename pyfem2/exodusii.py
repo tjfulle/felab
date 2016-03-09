@@ -22,7 +22,7 @@ except ImportError:
     from .netcdf import netcdf_file as Dataset
 
 from .elemlib1 import ElementFamily
-from .data import TimeStepRepository
+from .data import StepRepository
 
 __all__ = ['File', 'PutNodalSolution']
 

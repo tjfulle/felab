@@ -1,9 +1,11 @@
 from numpy import *
-from numpy.linalg import eigvalsh
 import logging
+from numpy.linalg import eigvalsh
 from collections import OrderedDict
 
 from .utilities import *
+
+__all__ = ['StepRepository']
 
 def component_labels(type, numdim, ndir, nshr):
     if type == SYMTENSOR:
@@ -14,49 +16,66 @@ def component_labels(type, numdim, ndir, nshr):
         components = None
     return components
 
-class TimeStepRepository(object):
+class StepRepository(OrderedDict):
+    def Step(self, name, start=0.):
+        self[name] = Step(name, start=start)
 
-    def __init__(self, mesh, first=1):
-        self.mesh = mesh
-        self.time = 0.
-        self.steps = []
-        if first:
-            self.TimeStep(0.)
+class Step(object):
+    def __init__(self, name, start=0.):
+        self.name = name
+        self.time = start
+        self.frames = []
+        self.Frame(0.)
+
     def __getitem__(self, i):
-        return self.steps[i]
-    def __iter__(self):
-        return iter(self.steps)
-    def __len__(self):
-        return len(self.steps)
+        return self.frames[i]
 
-    def TimeStep(self, dtime, copy=0):
-        ts = TimeStep(self.mesh, self.time, dtime)
+    def __iter__(self):
+        return iter(self.frames)
+
+    def __len__(self):
+        return len(self.frames)
+
+    def Frame(self, dtime, copy=0):
+        frame = Frame(self.time, dtime)
         self.time += dtime
         if copy:
-            tsn = self.steps[-1]
-            for fo in tsn.field_outputs.values():
-                fo1 = ts.FieldOutput(fo.name, fo.type, fo.position)
-                data = tsn.field_outputs[fo.name].get_data()
+            frame_n = self.frames[-1]
+            for fo in frame_n.field_outputs.values():
+                fo1 = frame.FieldOutput(fo.name, fo.type, fo.position)
+                data = frame_n.field_outputs[fo.name].get_data()
                 if fo1.position == NODE:
                     fo1.add_data(data)
                 else:
                     for (i, dx) in enumerate(data):
                         fo1.add_data(dx, block=i)
-        self.steps.append(ts)
-        return ts
+        self.frames.append(frame)
+        return frame
 
-class TimeStep(object):
-    def __init__(self, mesh, time, dtime, copy=None):
-        self.mesh = mesh
-        self.start = time
+class Frame(object):
+    def __init__(self, start, dtime):
+        self.start = start
         self.increment = dtime
-        self.value = time + dtime
+        self.value = start + dtime
         self.field_outputs = FieldOutputs()
 
-    def FieldOutput(self, name, type, position, numcomp=None):
-        fo = FieldOutput(self.mesh, name, type, position, numcomp=numcomp)
-        self.field_outputs[name] = fo
-        return fo
+    def SymmetricTensorField(self, name, position, labels, ndir, nshr, *args):
+        field = SymmetricTensorField(name, position, labels, ndir, nshr, *args)
+        if position in (INTEGRATION_POINT, ELEMENT):
+            name = (args[1], name)
+        self.field_outputs[name] = field
+
+    def VectorField(self, name, position, labels, ncomp, *args):
+        field = VectorField(name, position, labels, ncomp, *args)
+        if position in (INTEGRATION_POINT, ELEMENT):
+            name = (args[1], name)
+        self.field_outputs[name] = field
+
+    def ScalarField(self, name, position, labels, *args):
+        field = ScalarField(name, position, labels, *args)
+        if position in (INTEGRATION_POINT, ELEMENT):
+            name = (args[1], name)
+        self.field_outputs[name] = field
 
     def add_data(self, **kwargs):
         for (key, value) in kwargs.items():
@@ -217,6 +236,64 @@ class FieldOutput(object):
                             self.components, row)
             self._values.append(fv)
         return self._values
+
+class SymmetricTensorField(FieldOutput):
+    def __init__(self, name, position, labels, ndir, nshr, *args):
+        self.name = name
+        self.position = position
+        self.labels = labels
+        self.type = SYMTENSOR
+        self.components = ('xx', 'yy', 'zz')[:ndir] + ('xy', 'yz', 'xz')[:nshr]
+
+        if position == INTEGRATION_POINT:
+            ngauss, eleblk = args
+            self.eleblk = eleblk
+
+        if ndir is not None and nshr is not None:
+            ntens = ndir + nshr
+        else:
+            ntens = 0
+
+        num = len(self.labels)
+        if position == INTEGRATION_POINT:
+            if ngauss:
+                shape = (2, num, ngauss, ntens)
+            else:
+                shape = (2, num, ntens)
+        else:
+            shape = (2, num, ntens)
+        self.data = zeros(shape)
+
+class VectorField(FieldOutput):
+    def __init__(self, name, position, labels, nc, *args):
+        self.name = name
+        self.position = position
+        self.labels = labels
+        self.type = VECTOR
+
+        num = len(labels)
+        self.components = ('x', 'y', 'z')[:nc]
+        if position == INTEGRATION_POINT:
+            ngauss, self.eleblk = args
+            shape = (2, num, ngauss, nc)
+        else:
+            shape = (2, num, nc)
+        self.data = zeros(shape)
+
+class ScalarField(FieldOutput):
+    def __init__(self, name, position, labels, *args):
+        self.name = name
+        self.position = position
+        self.labels = labels
+        self.type = SCALAR
+
+        num = len(labels)
+        if self.position == INTEGRATION_POINT:
+            ngauss, self.eleblk = args
+            shape = (2, num, ngauss)
+        else:
+            shape = (2, num,)
+        self.data = zeros(shape)
 
 class FieldValue:
     def __init__(self, position, label, type, components, data):
