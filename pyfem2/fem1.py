@@ -7,7 +7,6 @@ from .utilities import *
 from .constants import *
 from .data import TimeStepRepository
 from .mesh import Mesh
-from .data import TimeStepRepository
 from .mat import Material
 from .exodusii import File
 
