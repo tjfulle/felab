@@ -1,3 +1,4 @@
+import os
 from numpy import sqrt, array, float64, zeros
 # Maximum number of possible DOF per node
 MDOF = 7

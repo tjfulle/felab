@@ -147,8 +147,8 @@ class FieldOutput(object):
         if ix is not None:
             self.data[ix] = data
         else:
-            assert data.shape == self.data.shape
-            self.data[:] = data
+            assert data.size == self.data.size
+            self.data[:] = reshape(data, self.data.shape)
 
     def get_data(self, position=None):
 

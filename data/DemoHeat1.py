@@ -5,7 +5,7 @@ from numpy import *
 from pyfem2 import *
 
 # Create the model
-V = HeatTransfer2DModel()
+V = HeatTransfer2DModel(jobid='Heat1')
 
 # Read mesh from file
 V.GenesisMesh('PlateWithHoleTria3Fine.g')
@@ -36,7 +36,7 @@ V.HeatGeneration(ALL, fun)
 # Solve for the unknown degrees of freedom
 V.Solve()
 
-V.WriteResults('Heat1.exo')
+V.WriteResults()
 
 if not os.environ.get('NOGRAPHICS'):
     V.Plot2D(colorby=V.dofs.flatten(), show=1)

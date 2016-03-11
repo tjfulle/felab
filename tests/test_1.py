@@ -82,7 +82,7 @@ def test_fem4_1_gravity_load1():
 @pytest.mark.heat
 def test_fem3_plate_with_hole():
     V = HeatTransfer2DModel()
-    V.GenesisMesh(join(D, 'meshes/PlateWithHoleTria3Fine.g'))
+    V.GenesisMesh(join(D, 'data/PlateWithHoleTria3Fine.g'))
     k, h, Too = 12, 250, 25
     fun = lambda x: 1000 / sqrt(x[:,0] ** 2 + x[:,1] ** 2)
     V.Material('Material-1')
@@ -106,7 +106,7 @@ def test_fem3_1():
         u = (1-x[:,0]**2)/2.-16./pi**3*sum([fun(k) for k in range(1, N, 2)],0)
         return u
     V = HeatTransfer2DModel()
-    V.GenesisMesh(join(D, 'meshes/UniformPlateTria3Fine.g'))
+    V.GenesisMesh(join(D, 'data/UniformPlateTria3Fine.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
@@ -122,7 +122,7 @@ def test_fem3_2():
     def solution(x):
         return 2. * (1. + x[:,1]) / ((3. + x[:,0])**2 + (1 + x[:,1])**2)
     V = HeatTransfer2DModel()
-    V.GenesisMesh(join(D, 'meshes/UniformPlateTria3.g'))
+    V.GenesisMesh(join(D, 'data/UniformPlateTria3.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
@@ -223,7 +223,7 @@ def test_fem3_5():
 def test_fem3_plate_with_hole2():
     k, h, Too = 12, 250, 25
     V = HeatTransfer2DModel()
-    V.GenesisMesh(join(D, 'meshes/PlateWithHoleTria3.g'))
+    V.GenesisMesh(join(D, 'data/PlateWithHoleTria3.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(k)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
@@ -263,8 +263,8 @@ def test_fem2_1():
     V.ConcentratedLoad(7, Y, -16)
 
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
-    R = V.steps[-1].field_outputs['R'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
+    R = V.steps.last.frames[-1].field_outputs['R'].data
     assert allclose([[0.,      0.,      0.],
                      [0.80954,-1.7756,  0.],
                      [0.28,   -1.79226, 0.],
@@ -318,8 +318,8 @@ def test_fem2_1a():
     V.ConcentratedLoad(7, Y, -16)
 
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
-    R = V.steps[-1].field_outputs['R'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
+    R = V.steps.last.frames[-1].field_outputs['R'].data
     assert allclose([[0.,      0.     ],
                      [0.80954,-1.7756 ],
                      [0.28,   -1.79226],
@@ -360,7 +360,7 @@ def test_fem2_2a():
     V.PrescribedBC(1, X, -.05)
     V.ConcentratedLoad(1, Y, 1000e3)
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
     assert allclose([[-0.05,     0.0882842],
                      [ 0.,       0.,      ],
                      [ 0.,       0.,      ]], u)
@@ -381,7 +381,7 @@ def test_fem2_2b():
     V.PrescribedBC(1, Z)
     V.ConcentratedLoad(1, Y, 1000e3)
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
     assert allclose([[-0.05,     0.0882842, 0.],
                      [ 0.,       0.,        0.],
                      [ 0.,       0.,        0.]], u)
@@ -403,7 +403,7 @@ def test_fem2_3():
     # Concentrated force in 'z' direction on node 1
     V.ConcentratedLoad(1, Z, -1000)
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
     ua = array([[-8.5337228, 0., -31.9486913],
                 [ 0.,        0.,   0.       ],
                 [ 0.,        0.,   0.       ],
@@ -447,7 +447,7 @@ def test_fem2_4():
 
     # Solve and write results
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
 
     assert allclose([[0.00851510679597,0.349956039184,-0.0221277138856],
                      [0.0319156311642,0.349956039184,-0.0322420125936],

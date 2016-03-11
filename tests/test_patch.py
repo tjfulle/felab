@@ -3,7 +3,7 @@ from pyfem2 import *
 
 def test_quad4_plane_strain():
     V = Plane2DModel()
-    V.AbaqusMesh(filename=join(D, 'meshes/EC4SFP1.inp'))
+    V.AbaqusMesh(filename=join(D, 'data/EC4SFP1.inp'))
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=1e6, Nu=.25)
     V.AssignProperties('EALL', PlaneStrainQuad4, 'Material-1', t=.001)
@@ -16,15 +16,15 @@ def test_quad4_plane_strain():
     V.PrescribedBC(40, Y, .12e-3)
     V.Solve()
     # Average stress must be 1600 in x and y
-    step = V.steps[-1]
-    field = step.field_outputs['S']
+    step = V.steps.last
+    field = step.frames[-1].field_outputs['S']
     for value in field.values:
         data = value.data
         assert allclose(data[:,0], 1600.)
         assert allclose(data[:,1], 1600.)
         assert allclose(data[:,2], 800.)
         assert allclose(data[:,3], 400.)
-    field = step.field_outputs['E']
+    field = step.frames[-1].field_outputs['E']
     for value in field.values:
         data = value.data
         assert allclose(data[:,0], 1e-3)
@@ -33,7 +33,7 @@ def test_quad4_plane_strain():
 
 def test_quad4_plane_stress():
     V = Plane2DModel()
-    V.AbaqusMesh(filename=join(D, 'meshes/EC4SFP1.inp'))
+    V.AbaqusMesh(filename=join(D, 'data/EC4SFP1.inp'))
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=1e6, Nu=.25)
     V.AssignProperties('EALL', PlaneStressQuad4, 'Material-1', t=.001)
@@ -45,14 +45,14 @@ def test_quad4_plane_stress():
     V.PrescribedBC(40, X, .06e-3)
     V.PrescribedBC(40, Y, .12e-3)
     V.Solve()
-    step = V.steps[-1]
-    field = step.field_outputs['S']
+    step = V.steps.last
+    field = step.frames[-1].field_outputs['S']
     for value in field.values:
         data = value.data
         assert allclose(data[:,0], 1333.33333333)
         assert allclose(data[:,1], 1333.33333333)
         assert allclose(data[:,2], 400.)
-    field = step.field_outputs['E']
+    field = step.frames[-1].field_outputs['E']
     for value in field.values:
         data = value.data
         assert allclose(data[:,0], 1e-3)
@@ -61,7 +61,7 @@ def test_quad4_plane_stress():
 
 def test_tria3_plane_stress():
     V = Plane2DModel()
-    V.AbaqusMesh(filename=join(D, 'meshes/EC3SFP1.inp'))
+    V.AbaqusMesh(filename=join(D, 'data/EC3SFP1.inp'))
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=1e6, Nu=.25)
     V.AssignProperties('EALL', PlaneStressTria3, 'Material-1', t=.001)
@@ -75,14 +75,14 @@ def test_tria3_plane_stress():
     #V.Plot2D(show=1)
     V.Solve()
     V.WriteResults('PlaneStressTria3Patch.exo')
-    step = V.steps[-1]
-    field = step.field_outputs['S']
+    step = V.steps.last
+    field = step.frames[-1].field_outputs['S']
     for value in field.values:
         data = value.data
         assert allclose(data[:,0], 1333.333333333), 'Wrong Sxx'
         assert allclose(data[:,1], 1333.333333333), 'Wrong Syy'
         assert allclose(data[:,2],  400.), 'Wrong Sxy'
-    field = step.field_outputs['E']
+    field = step.frames[-1].field_outputs['E']
     for value in field.values:
         data = value.data
         assert allclose(data[:,0], 1e-3)
@@ -91,7 +91,7 @@ def test_tria3_plane_stress():
 
 def test_tria3_plane_strain():
     V = Plane2DModel()
-    V.AbaqusMesh(filename=join(D, 'meshes/EC3SFP1.inp'))
+    V.AbaqusMesh(filename=join(D, 'data/EC3SFP1.inp'))
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=1e6, Nu=.25)
     V.AssignProperties('EALL', PlaneStrainTria3, 'Material-1', t=.001)
@@ -104,15 +104,15 @@ def test_tria3_plane_strain():
     V.PrescribedBC(40, Y, .12e-3)
     V.Solve()
     # Average stress must be 1600 in x and y
-    step = V.steps[-1]
-    field = step.field_outputs['S']
+    step = V.steps.last
+    field = step.frames[-1].field_outputs['S']
     for value in field.values:
         data = value.data
         assert allclose(data[:,0], 1600.)
         assert allclose(data[:,1], 1600.)
         assert allclose(data[:,2], 800.)
         assert allclose(data[:,3], 400.)
-    field = step.field_outputs['E']
+    field = step.frames[-1].field_outputs['E']
     for value in field.values:
         data = value.data
         assert allclose(data[:,0], 1e-3)

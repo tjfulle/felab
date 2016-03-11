@@ -24,5 +24,8 @@ class HeatTransfer2DModel(FiniteElementModel):
             raise RuntimeError('attempting to solve under constrained system')
         Ft = dot(K, self.dofs)
         R = Ft - F - Q
-        self.snapshot(T=self.dofs, R=R)
+
+        # Create new frame to hold updated state
+        self.steps.last.Frame(1.)
+        self.steps.last.frames[-1].field_outputs['T'].add_data(self.dofs)
         self.T = self.dofs

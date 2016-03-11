@@ -302,6 +302,8 @@ class FiniteElementModel(object):
             step.field_outputs['T'].add_data(self.initial_temp)
 
         for eb in self.mesh.eleblx:
+            if not any(eb.eletyp.signature[:3]):
+                continue
             args = (INTEGRATION_POINT, eb.labels,
                     eb.eletyp.ndir, eb.eletyp.nshr, eb.eletyp.ngauss(), eb.name)
             step.frames[0].SymmetricTensorField('S', *args)
