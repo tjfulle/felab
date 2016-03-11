@@ -27,6 +27,7 @@ class IsoPTria3(IsoPElement):
     signature = (1,1,0,0,0,0,0)
     numdim, numnod, ndof = 2, 3, 2
     edges = array([[0, 1], [1, 2], [2, 0]])
+    npts = 3
     gaussp = array([[.6, .2], [.2, .6], [.2, .2]])
     gaussw = ones(3) / 6.
     cp = array([1., 1.]) / 3.

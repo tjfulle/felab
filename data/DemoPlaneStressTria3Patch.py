@@ -1,5 +1,5 @@
 from pyfem2 import *
-V = Plane2DModel()
+V = Plane2DModel(jobid='PlaneStressTria3Patch')
 V.AbaqusMesh(filename='EC3SFP1.inp')
 V.Material('Material-1')
 V.materials['Material-1'].Elastic(E=1e6, Nu=.25)
@@ -13,15 +13,15 @@ V.PrescribedBC(40, X, .06e-3)
 V.PrescribedBC(40, Y, .12e-3)
 #V.Plot2D(show=1)
 V.Solve()
-V.WriteResults('PlaneStressTria3Patch.exo')
-step = V.steps[-1]
-field = step.field_outputs['S']
+V.WriteResults()
+step = V.steps.last
+field = step.frames[-1].field_outputs['S']
 for value in field.values:
     data = value.data
     assert allclose(data[:,0], 1333.333333333), 'Wrong Sxx'
     assert allclose(data[:,1], 1333.333333333), 'Wrong Syy'
     assert allclose(data[:,2],  400.), 'Wrong Sxy'
-field = step.field_outputs['E']
+field = step.frames[-1].field_outputs['E']
 for value in field.values:
     data = value.data
     assert allclose(data[:,0], 1e-3)

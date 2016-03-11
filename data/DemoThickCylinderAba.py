@@ -9,7 +9,7 @@ Nu = .499
 E = 2. * mu * (1. + Nu)
 
 def LinearSolution(ax=None):
-    V = Plane2DModel()
+    V = Plane2DModel(jobid='VolumeLocking.Linear')
     V.GenesisMesh('ThickCylinder_Linear.inp')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
@@ -19,13 +19,13 @@ def LinearSolution(ax=None):
     # Pressure on inside face
     V.Pressure('SurfID', 1.)
     V.Solve()
-    V.WriteResults('VolumeLocking.Linear')
+    V.WriteResults()
     ax = V.Plot2D(deformed=1, color='b', linestyle='-.', ax=ax, label='Linear',
                   xlim=(-.2,5), ylim=(-.2, 5))
     return ax
 
 def QuadraticSolution(ax=None):
-    V = Plane2DModel()
+    V = Plane2DModel(jobid='VolumeLocking.Quadratic')
     V.GenesisMesh('ThickCylinder_Quadratic.inp')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
@@ -35,7 +35,7 @@ def QuadraticSolution(ax=None):
     # Pressure on inside face
     V.Pressure('SurfID', 1.)
     V.Solve()
-    V.WriteResults('VolumeLocking.Quadratic')
+    V.WriteResults()
     return ax
 
 def WriteAnalyticSolution(ax=None):

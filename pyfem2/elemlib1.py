@@ -7,6 +7,7 @@ from .utilities import *
 # --------------------------------------------------------------------------- #
 class Element(object):
     nfab = 0
+    npts = None
     ndof, numnod, numdim = None, None, None
     gaussp, gaussw = None, None
     signature = None

@@ -36,8 +36,9 @@ def is_stringlike(a):
     return hasattr(a, 'strip')
 
 def is_listlike(a):
-    return (not hasattr(a, 'strip') and
-            hasattr(a, '__getitem__') or hasattr(a, '__iter__'))
+    if hasattr(a, 'strip'):
+        return False
+    return hasattr(a, '__getitem__') or hasattr(a, '__iter__')
 
 def DigitCount(p, d=1):
     return len([i for i in IntegerDigits(p) if i==d])

@@ -304,8 +304,12 @@ class FiniteElementModel(object):
         for eb in self.mesh.eleblx:
             if not any(eb.eletyp.signature[:3]):
                 continue
-            args = (INTEGRATION_POINT, eb.labels,
-                    eb.eletyp.ndir, eb.eletyp.nshr, eb.eletyp.ngauss(), eb.name)
+            if eb.eletyp.npts is not None:
+                args = (INTEGRATION_POINT, eb.labels,
+                        eb.eletyp.ndir, eb.eletyp.nshr, eb.eletyp.npts, eb.name)
+            else:
+                args = (ELEMENT_CENTROID, eb.labels,
+                        eb.eletyp.ndir, eb.eletyp.nshr, eb.name)
             step.frames[0].SymmetricTensorField('S', *args)
             step.frames[0].SymmetricTensorField('E', *args)
             step.frames[0].SymmetricTensorField('DE', *args)
@@ -1000,7 +1004,7 @@ class FiniteElementModel(object):
         key1 = key.lower()
         if key1 in ('u', 'ux', 'uy', 'uz'):
             key1 = 'displ' + key1[1:]
-        for (name, field) in self.steps[-1].field_outputs.items():
+        for (name, field) in self.steps.last.frames[-1].field_outputs.items():
             if key1 == name.lower() or key.lower() == name.lower():
                 if field.type != SCALAR:
                     comps = ','.join(key+comp for comp in field.components)
@@ -1010,11 +1014,10 @@ class FiniteElementModel(object):
                 return field.data
             if key.lower() == name.lower():
                 key1 = key.lower()
-            comps = [(field.key+c).lower() for c in field.components]
-            if key1 in comps:
+            if key1 in field.keys:
                 if field.position in (ELEMENT, INTEGRATION_POINT):
                     raise NotImplementedError('Plotting element data not done')
-                return field.data[:,comps.index(key1)]
+                return field.data[:,field.keys.index(key1)]
         raise UserInputError('No such field {0!r}'.format(key))
 
     def Plot2D(self, deformed=False, color=None, colorby=None, scale=1., **kwds):

@@ -1,5 +1,5 @@
 from pyfem2 import *
-V = Plane2DModel()
+V = Plane2DModel(jobid='PlaneStrainQuad4Patch')
 V.AbaqusMesh(filename='EC4SFP1.inp')
 V.Material('Material-1')
 V.materials['Material-1'].Elastic(E=1e6, Nu=.25)
@@ -13,11 +13,11 @@ V.PrescribedBC(40, X, .06e-3)
 V.PrescribedBC(40, Y, .12e-3)
 #V.Plot2D(show=1)
 V.Solve()
-V.WriteResults('PlaneStrainQuad4Patch.exo')
+V.WriteResults()
 
 # Average stress must be 1600 in x and y
-step = V.steps[-1]
-field = step.field_outputs['S']
+step = V.steps.last
+field = step.frames[-1].field_outputs['S']
 for value in field.values:
     data = value.data
     assert allclose(data[:,0], 1600.), 'Wrong Sxx'

@@ -1,6 +1,8 @@
+import logging
 from numpy import *
 from numpy.linalg import inv
 from .elas import elas
+from .utilities import UserInputError, is_listlike
 
 __all__ = ['Material']
 
@@ -39,17 +41,30 @@ class Material(object):
     """
     def __init__(self, name, **kwds):
         self.name = name
+
         # Young's modulus and Poisson's ratio
         self.E, self.Nu = None, None
+
         # Thermal conductivity
-        self.k = None
+        self.k_iso = None
+
         # Density
         self.density = None
-        for (k, v) in kwds.items():
+        for (kwd, v) in kwds.items():
+            k = kwd.lower()
             if k in ('density', 'rho'):
                 self.density = v
+            elif k == 'elastic':
+                try:
+                    self.Elastic(**v)
+                except TypeError:
+                    raise UserInputError('elastic properties must be a '
+                                         'dict, not {0}'.format(type(v)))
+            elif 'thermal_conductivity' in k:
+                self.ThermalConductivity(v)
             else:
-                setattr(self, k, v)
+                logging.warn('Setting unknown material property {0!r}'.format(kwd))
+                setattr(self, kwd, v)
 
     def Density(self, rho):
         """Assign mass density
@@ -106,20 +121,32 @@ class Material(object):
         self.Mu = self.G
         self.Lambda = props['Lame']
 
-    def IsotropicThermalConductivity(self, k):
+    def ThermalConductivity(self, k):
         """Assign the coefficient of thermal conductivity
 
         Parameters
         ----------
-        k : float
+        k : ndarray or float
             Coefficient of thermal conductivity
 
         """
-        self.k = k
+        if not is_listlike(k):
+            self.k_iso = k
+        else:
+            k = asarray(k)
+            self.k_aniso = eye(3)
+            if len(k) == 3:
+                fill_diagonal(self.k_aniso, k)
+            elif k.size == 9:
+                self.k_aniso[:] = k.reshape(3,3)
+            else:
+                raise UserInputError('K must be a 3 vector or 3x3 array')
+            self.k_iso = trace(self.k_aniso) / 3.
+    IsotropicThermalConductivity = ThermalConductivity
 
     def isotropic_thermal_conductivity(self, ndim):
         """The isotropic thermal conductivity matrix"""
-        return self.k * eye(ndim)
+        return self.k_iso * eye(ndim)
 
     def stiffness(self, ndir, nshr, disp=None):
         if self.E is None:

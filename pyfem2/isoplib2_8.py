@@ -24,6 +24,7 @@ class IsoPQuad8(IsoPElement):
                [0]
 
     """
+    npts = 9
     elefab = {'t':1.}
     signature = (1,1,0,0,0,0,0)
     numdim, numnod, ndof = 2, 8, 2
@@ -147,6 +148,7 @@ class PlaneStressQuad8(IsoPQuad8):
         return B
 
 class PlaneStrainQuad8Reduced(IsoPQuad8):
+    npts = 4
     ndir, nshr = 3, 1
     gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
     gaussw = ones(4)

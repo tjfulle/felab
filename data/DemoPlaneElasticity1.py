@@ -4,7 +4,7 @@ sys.path.insert(0, '../')
 from numpy import *
 from pyfem2 import *
 
-V = Plane2DModel()
+V = Plane2DModel(jobid='Plane1')
 V.GenesisMesh('PlateWithHoleQuad4.g')
 
 V.Material('Material-1')
@@ -18,7 +18,7 @@ V.PrescribedBC('RightHandSide', X, .1)
 
 V.Solve()
 
-V.WriteResults('Plane1.exo')
+V.WriteResults()
 
 if not os.getenv('NOGRAPHICS'):
     V.Plot2D(show=1, deformed=1, colorby='Ux')

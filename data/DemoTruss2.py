@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, '../')
 from pyfem2 import *
 
-V = TrussModel()
+V = TrussModel(jobid='Truss2')
 
 # Create mesh and define function space
 nodtab = [[1,-37.5,0,200],[2,37.5,0,200],[3,-37.5,37.5,100],
@@ -39,4 +39,4 @@ V.ConcentratedLoad((3, 6), X, P4)
 
 # Solve and write results
 V.Solve()
-V.WriteResults('Truss2.exo')
+V.WriteResults()

@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, '../')
 from pyfem2 import *
 
-V = Plane2DModel()
+V = Plane2DModel(jobid='PlateWithHoleQuad4QuarterSym')
 V.GenesisMesh('PlateWithHoleQuad4QuarterSym.g')
 V.Material('Material-1')
 V.materials['Material-1'].Elastic(E=100, Nu=.2)
@@ -12,7 +12,7 @@ V.PrescribedBC('SymYZ', X, 0.)
 V.PrescribedBC('SymXZ', Y, 0.)
 V.SurfaceLoad('RightHandSide', [1,0])
 V.Solve()
-V.WriteResults('PlateWithHoleQuad4QuarterSym.exo')
+V.WriteResults()
 
 F = File('PlateWithHoleQuad4QuarterSym.exo')
 max_p = [0., None]

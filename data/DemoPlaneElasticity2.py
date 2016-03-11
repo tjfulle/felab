@@ -5,7 +5,7 @@ from numpy import *
 from pyfem2 import *
 
 # Create the model
-V = Plane2DModel()
+V = Plane2DModel(jobid='Plane2')
 
 # Read mesh from file
 V.GenesisMesh('PlateWithHoleTria3.g')
@@ -22,7 +22,7 @@ V.PrescribedBC('RightHandSide', X, .1)
 # Solve for the unknown degrees of freedom
 V.Solve()
 
-V.WriteResults('Plane2.exo')
+V.WriteResults()
 
 if not os.getenv('NOGRAPHICS'):
     V.Plot2D(show=1, deformed=1)

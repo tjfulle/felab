@@ -27,6 +27,7 @@ class IsoPQuad4(IsoPElement):
               [0]
 
     """
+    npts = 4
     elefab = {'t':1.}
     signature = (1,1,0,0,0,0,0)
     numdim, numnod, ndof = 2, 4, 2
@@ -119,6 +120,7 @@ class PlaneStrainQuad4BBar(IsoPQuad4):
         return B
 
 class PlaneStrainQuad4Reduced(IsoPQuad4, IsoPReduced):
+    npts = 1
     ndir, nshr = 3, 1
     gaussp = array([[0., 0.]])
     gaussw = array([4.])
@@ -152,16 +154,16 @@ class PlaneStressQuad4Incompat(PlaneStressQuad4, IsoPIncompatibleModes):
         # Jacobian at element centroid
         # compute the shape function at the centroid (self.cp)
         dNdxi = self.shapegrad(self.cp)
-        
+
         # compute the deformation gradient at centroid (coordinates are self.xc)
         # and the jacobian
         dxdxi = dot(dNdxi, self.xc)
         dxidx = inv(dxdxi)
         J0 = det(dxidx)
-        
+
         # compute the jacobian of the element
         J = self.jacobian(self.xc, xi)
-        
+
         # compute dNdxi associated with the incompatible modes and then from it
         # and the jacobians computed above compute dNdx
         # N = [1 - xi**2, 1 - eta**2]

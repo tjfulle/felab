@@ -17,6 +17,7 @@ class StepRepository(object):
         self._keys.append(key)
         self._values.append(value)
     def __getitem__(self, key):
+        return self._values[self._keys.index(key)]
         try:
             i = self._keys.index(key)
         except ValueError:
@@ -95,20 +96,20 @@ class Frame(object):
 
     def SymmetricTensorField(self, name, position, labels, ndir, nshr, *args):
         field = SymmetricTensorField(name, position, labels, ndir, nshr, *args)
-        if position in (INTEGRATION_POINT, ELEMENT):
-            name = (args[1], name)
+        if position in (INTEGRATION_POINT, ELEMENT_CENTROID):
+            name = (args[-1], name)
         self.field_outputs[name] = field
 
     def VectorField(self, name, position, labels, ncomp, *args):
         field = VectorField(name, position, labels, ncomp, *args)
-        if position in (INTEGRATION_POINT, ELEMENT):
-            name = (args[1], name)
+        if position in (INTEGRATION_POINT, ELEMENT_CENTROID):
+            name = (args[-1], name)
         self.field_outputs[name] = field
 
     def ScalarField(self, name, position, labels, *args):
         field = ScalarField(name, position, labels, *args)
-        if position in (INTEGRATION_POINT, ELEMENT):
-            name = (args[1], name)
+        if position in (INTEGRATION_POINT, ELEMENT_CENTROID):
+            name = (args[-1], name)
         self.field_outputs[name] = field
 
     def add_data(self, **kwds):
@@ -123,21 +124,39 @@ class Frame(object):
             self.field_outputs[key].add_data(value, **d)
 
 class FieldOutputs(OrderedDict):
-    pass
+    def __getitem__(self, key):
+        try:
+            return super(FieldOutputs, self).__getitem__(key)
+        except KeyError as E:
+            pass
+        keys = []
+        for k in self.keys():
+            if is_listlike(k) and k[1] == key:
+                # element block property
+                keys.append(k)
+        if not keys:
+            raise E
+        a = self[keys[0]]
+        for k in keys[1:]:
+            a = row_stack((a, self[k]))
+        return a
 
 class FieldOutput(object):
 
-    def __init__(self, name, position, labels, type, components=None):
+    def __init__(self, name, position, labels, type, components, shape, eleblk):
         self.name = name
         self.position = position
         self.labels = labels
         self.type = type
-        self.comopnents = components
+        self.components = components
         self.key = 'displ' if name == 'U' else name
+        self.eleblk = eleblk
+        self._values = None
         if components is not None:
             self.keys = [self.key+x for x in components]
         else:
             self.keys = [self.key]
+        self.data = zeros(shape)
 
     def __getitem__(self, i):
         return self.data[i]
@@ -167,8 +186,7 @@ class FieldOutput(object):
 
     @property
     def values(self):
-        raise NotImplementedError
-        if hasattr(self, '_values'):
+        if self._values is not None:
             return self._values
         self._values = []
         for (i, label) in enumerate(self.labels):
@@ -179,17 +197,15 @@ class FieldOutput(object):
 
 class SymmetricTensorField(FieldOutput):
     def __init__(self, name, position, labels, ndir, nshr, *args):
-        c = ('xx', 'yy', 'zz')[:ndir] + ('xy', 'yz', 'xz')[:nshr]
-        super(SymmetricTensorField, self).__init__(name, position, labels,
-                                                   SYMTENSOR, c)
-        if self.position == INTEGRATION_POINT:
+        eleblk = None
+        components = ('xx', 'yy', 'zz')[:ndir] + ('xy', 'yz', 'xz')[:nshr]
+        if position == INTEGRATION_POINT:
             ngauss, eleblk = args
-            self.eleblk = eleblk
         if ndir is not None and nshr is not None:
             ntens = ndir + nshr
         else:
             ntens = 0
-        num = len(self.labels)
+        num = len(labels)
         if position == INTEGRATION_POINT:
             if ngauss:
                 shape = (num, ngauss, ntens)
@@ -197,30 +213,34 @@ class SymmetricTensorField(FieldOutput):
                 shape = (num, ntens)
         else:
             shape = (num, ntens)
-        self.data = zeros(shape)
+        super(SymmetricTensorField, self).__init__(
+            name, position, labels, SYMTENSOR, components, shape, eleblk)
 
 class VectorField(FieldOutput):
     def __init__(self, name, position, labels, nc, *args):
-        c = ('x', 'y', 'z')[:nc]
-        super(VectorField, self).__init__(name, position, labels, VECTOR, c)
-        num = len(self.labels)
-        if self.position == INTEGRATION_POINT:
-            ngauss, self.eleblk = args
+        eleblk = None
+        num = len(labels)
+        components = ('x', 'y', 'z')[:nc]
+        if position == INTEGRATION_POINT:
+            ngauss, eleblk = args
             shape = (num, ngauss, nc)
         else:
             shape = (num, nc)
-        self.data = zeros(shape)
+        super(VectorField, self).__init__(
+            name, position, labels, VECTOR, components, shape, eleblk)
 
 class ScalarField(FieldOutput):
     def __init__(self, name, position, labels, *args):
-        super(ScalarField, self).__init__(name, position, labels, SCALAR)
-        num = len(self.labels)
-        if self.position == INTEGRATION_POINT:
-            ngauss, self.eleblk = args
+        eleblk = None
+        num = len(labels)
+        components = None
+        if position == INTEGRATION_POINT:
+            ngauss, eleblk = args
             shape = (num, ngauss)
         else:
             shape = (num, 1)
-        self.data = zeros(shape)
+        super(ScalarField, self).__init__(
+            name, position, labels, SCALAR, components, shape, eleblk)
 
 class FieldValue:
     def __init__(self, position, label, type, components, data):
@@ -229,12 +249,18 @@ class FieldValue:
         self.data = data
         self.type = type
         self.components = components
+        self._mag = None
+        self._prin = None
 
     @property
     def magnitude(self):
-        if self.type in (SCALAR, VECTOR):
-            return sqrt(dot(self.data, self.data))
-
+        if self._mag is None:
+            if self.type in (SCALAR, VECTOR):
+                self._mag = sqrt(dot(self.data, self.data))
+            else:
+                w = array([1.,1.,1.,2.,2.,2.])
+                self._mag = sqrt(sum(self.data * self.data * w))
+        return self._mag
 
     def _tensor_components(self):
         if len(self.components) == 3:
@@ -250,20 +276,27 @@ class FieldValue:
         return sx, sy, sz, txy, tyz, txz
 
     @property
+    def prinvals(self):
+        if self.type != SYMTENSOR:
+            return None
+        if self._prin is None:
+            sx, sy, sz, txy, tyz, txz = self._tensor_components()
+            s3, s2, s1 = sorted(eigvalsh([[sx,txy,txz],[txy,sy,tyz],[txz,tyz,sz]]))
+            self._prin = array([s3, s2, s1])
+        return self._prin
+
+    @property
     def max_principal(self):
         if self.type != SYMTENSOR:
             return None
-        sx, sy, sz, txy, tyz, txz = self._tensor_components()
-        s3, s2, s1 = sorted(eigvalsh([[sx,txy,txz],[txy,sy,tyz],[txz,tyz,sz]]))
-        return s1
+        return self.prinvals[-1]
 
     @property
     def min_principal(self):
         if self.type != SYMTENSOR:
             return None
-        sx, sy, sz, txy, tyz, txz = self._tensor_components()
-        s3, s2, s1 = sorted(eigvalsh([[sx,txy,txz],[txy,sy,tyz],[txz,tyz,sz]]))
+        p = self.prinvals
         if len(self.components) == 6:
-            return s3
+            return p[0]
         else:
-            return s2
+            return p[1]

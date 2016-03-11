@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, '../')
 from pyfem2 import *
 
-V = Plane2DModel()
+V = Plane2DModel(jobid='PlateWithHoleQuad4')
 V.GenesisMesh('PlateWithHoleQuad4.g')
 
 V.Material('Material-1')
@@ -13,7 +13,7 @@ V.PrescribedBC('LeftHandSide', X, 0.)
 V.FixNodes('PinNode')
 V.SurfaceLoad(IHI, [1,0])
 V.Solve()
-V.WriteResults('PlateWithHoleQuad4.exo')
+V.WriteResults()
 
 F = File('PlateWithHoleQuad4.exo')
 max_p = [0., None]
