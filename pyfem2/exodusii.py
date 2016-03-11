@@ -490,15 +490,13 @@ class EXOFileWriter(EXOFile):
     def snapshot(self, step):
         if not self.initialized:
             nodvarnames, elevarnames = [], []
-            for fo in step.field_outputs.values():
-                if fo.type == SCALAR:
-                    labels = [fo.key]
-                else:
-                    labels = [fo.key + c for c in fo.components]
+            for fo in step.frames[0].field_outputs.values():
                 if fo.position == NODE:
-                    nodvarnames.extend(labels)
+                    nodvarnames.extend(fo.keys)
                 else:
-                    elevarnames.extend(labels)
+                    if any(in1d(fo.keys, elevarnames)):
+                        continue
+                    elevarnames.extend(fo.keys)
             self.initialize(nodvarnames, elevarnames)
 
         numele = self.getdim(DIM_NUM_ELE)
@@ -506,20 +504,22 @@ class EXOFileWriter(EXOFile):
         numblk = self.getdim(DIM_NUM_ELEBLK)
         numdim = self.getdim(DIM_NUM_DIM)
 
+        for frame in step.frames:
+            self.putframe(frame)
+
+    def putframe(self, frame):
         # write time value
         count = self.count
-        self.fh.variables[VAR_TIME_WHOLE][count] = step.value
-        self.fh.variables[VALS_GLO_VAR][count] = step.increment
+        self.fh.variables[VAR_TIME_WHOLE][count] = frame.value
+        self.fh.variables[VALS_GLO_VAR][count] = frame.increment
 
         nodvars = self.fh.variables.get(VAR_NAME_NOD_VAR)
         if nodvars is not None:
             nodvars = stringify2(nodvars)
-            for fo in step.field_outputs.values():
+            for fo in frame.field_outputs.values():
                 if fo.position != NODE:
                     continue
-                if fo.type == SCALAR: labels = [fo.key]
-                else: labels = [fo.key + c for c in fo.components]
-                for (k, label) in enumerate(labels):
+                for (k, label) in enumerate(fo.keys):
                     i = nodvars.index(label) + 1
                     self.fh.variables[VALS_NOD_VAR(i)][count] = fo.data[:,k]
 
@@ -527,19 +527,14 @@ class EXOFileWriter(EXOFile):
         if elevars is not None:
             elevars = stringify2(elevars)
             ebs = stringify2(self.fh.variables[VAR_EB_NAMES][:])
-            for fo in step.field_outputs.values():
+            for (name, fo) in frame.field_outputs.items():
                 if fo.position == NODE:
                     continue
-                if fo.type == SCALAR: labels = [fo.key]
-                else: labels = [fo.key + c for c in fo.components]
-                data = fo.get_data(position=ELEMENT)
-
-                for (i, label) in enumerate(labels):
+                ieb = ebs.index(name[0])
+                data = fo.get_data(position=ELEMENT_CENTROID)
+                for (i, label) in enumerate(fo.keys):
                     j = elevars.index(label) + 1
-                    # break the data up by element block
-                    for (ieb, eb) in enumerate(ebs):
-                        dat = data[ieb][:,i]
-                        self.fh.variables[VALS_ELE_VAR(j,ieb+1)][count] = dat
+                    self.fh.variables[VALS_ELE_VAR(j,ieb+1)][count] = data[:,i]
 
         self.count += 1
 

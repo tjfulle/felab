@@ -8,7 +8,7 @@ from pyfem2 import *
 V = Plane2DModel()
 
 # Read mesh from file
-V.GenesisMesh('../meshes/PlateWithHoleTria3.g')
+V.GenesisMesh('PlateWithHoleTria3.g')
 
 V.Material('Material-1')
 V.materials['Material-1'].Elastic(E=10e6, Nu=.29)

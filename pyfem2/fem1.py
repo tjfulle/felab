@@ -24,10 +24,22 @@ class FiniteElementModel(object):
 
     """
     active_dof = range(MDOF)
-    def __init__(self):
+    def __init__(self, jobid=None):
+        self.jobid = jobid or 'Job-1'
         self.mesh = None
         self.materials = {}
         self.initial_temp = None
+        self.fh = None
+
+    @property
+    def exofile(self):
+        if self.fh is not None:
+            return self.fh
+        self.fh = File(self.jobid+'.exo', mode='w')
+        self.fh.genesis(self.mesh.nodmap, self.mesh.elemap, self.mesh.coord,
+                        self.mesh.eleblx, nodesets=self.mesh.nodesets,
+                        elemsets=self.mesh.elemsets, sidesets=self.mesh.surfaces)
+        return self.fh
 
     def GenesisMesh(self, filename):
         """
@@ -157,7 +169,6 @@ class FiniteElementModel(object):
         self.numnod = self.mesh.numnod
         self.numdim = self.mesh.numdim
 
-        self.dofs = None
         self.doftags = zeros((self.numnod, MDOF), dtype=int)
         self.dofvals = zeros((self.numnod, MDOF), dtype=float)
 
@@ -173,9 +184,6 @@ class FiniteElementModel(object):
         self.sflux = zeros((self.numele, self.mesh.maxedge))
 
         self.validated = False
-
-    def init(self):
-        raise NotImplementedError('Application must define init')
 
     @property
     def orphaned_elements(self):
@@ -271,7 +279,7 @@ class FiniteElementModel(object):
                 eftab.append(Flatten([[el.ndof*ni+i for i in range(el.ndof)]
                                       for ni in el.nodes]))
             # Element freedom table
-            eftab = array(eftab)
+            self.eftab = array(eftab)
 
             active_dof = [i for i in range(MDOF) if nfs[i]]
 
@@ -283,21 +291,22 @@ class FiniteElementModel(object):
         node_labels = sorted(self.mesh.nodmap, key=lambda k: self.mesh.nodmap[k])
 
         self.steps = StepRepository()
-        self.steps.Step('Step-1')
+        step = self.steps.Step()
 
         # Node data
         nd = self.numdim
-        self.steps['Step-1'].frames[0].ScalarField('T', NODE, node_labels)
-        self.steps['Step-1'].frames[0].VectorField('U', NODE, node_labels, nd)
-        #if self.initial_temp is not None:
-        #    self.steps[0].field_outputs['T'].add_data(self.initial_temp)
+        step.frames[0].ScalarField('T', NODE, node_labels)
+        step.frames[0].VectorField('U', NODE, node_labels, nd)
+        step.frames[0].VectorField('R', NODE, node_labels, nd)
+        if self.initial_temp is not None:
+            step.field_outputs['T'].add_data(self.initial_temp)
 
         for eb in self.mesh.eleblx:
             args = (INTEGRATION_POINT, eb.labels,
                     eb.eletyp.ndir, eb.eletyp.nshr, eb.eletyp.ngauss(), eb.name)
-            self.steps['Step-1'].frames[0].SymmetricTensorField('S', *args)
-            self.steps['Step-1'].frames[0].SymmetricTensorField('E', *args)
-            self.steps['Step-1'].frames[0].SymmetricTensorField('DE', *args)
+            step.frames[0].SymmetricTensorField('S', *args)
+            step.frames[0].SymmetricTensorField('E', *args)
+            step.frames[0].SymmetricTensorField('DE', *args)
 
     def _element_freedom_table(self):
         eftab = []
@@ -329,50 +338,43 @@ class FiniteElementModel(object):
             raise UserInputError('Mesh must first be created')
         self.steps[0].FieldOutput(name, type, position)
 
-    def snapshot(self, **kwds):
-        self.steps[-1].add_data(**kwds)
-
-    def _write_steps(self, filename):
-        if not filename.endswith(('.e', '.exo')):
-            filename += '.exo'
-        f = File(filename, mode='w')
-        f.genesis(self.mesh.nodmap, self.mesh.elemap, self.mesh.coord,
-                  self.mesh.eleblx, nodesets=self.mesh.nodesets,
-                  elemsets=self.mesh.elemsets, sidesets=self.mesh.surfaces)
-        for step in self.steps:
-            f.snapshot(step)
-
-        fn = os.path.splitext(filename)[0] + '-1.exo'
-        f = File(filename, mode='w')
-        f.genesis(self.mesh.nodmap, self.mesh.elemap, self.mesh.coord,
-                  self.mesh.eleblx, nodesets=self.mesh.nodesets,
-                  elemsets=self.mesh.elemsets, sidesets=self.mesh.surfaces)
-        f.put(self.noddat, self.ebdat)
-
-        self.noddat.advance()
-        for (key, d) in self.ebdat.items():
-            d.advance()
+    def snapshot(self, step=None):
+        if step is None:
+            step = self.steps.values()[-1]
+        if step.written:
+            return
+        self.exofile.snapshot(step)
+        step.written = 1
 
     def assemble_global_stiffness(self, *args):
-        """Assembles the global stiffness matrix
+        """
+        Assembles the global stiffness for problems having uniform DOF.
 
-        This method is a layer between the other assemblers. It will call the
-        appropriate stiffness assembler, depending on whether the finite
-        element problem has elements with uniform DOF, or variable DOF.
+        A problem with uniform DOF is one in which every element in the mesh
+        has the same DOF signature. This method is intended to be called in
+        the application code's `Solve` method.
 
         Parameters
         ----------
         args : tuple
-            Arguments to be sent to individual element stiffness methods.
+            Arguments to be sent to the individual element stiffness methods.
+            Must have length `numele`
 
         Returns
         -------
         K : ndarray
-            The NxN global stiffness array, where N is the total number of
-            degrees of freedom in the system.
+            The NxN global stiffness array, where N is the total number of degrees
+            of freedom in the probem.
 
         Notes
         -----
+        ``assemble_global_stiffness`` implements a simplified assembler
+        that adopts the following assumptions:
+
+        - nodes are ordered continuously from 0 to :math:`n-1`;
+        - there are no multifreedom constraints; and
+        - the global stiffness matrix is stored as a full symmetric matrix.
+
         The arguments sent to this function:
 
         - are sent in by specific application codes;
@@ -398,33 +400,40 @@ class FiniteElementModel(object):
               ...
 
         """
-        if not self.validated:
-            raise PyFEM2Error('Problem must be validated before assembly')
-        if self.vdof:
-            return self.assemble_global_stiffness_vdof(*args)
-        else:
-            return self.assemble_global_stiffness_udof(*args)
+        # compute the element stiffness and scatter to global array
+        K = zeros((self.numdof, self.numdof))
+        for (iel, el) in enumerate(self.elements):
+            # Element stiffness
+            elearg = [arg[iel] for arg in args]
+            Ke = el.stiffness(*elearg)
+            eft = self.eftab[iel]
+            K[IX(eft, eft)] += Ke
+        return K
 
     def assemble_global_force(self, *args):
         """Assembles the global force matrix
 
-        This method is a layer between the other assemblers. It will call the
-        appropriate force assembler, depending on whether the finite
-        element problem has elements with uniform DOF, or variable DOF.
-
         Parameters
         ----------
         args : tuple
-            Arguments to be sent to individual element force methods.
+            Arguments to be sent to the individual element force methods.
+            Must have length ``numele``
 
         Returns
         -------
-        K : ndarray
+        F : ndarray
             The global force array, with lentgh N, where N is the total number
             of degrees of freedom in the system.
 
         Notes
         -----
+        ``assemble_global_force`` implements a simplified assembler
+        that adopts the following assumptions:
+
+        - nodes are ordered continuously from 0 to :math:`n-1`;
+        - there are no multifreedom constraints.
+
+
         The arguments sent to this function:
 
         - are sent in by specific application codes;
@@ -438,7 +447,7 @@ class FiniteElementModel(object):
 
         .. code:: python
 
-           K = self.assemble_global_force(self.dloads, self.sloads)
+           F = self.assemble_global_force(self.dloads, self.sloads)
 
         This method then calls each element force as:
 
@@ -452,22 +461,52 @@ class FiniteElementModel(object):
         """
         if not self.validated:
             raise PyFEM2Error('Problem must be validated before assembly')
-        if self.vdof:
-            return self.assemble_global_force_vdof(*args)
-        else:
-            return self.assemble_global_force_udof(*args)
 
-    def apply_bc(self, K, F):
+        Q = zeros(self.numdof)
+        F = zeros(self.numdof)
+
+        # compute contribution from Neumann boundary
+        for n in range(self.numnod):
+            ix = 0
+            for j in range(MDOF):
+                if self.nodfat[n,j] > 0:
+                    if self.doftags[n,j] == NEUMANN:
+                        I = self.nodfmt[n] + ix
+                        Q[I] = self.dofvals[n,j]
+                    ix += 1
+
+        # compute contribution from element sources and boundary loads
+        for (iel, el) in enumerate(self.elements):
+            elearg = [arg[iel] for arg in args]
+            Fe = el.force(*elearg)
+            eft = self.eftab[iel]
+            F[eft] += Fe
+
+        return F, Q
+
+    def assemble_global_residual(self, u):
+        """
+        Assembles the global residual
+
+        """
+        # compute contribution from element sources and boundary loads
+        R = zeros(self.numdof)
+        for (ieb, eb) in self.mesh.eleblx:
+            S = self.steps.last.frames[-1].field_outputs[eb.name, 'S']
+            for (e, xel) in enumerate(eb.labels):
+                iel = self.mesh.elemap[xel]
+                el = self.elements[iel]
+                xe = el.xc + u[el.nodes]
+                Re = el.residual(xe, S[e])
+                R[self.eftab[iel]] += Re
+        return R
+
+    def apply_bc(self, K, F, u=None, du=None, fac=1.):
         """
         .. _apply_bc:
 
         Apply boundary conditions to the global stiffness ``K`` and global
         force ``F``.
-
-        This method is a layer between the other boundary condition
-        application methods. It will call the appropriate method
-        depending on whether the finite element problem has elements with
-        uniform DOF, or variable DOF.
 
         Parameters
         ----------
@@ -489,217 +528,31 @@ class FiniteElementModel(object):
         application code's ``Solve`` method.
 
         """
-        if self.vdof:
-            return self.apply_bc_vdof(K, F)
-        else:
-            return self.apply_bc_udof(K, F)
 
-    def assemble_global_stiffness_udof(self, *args):
-        """
-        Assembles the global stiffness for problems having uniform DOF.
+        if  u is None:  u = zeros(self.numdof)
+        if du is None: du = zeros(self.numdof)
 
-        A problem with uniform DOF is one in which every element in the mesh
-        has the same DOF signature. This method is intended to be called in
-        the application code's `Solve` method.
-
-        Parameters
-        ----------
-        args : tuple
-            Arguments to be sent to the individual element stiffness methods.
-            Must have length `numele`
-
-        Returns
-        -------
-        K : ndarray
-            The NxN global stiffness array, where N is the total number of degrees
-            of freedom in the probem.
-
-        Notes
-        -----
-        ``assemble_global_stiffness_udof`` implements a simplified assembler
-        that adopts the following assumptions:
-
-        - nodes are ordered continuously from 0 to :math:`n-1`;
-        - the number and type of degrees of freedom at each node is the same;
-        - there are no multifreedom constraints; and
-        - the global stiffness matrix is stored as a full symmetric matrix.
-
-        See Also
-        --------
-        FiniteElementModel.assemble_global_stiffness
-
-        """
-        # compute the element stiffness and scatter to global array
-        ndof = self.elements[0].ndof
-        K = zeros((ndof*self.numnod, ndof*self.numnod))
-        for (iel, el) in enumerate(self.elements):
-            # Element stiffness
-            elearg = [arg[iel] for arg in args]
-            Ke = el.stiffness(*elearg)
-            # GLOBAL DOF = NUMBER OF DOF PER NODExNODE NUMBER + LOCAL DOF
-            eft = Flatten([[ndof*ni+i for i in range(ndof)] for ni in el.nodes])
-            neldof = len(eft)
-            for i in range(neldof):
-                ii = eft[i]
-                for j in range(i, neldof):
-                    jj = eft[j]
-                    K[ii, jj] += Ke[i,j]
-                    K[jj, ii] = K[ii, jj]
-        return K
-
-    def assemble_global_force_udof(self, *args):
-        """
-        Assembles the global force for problems having uniform DOF.
-
-        A problem with uniform DOF is one in which every element in the mesh
-        has the same DOF signature. This method is intended to be called in
-        the application code's ``Solve`` method.
-
-        Parameters
-        ----------
-        args : tuple
-            Arguments to be sent to the individual element force methods.
-            Must have length ``numele``
-
-        Returns
-        -------
-        K : ndarray
-            The NxN global stiffness array, where N is the total number of degrees
-            of freedom in the probem.
-
-        Notes
-        -----
-        ``assemble_global_force_udof`` implements a simplified assembler
-        that adopts the following assumptions:
-
-        - nodes are ordered continuously from 0 to :math:`n-1`;
-        - the number and type of degrees of freedom at each node is the same; and
-        - there are no multifreedom constraints.
-
-        See Also
-        --------
-        FiniteElementModel.assemble_global_force
-
-        """
-        doftags = self.doftags[:,self.active_dof]
-        dofvals = self.dofvals[:,self.active_dof]
-        if doftags.ndim == 1:
-            doftags = doftags.reshape(-1,1)
-            dofvals = dofvals.reshape(-1,1)
-        numnod, ndof = doftags.shape
-        # Force contribution on Neummann boundary
-        Q = array([dofvals[i,j] if doftags[i,j] == NEUMANN else 0.
-                   for i in range(numnod) for j in range(ndof)])
-        # compute contribution from element sources and boundary loads
-        F = zeros(ndof*numnod)
-        for (iel, el) in enumerate(self.elements):
-            elearg = [arg[iel] for arg in args]
-            Fe = el.force(*elearg)
-            # GLOBAL DOF = NUMBER OF DOF PER NODExNODE NUMBER + LOCAL DOF
-            eft = Flatten([[ndof*ni+i for i in range(ndof)] for ni in el.nodes])
-            for i in range(Fe.shape[0]):
-                F[eft[i]] += Fe[i]
-
-        return F, Q
-
-    def apply_bc_udof(self, K, F):
-        """
-        Applies boundary conditions for problems having uniform DOF.
-
-        A problem with uniform DOF is one in which every element in the mesh
-        has the same DOF signature. This method is intended to be called in
-        the application code's ``Solve`` method.
-
-        Parameters
-        ----------
-        K : ndarray
-            Global stiffness
-        F : ndarray
-            Global force
-
-        Returns
-        -------
-        Kbc, Fbc : ndarray
-            Boundary condition modified stiffness and force
-
-        See Also
-        --------
-        FiniteElementModel.apply_bc
-
-        """
-        doftags = self.doftags[:,self.active_dof]
-        dofvals = self.dofvals[:,self.active_dof]
-        if doftags.ndim == 1:
-            doftags = doftags.reshape(-1,1)
-            dofvals = dofvals.reshape(-1,1)
-        numnod, ndof = doftags.shape
+        # copy the global arrays
         Kbc, Fbc = K.copy(), F.copy()
+        ubc, mask = [], array([False]*self.numdof)
 
         # Dirichlet boundary conditions
-        for i in range(numnod):
-            for j in range(ndof):
-                if doftags[i,j] == DIRICHLET:
-                    I = i * ndof + j
-                    Fbc -= [K[k,I] * dofvals[i,j] for k in range(numnod*ndof)]
-                    Kbc[I, :] = Kbc[:, I] = 0
-                    Kbc[I, I] = 1
-
-        # Further modify RHS for Dirichlet boundary
-        # This must be done after the loop above.
-        for i in range(numnod):
-            for j in range(ndof):
-                if doftags[i,j] == DIRICHLET:
-                    Fbc[i*ndof+j] = dofvals[i,j]
-
-        return Kbc, Fbc
-
-    def assemble_global_stiffness_vdof(self, *args):
-        K = zeros((self.numdof, self.numdof))
-        for (iel, el) in enumerate(self.elements):
-            # Element stiffness
-            elearg = [arg[iel] for arg in args]
-            Ke = el.stiffness(*elearg)
-            eft = self.eftab[iel]
-            neldof = len(eft)
-            for i in range(neldof):
-                ii = eft[i]
-                for j in range(i, neldof):
-                    jj = eft[j]
-                    K[ii,jj] += Ke[i,j]
-                    K[jj,ii] = K[ii,jj]
-        return K
-
-    def assemble_global_force_vdof(self, *args):
-        Q = zeros(self.numdof)
-        F = zeros(self.numdof)
-        for n in range(self.numnod):
+        for i in range(self.numnod):
             ix = 0
             for j in range(MDOF):
-                if self.nodfat[n,j] > 0:
-                    if self.doftags[n,j] == NEUMANN:
-                        ii = self.nodfmt[n] + ix
-                        Q[ii] = self.dofvals[n,j]
-                    ix += 1
-        return F, Q
-
-    def apply_bc_vdof(self, K, F):
-        # Apply boundary conditions on copies of K and F
-        ubc, mask = [], array([False]*(self.numdof))
-        Kbc, Fbc = K.copy(), F.copy()
-        for inode in range(self.numnod):
-            ix = 0
-            for j in range(MDOF):
-                if self.nodfat[inode,j] <= 0:
+                if self.nodfat[i,j] <= 0:
                     continue
-                if self.doftags[inode,j] == DIRICHLET:
-                    ii = self.nodfmt[inode] + ix
-                    Fbc -= [K[k,ii] * self.dofvals[inode,j]
-                            for k in range(self.numdof)]
-                    ubc.append(self.dofvals[inode,j])
-                    mask[ii] = True
-                    Kbc[ii,:] = Kbc[:,ii] = 0
-                    Kbc[ii,ii] = 1
+                if self.doftags[i,j] == DIRICHLET:
+                    I = self.nodfmt[i] + ix
+                    u_cur = u[I] + du[I]
+                    ufac = fac * self.dofvals[i,j] - u_cur
+                    Fbc -= [K[k,I] * ufac for k in range(self.numdof)]
+                    ubc.append(ufac)
+                    mask[I] = True
+                    Kbc[I,:] = Kbc[:,I] = 0
+                    Kbc[I,I] = 1
                 ix += 1
+
         Fbc[mask] = ubc
         return Kbc, Fbc
 
@@ -1201,17 +1054,7 @@ class FiniteElementModel(object):
         return self.mesh.Plot2D(xy=xy, elecon=array(elecon), color=color,
                                 colorby=colorby, **kwds)
 
-    def WriteResults(self, filename):
-        """Write the finite element results to a file
-
-        Parameters
-        ----------
-        filename : str
-
-        Notes
-        -----
-        If ``filename`` is sent with no extension, the ``.exo`` extension is
-        appended.
-
-        """
-        self._write_steps(filename)
+    def WriteResults(self):
+        """Write the finite element results to a file"""
+        for (name, step) in self.steps.items():
+            self.snapshot(step)

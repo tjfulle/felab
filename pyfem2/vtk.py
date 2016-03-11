@@ -8,9 +8,6 @@ import xml.dom.minidom as xdom
 from .constants import *
 from .elemlib1 import ElementFamily
 
-MESHD = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../meshes')
-assert os.path.isdir(MESHD)
-
 # Linear cells
 VTK_EMPTY_CELL       = 0
 VTK_VERTEX           = 1
@@ -124,7 +121,7 @@ class VTKFile(object):
             if filename is None:
                 raise ValueError('No filename given')
             if not os.path.isfile(filename):
-                f = os.path.join(MESHD, filename)
+                f = os.path.join(DATA_D, filename)
                 if not os.path.isfile(f):
                     raise ValueError('File not found: {0!r}'.format(filename))
                 filename = f

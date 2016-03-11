@@ -8,7 +8,7 @@ from pyfem2 import *
 V = HeatTransfer2DModel()
 
 # Read mesh from file
-V.GenesisMesh('../meshes/PlateWithHoleTria3Fine.g')
+V.GenesisMesh('PlateWithHoleTria3Fine.g')
 
 # Create a material and define the thermal conductivity
 V.Material('Material-1')

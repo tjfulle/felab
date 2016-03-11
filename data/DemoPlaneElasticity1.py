@@ -5,7 +5,7 @@ from numpy import *
 from pyfem2 import *
 
 V = Plane2DModel()
-V.GenesisMesh('../meshes/PlateWithHoleQuad4.g')
+V.GenesisMesh('PlateWithHoleQuad4.g')
 
 V.Material('Material-1')
 V.materials['Material-1'].Elastic(E=10e6, Nu=.29)

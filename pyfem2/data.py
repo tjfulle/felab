@@ -2,55 +2,85 @@ from numpy import *
 import logging
 from numpy.linalg import eigvalsh
 from collections import OrderedDict
+from copy import deepcopy
 
 from .utilities import *
+from .elemlib1 import InterpolateToCentroid
 
 __all__ = ['StepRepository']
 
-def component_labels(type, numdim, ndir, nshr):
-    if type == SYMTENSOR:
-        components = ['xx','yy','zz'][:ndir] + ['xy','yz','xz'][:nshr]
-    elif type == VECTOR:
-        components = ['x','y','z'][:numdim]
-    else:
-        components = None
-    return components
-
-class StepRepository(OrderedDict):
-    def Step(self, name, start=0.):
-        self[name] = Step(name, start=start)
+class StepRepository(object):
+    def __init__(self):
+        self._keys = []
+        self._values = []
+    def __setitem__(self, key, value):
+        self._keys.append(key)
+        self._values.append(value)
+    def __getitem__(self, key):
+        try:
+            i = self._keys.index(key)
+        except ValueError:
+            raise KeyError(key)
+        return self._values[i]
+    def __len__(self):
+        return len(self._keys)
+    def __iter__(self):
+        return iter(self._keys)
+    def keys(self):
+        return self._keys
+    def values(self):
+        return self._values
+    def items(self):
+        for (i, key) in enumerate(self._keys):
+            yield (key, self._values[i])
+    def Step(self, name=None, copy=1):
+        if name is None:
+            j = 1
+            while 1:
+                name = 'Step-{0}'.format(len(self._keys)+j)
+                if name not in self._keys:
+                    break
+                j += 1
+        if not self._values:
+            step = Step(name, 0.)
+        else:
+            last = self._values[-1].framces[-1]
+            step = Step(name, last.value)
+            if copy:
+                step.frames[0].field_outputs = deepcopy(last.field_outputs)
+        self[name] = step
+        return self._values[-1]
+    @property
+    def last(self):
+        return self._values[-1]
+    @property
+    def first(self):
+        return self._values[0]
 
 class Step(object):
-    def __init__(self, name, start=0.):
+    def __init__(self, name, start):
+        self.written = 0
         self.name = name
         self.time = start
         self.frames = []
         self.Frame(0.)
-
-    def __getitem__(self, i):
-        return self.frames[i]
-
-    def __iter__(self):
-        return iter(self.frames)
+        self.temp_frame = None
 
     def __len__(self):
         return len(self.frames)
 
-    def Frame(self, dtime, copy=0):
+    def Frame(self, dtime, copy=1):
         frame = Frame(self.time, dtime)
         self.time += dtime
-        if copy:
+        if self.frames and copy:
             frame_n = self.frames[-1]
-            for fo in frame_n.field_outputs.values():
-                fo1 = frame.FieldOutput(fo.name, fo.type, fo.position)
-                data = frame_n.field_outputs[fo.name].get_data()
-                if fo1.position == NODE:
-                    fo1.add_data(data)
-                else:
-                    for (i, dx) in enumerate(data):
-                        fo1.add_data(dx, block=i)
+            frame.field_outputs = deepcopy(frame_n.field_outputs)
         self.frames.append(frame)
         return frame
+
+    def TempFrame(self):
+        self.temp_frame = Frame(self.time, 0.)
+        self.temp_frame.field_outputs = deepcopy(self.frames[-1].field_outputs)
 
 class Frame(object):
     def __init__(self, start, dtime):
@@ -58,6 +88,10 @@ class Frame(object):
         self.increment = dtime
         self.value = start + dtime
         self.field_outputs = FieldOutputs()
+
+    def adjust_dt(self, dtime):
+        self.increment = dtime
+        self.value = self.start + dtime
 
     def SymmetricTensorField(self, name, position, labels, ndir, nshr, *args):
         field = SymmetricTensorField(name, position, labels, ndir, nshr, *args)
@@ -77,222 +111,115 @@ class Frame(object):
             name = (args[1], name)
         self.field_outputs[name] = field
 
-    def add_data(self, **kwargs):
-        for (key, value) in kwargs.items():
-            kwds = {}
+    def add_data(self, **kwds):
+        for (key, value) in kwds.items():
+            d = {}
             if isinstance(value, tuple):
                 if len(value) == 2:
+                    d['ix'] = value[1]
                     value = value[0]
-                    kwds['ix'] = value[1]
                 else:
                     raise ValueError('Unknown add_data option for {0}'.format(key))
-            self.field_outputs[key].add_data(value, **kwds)
+            self.field_outputs[key].add_data(value, **d)
 
 class FieldOutputs(OrderedDict):
     pass
 
 class FieldOutput(object):
-    def __init__(self, mesh, name, type, position, numcomp=None):
-        self._values = None
+
+    def __init__(self, name, position, labels, type, components=None):
         self.name = name
-        self.key = 'displ' if name.upper() == 'U' else name
-        self.type = type
         self.position = position
-        self.mesh = mesh
-        numdim, numele, numnod = mesh.numdim, mesh.numele, mesh.numnod
-
-        if self.position not in (NODE, INTEGRATION_POINT, ELEMENT):
-            raise ValueError('Unknown field position')
-
-        if self.type not in (SCALAR, VECTOR, SYMTENSOR):
-            raise ValueError('Unknown field type')
-
-        if self.position == NODE:
-            if self.type == SCALAR:
-                self.components = None
-                self.data = zeros((mesh.numnod,1))
-            elif self.type == VECTOR:
-                self.components = ('x','y','z')[:numdim]
-                self.data = zeros((mesh.numnod, numdim))
-            else:
-                raise ValueError('Node tensors not yet supported')
-
-        elif self.position == ELEMENT:
-            if self.type == SCALAR:
-                self.components = None
-                self.data = [zeros((eb.numele,1)) for eb in mesh.eleblx]
-            elif self.type == VECTOR:
-                self.components = ('x','y','z')[:numdim]
-                self.data = [zeros((eb.numele, numdim)) for eb in mesh.eleblx]
-            elif self.type == SYMTENSOR:
-                self.data = []
-                for eb in mesh.eleblx:
-                    if numcomp is None:
-                        ndir, nshr = eb.eletyp.ndir, eb.eletyp.nshr
-                    else:
-                        ndir, nshr = {3:(2,1), 4:(3,1), 6:(3,3)}[numcomp]
-                    numcomp = ndir + nshr
-                    self.components = ('xx','yy','zz')[:ndir]+('xy','yz','xz')[:nshr]
-                    self.data.append(zeros((eb.numele, numcomp)))
-
+        self.labels = labels
+        self.type = type
+        self.comopnents = components
+        self.key = 'displ' if name == 'U' else name
+        if components is not None:
+            self.keys = [self.key+x for x in components]
         else:
-            if self.type == SCALAR:
-                self.components = None
-                self.data = [zeros(eb.numele, eb.npt) for eb in mesh.eleblx]
-            elif self.type == VECTOR:
-                self.components = ('x','y','z')[:numdim]
-                self.data = [zeros((eb.numele, eb.npt, numdim))
-                             for eb in mesh.eleblx]
-            elif self.type == SYMTENSOR:
-                self.data = []
-                for eb in mesh.eleblx:
-                    if numcomp is None:
-                        ndir, nshr = eb.eletyp.ndir, eb.eletyp.nshr
-                    else:
-                        ndir, nshr = {3:(2,1), 4:(3,1), 6:(3,3)}[numcomp]
-                    numcomp = ndir + nshr
-                    npt = len(eb.eletyp.gaussp)
-                    self.components = ('xx','yy','zz')[:ndir]+('xy','yz','xz')[:nshr]
-                    self.data.append(zeros((eb.numele, npt, numcomp)))
+            self.keys = [self.key]
 
-    def __getitem__(self, args):
-        return self.data[args]
+    def __getitem__(self, i):
+        return self.data[i]
 
-    def add_data(self, data, ix=None, block=None, column=None):
+    def add_data(self, data, ix=None):
         data = asarray(data)
-        if self.position == NODE:
-            if ix is None:
-                ix = arange(self.data.shape[0])
-            if column is not None:
-                self.data[ix, column] = data
-            else:
-                assert data.size == self.data[ix].size, 'Incorrect data shape'
-                data.resize(self.data[ix].shape)
-                self.data[ix] = data
+        if ix is not None:
+            self.data[ix] = data
         else:
-            # group element data by block
-            if data.ndim == 1:
-                data = data.reshape(-1, 1)
-            for (i, blk) in enumerate(self.mesh.eleblx):
-                ix = [self.mesh.elemap[xel] for xel in blk.labels]
-                if column is not None:
-                    self.data[i][ix, column] = data[:,0]
-                else:
-                    self.data[i][ix] = data
+            assert data.shape == self.data.shape
+            self.data[:] = data
 
-    def get_data(self, position=None, block=None):
+    def get_data(self, position=None):
 
-        if position is None and block is None:
-            return array(self.data)
+        if position is None:
+            return self.data
 
-        position = position or self.position
+        if position == ELEMENT_CENTROID:
 
-        if block is not None:
-            for eb in self.mesh.eleblx:
-                if eb.name == block:
-                    theblk = eb
-                    break
-            else:
-                raise ValueError('Unrecognized element block {0!r}'.format(block))
+            if self.position != INTEGRATION_POINT:
+                raise ValueError('Cannot project data to centroid')
 
-        if self.position == ELEMENT:
-            if position not in (ELEMENT, ELEMENT_CENTROID):
-                raise ValueError('Bad position request for ELEMENT data')
-            if block is None:
-                return array(self.data)
-            return array(self.data[theblk.elems])
+            # Interpolate Gauss point data to element center
+            return array([InterpolateToCentroid(x) for x in self.data])
 
-        elif self.position == NODE:
-            if position != NODE:
-                raise ValueError('Bad position request for NODE data')
-            if block is not None:
-                raise ValueError('Cannot get block data for NODE position')
-                ix = sorted(unique(theblk.elecon))
-                return self.data[ix]
-            return array(self.data)
-
-        # Interpolate Gauss point data to element center
-        ave = []
-        for (i, dx) in enumerate(self.data):
-            et = self.mesh.eleblx[i].eletyp
-            ave.append(et.interpolate_to_centroid(dx))
-        return ave
+        raise ValueError('Unknown position')
 
     @property
     def values(self):
-        if self._values is not None:
+        raise NotImplementedError
+        if hasattr(self, '_values'):
             return self._values
         self._values = []
-        if self.position == NODE:
-            xd = self.data
-        else:
-            xd = vstack(self.data)
-        for (i, row) in enumerate(xd):
-            if self.position == NODE:
-                label = self.mesh.inodmap[i]
-            else:
-                label = self.mesh.ielemap[i]
+        for (i, label) in enumerate(self.labels):
             fv = FieldValue(self.position, label, self.type,
-                            self.components, row)
+                            self.components, self.data[i])
             self._values.append(fv)
         return self._values
 
 class SymmetricTensorField(FieldOutput):
     def __init__(self, name, position, labels, ndir, nshr, *args):
-        self.name = name
-        self.position = position
-        self.labels = labels
-        self.type = SYMTENSOR
-        self.components = ('xx', 'yy', 'zz')[:ndir] + ('xy', 'yz', 'xz')[:nshr]
-
-        if position == INTEGRATION_POINT:
+        c = ('xx', 'yy', 'zz')[:ndir] + ('xy', 'yz', 'xz')[:nshr]
+        super(SymmetricTensorField, self).__init__(name, position, labels,
+                                                   SYMTENSOR, c)
+        if self.position == INTEGRATION_POINT:
             ngauss, eleblk = args
             self.eleblk = eleblk
-
         if ndir is not None and nshr is not None:
             ntens = ndir + nshr
         else:
             ntens = 0
-
         num = len(self.labels)
         if position == INTEGRATION_POINT:
             if ngauss:
-                shape = (2, num, ngauss, ntens)
+                shape = (num, ngauss, ntens)
             else:
-                shape = (2, num, ntens)
+                shape = (num, ntens)
         else:
-            shape = (2, num, ntens)
+            shape = (num, ntens)
         self.data = zeros(shape)
 
 class VectorField(FieldOutput):
     def __init__(self, name, position, labels, nc, *args):
-        self.name = name
-        self.position = position
-        self.labels = labels
-        self.type = VECTOR
-
-        num = len(labels)
-        self.components = ('x', 'y', 'z')[:nc]
-        if position == INTEGRATION_POINT:
+        c = ('x', 'y', 'z')[:nc]
+        super(VectorField, self).__init__(name, position, labels, VECTOR, c)
+        num = len(self.labels)
+        if self.position == INTEGRATION_POINT:
             ngauss, self.eleblk = args
-            shape = (2, num, ngauss, nc)
+            shape = (num, ngauss, nc)
         else:
-            shape = (2, num, nc)
+            shape = (num, nc)
         self.data = zeros(shape)
 
 class ScalarField(FieldOutput):
     def __init__(self, name, position, labels, *args):
-        self.name = name
-        self.position = position
-        self.labels = labels
-        self.type = SCALAR
-
-        num = len(labels)
+        super(ScalarField, self).__init__(name, position, labels, SCALAR)
+        num = len(self.labels)
         if self.position == INTEGRATION_POINT:
             ngauss, self.eleblk = args
-            shape = (2, num, ngauss)
+            shape = (num, ngauss)
         else:
-            shape = (2, num,)
+            shape = (num, 1)
         self.data = zeros(shape)
 
 class FieldValue:

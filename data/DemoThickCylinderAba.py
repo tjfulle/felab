@@ -10,7 +10,7 @@ E = 2. * mu * (1. + Nu)
 
 def LinearSolution(ax=None):
     V = Plane2DModel()
-    V.GenesisMesh('../meshes/ThickCylinder_Linear.inp')
+    V.GenesisMesh('ThickCylinder_Linear.inp')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
     V.AssignProperties('ALL', PlaneStrainQuad4, 'Material-1', t=1)
@@ -26,7 +26,7 @@ def LinearSolution(ax=None):
 
 def QuadraticSolution(ax=None):
     V = Plane2DModel()
-    V.GenesisMesh('../meshes/ThickCylinder_Quadratic.inp')
+    V.GenesisMesh('ThickCylinder_Quadratic.inp')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
     V.AssignProperties('ALL', PlaneStrainQuad8BBar, 'Material-1', t=1)
@@ -39,7 +39,7 @@ def QuadraticSolution(ax=None):
     return ax
 
 def WriteAnalyticSolution(ax=None):
-    mesh = Mesh(filename='../meshes/ThickCylinder_Linear.inp')
+    mesh = Mesh(filename='ThickCylinder_Linear.inp')
     ix = where(mesh.coord[:,1]<=1e-12)
     a = mesh.coord[ix][:,0].min()
     b = mesh.coord[ix][:,0].max()

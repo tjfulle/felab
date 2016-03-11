@@ -14,7 +14,7 @@ def Runall(ax=None):
         filename = '../../pyfem2-docs/_images/VolumeLocking_%d.png'%i
 
         # Analytic solution
-        mesh = Mesh(filename='../meshes/QuarterCylinderQuad4.g')
+        mesh = Mesh(filename='QuarterCylinderQuad4.g')
         p = 1.
         a, b = mesh.coord[0, 1], mesh.coord[-1, 0]
         u = zeros_like(mesh.coord)
@@ -30,7 +30,7 @@ def Runall(ax=None):
 
         # Linear finite element solution
         V = Plane2DModel()
-        V.GenesisMesh('../meshes/QuarterCylinderQuad4.g')
+        V.GenesisMesh('QuarterCylinderQuad4.g')
         V.Material('Material-1')
         V.materials['Material-1'].Elastic(E=E, Nu=Nu)
         V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1')

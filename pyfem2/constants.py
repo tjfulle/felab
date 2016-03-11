@@ -26,6 +26,10 @@ SCALAR = 'Scalar'
 VECTOR = 'Vector'
 SYMTENSOR = 'Tensor'
 
+# SOLVERS
+NEWTON = 'Newton'
+RIKS = 'Riks'
+
 # FIELD POSITIONS
 NODE = 'Node'
 ELEMENT = 'Element'
@@ -45,3 +49,9 @@ ROOT3 = sqrt(3.0)
 TOOR2 = 1.0 / ROOT2
 TOOR3 = 1.0 / ROOT3
 ROOT23 = ROOT2 / ROOT3
+
+_d = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+DATA_D = os.path.join(_d, 'data')
+if not os.path.isdir(DATA_D):
+    import logging
+    logging.warn('pyfem2 data directory not located')

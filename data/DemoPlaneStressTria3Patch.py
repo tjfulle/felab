@@ -1,6 +1,6 @@
 from pyfem2 import *
 V = Plane2DModel()
-V.AbaqusMesh(filename='../meshes/EC3SFP1.inp')
+V.AbaqusMesh(filename='EC3SFP1.inp')
 V.Material('Material-1')
 V.materials['Material-1'].Elastic(E=1e6, Nu=.25)
 V.AssignProperties('EALL', PlaneStressTria3, 'Material-1', t=.001)

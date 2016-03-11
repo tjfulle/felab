@@ -108,18 +108,14 @@ class IsoPElement(object):
             weights = [1./dist(point, xi) for xi in cls.gaussp]
 
         if data.ndim == 1:
-            # Scalar data at each Gauss point of a single element
+            # Scalar data
             assert len(data) == len(cls.gaussp)
             return average(data, weights=weights)
 
         elif len(data.shape) == 2:
-            # Scalar data at each Gauss point
-            assert data.shape[1] == len(cls.gaussp)
+            # Vector or tensor data
+            assert data.shape[0] == len(cls.gaussp)
             return average(data, axis=0, weights=weights)
-
-        elif len(data.shape) == 3:
-            assert data.shape[1] == len(cls.gaussp)
-            return average(data, axis=1, weights=weights)
 
         raise TypeError('Unknown data type')
 
@@ -137,16 +133,15 @@ class IsoPElement(object):
             Ke += dot(dot(B.T, D), B) * J * self.gaussw[p]
         return Ke
 
-    def residual(self, xc, u, stress):
+    def residual(self, xc, stress):
         """Compute the element residual"""
         # compute integration point data
         R = zeros(self.ndof * self.numnod)
-        x = self.xc + u
         for (p, xi) in enumerate(self.gaussp):
             J = self.jacobian(xc, xi)
             dNdx = self.shapegradx(xc, xi)
             B = self.bmatrix(dNdx)
-            R += dot(stress, B) * J * self.gaussw[p]
+            R += dot(stress[p], B) * J * self.gaussw[p]
         return R
 
     def force(self, dload, sload):
@@ -200,6 +195,17 @@ class IsoPElement(object):
             D = self.material.stiffness(self.ndir, self.nshr)
             s[p] += dot(D, de[p])
         return de, e, s
+
+    def update_kinematic(self, u, dtime, e):
+        de = zeros_like(e)
+        for (p, xi) in enumerate(self.gaussp):
+            # Update material state
+            J = self.jacobian(self.xc, xi)
+            dNdx = self.shapegradx(self.xc, xi)
+            B = self.bmatrix(dNdx)
+            de[p] = dot(B, u.flatten())
+            e[p] += de[p]
+        return de, e
 
 # --------------------------------------------------------------------------- #
 # -------------- REDUCED INTEGRATION ISOPARAMETRIC ELEMENTS ----------------- #
