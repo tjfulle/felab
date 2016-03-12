@@ -196,17 +196,6 @@ class IsoPElement(object):
             s[p] += dot(D, de[p])
         return de, e, s
 
-    def update_kinematic(self, u, dtime, e):
-        de = zeros_like(e)
-        for (p, xi) in enumerate(self.gaussp):
-            # Update material state
-            J = self.jacobian(self.xc, xi)
-            dNdx = self.shapegradx(self.xc, xi)
-            B = self.bmatrix(dNdx)
-            de[p] = dot(B, u.flatten())
-            e[p] += de[p]
-        return de, e
-
 # --------------------------------------------------------------------------- #
 # -------------- REDUCED INTEGRATION ISOPARAMETRIC ELEMENTS ----------------- #
 # --------------------------------------------------------------------------- #

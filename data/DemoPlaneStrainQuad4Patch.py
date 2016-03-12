@@ -1,3 +1,4 @@
+import logging
 from pyfem2 import *
 V = Plane2DModel(jobid='PlaneStrainQuad4Patch')
 V.AbaqusMesh(filename='EC4SFP1.inp')
@@ -24,3 +25,4 @@ for value in field.values:
     assert allclose(data[:,1], 1600.), 'Wrong Syy'
     assert allclose(data[:,2],  800.), 'Wrong Szz'
     assert allclose(data[:,3],  400.), 'Wrong Sxy'
+logging.warn('PATCH TEST PASSED')

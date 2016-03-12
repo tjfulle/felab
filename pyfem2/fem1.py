@@ -173,7 +173,7 @@ class FiniteElementModel(object):
         self.dofvals = zeros((self.numnod, MDOF), dtype=float)
 
         # Containers to hold loads
-        self.dload = zeros((self.numele, 2))
+        self.dload = zeros((self.numele, self.numdim))
         self.sload = zeros((self.numele, self.mesh.maxedge, 2))
 
         # Heat transfer containers
@@ -347,18 +347,60 @@ class FiniteElementModel(object):
             eftab.append(eft)
         return eftab
 
-    def request_output_variable(self, name, type, position):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        self.steps[0].FieldOutput(name, type, position)
-
     def snapshot(self, step=None):
+
         if step is None:
-            step = self.steps.values()[-1]
+            for step in self.steps.values():
+                self.snapshot(step)
+                if step.written:
+                    break
+            return
+
         if step.written:
             return
+
         self.exofile.snapshot(step)
         step.written = 1
+
+    def assemble(self, flags, u, du, time, dtime, istep, iframe):
+        """
+        flags : ndarray of int
+            flags[0] - procedure type
+            flags[1] - small or large strain
+            flags[2] - general or linear perturbation
+        """
+        if not self._setup:
+            raise RuntimeError('PROBLEM MUST BE SETUP BEFORE ASSEMBLY')
+        F = zeros(self.numdof)
+        K = zeros((self.numdof, self.numdof))
+        for (ieb, eb) in enumerate(self.mesh.eleblx):
+            fvars = frame.field_outputs[eb.name]
+            for (e, xel) in enumerate(eb.labels):
+                # Element stiffness
+                iel = self.mesh.elemap[xel]
+                el = self.elements[iel]
+                dltyp = self.dltyp[iel]
+                dload = self.dload[iel]
+                sload = self.sload[iel]
+                Ke, Fe = el.response(u[iel], du[iel], time, dtime, fvars[iel],
+                                     istep, iframe, dltyp, dload, ddload, temp,
+                                     flags)
+                eft = self.eftab[iel]
+                K[IX(eft, eft)] += Ke
+                F[IX(eft)] += Fe
+
+    def natural_bc_array(self):
+        # compute contribution from Neumann boundary
+        Q = zeros(self.numdof)
+        for n in range(self.numnod):
+            ix = 0
+            for j in range(MDOF):
+                if self.nodfat[n,j] > 0:
+                    if self.doftags[n,j] == NEUMANN:
+                        I = self.nodfmt[n] + ix
+                        Q[I] = self.dofvals[n,j]
+                    ix += 1
+        return Q
 
     def assemble_global_stiffness(self, *args):
         """
@@ -416,12 +458,15 @@ class FiniteElementModel(object):
         """
         # compute the element stiffness and scatter to global array
         K = zeros((self.numdof, self.numdof))
-        for (iel, el) in enumerate(self.elements):
-            # Element stiffness
-            elearg = [arg[iel] for arg in args]
-            Ke = el.stiffness(*elearg)
-            eft = self.eftab[iel]
-            K[IX(eft, eft)] += Ke
+        for (ieb, eb) in enumerate(self.mesh.eleblx):
+            for (e, xel) in enumerate(eb.labels):
+                # Element stiffness
+                iel = self.mesh.elemap[xel]
+                el = self.elements[iel]
+                elearg = [arg[iel] for arg in args]
+                Ke = el.stiffness(*elearg)
+                eft = self.eftab[iel]
+                K[IX(eft, eft)] += Ke
         return K
 
     def assemble_global_force(self, *args):
@@ -493,11 +538,13 @@ class FiniteElementModel(object):
             return F, Q
 
         # compute contribution from element sources and boundary loads
-        for (iel, el) in enumerate(self.elements):
-            elearg = [arg[iel] for arg in args]
-            Fe = el.force(*elearg)
-            eft = self.eftab[iel]
-            F[eft] += Fe
+        for (ieb, eb) in enumerate(self.mesh.eleblx):
+            for (e, xel) in enumerate(eb.labels):
+                # Element stiffness
+                iel = self.mesh.elemap[xel]
+                el = self.elements[iel]
+                elearg = [arg[iel] for arg in args]
+                F[self.eftab[iel]] += el.force(*elearg)
 
         return F, Q
 
@@ -514,8 +561,8 @@ class FiniteElementModel(object):
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
                 xe = el.xc + u[el.nodes]
-                Re = el.residual(xe, S[e])
-                R[self.eftab[iel]] += Re
+                R[self.eftab[iel]] += el.residual(xe, S[e])
+
         return R
 
     def apply_bc(self, K, F, u=None, du=None, fac=1.):

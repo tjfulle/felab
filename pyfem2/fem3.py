@@ -8,11 +8,6 @@ from .elemlib2_3T import DiffussiveHeatTransfer2D3
 
 class HeatTransfer2DModel(FiniteElementModel):
     numdim = 2
-    def init(self):
-        # Request allocation of field variables
-        self.request_output_variable('T', SCALAR, NODE)
-        self.request_output_variable('R', SCALAR, NODE)
-
     def Solve(self):
         self.setup(DiffussiveHeatTransfer2D3)
         K = self.assemble_global_stiffness(self.sfilm)
@@ -28,5 +23,6 @@ class HeatTransfer2DModel(FiniteElementModel):
         # Create new frame to hold updated state
         frame = self.steps.last.Frame(1.)
         frame.field_outputs['T'].add_data(self.dofs)
+        frame.field_outputs['R'].add_data(R)
         frame.converged = True
         self.T = self.dofs

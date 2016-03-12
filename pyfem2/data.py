@@ -69,12 +69,19 @@ class Step(object):
     def __len__(self):
         return len(self.frames)
 
+    @property
+    def last_converged_frame(self):
+        for frame in reversed(self.frames):
+            if frame.converged:
+                return frame
+
     def Frame(self, dtime, copy=1):
         frame = Frame(self.time, dtime)
         self.time += dtime
         if self.frames and copy:
             frame_n = self.frames[-1]
             frame.field_outputs = deepcopy(frame_n.field_outputs)
+        frame.number = len(self.frames)
         self.frames.append(frame)
         return frame
 
