@@ -2,7 +2,7 @@ from pyfem2 import *
 
 nodtab = [[1,-4,3], [2,0,0], [3,0,3], [4,nan,nan], [5,4,3]]
 eletab = [[1,1,3], [2,3,5], [3,1,2], [4,2,3], [5,2,5]]
-V = PlaneBeamColumnTrussModel()
+V = PlaneBeamColumnTrussModel('PlaneBeamColumn')
 V.Mesh(nodtab=nodtab, eletab=eletab)
 Ec, Em = 30000, 200000
 V.Material('Material-1')
@@ -21,3 +21,4 @@ V.ConcentratedLoad(2, Y, 100)
 V.ConcentratedLoad(5, TZ, 200)
 V.ConcentratedLoad(5, X, 300)
 V.Solve()
+V.WriteResults()

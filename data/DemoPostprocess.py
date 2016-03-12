@@ -18,18 +18,19 @@ V.WriteResults()
 F = File('PlateWithHoleQuad4.exo')
 max_p = [0., None]
 max_u = [0., None]
-for step in F.steps:
-    u = step.field_outputs['U']
-    for value in u.values:
-        u1 = value.magnitude
-        if max_u[0] < u1:
-            max_u = [u1, value]
+for step in F.steps.values():
+    for frame in step.frames:
+        u = frame.field_outputs['U']
+        for value in u.values:
+            u1 = value.magnitude
+            if max_u[0] < u1:
+                max_u = [u1, value]
 
-    s = step.field_outputs['S']
-    for value in s.values:
-        s1 = value.max_principal
-        if max_p[0] < s1:
-            max_p = [s1, value]
+        s = frame.field_outputs['S']
+        for value in s.values:
+            s1 = value.max_principal
+            if max_p[0] < s1:
+                max_p = [s1, value]
 
 # External and internal element numbers
 xel = max_p[1].label

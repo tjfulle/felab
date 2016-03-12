@@ -9,14 +9,6 @@ __all__ = ['TrussModel']
 
 class TrussModel(FiniteElementModel):
     numdim = None
-
-    def init(self):
-        # Request allocation of field variables
-        self.request_output_variable('U', VECTOR, NODE)
-        self.request_output_variable('R', VECTOR, NODE)
-        self.request_output_variable('S', SCALAR, ELEMENT)
-        self.request_output_variable('P', SCALAR, ELEMENT)
-
     def Solve(self):
         """Solves the finite element problem
 
@@ -24,6 +16,7 @@ class TrussModel(FiniteElementModel):
         # active DOF set dynamically
         self.active_dof = range(self.elements[0].ndof)
         self.validate(ElasticLinknD2, one=True)
+
         # Assemble the global stiffness and force
         K = self.assemble_global_stiffness()
         F, Q = self.assemble_global_force()
@@ -42,7 +35,14 @@ class TrussModel(FiniteElementModel):
         R = R.reshape(self.numnod, -1)
         p = self.internal_forces(u)
         s = self.stresses(p)
-        self.snapshot(U=u, R=R, P=p, S=s)
+        e = s / array([el.material.E for el in self.elements])
+
+        frame = self.steps.last.Frame(1.)
+        frame.field_outputs['U'].add_data(u)
+        frame.field_outputs['E'].add_data(e)
+        frame.field_outputs['DE'].add_data(e)
+        frame.field_outputs['S'].add_data(s)
+        frame.field_outputs['R'].add_data(R)
 
     # ----------------------------------------------------------------------- #
     # --------------------------- POSTPROCESSING ---------------------------- #

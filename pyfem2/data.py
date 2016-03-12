@@ -94,23 +94,28 @@ class Frame(object):
         self.increment = dtime
         self.value = self.start + dtime
 
-    def SymmetricTensorField(self, name, position, labels, ndir, nshr, *args):
-        field = SymmetricTensorField(name, position, labels, ndir, nshr, *args)
+    def SymmetricTensorField(self, name, position, labels,
+                             ndir, nshr, *args, **kwargs):
+        field = SymmetricTensorField(name, position, labels,
+                                     ndir, nshr, *args, **kwargs)
         if position in (INTEGRATION_POINT, ELEMENT_CENTROID):
             name = (args[-1], name)
         self.field_outputs[name] = field
+        return field
 
-    def VectorField(self, name, position, labels, ncomp, *args):
-        field = VectorField(name, position, labels, ncomp, *args)
+    def VectorField(self, name, position, labels, ncomp, *args, **kwargs):
+        field = VectorField(name, position, labels, ncomp, *args, **kwargs)
         if position in (INTEGRATION_POINT, ELEMENT_CENTROID):
             name = (args[-1], name)
         self.field_outputs[name] = field
+        return field
 
-    def ScalarField(self, name, position, labels, *args):
-        field = ScalarField(name, position, labels, *args)
+    def ScalarField(self, name, position, labels, *args, **kwargs):
+        field = ScalarField(name, position, labels, *args, **kwargs)
         if position in (INTEGRATION_POINT, ELEMENT_CENTROID):
             name = (args[-1], name)
         self.field_outputs[name] = field
+        return field
 
     def add_data(self, **kwds):
         for (key, value) in kwds.items():
@@ -143,7 +148,8 @@ class FieldOutputs(OrderedDict):
 
 class FieldOutput(object):
 
-    def __init__(self, name, position, labels, type, components, shape, eleblk):
+    def __init__(self, name, position, labels, type, components, shape, eleblk,
+                 **kwargs):
         self.name = name
         self.position = position
         self.labels = labels
@@ -158,11 +164,18 @@ class FieldOutput(object):
             self.keys = [self.key]
         self.data = zeros(shape)
 
+        a = kwargs.get('data')
+        if a is not None:
+            self.add_data(a)
+
     def __getitem__(self, i):
         return self.data[i]
 
     def add_data(self, data, ix=None):
-        data = asarray(data)
+        if not is_listlike(data):
+            data = ones_like(self.data) * data
+        else:
+            data = asarray(data)
         if ix is not None:
             self.data[ix] = data
         else:
@@ -175,10 +188,10 @@ class FieldOutput(object):
             return self.data
 
         if position == ELEMENT_CENTROID:
-
+            if self.position == ELEMENT_CENTROID:
+                return self.data
             if self.position != INTEGRATION_POINT:
                 raise ValueError('Cannot project data to centroid')
-
             # Interpolate Gauss point data to element center
             return array([InterpolateToCentroid(x) for x in self.data])
 
@@ -196,7 +209,7 @@ class FieldOutput(object):
         return self._values
 
 class SymmetricTensorField(FieldOutput):
-    def __init__(self, name, position, labels, ndir, nshr, *args):
+    def __init__(self, name, position, labels, ndir, nshr, *args, **kwargs):
         eleblk = None
         components = ('xx', 'yy', 'zz')[:ndir] + ('xy', 'yz', 'xz')[:nshr]
         if position == INTEGRATION_POINT:
@@ -214,10 +227,10 @@ class SymmetricTensorField(FieldOutput):
         else:
             shape = (num, ntens)
         super(SymmetricTensorField, self).__init__(
-            name, position, labels, SYMTENSOR, components, shape, eleblk)
+            name, position, labels, SYMTENSOR, components, shape, eleblk, **kwargs)
 
 class VectorField(FieldOutput):
-    def __init__(self, name, position, labels, nc, *args):
+    def __init__(self, name, position, labels, nc, *args, **kwargs):
         eleblk = None
         num = len(labels)
         components = ('x', 'y', 'z')[:nc]
@@ -227,10 +240,10 @@ class VectorField(FieldOutput):
         else:
             shape = (num, nc)
         super(VectorField, self).__init__(
-            name, position, labels, VECTOR, components, shape, eleblk)
+            name, position, labels, VECTOR, components, shape, eleblk, **kwargs)
 
 class ScalarField(FieldOutput):
-    def __init__(self, name, position, labels, *args):
+    def __init__(self, name, position, labels, *args, **kwargs):
         eleblk = None
         num = len(labels)
         components = None
@@ -240,7 +253,7 @@ class ScalarField(FieldOutput):
         else:
             shape = (num, 1)
         super(ScalarField, self).__init__(
-            name, position, labels, SCALAR, components, shape, eleblk)
+            name, position, labels, SCALAR, components, shape, eleblk, **kwargs)
 
 class FieldValue:
     def __init__(self, position, label, type, components, data):

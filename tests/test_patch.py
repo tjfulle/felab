@@ -60,7 +60,7 @@ def test_quad4_plane_stress():
         assert allclose(data[:,2], 1e-3)
 
 def test_tria3_plane_stress():
-    V = Plane2DModel()
+    V = Plane2DModel(jobid='PlaneStressTria3Patch')
     V.AbaqusMesh(filename=join(D, 'data/EC3SFP1.inp'))
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=1e6, Nu=.25)
@@ -72,9 +72,8 @@ def test_tria3_plane_stress():
     V.PrescribedBC(30, Y, .24e-3)
     V.PrescribedBC(40, X, .06e-3)
     V.PrescribedBC(40, Y, .12e-3)
-    #V.Plot2D(show=1)
     V.Solve()
-    V.WriteResults('PlaneStressTria3Patch.exo')
+    V.WriteResults()
     step = V.steps.last
     field = step.frames[-1].field_outputs['S']
     for value in field.values:

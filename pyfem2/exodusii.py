@@ -8,6 +8,7 @@ from os.path import basename, join, splitext, isfile
 
 from .constants import *
 from .mesh import ElementBlock
+from .data import StepRepository
 
 # True if we are running on Python 3.
 PY3 = sys.version_info[0] == 3
@@ -713,46 +714,79 @@ class EXOFileReader(EXOFile):
             nodvarnames = ''
         numstep = len(times)
 
+        node_labels = sorted(self.nodmap, key=lambda k: self.nodmap[k])
+
         scalars1, vectors1, tensors1 = self.parse_names_and_components(nodvarnames)
         scalars2, vectors2, tensors2 = self.parse_names_and_components(elevarnames)
 
-        self.steps = TimeStepRepository(self, 0)
-        for (count, time) in enumerate(times):
-            step = self.steps.TimeStep(dtimes[count])
+        self.steps = StepRepository()
+        step = self.steps.Step()
+        frame = step.frames[0]
 
-            # node data
+        # --- REGISTER VARIABLES
+
+        # NODE DATA
+        for (i, name) in scalars1:
+            frame.ScalarField(name, NODE, node_labels)
+        for (name, item) in vectors1.items():
+            if name == 'displ': name = 'U'
+            frame.VectorField(name, NODE, node_labels, self.numdim)
+        for (name, item) in tensors1.items():
+            ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
+            frame.SymmetricTensorField(name, NODE, node_labels, ndir, nshr)
+
+        # ELEMENT DATA
+        for (ieb, eb) in enumerate(self.eleblx):
+            for (i, name) in scalars2:
+                frame.ScalarField(name, ELEMENT_CENTROID, eb.labels, eb.name)
+            for (name, item) in vectors2.items():
+                frame.VectorField(name, ELEMENT_CENTROID,
+                                  eb.labels, self.numdim, eb.name)
+            for (name, item) in tensors2.items():
+                ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
+                frame.SymmetricTensorField(name, ELEMENT_CENTROID, eb.labels,
+                                           ndir, nshr, eb.name)
+
+        for (count, time) in enumerate(times):
+            if count > 0:
+                frame = step.Frame(dtimes[count])
+
+            # NODE DATA
             for (i, name) in scalars1:
-                data = self.fh.variables[VALS_NOD_VAR(i+1)][count]
-                step.FieldOutput(name, SCALAR, NODE)
-                step.field_outputs[name].add_data(data)
+                d = self.fh.variables[VALS_NOD_VAR(i+1)][count]
+                frame.field_outputs[name].add_data(d)
             for (name, item) in vectors1.items():
                 if name == 'displ': name = 'U'
-                step.FieldOutput(name, VECTOR, NODE)
-                for k, (i, comp) in enumerate(item):
-                    data = self.fh.variables[VALS_NOD_VAR(i+1)][count]
-                    step.field_outputs[name].add_data(data, column=k)
+                d = []
+                for (i, comp) in item:
+                    d.append(self.fh.variables[VALS_NOD_VAR(i+1)][count])
+                d = column_stack(d)
+                frame.field_outputs[name].add_data(d)
             for (name, item) in tensors1.items():
-                step.FieldOutput(name, SYMTENSOR, NODE, numcomp=len(item))
-                for k, (i, comp) in enumerate(item):
-                    data = self.fh.variables[VALS_NOD_VAR(i+1)][count]
-                    step.field_outputs[name].add_data(data, column=k)
+                d = []
+                for (i, comp) in item:
+                    d.append(self.fh.variables[VALS_NOD_VAR(i+1)][count])
+                d = column_stack(d)
+                frame.field_outputs[name].add_data(d)
 
-            # element data
-            for ieb in range(self.numblk):
+            # ELEMENT DATA
+            for (ieb, eb) in enumerate(self.eleblx):
                 for (i, name) in scalars2:
-                    step.FieldOutput(name, SCALAR, ELEMENT)
-                    data = self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count]
-                    step.field_outputs[name].add_data(data)
+                    d = self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count]
+                    frame.field_outputs[eb.name,name].add_data(d)
                 for (name, item) in vectors2.items():
-                    step.FieldOutput(name, VECTOR, ELEMENT)
-                    for k, (i, comp) in enumerate(item):
-                        data = self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count]
-                        step.field_outputs[name].add_data(data, column=k)
+                    d = []
+                    for (i, comp) in item:
+                        d.append(self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count])
+                    d = column_stack(d)
+                    frame.field_outputs[eb.name,name].add_data(d)
                 for (name, item) in tensors2.items():
-                    step.FieldOutput(name, SYMTENSOR, ELEMENT, numcomp=len(item))
-                    for k, (i, comp) in enumerate(item):
-                        data = self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count]
-                        step.field_outputs[name].add_data(data, column=k)
+                    d = []
+                    for (i, comp) in item:
+                        d.append(self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count])
+                    d = column_stack(d)
+                    ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
+                    frame.field_outputs[eb.name,name].add_data(d)
 
         return self.steps
 

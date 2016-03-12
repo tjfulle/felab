@@ -20,10 +20,12 @@ def PlaneStressBeam(ratio):
     V.PrescribedBC(IHI, (X,Y))
     V.SurfaceLoad(ILO, [0, -q])
     V.Solve()
-    ax = V.Plot2D(deformed=1, color='b')
+    if not os.getenv('NOGRAPHICS'):
+        ax = V.Plot2D(deformed=1, color='b')
     u = AnalyticSolution(V.mesh.coord, q)
     xy = V.mesh.coord + u
-    V.mesh.Plot2D(xy=xy, color='r', ax=ax, show=1)
+    if not os.getenv('NOGRAPHICS'):
+        V.mesh.Plot2D(xy=xy, color='r', ax=ax, show=1)
 
 def AnalyticSolution(coord, q):
     a = (coord[:,1].max() - coord[:,1].min()) / 2.

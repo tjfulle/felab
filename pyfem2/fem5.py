@@ -13,12 +13,6 @@ from .elemlibN_2 import ElasticLink2D2, BeamColumn2D
 # --------------------------------------------------------------------------- #
 class PlaneBeamColumnTrussModel(FiniteElementModel):
     numdim = 2
-    def init(self):
-        # Request allocation of field variables
-        self.request_output_variable('U', VECTOR, NODE)
-        self.request_output_variable('Rot', SCALAR, NODE)
-        self.request_output_variable('R', VECTOR, NODE)
-        self.request_output_variable('Rt', SCALAR, NODE)
 
     def Solve(self):
         # active DOF set dynamically
@@ -41,9 +35,11 @@ class PlaneBeamColumnTrussModel(FiniteElementModel):
 
         U, R, Urot, Rrot = self.format_displacements_and_reactions(self.dofs, R)
 
-        self.u = U
+        frame = self.steps.last.Frame(1.)
+        frame.field_outputs['U'].add_data(U)
+        frame.field_outputs['R'].add_data(R)
 
-        self.snapshot(U=U, R=R, Rot=Urot, Rt=Rrot)
+        self.u = U
 
     def format_displacements_and_reactions(self, u, R):
         # construct displacement and rotation vectors

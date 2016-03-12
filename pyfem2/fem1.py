@@ -189,7 +189,7 @@ class FiniteElementModel(object):
     def orphaned_elements(self):
         return [iel for (iel, el) in enumerate(self.elements) if el is None]
 
-    def validate(self, eletyp=None, one=False):
+    def validate(self, eletyp=None, one=False, fields=None):
 
         # Validate user input
 
@@ -292,32 +292,37 @@ class FiniteElementModel(object):
 
         self.steps = StepRepository()
         step = self.steps.Step()
+        frame = step.frames[0]
 
         # Node data
         nd = self.numdim
-        step.frames[0].ScalarField('T', NODE, node_labels)
-        step.frames[0].VectorField('U', NODE, node_labels, nd)
-        step.frames[0].VectorField('R', NODE, node_labels, nd)
+        frame.ScalarField('T', NODE, node_labels)
+        frame.VectorField('U', NODE, node_labels, self.numdim)
         if self.initial_temp is not None:
-            step.field_outputs['T'].add_data(self.initial_temp)
+            frame.field_outputs['T'].add_data(self.initial_temp)
 
+        sd = False
         for eb in self.mesh.eleblx:
             if not any(eb.eletyp.signature[:3]):
                 continue
+            sd = True
             if eb.eletyp.npts is not None:
                 args = (INTEGRATION_POINT, eb.labels,
                         eb.eletyp.ndir, eb.eletyp.nshr, eb.eletyp.npts, eb.name)
             else:
                 args = (ELEMENT_CENTROID, eb.labels,
                         eb.eletyp.ndir, eb.eletyp.nshr, eb.name)
-            step.frames[0].SymmetricTensorField('S', *args)
-            step.frames[0].SymmetricTensorField('E', *args)
-            step.frames[0].SymmetricTensorField('DE', *args)
+            frame.SymmetricTensorField('S', *args)
+            frame.SymmetricTensorField('E', *args)
+            frame.SymmetricTensorField('DE', *args)
+
+        if sd:
+            frame.VectorField('R', NODE, node_labels, self.numdim)
 
     def _element_freedom_table(self):
         eftab = []
         for el in self.elements:
-            eft = zeros(el.ndof * el.numnod)
+            eft = zeros(el.ndof * el.numnod, dtype=int)
             k, count = 0, 0
             for (i, inode) in enumerate(el.nodes):
                 ix, sx = 0, zeros(MDOF, dtype=int)
@@ -480,6 +485,9 @@ class FiniteElementModel(object):
                         I = self.nodfmt[n] + ix
                         Q[I] = self.dofvals[n,j]
                     ix += 1
+
+        if not args:
+            return F, Q
 
         # compute contribution from element sources and boundary loads
         for (iel, el) in enumerate(self.elements):

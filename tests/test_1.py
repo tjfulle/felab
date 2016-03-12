@@ -67,7 +67,7 @@ def test_fem5_2():
 
 @pytest.mark.plane
 def test_fem4_1_gravity_load1():
-    V = Plane2DModel()
+    V = Plane2DModel('Gravity')
     V.RectilinearMesh((101, 11), (100, 10))
     V.Material('Material-1')
     V.materials['Material-1'].Density(1.)
@@ -77,7 +77,7 @@ def test_fem4_1_gravity_load1():
     V.FixNodes(ILO)
     V.GravityLoad(ALL, [0, -1e2])
     V.Solve()
-    V.WriteResults('Job4.exo')
+    V.WriteResults()
 
 @pytest.mark.heat
 def test_fem3_plate_with_hole():
@@ -222,7 +222,7 @@ def test_fem3_5():
 @pytest.mark.heat
 def test_fem3_plate_with_hole2():
     k, h, Too = 12, 250, 25
-    V = HeatTransfer2DModel()
+    V = HeatTransfer2DModel('HeatPlateWithHole')
     V.GenesisMesh(join(D, 'data/PlateWithHoleTria3.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(k)
@@ -232,7 +232,7 @@ def test_fem3_plate_with_hole2():
     V.HeatGeneration(ALL, fun)
     V.InitialTemperature(ALL, 50)
     V.Solve()
-    V.WriteResults('Job3.exo')
+    V.WriteResults()
 
 @pytest.mark.truss
 def test_fem2_1():
@@ -457,8 +457,6 @@ def test_fem2_4():
                      [0.00704244773528,-0.00410032427032,0.0773745623519],
                      [0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]], u)
 
-    V.WriteResults('Job2')
-
 def test_fem1_1():
     xa, xb = 0., 1.
     A, E, p, q = 1, 1, 1, 0
@@ -508,8 +506,9 @@ def test_elemlibN_2_4():
     El = BeamColumn2D(1, [0, 1], coord, mat, A=A, Izz=Izz)
     Ke = El.stiffness()
 
-def test_tutorials():
-    d = realpath(join(D, 'tutorials'))
+@pytest.mark.demos
+def test_demos():
+    d = realpath(join(D, 'data'))
     env = dict(os.environ)
     env['PYTHONPATH'] = D
     env['NOGRAPHICS'] = '1'
