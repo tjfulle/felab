@@ -2,14 +2,14 @@ from numpy import *
 
 from .constants import *
 from .utilities import *
-from .fem1 import FiniteElementModel
+from .fem1 import FiniteElemntModel
 from .isoplib import IsoPElement
 
 class Plane2DModel(FiniteElementModel):
     numdim = 2
 
     def Solve(self, solver=None, **kwds):
-        self.validate(IsoPElement)
+        self.setup(IsoPElement)
         if solver is None:
             self.StaticPerturbation()
         elif solver == NEWTON:
@@ -108,7 +108,7 @@ class Plane2DModel(FiniteElementModel):
 
         return
 
-    def update_kinematic(self, u, dtime):
+    def update_kinematics(self, u, dtime):
         """Update kinematics to dtime"""
         frame = self.steps.last.frames[-1]
         frame.field_outputs['U'].add_data(u)
@@ -117,7 +117,7 @@ class Plane2DModel(FiniteElementModel):
             for (e, xel) in enumerate(eb.labels):
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
-                de1, e1 = el.update_kinematic(ue, dtime, E)
+                de1, e1 = el.update_kinematics(ue, dtime, E)
                 frame.field_outputs[eb.name, 'E'].add_data(e1, e)
                 frame.field_outputs[eb.name, 'DE'].add_data(de1, e)
 

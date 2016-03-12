@@ -24,7 +24,7 @@ def IX(*args):
     for k, new in enumerate(args):
         new = asarray(new)
         if new.ndim != 1:
-            raise ValueError("Cross index must be 1 dimensional")
+            raise ValueError("CROSS INDEX MUST BE 1 DIMENSIONAL")
         new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
         out.append(new)
     return tuple(out)
@@ -112,8 +112,8 @@ def linsolve(A, b, symmetric=True):
     if not use_np_solve:
         c, x, info = flapack.dposv(A, F, lower=0, overwrite_a=0, overwrite_b=0)
         if info < 0:
-            raise ValueError("illegal value in {0}-th argument of "
-                             "internal dposv".format(-info))
+            raise ValueError("ILLEGAL VALUE IN {0}-TH ARGUMENT OF "
+                             "INTERNAL DPOSV".format(-info))
         if info != 0:
             use_np_solve = True
 
@@ -125,8 +125,8 @@ def linsolve(A, b, symmetric=True):
             pass
 
     if info > 0:
-        logging.warn("linsolve failed, using least squares "
-                     "to solve system")
+        logging.warn("LINSOLVE FAILED, USING LEAST SQUARES "
+                     "TO SOLVE SYSTEM")
         x = lstsq(A, F)[0]
 
     return x

@@ -15,7 +15,7 @@ class TrussModel(FiniteElementModel):
         """
         # active DOF set dynamically
         self.active_dof = range(self.elements[0].ndof)
-        self.validate(ElasticLinknD2, one=True)
+        self.setup(ElasticLinknD2, one=True)
 
         # Assemble the global stiffness and force
         K = self.assemble_global_stiffness()
@@ -43,6 +43,7 @@ class TrussModel(FiniteElementModel):
         frame.field_outputs['DE'].add_data(e)
         frame.field_outputs['S'].add_data(s)
         frame.field_outputs['R'].add_data(R)
+        frame.converged = True
 
     # ----------------------------------------------------------------------- #
     # --------------------------- POSTPROCESSING ---------------------------- #

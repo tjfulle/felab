@@ -55,4 +55,4 @@ _d = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 DATA_D = os.path.join(_d, 'data')
 if not os.path.isdir(DATA_D):
     import logging
-    logging.warn('pyfem2 data directory not located')
+    logging.warn('PYFEM2 DATA DIRECTORY NOT LOCATED')

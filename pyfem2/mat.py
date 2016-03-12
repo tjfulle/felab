@@ -58,12 +58,12 @@ class Material(object):
                 try:
                     self.Elastic(**v)
                 except TypeError:
-                    raise UserInputError('elastic properties must be a '
-                                         'dict, not {0}'.format(type(v)))
+                    raise UserInputError('ELASTIC PROPERTIES MUST BE A '
+                                         'DICT, NOT {0}'.format(type(v)))
             elif 'thermal_conductivity' in k:
                 self.ThermalConductivity(v)
             else:
-                logging.warn('Setting unknown material property {0!r}'.format(kwd))
+                logging.warn('SETTING UNKNOWN MATERIAL PROPERTY {0!r}'.format(kwd))
                 setattr(self, kwd, v)
 
     def Density(self, rho):
@@ -109,12 +109,12 @@ class Material(object):
         """
         if 'rho' in [s.lower() for s in kwds.keys()]:
             if len(kwds) != 3:
-                raise ValueError('Exactly 2 elastic constants required')
+                raise UserInputError('EXACTLY 2 ELASTIC CONSTANTS REQUIRED')
             for (k,v) in kwds.items():
                 if k.lower() == 'rho':
                     self.Density(v)
         elif len(kwds) != 2:
-            raise ValueError('Exactly 2 elastic constants required')
+            raise UserInputError('EXACTLY 2 ELASTIC CONSTANTS REQUIRED')
         props = elas(**kwds)
         self.E, self.Nu = props['E'], props['Nu']
         self.G, self.K = props['G'], props['K']
@@ -140,7 +140,7 @@ class Material(object):
             elif k.size == 9:
                 self.k_aniso[:] = k.reshape(3,3)
             else:
-                raise UserInputError('K must be a 3 vector or 3x3 array')
+                raise UserInputError('K MUST BE A 3 VECTOR OR 3X3 ARRAY')
             self.k_iso = trace(self.k_aniso) / 3.
     IsotropicThermalConductivity = ThermalConductivity
 
@@ -150,9 +150,9 @@ class Material(object):
 
     def stiffness(self, ndir, nshr, disp=None):
         if self.E is None:
-            raise ValueError('Elastic modulus not set')
+            raise UserInputError('ELASTIC MODULUS NOT SET')
         if self.Nu is None:
-            raise ValueError("Poisson's ration not set")
+            raise UserInputError("POISSON'S RATIO NOT SET")
         D = self.isotropic_elastic_stiffness()
 
         if nshr == 1:

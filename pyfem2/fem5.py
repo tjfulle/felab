@@ -16,7 +16,7 @@ class PlaneBeamColumnTrussModel(FiniteElementModel):
 
     def Solve(self):
         # active DOF set dynamically
-        self.validate((ElasticLink2D2, BeamColumn2D))
+        self.setup((ElasticLink2D2, BeamColumn2D))
 
         # Assemble the global stiffness and force
         K = self.assemble_global_stiffness()
@@ -38,6 +38,7 @@ class PlaneBeamColumnTrussModel(FiniteElementModel):
         frame = self.steps.last.Frame(1.)
         frame.field_outputs['U'].add_data(U)
         frame.field_outputs['R'].add_data(R)
+        frame.converged = True
 
         self.u = U
 

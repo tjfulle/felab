@@ -598,7 +598,7 @@ def ElementType(name):
         return elemlib.PlaneStressTria3
     if name[:4] == 'CPE8':
         return elemlib.PlaneStrainQuad8
-    raise ValueError('Unknown element type {0}'.format(name))
+    raise ValueError('UNKNOWN ELEMENT TYPE {0}'.format(name))
 
 def ReadInput(filename):
     f = os.path.basename(filename)
@@ -706,13 +706,13 @@ def ReadInput(filename):
         els = elemsets[elset]
         s = set([eletyp[e] for e in els])
         if len(set([eletyp[e] for e in els])) != 1:
-            raise ValueError('pyfem2 solid sections must contain '
-                             'only one element type')
+            raise ValueError('PYFEM2 SOLID SECTIONS MUST CONTAIN '
+                             'ONLY ONE ELEMENT TYPE')
         et = ElementType(list(s)[0])
         eleblx[elset] = (et, els)
 
     if notread:
-        logging.warn('The following keywords and their data were not read:\n'
+        logging.warn('THE FOLLOWING KEYWORDS AND THEIR DATA WERE NOT READ:\n'
                      '{0}'.format(', '.join(notread)))
 
     # Generate the mesh info

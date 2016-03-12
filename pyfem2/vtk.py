@@ -149,10 +149,10 @@ class VTKFile(object):
         root = self.doc.getElementsByTagName('VTKFile')[0]
         grid = root.getElementsByTagName('UnstructuredGrid')
         if not grid:
-            logging.warn('No grid information found in {0!r}'.format(filename))
+            logging.warn('NO GRID INFORMATION FOUND in {0!r}'.format(filename))
             return None
         if len(grid) > 1:
-            logging.warn('Multiple grids not supported')
+            logging.warn('MULTIPLE GRIDS NOT SUPPORTED')
             return None
         grid = grid[0]
         # Piece 0 (only one)

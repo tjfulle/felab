@@ -1,5 +1,4 @@
 from numpy import *
-import logging
 from numpy.linalg import eigvalsh
 from collections import OrderedDict
 from copy import deepcopy
@@ -89,6 +88,7 @@ class Frame(object):
         self.increment = dtime
         self.value = start + dtime
         self.field_outputs = FieldOutputs()
+        self.converged = False
 
     def adjust_dt(self, dtime):
         self.increment = dtime

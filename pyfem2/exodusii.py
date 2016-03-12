@@ -18,8 +18,8 @@ try:
 except ImportError:
     NETCDF4 = False
     if PY3:
-        logging.warn('Using scipy.io.netcdf library to write ExodusII files.  '
-                     'Install netcdf4 for better reliability.')
+        logging.warn('USING SCIPY.IO.NETCDF LIBRARY TO WRITE EXODUSII FILES.  '
+                     'INSTALL NETCDF4 FOR BETTER RELIABILITY.')
     from .netcdf import netcdf_file as Dataset
 
 from .elemlib1 import ElementFamily
@@ -193,7 +193,7 @@ VAR_FO_VALINV      = 'fo_valinv'
 
 def File(filename, mode='r'):
     if mode not in 'rw':
-        raise ValueError('unknown File mode {0}'.format(mode))
+        raise ValueError('UNKNOWN FILE MODE {0}'.format(mode))
     if mode == 'r':
         return EXOFileReader(filename)
     return EXOFileWriter(filename)
@@ -214,7 +214,7 @@ def get_exo_eletyp(numdim, numnod):
         elif numnod in (8, 20):
             eletyp = 'HEX'
     else:
-        raise ValueError('Unknown element type')
+        raise ValueError('UNKNOWN ELEMENT TYPE')
     return eletyp
 
 class EXOFile(object):
@@ -506,6 +506,9 @@ class EXOFileWriter(EXOFile):
         numdim = self.getdim(DIM_NUM_DIM)
 
         for frame in step.frames:
+            if not frame.converged:
+                logging.warn('CANNOT WRITE UNCONVERGED FRAME')
+                return
             self.putframe(frame)
 
     def putframe(self, frame):
@@ -543,7 +546,7 @@ class EXOFileReader(EXOFile):
     mode = 'r'
     def __init__(self, filename):
         if not isfile(filename):
-            raise IOError('no such file: {0}'.format(repr(filename)))
+            raise IOError('NO SUCH FILE: {0}'.format(repr(filename)))
         self.filename = filename
         self.fh = self.open_file(filename, mode='r')
         self.read()
@@ -698,7 +701,7 @@ class EXOFileReader(EXOFile):
         """Read the results from the output database. """
 
         if not (self.numnodvar + self.numelevar):
-            raise ValueError('No results')
+            raise ValueError('NO RESULTS')
 
         times = self.fh.variables[VAR_TIME_WHOLE][:]
         dtimes = self.fh.variables[VALS_GLO_VAR][:]
@@ -799,7 +802,7 @@ class EXOFileReader(EXOFile):
                 break
             k += eb.elecon.shape[0]
         else:
-            raise ValueError('Could not determine node numbers')
+            raise ValueError('COULD NOT DETERMINE NODE NUMBERS')
         return self.coord[inodes]
 
 def PutNodalSolution(filename, nodmap, elemap, coord, eleblx, u):

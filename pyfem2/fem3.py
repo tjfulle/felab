@@ -14,7 +14,7 @@ class HeatTransfer2DModel(FiniteElementModel):
         self.request_output_variable('R', SCALAR, NODE)
 
     def Solve(self):
-        self.validate(DiffussiveHeatTransfer2D3)
+        self.setup(DiffussiveHeatTransfer2D3)
         K = self.assemble_global_stiffness(self.sfilm)
         F, Q = self.assemble_global_force(self.src, self.sflux, self.sfilm)
         Kbc, Fbc = self.apply_bc(K, F+Q)
@@ -26,6 +26,7 @@ class HeatTransfer2DModel(FiniteElementModel):
         R = Ft - F - Q
 
         # Create new frame to hold updated state
-        self.steps.last.Frame(1.)
-        self.steps.last.frames[-1].field_outputs['T'].add_data(self.dofs)
+        frame = self.steps.last.Frame(1.)
+        frame.field_outputs['T'].add_data(self.dofs)
+        frame.converged = True
         self.T = self.dofs
