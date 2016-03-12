@@ -2,7 +2,7 @@ from numpy import *
 
 from .constants import *
 from .utilities import *
-from .fem1 import FiniteElemntModel
+from .fem1 import FiniteElementModel
 from .isoplib import IsoPElement
 
 class Plane2DModel(FiniteElementModel):
@@ -29,9 +29,10 @@ class Plane2DModel(FiniteElementModel):
         u = u.reshape(self.mesh.coord.shape)
 
         # Create new frame to hold updated state
-        self.steps.last.Frame(1.)
+        frame =self.steps.last.Frame(1.)
         self.update_state(u, 1.)
-        self.steps.last.frames[-1].field_outputs['R'].add_data(R)
+        frame.field_outputs['R'].add_data(R)
+        frame.converged = True
 
     def NewtonSolve(self, period=1., increments=5, maxiters=10, tolerance=1e-4,
                     relax=1.):
