@@ -516,7 +516,7 @@ def test_demos():
     cwd = os.getcwd()
     os.chdir(d)
     for filename in glob.glob(join(d, '*.py')):
-        if basename(filename) == 'Runall.py':
+        if not re.search(r'(?i)Demo[a-z0-9]+\.py', filename):
             continue
         proc = Popen(['python', filename], env=env)
         proc.wait()
@@ -526,4 +526,4 @@ def test_demos():
     assert not failed
 
 if __name__ == '__main__':
-    test_fem3_2()
+    test_demos()

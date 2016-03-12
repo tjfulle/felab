@@ -8,9 +8,7 @@ def run_all():
     env['PYTHONPATH'] = dirname(d)
     env['NOGRAPHICS'] = '1'
     failed = []
-    for filename in glob.glob(join(d, '*.py')):
-        if basename(filename) == 'Runall.py':
-            continue
+    for filename in glob.glob(join(d, 'Demo*.py')):
         proc = Popen(['python', filename], env=env)
         proc.wait()
         if proc.returncode != 0:
