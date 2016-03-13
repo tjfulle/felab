@@ -6,7 +6,7 @@ from .fem1 import FiniteElementModel
 from .isoplib import IsoPElement
 
 class Plane2DModel(FiniteElementModel):
-    numdim = 2
+    dimensions = 2
 
     def Solve(self, solver=None, **kwds):
         self.setup(IsoPElement)
@@ -18,8 +18,7 @@ class Plane2DModel(FiniteElementModel):
             raise ValueError('UNKNOWN SOLVER')
 
     def StaticPerturbation(self):
-        K = self.assemble_global_stiffness()
-        F, Q = self.assemble_global_force(self.dload, self.sload)
+        K, F, Q = self.assemble()
         Kbc, Fbc = self.apply_bc(K, F+Q)
         u = linsolve(Kbc, Fbc)
         Ft = dot(K, u)
@@ -108,7 +107,7 @@ class Plane2DModel(FiniteElementModel):
             for (e, xel) in enumerate(eb.labels):
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
-                ue = u[el.nodes]
+                ue = u[el.inodes]
                 de1, e1, s1 = el.update_state(ue, E.data[e], S.data[e])
                 frame.field_outputs[eb.name, 'S'].add_data(s1, e)
                 frame.field_outputs[eb.name, 'E'].add_data(e1, e)

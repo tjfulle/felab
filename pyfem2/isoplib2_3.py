@@ -23,11 +23,15 @@ class IsoPTria3(IsoPElement):
               [2]
 
     """
+    nodes = 3
     elefab = {'t':1.}
-    signature = (1,1,0,0,0,0,0)
-    numdim, numnod, ndof = 2, 3, 2
+    signature = [(1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0)]
+    dimensions = 2
+    integration = 3
+
     edges = array([[0, 1], [1, 2], [2, 0]])
-    npts = 3
     gaussp = array([[.6, .2], [.2, .6], [.2, .2]])
     gaussw = ones(3) / 6.
     cp = array([1., 1.]) / 3.
@@ -76,6 +80,7 @@ class IsoPTria3(IsoPElement):
 # ------------------------ USER ELEMENT TYPES ------------------------------- #
 # --------------------------------------------------------------------------- #
 class PlaneStressTria3(IsoPTria3):
+    variables = ('E', 'DE', 'S')
     ndir, nshr = 2, 1
     def bmatrix(self, dN):
         B = zeros((3, 6))
@@ -84,6 +89,7 @@ class PlaneStressTria3(IsoPTria3):
         return B
 
 class PlaneStrainTria3(IsoPTria3):
+    variables = ('E', 'DE', 'S')
     ndir, nshr = 3, 1
     def bmatrix(self, dN):
         B = zeros((4, 6))

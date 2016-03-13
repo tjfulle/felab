@@ -6,11 +6,13 @@ from .utilities import *
 # -------------------------- BASE ELMENT CLASS ------------------------------ #
 # --------------------------------------------------------------------------- #
 class Element(object):
-    nfab = 0
-    npts = None
-    ndof, numnod, numdim = None, None, None
-    gaussp, gaussw = None, None
+    nodes = None
     signature = None
+    variables = None
+    dimensions = None
+    integration = None
+    gaussp = None
+    gaussw = None
     edges = []
     def jacobian(self, *args):
         raise NotImplementedError
@@ -20,43 +22,45 @@ class Element(object):
         raise NotImplementedError
     def shapegradx(self, *args):
         raise NotImplementedError
-    def stiffness(self, *args):
-        raise NotImplementedError
-    def force(self, *args):
+    def response(self, *args):
         raise NotImplementedError
 
 # --------------------------------------------------------------------------- #
 # -------------------------- ELEMENT FAMILIES ------------------------------- #
 # --------------------------------------------------------------------------- #
 class LinknD2(Element):
-    numnod = 2
+    nodes = 2
 
 class Tria3(Element):
-    numdim, numnod = 2, 3
+    nodes = 3
+    dimensions = 2
     edges = array([[0,1], [1,2], [2,0]])
 
 class Tria6(Element):
-    numdim, numnod = 2, 6
+    nodes = 6
+    dimensions = 2
     edges = array([[0,1,3], [1,2,4], [2,0,5]])
 
 class Quad4(Element):
-    numdim, numnod = 2, 4
+    nodes = 4
+    dimensions = 2
     edges = array([[0,1], [1,2], [2,3], [3,0]])
 
 class Quad8(Element):
-    numdim, numnod = 2, 8
+    nodes = 8
+    dimensions = 2
     edges = array([[0, 1, 4], [1, 2, 5], [2, 3, 6], [3, 0, 7]])
 
-def ElementFamily(numdim, numnod, abaname=None):
-    if numnod == 2:
+def ElementFamily(dimensions, nodes, abaname=None):
+    if nodes == 2:
         return LinknD2
-    elif numdim == 2 and numnod == 3:
+    elif dimensions == 2 and nodes == 3:
         return Tria3
-    elif numdim == 2 and numnod == 6:
+    elif dimensions == 2 and nodes == 6:
         return Tria6
-    elif numdim == 2 and numnod == 4:
+    elif dimensions == 2 and nodes == 4:
         return Quad4
-    elif numdim == 2 and numnod == 8:
+    elif dimensions == 2 and nodes == 8:
         return Quad8
     raise ValueError('Unknown element family')
 

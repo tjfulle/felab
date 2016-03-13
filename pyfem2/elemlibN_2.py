@@ -24,11 +24,10 @@ class ElasticLinknD2(Element):
         Requires area 'A'
 
     """
-    nfab = 1
     ndir, nshr = 1, 0
     def __init__(self, label, elenod, elecoord, elemat, **elefab):
         self.label = label
-        self.nodes = asarray(elenod, dtype=int)
+        self.inodes = asarray(elenod, dtype=int)
         self.xc = asarray(elecoord, dtype=float)
         self.material = elemat
         self.A = elefab.get('A')
@@ -36,41 +35,40 @@ class ElasticLinknD2(Element):
             raise UserInputError("Expected exactly area 'A' as the only element "
                                  "fabrication property")
 
-    def stiffness(self, *args):
-        """Computes the stiffness of a n-dimensional elastic link
+    def response(self, dltyp, dload):
+        """Computes the response of a n-dimensional elastic link
 
         Parameters
         ----------
-        xc : array_like
-            nodal coordinates
-            xc[i,j] is the jth coordinate of the ith node
-        E, A : float
-            Young's modulus and area of the bar
 
         Returns
         -------
         k : array_like
-            2*nd x 2*nd elastic stiffness
+            (2*nd, 2*nd) elastic stiffness
+        f : array_like
+            (2*nd, 0) internal force
 
         """
-        # Element normal
+        # ELEMENT NORMAL
         v = self.xc[1] - self.xc[0]
         h = sqrt(dot(v, v))
         n = v / h
-        if self.numdim == 1:
+        if self.dimensions == 1:
             nn = 1.
         else:
             nn = outer(n, n)
 
-        # Assemble element stiffness
-        i, j = self.ndof, 2*self.ndof
-        k = zeros((2*self.ndof, 2*self.ndof))
-        k[0:i, 0:i] = k[i:j, i:j] =  nn # upper left and lower right 2x2
-        k[0:i, i:j] = k[i:j, 0:i] = -nn # lower left and upper right 2x2
-        return self.A * self.material.E / h * k
+        # ASSEMBLE ELEMENT STIFFNESS
+        nd = count_digits(self.signature[0])
+        i, j = nd, 2*nd
+        k = zeros((2*nd, 2*nd))
+        k[0:i, 0:i] = k[i:j, i:j] =  nn # UPPER LEFT AND LOWER RIGHT 2X2
+        k[0:i, i:j] = k[i:j, 0:i] = -nn # LOWER LEFT AND UPPER RIGHT 2X2
+        k *= self.A * self.material.E / h
 
-    def force(self, *args):
-        return zeros(self.numnod*self.ndof)
+        # INTERNAL FORCE
+        f = zeros(2*nd)
+        return k, f
 
     def internal_force(self, uc):
         """
@@ -103,16 +101,25 @@ class ElasticLinknD2(Element):
         return self.material.E * self.A / L * Xu / L
 
 class ElasticLink1D2(ElasticLinknD2):
-    numdim, ndof, numnod = 1, 1, 2
-    signature = (1,0,0,0,0,0,0)  # 2 NODE 1D LINE LINK
+    nodes = 2
+    variables = ('P', 'S')
+    dimensions = 1
+    signature = [(1,0,0,0,0,0,0),  # 2 NODE 1D LINE LINK
+                 (1,0,0,0,0,0,0)]
 
 class ElasticLink2D2(ElasticLinknD2):
-    numdim, ndof, numnod = 2, 2, 2
-    signature = (1,1,0,0,0,0,0)  # 2 NODE 2D LINE LINK
+    nodes = 2
+    variables = ('P', 'S')
+    dimensions = 2
+    signature = [(1,1,0,0,0,0,0),  # 2 NODE 2D LINE LINK
+                 (1,1,0,0,0,0,0)]
 
 class ElasticLink3D2(ElasticLinknD2):
-    numdim, ndof, numnod = 3, 3, 2
-    signature = (1,1,1,0,0,0,0)  # 2 NODE 3D LINE LINK
+    nodes = 2
+    variables = ('P', 'S')
+    dimensions = 3
+    signature = [(1,1,1,0,0,0,0),
+                 (1,1,1,0,0,0,0)]  # 2 NODE 3D LINE LINK
 
 # --------------------------------------------------------------------------- #
 # ---------------------- EULER BERNOULI BEAM ELEMENT ------------------------ #
@@ -134,27 +141,35 @@ class BeamColumn2D(Element):
         Requires area 'A' and 'Izz'
 
     """
-    nfab = 2
     ndir, nshr = 1, 0
-    numdim, ndof, numnod = 2, 3, 2
-    signature = (1,1,0,0,0,1,0)
+    nodes = 2
+    variables = ('P', 'S')
+    dimensions = 2
+    signature = [(1,1,0,0,0,1,0),
+                 (1,1,0,0,0,1,0)]
     def __init__(self, label, elenod, elecoord, elemat, **elefab):
         self.label = label
-        self.nodes = asarray(elenod, dtype=int)
+        self.inodes = asarray(elenod, dtype=int)
         self.xc = asarray(elecoord, dtype=float)
         self.material = elemat
         self.A, self.Izz = elefab.get('A'), elefab.get('Izz')
         if self.A is None or self.Izz is None:
             raise ValueError('Incorrect element fabrication properties')
 
-    def stiffness(self, *args):
+    def response(self, *args):
+
+        ndof = sum([count_digits(nfs) for nfs in self.signature])
+        fe = zeros(ndof)
+
         # Compute element normal
         v = self.xc[1] - self.xc[0]
         h = sqrt(dot(v, v))
         n = v / h
+
         # Transformation matrix
         Te = eye(6)
         Te[0:2, 0:2] = Te[3:5, 3:5] =  [[n[0], n[1]], [-n[1], n[0]]]
+
         # Column stiffness
         EA, EI = self.material.E * self.A, self.material.E * self.Izz
         K1 = EA / h * array([[ 1., 0., 0.,-1., 0., 0.],
@@ -170,4 +185,7 @@ class BeamColumn2D(Element):
                                      [0.,  0.,    0.,     0.,  0.,   0.    ],
                                      [0., -6.,   -3.*h,   0.,  6.,  -3.*h  ],
                                      [0.,  3.*h,  h*h,    0., -3.*h, 2.*h*h]])
-        return dot(dot(Te.T, K1+K2), Te)
+
+        ke = dot(dot(Te.T, K1+K2), Te)
+
+        return ke, fe

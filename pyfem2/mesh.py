@@ -126,7 +126,7 @@ class Mesh(object):
               elemsets=None, surfaces=None):
         self.nodmap = nodmap
         self.coord = asarray(coord)
-        self.numnod, self.numdim = self.coord.shape
+        self.numnod, self.dimensions = self.coord.shape
 
         self.eletab = eletab
         self.numele = len(self.eletab)
@@ -141,7 +141,7 @@ class Mesh(object):
         self.element_blocks = {}
 
         # maximum number of edges on any one element
-        self.maxedge = max([len(ElementFamily(self.numdim,len(nodes)).edges)
+        self.maxedge = max([len(ElementFamily(self.dimensions,len(nodes)).edges)
                             for nodes in self.eletab.values()])
 
         # Number of elements assigned to a block
@@ -150,7 +150,7 @@ class Mesh(object):
     def init2(self, nodmap, coord, elemap, eleblx, nodesets, elemsets, sidesets):
         self.nodmap = nodmap
         self.coord = asarray(coord)
-        self.numnod, self.numdim = self.coord.shape
+        self.numnod, self.dimensions = self.coord.shape
 
         self.elemap = elemap
         self.numele = len(self.elemap)
@@ -301,9 +301,9 @@ class Mesh(object):
         return self._bndry_nod2
 
     def boundary_nodes(self):
-        if self.numdim == 1:
+        if self.dimensions == 1:
             return [argmin(self.coord), argmax(self.coord)]
-        elif self.numdim == 2:
+        elif self.dimensions == 2:
             return self.boundary_nodes2()
         raise UserInputError('3D meshes not supported')
 
@@ -327,9 +327,9 @@ class Mesh(object):
         if is_stringlike(region) and region.upper() in self.surfaces:
             return self.surfaces[region.upper()]
         if region in (ILO, IHI, JLO, JHI, KLO, KHI):
-            if self.numdim == 1:
+            if self.dimensions == 1:
                 return self.find_surface1(region)
-            if self.numdim == 2:
+            if self.dimensions == 2:
                 return self.find_surface2(region)
         elif is_stringlike(region):
             raise UserInputError('No such surface {0!r}'.format(region))
@@ -374,7 +374,7 @@ class Mesh(object):
         return array(surface)
 
         for (e, c) in enumerate(self.elecon):
-            c = c[:self.elefam[e].numnod]
+            c = c[:self.elefam[e].nodes]
             w = where(in1d(c, nodes))[0]
             if len(w) < 2:
                 continue
@@ -446,7 +446,7 @@ class Mesh(object):
             raise UserInputError('The following elements have inconsistent element '
                                  'connectivity:\n   {0}'.format(badel))
         blkcon = array(blkcon, dtype=int)
-        elefam = ElementFamily(self.numdim, blkcon.shape[1])
+        elefam = ElementFamily(self.dimensions, blkcon.shape[1])
         blk = ElementBlock(name, len(self.eleblx)+1, xelems, elefam, blkcon)
         self.eleblx.append(blk)
         self.element_blocks[blk.name] = blk
@@ -489,7 +489,7 @@ class Mesh(object):
     def Plot2D(self, xy=None, elecon=None, u=None, color=None, ax=None, show=0,
                weight=None, colorby=None, linestyle='-', label=None, xlim=None,
                ylim=None, filename=None, **kwds):
-        assert self.numdim == 2
+        assert self.dimensions == 2
         from matplotlib.patches import Polygon
         import matplotlib.lines as mlines
         from matplotlib.collections import PatchCollection

@@ -147,7 +147,7 @@ class FieldOutputs(OrderedDict):
                 # element block property
                 keys.append(k)
         if not keys:
-            raise E
+            raise KeyError(key)
         a = self[keys[0]]
         for k in keys[1:]:
             a = row_stack((a, self[k]))

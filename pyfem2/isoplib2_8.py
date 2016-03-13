@@ -24,10 +24,19 @@ class IsoPQuad8(IsoPElement):
                [0]
 
     """
-    npts = 9
+    nodes = 8
     elefab = {'t':1.}
-    signature = (1,1,0,0,0,0,0)
-    numdim, numnod, ndof = 2, 8, 2
+    signature = [(1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0)]
+    dimensions = 2
+    integration = 9
+
     gaussp = array([[c,  c], [0,  c], [-c,  c],
                     [c,  0], [0,  0], [-c,  0],
                     [c, -c], [0, -c], [-c, -c]])
@@ -112,6 +121,7 @@ class IsoPQuad8(IsoPElement):
 # ------------------------ USER ELEMENT TYPES ------------------------------- #
 # --------------------------------------------------------------------------- #
 class PlaneStrainQuad8(IsoPQuad8):
+    variables = ('S', 'E', 'DE')
     ndir, nshr = 3, 1
     def bmatrix(self, dN):
         """Assemble and return the B matrix"""
@@ -121,6 +131,7 @@ class PlaneStrainQuad8(IsoPQuad8):
         return B
 
 class PlaneStrainQuad8BBar(IsoPQuad8):
+    variables = ('S', 'E', 'DE')
     ndir, nshr = 3, 1
     def bmatrix(self, dN):
         """Assemble and return the B matrix"""
@@ -129,7 +140,7 @@ class PlaneStrainQuad8BBar(IsoPQuad8):
         B[1, 1::2] = B[3, 0::2] = dN[1, :]
         # mean dilatational formulation
         dNb = self.shapegradxbar(self.xc)
-        for a in range(self.numnod):
+        for a in range(self.nodes):
             i = 2 * a
             j = i + 1
             bb1 = (dNb[0, a] - dN[0, a]) / 2.
@@ -139,6 +150,7 @@ class PlaneStrainQuad8BBar(IsoPQuad8):
         return B
 
 class PlaneStressQuad8(IsoPQuad8):
+    variables = ('S', 'E', 'DE')
     ndir, nshr = 2, 1
     def bmatrix(self, dN):
         """Assemble and return the B matrix"""
@@ -148,7 +160,8 @@ class PlaneStressQuad8(IsoPQuad8):
         return B
 
 class PlaneStrainQuad8Reduced(IsoPQuad8):
-    npts = 4
+    variables = ('S', 'E', 'DE')
+    integration = 4
     ndir, nshr = 3, 1
     gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
     gaussw = ones(4)

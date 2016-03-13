@@ -27,10 +27,15 @@ class IsoPQuad4(IsoPElement):
               [0]
 
     """
-    npts = 4
+    nodes = 4
     elefab = {'t':1.}
-    signature = (1,1,0,0,0,0,0)
-    numdim, numnod, ndof = 2, 4, 2
+    signature = [(1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0)]
+    dimensions = 2
+    integration = 4
+    variables = ('E', 'DE', 'S')
     gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
     gaussw = ones(4)
     cp = array([0, 0], dtype=float64)
@@ -110,7 +115,7 @@ class PlaneStrainQuad4BBar(IsoPQuad4):
         B[1, 1::2] = B[3, 0::2] = dN[1, :]
         # mean dilatational formulation
         dNb = self.shapegradxbar(self.xc)
-        for a in range(self.numnod):
+        for a in range(self.nodes):
             i = 2 * a
             j = i + 1
             bb1 = (dNb[0, a] - dN[0, a]) / 2.
@@ -120,8 +125,9 @@ class PlaneStrainQuad4BBar(IsoPQuad4):
         return B
 
 class PlaneStrainQuad4Reduced(IsoPQuad4, IsoPReduced):
-    npts = 1
+    integration = 1
     ndir, nshr = 3, 1
+    variables = ('E', 'DE', 'S')
     gaussp = array([[0., 0.]])
     gaussw = array([4.])
     hglassp = array([[0., 0.]])

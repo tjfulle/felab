@@ -56,3 +56,17 @@ DATA_D = os.path.join(_d, 'data')
 if not os.path.isdir(DATA_D):
     import logging
     logging.warn('PYFEM2 DATA DIRECTORY NOT LOCATED')
+
+# TENSORS
+ONED = '1D'
+TWOD = '3D'
+THREED = '3D'
+PSTRAIN = 'Plane Strain'
+PSTRESS = 'Plane Stress'
+
+# DISTRIBUTED LOADS
+SLOAD = 1
+DLOAD = 2
+SFLUX = 3
+SFILM = 4
+HSRC = 5

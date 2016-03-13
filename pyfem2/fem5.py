@@ -12,15 +12,14 @@ from .elemlibN_2 import ElasticLink2D2, BeamColumn2D
 # -------------------------- APPLICATION CODE ------------------------------- #
 # --------------------------------------------------------------------------- #
 class PlaneBeamColumnTrussModel(FiniteElementModel):
-    numdim = 2
+    dimensions = 2
 
     def Solve(self):
         # active DOF set dynamically
         self.setup((ElasticLink2D2, BeamColumn2D))
 
         # Assemble the global stiffness and force
-        K = self.assemble_global_stiffness()
-        F, Q = self.assemble_global_force()
+        K, F, Q = self.assemble()
         Kbc, Fbc = self.apply_bc(K, F+Q)
 
         # Solve

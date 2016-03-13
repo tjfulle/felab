@@ -56,31 +56,29 @@ def arrtostr(a, fmt='.18f', newl='\n', indent=''):
     a1 = ' '.join('{0:{1}}'.format(x, fmt) for x in a)
     return '{0}{3}{1}{0}{2}'.format(newl, a1, indent[:-INDENT], indent)
 
-def vtk_cell_types(et=None, numdim=None, numnod=None, ndof=None):
+def vtk_cell_types(et=None, dimensions=None, nodes=None):
     if et is not None:
-        numdim, numnod, ndof = et.numdim, et.numnod, et.ndof
-    if numnod == 2:
+        dimensions, nodes = et.dimensions, et.nodes
+    if nodes == 2:
         return VTK_LINE
-    if numdim == 1:
-        if ndof == 2:
-            return VTK_LINE
+    if dimensions == 1:
         return VTK_LINE
-    elif numdim == 2:
-        if numnod == 3:
+    elif dimensions == 2:
+        if nodes == 3:
             return VTK_TRIANGLE
-        elif numnod == 4:
+        elif nodes == 4:
             return VTK_QUAD
-        elif numnod == 6:
+        elif nodes == 6:
             return VTK_QUADRATIC_TRIANGLE
-        elif numnod == 8:
+        elif nodes == 8:
             return VTK_QUADRATIC_QUAD
 
 def pyfem_elem_type(et):
-    numdim, numnod = {VTK_LINE: (None, 2),
-                      VTK_TRIANGLE: (2, 3),
-                      VTK_QUAD: (2, 4),
-                      VTK_QUADRATIC_QUAD: (2, 8)}[et]
-    return ElementFamily(numdim, numnod)
+    dimensions, nodes = {VTK_LINE: (None, 2),
+                         VTK_TRIANGLE: (2, 3),
+                         VTK_QUAD: (2, 4),
+                         VTK_QUADRATIC_QUAD: (2, 8)}[et]
+    return ElementFamily(dimensions, nodes)
 
 def arrtotens(a):
     if a.ndim == 1:
@@ -136,7 +134,7 @@ class VTKFile(object):
         self.elecon = asarray(elecon, dtype=int)
         self.elelab = asarray(elelab, dtype=int)
         self.eletyp = asarray(eletyp, dtype=object)
-        self.numnod, self.numdim = coord.shape
+        self.nodes, self.dimensions = coord.shape
         self.numele, self.max_num_node_per_elem = elecon.shape
 
     def readmesh(self, filename):
@@ -157,25 +155,25 @@ class VTKFile(object):
         grid = grid[0]
         # Piece 0 (only one)
         piece = grid.getElementsByTagName('Piece')[0]
-        numnod = int(piece.getAttribute('NumberOfPoints'))
+        nodes = int(piece.getAttribute('NumberOfPoints'))
         numele = int(piece.getAttribute('NumberOfCells'))
         points = piece.getElementsByTagName('Points')[0]
         el = points.getElementsByTagName('DataArray')[0]
         numcmp = int(el.getAttribute('NumberOfComponents'))
         s = [line for line in el.firstChild.data.split('\n') if line.split()]
-        coord = array([float(a) for o in s for a in o.split()]).reshape(numnod, -1)
+        coord = array([float(a) for o in s for a in o.split()]).reshape(nodes, -1)
         assert coord.shape[1] == numcmp, 'Error reading coord shape'
 
         try:
-            numdim = int(el.getAttribute('NumberOfProblemDimensions'))
+            dimensions = int(el.getAttribute('NumberOfProblemDimensions'))
         except ValueError:
-            numdim = 0
-        if not numdim:
-            numdim = coord.shape[1]
+            dimensions = 0
+        if not dimensions:
+            dimensions = coord.shape[1]
             # check dimension
-            if numdim == 3 and all(abs(coord[:,numdim-1] < 1e-12)):
-                numdim = 2
-        coord = coord[:, :numdim]
+            if dimensions == 3 and all(abs(coord[:,dimensions-1] < 1e-12)):
+                dimensions = 2
+        coord = coord[:, :dimensions]
 
         # Cells
         cells = piece.getElementsByTagName('Cells')[0]
@@ -207,7 +205,7 @@ class VTKFile(object):
         fd = root.getElementsByTagName('FieldData')
 
         elemsets, surfaces, nodesets = {}, {}, {}
-        nodlab, elelab = range(numnod), range(numele)
+        nodlab, elelab = range(nodes), range(numele)
 
         if not fd:
             return (coord, nodlab, elecon, elelab,
@@ -311,11 +309,11 @@ class VTKFile(object):
                 nc = 1
                 val = val.reshape(-1, 1)
             else:
-                if val.shape[1] == self.numdim:
+                if val.shape[1] == self.dimensions:
                     nc = 3
                     # Vector data
                     if val.shape[1] != 3:
-                        z = zeros((self.numnod,3-val.shape[1]))
+                        z = zeros((self.nodes,3-val.shape[1]))
                         val = column_stack((val, z))
                 elif val.shape[1] == 4:
                     val = arrtotens(val, 1)
@@ -326,7 +324,7 @@ class VTKFile(object):
             da.setAttribute('NumberOfComponents', str(nc))
             da.setAttribute('type', 'Float32')
             da.setAttribute('format', 'ascii')
-            if len(val) == self.numnod:
+            if len(val) == self.nodes:
                 pd.appendChild(da)
             elif len(val) == self.numele:
                 cd.appendChild(da)
@@ -377,7 +375,7 @@ class VTKFile(object):
 
         # Piece 0 (only one)
         piece = self.create_element('Piece', parent=usgrid.nodeName,
-                                    NumberOfPoints=self.numnod,
+                                    NumberOfPoints=self.nodes,
                                     NumberOfCells=self.numele)
 
         # Points
@@ -387,13 +385,13 @@ class VTKFile(object):
         da = self.create_element('DataArray', parent=points.nodeName,
                                  type='Float32', format='ascii',
                                  NumberOfComponents=3,
-                                 NumberOfProblemDimensions=self.numdim)
+                                 NumberOfProblemDimensions=self.dimensions)
         x = array(self.coord)
         if u is not None:
             x += u
-        if self.numdim != 3:
-            z = zeros(self.numnod)
-            for i in range(3-self.numdim):
+        if self.dimensions != 3:
+            z = zeros(self.nodes)
+            for i in range(3-self.dimensions):
                 x = column_stack((x, z))
         da.appendChild(self.doc.createTextNode(arrtostr2(x, indent='')))
 
@@ -403,7 +401,7 @@ class VTKFile(object):
         # Cell connectivity
         da = self.create_element('DataArray', parent=cells.nodeName,
                                  type='Int32', Name='connectivity', format='ascii')
-        o = [[n for n in el[:self.eletyp[e].numnod]]
+        o = [[n for n in el[:self.eletyp[e].nodes]]
              for (e, el) in enumerate(self.elecon)]
         da.appendChild(self.doc.createTextNode(arrtostr2(o, 'd', indent='')))
 
@@ -412,7 +410,7 @@ class VTKFile(object):
                                  type='Int32', Name='offsets', format='ascii')
         o, k = [], 0
         for (e, el) in enumerate(self.elecon):
-            k += self.eletyp[e].numnod
+            k += self.eletyp[e].nodes
             o.append(k)
         da.appendChild(self.doc.createTextNode(arrtostr(o, 'd', indent='')))
 
