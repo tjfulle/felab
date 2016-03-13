@@ -63,7 +63,8 @@ class DiffussiveHeatTransfer2D3(Element):
         s = he * (xp + 1) / 2.0
         return array([(he - s) / he, s / he, 0.])[o]
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
+                 load_fac):
 
         # --- ELEMENT STIFFNESS AND FORCE
         Fe = zeros(3)

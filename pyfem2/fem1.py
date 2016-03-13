@@ -312,7 +312,7 @@ class FiniteElementModel(object):
         self.exofile.snapshot(step)
         step.written = 1
 
-    def assemble(self, u, du, time, dtime, istep, iframe, flags):
+    def assemble(self, u, du, time, dtime, istep, iframe, flags, load_fac=1.):
         """
         Assembles the global system of equations
 
@@ -347,8 +347,12 @@ class FiniteElementModel(object):
         if flags[2] not in (1, 2, 5):
             raise ValueError('UNKNOWN FLAG')
 
-        F = zeros(self.numdof)
-        K = zeros((self.numdof, self.numdof))
+        compute_stiff = flags[2] in (1, 2)
+        compute_force = flags[2] in (1, 5)
+        if compute_stiff:
+            K = zeros((self.numdof, self.numdof))
+        if compute_force:
+            F = zeros(self.numdof)
 
         # compute the element stiffness and scatter to global array
         for (ieb, eb) in enumerate(self.mesh.eleblx):
@@ -361,7 +365,7 @@ class FiniteElementModel(object):
                 dload = self.dload[iel]
                 dltyp = self.dltyp[iel]
                 response = el.response(ue, due, time, dtime, istep, iframe,
-                                       dltyp, dload, flags)
+                                       dltyp, dload, flags, load_fac)
 
                 eft = self.eftab[iel]
                 if flags[2] == 1:
@@ -373,11 +377,13 @@ class FiniteElementModel(object):
                     F[eft] += response[0]
 
         if flags[2] == 1:
-            return K, F + self.external_force_array()
+            return K, F + load_fac * self.external_force_array()
+
         elif flags[2] == 2:
             return K
+
         elif flags[2] == 5:
-            return F + self.external_force_array()
+            return F + load_fac * self.external_force_array()
 
     def external_force_array(self):
         # compute contribution from Neumann boundary

@@ -145,7 +145,8 @@ class IsoPElement(object):
             s[p] += dot(D, de[p])
         return de, e, s
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
+                 load_fac):
         """Assemble the element stiffness"""
 
         n = sum([count_digits(nfs) for nfs in self.signature])
@@ -200,11 +201,12 @@ class IsoPElement(object):
 # --------------------------------------------------------------------------- #
 class IsoPReduced(IsoPElement):
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
+                 load_fac):
 
         # Get the nominal stiffness
         response = super(IsoPReduced, self).response(
-            u, du, time, dtime, istep, iframe, dltyp, dload, flags)
+            u, du, time, dtime, istep, iframe, dltyp, dload, flags, load_fac)
         if flags[2] == 5:
             return response
 
@@ -255,14 +257,15 @@ class IsoPReduced(IsoPElement):
 # --------------------------------------------------------------------------- #
 class IsoPSelectiveReduced(IsoPElement):
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
+                 load_fac):
         """Assemble the element stiffness"""
 
         if flags[2] in (1, 5):
             flags1 = [i for i in flags]
             flags1[2] = 5
             Fe = super(IsoPSelectiveReduced, self).response(
-                u, du, time, dtime, istep, iframe, dltyp, dload, flags1)
+                u, du, time, dtime, istep, iframe, dltyp, dload, flags1, load_fac)
 
             if flags[2] == 5:
                 return Fe
@@ -301,14 +304,15 @@ class IsoPSelectiveReduced(IsoPElement):
 class IsoPIncompatibleModes(IsoPElement):
     numincomp = None
     def gmatrix(self, xi): raise NotImplementedError
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
+                 load_fac):
         """Assemble the element stiffness"""
 
         if flags[2] in (1, 5):
             flags1 = [i for i in flags]
             flags1[2] = 5
             Fe = super(IsoPIncompatibleModes, self).response(
-                u, du, time, dtime, istep, iframe, dltyp, dload, flags1)
+                u, du, time, dtime, istep, iframe, dltyp, dload, flags1, load_fac)
 
             if flags[2] == 5:
                 return Fe

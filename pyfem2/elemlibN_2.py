@@ -35,7 +35,8 @@ class ElasticLinknD2(Element):
             raise UserInputError("Expected exactly area 'A' as the only element "
                                  "fabrication property")
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
+                 load_fac):
         """Computes the response of a n-dimensional elastic link
 
         Parameters
@@ -164,7 +165,8 @@ class BeamColumn2D(Element):
         if self.A is None or self.Izz is None:
             raise ValueError('Incorrect element fabrication properties')
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
+                 load_fac):
 
         # INTERNAL FORCE
         Fe = zeros(6)

@@ -35,11 +35,13 @@ class Plane2DModel(FiniteElementModel):
     def NewtonSolve(self, period=1., increments=5, maxiters=10, tolerance=1e-4,
                     relax=1.):
 
-        time = self.steps.last.frames[-1].value
+        time = [0., self.steps.last.frames[-1].value]
         dtime = period / float(increments)
 
         istep = 1
+        flags = [1, 0, 1, 0]
         for iframe in range(1, increments+1):
+
             load_fac = float(iframe) / float(increments)
             err1 = 1.
 
@@ -51,24 +53,24 @@ class Plane2DModel(FiniteElementModel):
             # Newton-Raphson loop
             for nit in range(maxiters):
 
-                K, F, Q = self.assemble(self.dofs, u, time, dtime, istep, iframe)
-                R = self.assemble_global_residual(u, dtime)
+                K, rhs = self.assemble(self.dofs, u, time, dtime, istep, iframe,
+                                       flags, load_fac=load_fac)
 
                 # Compute global force
                 rhs = load_fac * (F + Q) - R
 
                 # Enforce displacement boundary conditions
-                Kbc, Fbc = self.apply_bc(K, rhs, self.dofs, u, load_fac)
+                Kbc, Fbc = self.apply_bc(K, rhs, self.dofs, u, load_fac=load_fac)
 
                 # --- Solve for the nodal displacement
-                du = linsolve(Kbc, rhs)
+                w = linsolve(Kbc, rhs)
 
                 # --- update displacement increment
-                u += relax * du
+                u += relax * w
 
                 # --- Check convergence
                 dusq = dot(u, u)
-                err1 = dot(du, du)
+                err1 = dot(w, w)
                 if dusq != 0.:
                     err1 = sqrt(err1 / dusq)
                 err2 = sqrt(dot(rhs, rhs)) / float(self.numdof)
