@@ -174,10 +174,11 @@ class FiniteElementModel(object):
         self.numnod = self.mesh.numnod
         self.dimensions = self.mesh.dimensions
 
+        # CONTAINERS TO HOLD DOF INFORMATION
         self.doftags = zeros((self.numnod, MDOF), dtype=int)
         self.dofvals = zeros((self.numnod, MDOF), dtype=float)
 
-        # Containers to hold loads
+        # CONTAINERS TO HOLD LOADS
         self.dload = emptywithlists(self.numele)
         self.dltyp = emptywithlists(self.numele)
 
@@ -189,7 +190,7 @@ class FiniteElementModel(object):
 
     def setup(self, eletyp=None, one=False, fields=None):
 
-        # Validate user input
+        # VALIDATE USER INPUT
 
         if self.orphaned_elements:
             raise UserInputError('ALL ELEMENTS MUST BE ASSIGNED '
@@ -203,13 +204,13 @@ class FiniteElementModel(object):
             if len(set([type(el) for el in self.elements])) != 1:
                 raise UserInputError('EXPECTED ONLY 1 ELEMENT TYPE')
 
-        # Check consistent loading
+        # CHECK CONSISTENT LOADING
         nod_with_bc = {}
         for (i,tag) in enumerate(self.doftags):
             if [t for t in tag[:3] if t == DIRICHLET]:
                 nod_with_bc[i] = tag[:3]
 
-        # Node freedom association table
+        # NODE FREEDOM ASSOCIATION TABLE
         active_dof = [None] * MDOF
         self.nodfat = zeros((self.numnod, MDOF), dtype=int)
         for el in self.elements:
@@ -222,30 +223,30 @@ class FiniteElementModel(object):
                         active_dof[j] = j
         active_dof = array([x for x in active_dof if x is not None])
 
-        # Total number of degrees of freedom
+        # TOTAL NUMBER OF DEGREES OF FREEDOM
         self.numdof = sum(count_digits(p) for p in self.nodfat)
 
-        # Node freedom map table
+        # NODE FREEDOM MAP TABLE
         self.nodfmt = zeros(self.numnod, dtype=int)
         for i in range(self.numnod-1):
             self.nodfmt[i+1] = self.nodfmt[i] + count_digits(self.nodfat[i])
 
-        # Element freedom table
+        # ELEMENT FREEDOM TABLE
         self.eftab = self._element_freedom_table()
 
-
         self.active_dof = array(active_dof)
-        self.dofs = zeros((self.numnod, self.active_dof.shape[0]))
+        self.dofs = zeros(self.numdof)
 
         self._setup = True
 
         node_labels = sorted(self.mesh.nodmap, key=lambda k: self.mesh.nodmap[k])
 
+        # --- ALLOCATE STORAGE FOR SIMULATION DATA
         self.steps = StepRepository()
         step = self.steps.Step()
         frame = step.frames[0]
 
-        # Node data
+        # NODE DATA
         nd = self.dimensions
         if 6 in active_dof:
             frame.ScalarField('Q', NODE, node_labels)
@@ -255,6 +256,7 @@ class FiniteElementModel(object):
         if self.initial_temp is not None:
             frame.field_outputs['T'].add_data(self.initial_temp)
 
+        # ELEMENT DATA
         for eb in self.mesh.eleblx:
             if not eb.eletyp.variables:
                 continue

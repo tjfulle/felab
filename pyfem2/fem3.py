@@ -13,7 +13,7 @@ class HeatTransfer2DModel(FiniteElementModel):
         K, F, Q = self.assemble()
         Kbc, Fbc = self.apply_bc(K, F+Q)
         try:
-            self.dofs = solve(Kbc, Fbc)
+            self.dofs[:] = solve(Kbc, Fbc)
         except LinAlgError:
             raise RuntimeError('attempting to solve under constrained system')
         Ft = dot(K, self.dofs)

@@ -20,12 +20,11 @@ class Plane2DModel(FiniteElementModel):
     def StaticPerturbation(self):
         K, F, Q = self.assemble()
         Kbc, Fbc = self.apply_bc(K, F+Q)
-        u = linsolve(Kbc, Fbc)
-        Ft = dot(K, u)
-        self.dofs[:] = u.reshape(self.dofs.shape)
+        self.dofs[:] = linsolve(Kbc, Fbc)
+        Ft = dot(K, self.dofs)
         R = Ft - F - Q
         R = R.reshape(self.mesh.coord.shape)
-        u = u.reshape(self.mesh.coord.shape)
+        u = self.dofs.reshape(self.mesh.coord.shape)
 
         # Create new frame to hold updated state
         frame =self.steps.last.Frame(1.)
