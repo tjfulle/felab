@@ -351,8 +351,9 @@ class FiniteElementModel(object):
         compute_force = flags[2] in (1, 5)
         if compute_stiff:
             K = zeros((self.numdof, self.numdof))
+
         if compute_force:
-            F = zeros(self.numdof)
+            rhs = zeros(self.numdof)
 
         # compute the element stiffness and scatter to global array
         for (ieb, eb) in enumerate(self.mesh.eleblx):
@@ -360,30 +361,32 @@ class FiniteElementModel(object):
                 # Element stiffness
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
-                ue = u[el.inodes]
-                due = du[el.inodes]
+                eft = self.eftab[iel]
+                ue = u[eft]
+                due = du[eft]
                 dload = self.dload[iel]
                 dltyp = self.dltyp[iel]
                 response = el.response(ue, due, time, dtime, istep, iframe,
                                        dltyp, dload, flags, load_fac)
 
-                eft = self.eftab[iel]
                 if flags[2] == 1:
                     K[IX(eft, eft)] += response[0]
-                    F[eft] += response[1]
+                    rhs[eft] += response[1]
+
                 elif flags[2] == 2:
                     K[IX(eft, eft)] += response[0]
+
                 elif flags[2] == 5:
-                    F[eft] += response[0]
+                    rhs[eft] += response[0]
 
         if flags[2] == 1:
-            return K, F + load_fac * self.external_force_array()
+            return K, rhs + load_fac * self.external_force_array()
 
         elif flags[2] == 2:
             return K
 
         elif flags[2] == 5:
-            return F + load_fac * self.external_force_array()
+            return rhs + load_fac * self.external_force_array()
 
     def external_force_array(self):
         # compute contribution from Neumann boundary
@@ -398,23 +401,7 @@ class FiniteElementModel(object):
                     ix += 1
         return Q
 
-    def assemble_global_residual(self, u):
-        """
-        Assembles the global residual
-
-        """
-        # compute contribution from element sources and boundary loads
-        R = zeros(self.numdof)
-        for (ieb, eb) in self.mesh.eleblx:
-            S = self.steps.last.frames[-1].field_outputs[eb.name, 'S']
-            for (e, xel) in enumerate(eb.labels):
-                iel = self.mesh.elemap[xel]
-                el = self.elements[iel]
-                xe = el.xc + u[el.inodes]
-                R[self.eftab[iel]] += el.residual(xe, S[e])
-        return R
-
-    def apply_bc(self, K, F, u=None, du=None, fac=1.):
+    def apply_bc(self, K, F, u=None, du=None, load_fac=1.):
         """
         .. _apply_bc:
 
@@ -458,7 +445,7 @@ class FiniteElementModel(object):
                 if self.doftags[i,j] == DIRICHLET:
                     I = self.nodfmt[i] + ix
                     u_cur = u[I] + du[I]
-                    ufac = fac * self.dofvals[i,j] - u_cur
+                    ufac = load_fac * self.dofvals[i,j] - u_cur
                     Fbc -= [K[k,I] * ufac for k in range(self.numdof)]
                     ubc.append(ufac)
                     mask[I] = True
@@ -884,7 +871,7 @@ class FiniteElementModel(object):
         name : str
             Name for this element set
         surface : list, list of list, or symbolic constant
-            Element/face, list of element/fac, or symbolic constant
+            Element/face, list of element/face, or symbolic constant
 
         See Also
         --------
@@ -977,3 +964,4 @@ class FiniteElementModel(object):
         """Write the finite element results to a file"""
         for (name, step) in self.steps.items():
             self.snapshot(step)
+        self.fh.close()

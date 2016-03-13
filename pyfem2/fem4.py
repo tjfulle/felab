@@ -25,17 +25,16 @@ class Plane2DModel(FiniteElementModel):
         self.dofs[:] = linsolve(Kbc, Fbc)
         R = dot(K, self.dofs) - rhs
         R = R.reshape(self.mesh.coord.shape)
-        u = self.dofs.reshape(self.mesh.coord.shape)
 
         # Create new frame to hold updated state
         frame =self.steps.last.Frame(1.)
-        self.update_state(u, 1., R=R)
+        self.update_state(1., R=R)
         frame.converged = True
 
     def NewtonSolve(self, period=1., increments=5, maxiters=10, tolerance=1e-4,
                     relax=1.):
 
-        time = [0., self.steps.last.frames[-1].value]
+        time = array([0., self.steps.last.frames[-1].value])
         dtime = period / float(increments)
 
         istep = 1
@@ -56,26 +55,18 @@ class Plane2DModel(FiniteElementModel):
                 K, rhs = self.assemble(self.dofs, u, time, dtime, istep, iframe,
                                        flags, load_fac=load_fac)
 
-                # Compute global force
-                rhs = load_fac * (F + Q) - R
-
                 # Enforce displacement boundary conditions
                 Kbc, Fbc = self.apply_bc(K, rhs, self.dofs, u, load_fac=load_fac)
 
                 # --- Solve for the nodal displacement
-                w = linsolve(Kbc, rhs)
+                w = linsolve(Kbc, Fbc)
 
                 # --- update displacement increment
                 u += relax * w
 
                 # --- Check convergence
-                dusq = dot(u, u)
-                err1 = dot(w, w)
-                if dusq != 0.:
-                    err1 = sqrt(err1 / dusq)
+                err1 = sqrt(dot(w, w) / dot(u, u))
                 err2 = sqrt(dot(rhs, rhs)) / float(self.numdof)
-
-                self.update_state(u, dtime)
 
                 if err1 < tolerance or err2 < tolerance:
                     break
@@ -90,9 +81,11 @@ class Plane2DModel(FiniteElementModel):
             time += dtime
             self.dofs += u
 
+        self.update_state(time[0])
         return
 
-    def update_state(self, u, dtime, **kwds):
+    def update_state(self, dtime, **kwds):
+        u = self.dofs.reshape(self.mesh.coord.shape)
         frame = self.steps.last.frames[-1]
         frame.field_outputs['U'].add_data(u)
         for (kwd, val) in kwds.items():

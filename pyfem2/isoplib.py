@@ -149,32 +149,55 @@ class IsoPElement(object):
                  load_fac):
         """Assemble the element stiffness"""
 
+        x = self.xc + u.reshape(self.xc.shape)
+
         n = sum([count_digits(nfs) for nfs in self.signature])
         compute_stiff = flags[2] in (1, 2)
         compute_force = flags[2] in (1, 5)
+        linear_perturbation = flags[3] == 1
 
         if compute_stiff:
             Ke = zeros((n, n))
 
         if compute_force:
-            Fe = zeros(n)
+            rhs = zeros(n)
+
+        if not linear_perturbation:
+            resid = zeros(n)
 
         # COMPUTE INTEGRATION POINT DATA
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
         for (p, xi) in enumerate(self.gaussp):
+
+            dNdx = self.shapegradx(self.xc, xi)
+            B = self.bmatrix(dNdx)
             J = self.jacobian(self.xc, xi)
+
+            # STRAIN AND INCREMENT
+            e = dot(B, u)
+            de = dot(B, du)
+
+            # MATERIAL RESPONSE
+            s = zeros(self.ndir+self.nshr)
+            temp, dtemp = 1., 1.
+            xv = zeros(1)
+            s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
+                                              dtemp, self.ndir, self.nshr)
+
             if compute_stiff:
-                dNdx = self.shapegradx(self.xc, xi)
-                B = self.bmatrix(dNdx)
                 # UPDATE MATERIAL STATE
-                D = self.material.stiffness(self.ndir, self.nshr)
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
                 Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
+
             if compute_force:
                 P = self.pmatrix(self.shape(xi))
                 for dloadx in bload:
                     # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                    Fe += J * self.gaussw[p] * dot(P.T, dloadx)
+                    rhs += J * self.gaussw[p] * dot(P.T, dloadx)
+
+            if not linear_perturbation:
+                # SUBTRACT THE RESIDUAL FROM THE FORCE
+                resid +=  J * self.gaussw[p] * dot(s, B)
 
         if flags[2] == 2:
             return Ke
@@ -186,15 +209,20 @@ class IsoPElement(object):
                     continue
                 elif typ == SLOAD:
                     # Surface load
-                    Fe += self.surface_force(dloadx[0], dloadx[1:])
+                    rhs += self.surface_force(dloadx[0], dloadx[1:])
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')
 
+        rhs *= load_fac
+
+        if not linear_perturbation:
+            rhs -= resid
+
         if flags[2] == 1:
-            return Ke, Fe
+            return Ke, rhs
 
         elif flags[2] == 5:
-            return Fe
+            return rhs
 
 # --------------------------------------------------------------------------- #
 # -------------- REDUCED INTEGRATION ISOPARAMETRIC ELEMENTS ----------------- #
@@ -211,7 +239,7 @@ class IsoPReduced(IsoPElement):
             return response
 
         if flags[2] == 1:
-            Ke, Fe = response
+            Ke, rhs = response
 
         elif flags[2] == 2:
             Ke = response
@@ -247,7 +275,7 @@ class IsoPReduced(IsoPElement):
         Ke += Khg
 
         if flags[2] == 1:
-            return Ke, Fe
+            return Ke, rhs
 
         elif flags[2] == 2:
             return Ke
@@ -264,11 +292,11 @@ class IsoPSelectiveReduced(IsoPElement):
         if flags[2] in (1, 5):
             flags1 = [i for i in flags]
             flags1[2] = 5
-            Fe = super(IsoPSelectiveReduced, self).response(
+            rhs = super(IsoPSelectiveReduced, self).response(
                 u, du, time, dtime, istep, iframe, dltyp, dload, flags1, load_fac)
 
             if flags[2] == 5:
-                return Fe
+                return rhs
 
         # compute integration point data
         n = sum([count_digits(nfs) for nfs in self.signature])
@@ -293,7 +321,7 @@ class IsoPSelectiveReduced(IsoPElement):
             Ke += dot(dot(B.T, D1), B) * J * self.rgaussw[p]
 
         if flags[2] == 1:
-            return Ke, Fe
+            return Ke, rhs
 
         elif flags[2] == 2:
             return Ke
@@ -311,11 +339,11 @@ class IsoPIncompatibleModes(IsoPElement):
         if flags[2] in (1, 5):
             flags1 = [i for i in flags]
             flags1[2] = 5
-            Fe = super(IsoPIncompatibleModes, self).response(
+            rhs = super(IsoPIncompatibleModes, self).response(
                 u, du, time, dtime, istep, iframe, dltyp, dload, flags1, load_fac)
 
             if flags[2] == 5:
-                return Fe
+                return rhs
 
         # incompatible modes stiffnesses
         n = sum([count_digits(nfs) for nfs in self.signature])
@@ -338,7 +366,7 @@ class IsoPIncompatibleModes(IsoPElement):
         Ke = Kcc  - dot(dot(Kci, inv(Kii)), Kci.T)
 
         if flags[2] == 1:
-            return Ke, Fe
+            return Ke, rhs
 
         elif flags[2] == 2:
             return Ke

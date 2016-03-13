@@ -148,6 +148,12 @@ class Material(object):
         """The isotropic thermal conductivity matrix"""
         return self.k_iso * eye(ndim)
 
+    def response(self, stress, statev, strain, dstrain, time, dtime,
+                 temp, dtemp, ndir, nshr):
+        D = self.stiffness(ndir, nshr)
+        stress += dot(D, dstrain)
+        return stress, statev, D
+
     def stiffness(self, ndir, nshr, disp=None):
         if self.E is None:
             raise UserInputError('ELASTIC MODULUS NOT SET')
