@@ -122,7 +122,7 @@ def linsolve(A, b, symmetric=True):
             x = solve(A, F)
             info = 0
         except LinAlgError:
-            pass
+            raise RuntimeError('ATTEMPTING TO SOLVE UNDER CONSTRAINED SYSTEM')
 
     if info > 0:
         logging.warn("LINSOLVE FAILED, USING LEAST SQUARES "

@@ -63,13 +63,17 @@ class DiffussiveHeatTransfer2D3(Element):
         s = he * (xp + 1) / 2.0
         return array([(he - s) / he, s / he, 0.])[o]
 
-    def response(self, dltyp, dload):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
 
         # --- ELEMENT STIFFNESS AND FORCE
         Fe = zeros(3)
 
+        compute_stiff = flags[2] in (1, 2)
+        compute_force = flags[2] in (1, 5)
+
         # MATERIAL CONTRIBUTION
-        Ke = self.stiffness1()
+        if compute_stiff:
+            Ke = self.stiffness1()
 
         for (i, typ) in enumerate(dltyp):
             # CONTRIBUTIONS FROM EXTERNAL LOADS
@@ -77,19 +81,28 @@ class DiffussiveHeatTransfer2D3(Element):
             if typ == SFILM:
                 # EVALUATE THE CONVECTION CONTRIBUTION
                 iedge, Too, h = dload[i]
-                Ke += self.stiffness2(iedge, h)
-                Fe += self.convection_flux_array(iedge, Too, h)
+                if compute_stiff:
+                    Ke += self.stiffness2(iedge, h)
+                if compute_force:
+                    Fe += self.convection_flux_array(iedge, Too, h)
 
             elif typ == HSRC:
                 # EVALUATE THE HEAT SOURCE CONTRIBUTION
-                Fe += self.heat_source(dload[i])
+                if compute_force:
+                    Fe += self.heat_source(dload[i])
 
             elif typ == SFLUX:
                 # EVALUATE THE BOUNDARY FLUX CONTRIBUTION
-                iedge, qn = dload[i]
-                Fe += self.conduction_flux_array(iedge, qn)
+                if compute_force:
+                    iedge, qn = dload[i]
+                    Fe += self.conduction_flux_array(iedge, qn)
 
-        return Ke, Fe
+        if flags[2] == 1:
+            return Ke, Fe
+        elif flags[2] == 2:
+            return Ke
+        elif flags[2] == 5:
+            return Fe
 
     def stiffness1(self):
         # Material stiffness - "resistance" to conduction

@@ -35,7 +35,7 @@ class ElasticLinknD2(Element):
             raise UserInputError("Expected exactly area 'A' as the only element "
                                  "fabrication property")
 
-    def response(self, dltyp, dload):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
         """Computes the response of a n-dimensional elastic link
 
         Parameters
@@ -49,6 +49,13 @@ class ElasticLinknD2(Element):
             (2*nd, 0) internal force
 
         """
+        # INTERNAL FORCE
+        ndof = count_digits(self.signature[0])
+        Fe = zeros(2*ndof)
+
+        if flags[2] == 5:
+            return Fe
+
         # ELEMENT NORMAL
         v = self.xc[1] - self.xc[0]
         h = sqrt(dot(v, v))
@@ -59,16 +66,17 @@ class ElasticLinknD2(Element):
             nn = outer(n, n)
 
         # ASSEMBLE ELEMENT STIFFNESS
-        nd = count_digits(self.signature[0])
-        i, j = nd, 2*nd
-        k = zeros((2*nd, 2*nd))
-        k[0:i, 0:i] = k[i:j, i:j] =  nn # UPPER LEFT AND LOWER RIGHT 2X2
-        k[0:i, i:j] = k[i:j, 0:i] = -nn # LOWER LEFT AND UPPER RIGHT 2X2
-        k *= self.A * self.material.E / h
+        i, j = ndof, 2*ndof
+        Ke = zeros((2*ndof, 2*ndof))
+        Ke[0:i, 0:i] = Ke[i:j, i:j] =  nn # UPPER LEFT AND LOWER RIGHT 2X2
+        Ke[0:i, i:j] = Ke[i:j, 0:i] = -nn # LOWER LEFT AND UPPER RIGHT 2X2
+        Ke *= self.A * self.material.E / h
 
-        # INTERNAL FORCE
-        f = zeros(2*nd)
-        return k, f
+        if flags[2] == 1:
+            return Ke, Fe
+
+        elif flags[2] == 2:
+            return Ke
 
     def internal_force(self, uc):
         """
@@ -156,21 +164,24 @@ class BeamColumn2D(Element):
         if self.A is None or self.Izz is None:
             raise ValueError('Incorrect element fabrication properties')
 
-    def response(self, *args):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
 
-        ndof = sum([count_digits(nfs) for nfs in self.signature])
-        fe = zeros(ndof)
+        # INTERNAL FORCE
+        Fe = zeros(6)
 
-        # Compute element normal
+        if flags[2] == 5:
+            return Fe
+
+        # COMPUTE ELEMENT NORMAL
         v = self.xc[1] - self.xc[0]
         h = sqrt(dot(v, v))
         n = v / h
 
-        # Transformation matrix
+        # TRANSFORMATION MATRIX
         Te = eye(6)
         Te[0:2, 0:2] = Te[3:5, 3:5] =  [[n[0], n[1]], [-n[1], n[0]]]
 
-        # Column stiffness
+        # COLUMN STIFFNESS
         EA, EI = self.material.E * self.A, self.material.E * self.Izz
         K1 = EA / h * array([[ 1., 0., 0.,-1., 0., 0.],
                              [ 0., 0., 0., 0., 0., 0.],
@@ -186,6 +197,10 @@ class BeamColumn2D(Element):
                                      [0., -6.,   -3.*h,   0.,  6.,  -3.*h  ],
                                      [0.,  3.*h,  h*h,    0., -3.*h, 2.*h*h]])
 
-        ke = dot(dot(Te.T, K1+K2), Te)
+        Ke = dot(dot(Te.T, K1+K2), Te)
 
-        return ke, fe
+        if flags[2] == 1:
+            return Ke, Fe
+
+        elif flags[2] == 2:
+            return Ke

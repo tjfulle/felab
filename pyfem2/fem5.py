@@ -5,6 +5,7 @@ from numpy import *
 from numpy.linalg import solve, LinAlgError
 
 from .constants import *
+from .utilities import linsolve
 from .fem1 import FiniteElementModel
 from .elemlibN_2 import ElasticLink2D2, BeamColumn2D
 
@@ -19,19 +20,19 @@ class PlaneBeamColumnTrussModel(FiniteElementModel):
         self.setup((ElasticLink2D2, BeamColumn2D))
 
         # Assemble the global stiffness and force
-        K, F, Q = self.assemble()
-        Kbc, Fbc = self.apply_bc(K, F+Q)
+        flags = [1, 0, 1, 1]
+        du = zeros(self.numdof)
+        K, rhs = self.assemble(self.dofs, du, [0, 0], 1., 1, 1, flags)
+        Kbc, Fbc = self.apply_bc(K, rhs)
 
         # Solve
-        try:
-            self.dofs = solve(Kbc, Fbc)
-        except LinAlgError:
-            raise RuntimeError('attempting to solve under constrained system')
+        self.dofs[:] = linsolve(Kbc, Fbc)
 
         # Total force, including reaction, and reaction
-        Ft = dot(K, self.dofs)
-        R = Ft - F - Q
+        R = dot(K, self.dofs) - rhs
 
+        Q = self.external_force_array()
+        R = zeros(self.numdof)
         U, R, Urot, Rrot = self.format_displacements_and_reactions(self.dofs, R)
 
         frame = self.steps.last.Frame(1.)

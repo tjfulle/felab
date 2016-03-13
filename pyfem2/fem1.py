@@ -312,14 +312,26 @@ class FiniteElementModel(object):
         self.exofile.snapshot(step)
         step.written = 1
 
-    def assemble(self):
+    def assemble(self, u, du, time, dtime, istep, iframe, flags):
         """
         Assembles the global system of equations
+
+        Parameters
+        ----------
+        flags : ndarray of int
+            flags[0] - procedure type, 1:static, 21:heat transfer
+            flags[1] - 0:small, 1:large strain
+            flags[2] - 1:define K and F, 2: define just K, 5: define just F
+                       100: define perturbation quantifies for output
+            flags[3] - 0: general step, 1: linear perturbation
 
         Returns
         -------
         K : ndarray
-            The NxN global stiffness array, where N is the total number of degrees
+            The (N,N) global stiffness array, where N is the total number of degrees
+            of freedom in the probem.
+        F : ndarray
+            The (N,0) global RHS array, where N is the total number of degrees
             of freedom in the probem.
 
         Notes
@@ -331,13 +343,9 @@ class FiniteElementModel(object):
         - there are no multifreedom constraints; and
         - the global stiffness matrix is stored as a full symmetric matrix.
 
-        flags : ndarray of int
-            flags[0] - procedure type
-            flags[1] - small or large strain
-            flags[2] - general or linear perturbation
-
         """
-        Q = self.external_force_array()
+        if flags[2] not in (1, 2, 5):
+            raise ValueError('UNKNOWN FLAG')
 
         F = zeros(self.numdof)
         K = zeros((self.numdof, self.numdof))
@@ -348,17 +356,28 @@ class FiniteElementModel(object):
                 # Element stiffness
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
+                ue = u[el.inodes]
+                due = du[el.inodes]
                 dload = self.dload[iel]
                 dltyp = self.dltyp[iel]
-                Ke, Fe = el.response(dltyp, dload)
-                eft = self.eftab[iel]
-                K[IX(eft, eft)] += Ke
-                F[eft] += Fe
-                #Ke, Fe = el.response(u[iel], du[iel], time, dtime, fvars[iel],
-                #                     istep, iframe, dltyp, dload, ddload, temp,
-                #                     flags)
+                response = el.response(ue, due, time, dtime, istep, iframe,
+                                       dltyp, dload, flags)
 
-        return K, F, Q
+                eft = self.eftab[iel]
+                if flags[2] == 1:
+                    K[IX(eft, eft)] += response[0]
+                    F[eft] += response[1]
+                elif flags[2] == 2:
+                    K[IX(eft, eft)] += response[0]
+                elif flags[2] == 5:
+                    F[eft] += response[0]
+
+        if flags[2] == 1:
+            return K, F + self.external_force_array()
+        elif flags[2] == 2:
+            return K
+        elif flags[2] == 5:
+            return F + self.external_force_array()
 
     def external_force_array(self):
         # compute contribution from Neumann boundary

@@ -10,18 +10,16 @@ class HeatTransfer2DModel(FiniteElementModel):
     dimensions = 2
     def Solve(self):
         self.setup(DiffussiveHeatTransfer2D3)
-        K, F, Q = self.assemble()
-        Kbc, Fbc = self.apply_bc(K, F+Q)
-        try:
-            self.dofs[:] = solve(Kbc, Fbc)
-        except LinAlgError:
-            raise RuntimeError('attempting to solve under constrained system')
-        Ft = dot(K, self.dofs)
-        R = Ft - F - Q
+        flags = [21, 0, 1, 1]
+        du = zeros(self.numdof)
+        K, rhs = self.assemble(self.dofs, du, [0, 0], 1., 1, 1, flags)
+        Kbc, Fbc = self.apply_bc(K, rhs)
+        self.dofs[:] = linsolve(Kbc, Fbc)
+        Q = dot(K, self.dofs) - rhs
 
         # Create new frame to hold updated state
         frame = self.steps.last.Frame(1.)
         frame.field_outputs['T'].add_data(self.dofs)
-        frame.field_outputs['Q'].add_data(R)
+        frame.field_outputs['Q'].add_data(Q)
         frame.converged = True
         self.T = self.dofs

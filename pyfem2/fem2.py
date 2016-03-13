@@ -19,16 +19,16 @@ class TrussModel(FiniteElementModel):
         self.setup(ElasticLinknD2, one=True)
 
         # Assemble the global stiffness and force
-        K, F, Q = self.assemble()
-        Kbc, Fbc = self.apply_bc(K, F+Q)
-        try:
-            self.dofs[:] = solve(Kbc, Fbc)
-        except LinAlgError:
-            raise RuntimeError('attempting to solve under constrained system')
+        flags = [1, 0, 1, 1]
+        du = zeros(self.numdof)
+        K, rhs = self.assemble(self.dofs, du, [0, 0], 1., 1, 1, flags)
+        Kbc, Fbc = self.apply_bc(K, rhs)
+        self.dofs[:] = linsolve(Kbc, Fbc)
 
         # Total force, including reaction, and reaction
-        Ft = dot(K, self.dofs)
-        R = Ft - F - Q
+        #flags[-1] = 100
+        #R = self.assemble(self.dofs, du, [0, 0], 1. 1, 1, flags)
+        R = dot(K, self.dofs) - rhs
 
         # reshape R to be the same shape as coord
         u = self.dofs.reshape(self.numnod, -1)

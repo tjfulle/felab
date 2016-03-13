@@ -18,11 +18,12 @@ class Plane2DModel(FiniteElementModel):
             raise ValueError('UNKNOWN SOLVER')
 
     def StaticPerturbation(self):
-        K, F, Q = self.assemble()
-        Kbc, Fbc = self.apply_bc(K, F+Q)
+        flags = [1, 0, 1, 1]
+        du = zeros(self.numdof)
+        K, rhs = self.assemble(self.dofs, du, [0, 0], 1., 1, 1, flags)
+        Kbc, Fbc = self.apply_bc(K, rhs)
         self.dofs[:] = linsolve(Kbc, Fbc)
-        Ft = dot(K, self.dofs)
-        R = Ft - F - Q
+        R = dot(K, self.dofs) - rhs
         R = R.reshape(self.mesh.coord.shape)
         u = self.dofs.reshape(self.mesh.coord.shape)
 
@@ -33,8 +34,6 @@ class Plane2DModel(FiniteElementModel):
 
     def NewtonSolve(self, period=1., increments=5, maxiters=10, tolerance=1e-4,
                     relax=1.):
-
-        u = zeros(self.numdof)
 
         time = self.steps.last.frames[-1].value
         dtime = period / float(increments)
@@ -47,20 +46,19 @@ class Plane2DModel(FiniteElementModel):
             # create frame to hold results
             frame = self.steps.last.Frame(dtime)
 
+            u = zeros(self.numdof)
+
             # Newton-Raphson loop
             for nit in range(maxiters):
 
-                K, F = self.assemble(u, du, time, dtime, istep, iframe)
-
-                K = self.assemble_global_stiffness(u, dtime)
-                F, Q = self.assemble_global_force(self.dload, self.sload)
+                K, F, Q = self.assemble(self.dofs, u, time, dtime, istep, iframe)
                 R = self.assemble_global_residual(u, dtime)
 
                 # Compute global force
                 rhs = load_fac * (F + Q) - R
 
                 # Enforce displacement boundary conditions
-                Kbc, Fbc = self.apply_bc(K, rhs, u, load_fac)
+                Kbc, Fbc = self.apply_bc(K, rhs, self.dofs, u, load_fac)
 
                 # --- Solve for the nodal displacement
                 du = linsolve(Kbc, rhs)
@@ -88,6 +86,7 @@ class Plane2DModel(FiniteElementModel):
 
             frame.converged = True
             time += dtime
+            self.dofs += u
 
         return
 

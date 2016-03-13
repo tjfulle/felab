@@ -145,48 +145,74 @@ class IsoPElement(object):
             s[p] += dot(D, de[p])
         return de, e, s
 
-    def response(self, dltyp, dload):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
         """Assemble the element stiffness"""
-        # compute integration point data
 
         n = sum([count_digits(nfs) for nfs in self.signature])
-        Fe = zeros(n)
-        Ke = zeros((n, n))
+        compute_stiff = flags[2] in (1, 2)
+        compute_force = flags[2] in (1, 5)
 
+        if compute_stiff:
+            Ke = zeros((n, n))
+
+        if compute_force:
+            Fe = zeros(n)
+
+        # COMPUTE INTEGRATION POINT DATA
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
         for (p, xi) in enumerate(self.gaussp):
-            # Update material state
             J = self.jacobian(self.xc, xi)
-            dNdx = self.shapegradx(self.xc, xi)
-            P = self.pmatrix(self.shape(xi))
-            B = self.bmatrix(dNdx)
-            D = self.material.stiffness(self.ndir, self.nshr)
-            # Add contribution of function call to integral
-            Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
-            for dloadx in bload:
-                Fe += J * self.gaussw[p] * dot(P.T, dloadx)
+            if compute_stiff:
+                dNdx = self.shapegradx(self.xc, xi)
+                B = self.bmatrix(dNdx)
+                # UPDATE MATERIAL STATE
+                D = self.material.stiffness(self.ndir, self.nshr)
+                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
+                Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
+            if compute_force:
+                P = self.pmatrix(self.shape(xi))
+                for dloadx in bload:
+                    # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
+                    Fe += J * self.gaussw[p] * dot(P.T, dloadx)
 
-        for (i, typ) in enumerate(dltyp):
-            dloadx = dload[i]
-            if typ == DLOAD:
-                continue
-            elif typ == SLOAD:
-                # Surface load
-                Fe += self.surface_force(dloadx[0], dloadx[1:])
-            else:
-                logging.warn('UNRECOGNIZED DLOAD FLAG')
+        if flags[2] == 2:
+            return Ke
 
-        return Ke, Fe
+        if compute_force:
+            for (i, typ) in enumerate(dltyp):
+                dloadx = dload[i]
+                if typ == DLOAD:
+                    continue
+                elif typ == SLOAD:
+                    # Surface load
+                    Fe += self.surface_force(dloadx[0], dloadx[1:])
+                else:
+                    logging.warn('UNRECOGNIZED DLOAD FLAG')
+
+        if flags[2] == 1:
+            return Ke, Fe
+
+        elif flags[2] == 5:
+            return Fe
 
 # --------------------------------------------------------------------------- #
 # -------------- REDUCED INTEGRATION ISOPARAMETRIC ELEMENTS ----------------- #
 # --------------------------------------------------------------------------- #
 class IsoPReduced(IsoPElement):
 
-    def response(self, dltyp, dload):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
 
         # Get the nominal stiffness
-        Ke, Fe = super(IsoPReduced, self).response(dltyp, dload)
+        response = super(IsoPReduced, self).response(
+            u, du, time, dtime, istep, iframe, dltyp, dload, flags)
+        if flags[2] == 5:
+            return response
+
+        if flags[2] == 1:
+            Ke, Fe = response
+
+        elif flags[2] == 2:
+            Ke = response
 
         # Perform hourglass correction
         Khg = zeros(Ke.shape)
@@ -216,32 +242,43 @@ class IsoPReduced(IsoPElement):
                             K = n1 * a + i
                             L = n2 * b + j
                             Khg[K,L] += scale * g[a] * g[b] * Je * 4.
-        return Ke + Khg, Fe
+        Ke += Khg
+
+        if flags[2] == 1:
+            return Ke, Fe
+
+        elif flags[2] == 2:
+            return Ke
 
 # --------------------------------------------------------------------------- #
 # ---------- SELECTIVE REDUCED INTEGRATION ISOPARAMETRIC ELEMENTS ----------- #
 # --------------------------------------------------------------------------- #
 class IsoPSelectiveReduced(IsoPElement):
 
-    def response(self, dltyp, dload):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
         """Assemble the element stiffness"""
+
+        if flags[2] in (1, 5):
+            flags1 = [i for i in flags]
+            flags1[2] = 5
+            Fe = super(IsoPSelectiveReduced, self).response(
+                u, du, time, dtime, istep, iframe, dltyp, dload, flags1)
+
+            if flags[2] == 5:
+                return Fe
+
         # compute integration point data
         n = sum([count_digits(nfs) for nfs in self.signature])
         Ke = zeros((n, n))
-        Fe = zeros(n)
 
-        bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
         for (p, xi) in enumerate(self.gaussp):
             # Update material state
             J = self.jacobian(self.xc, xi)
             dNdx = self.shapegradx(self.xc, xi)
-            P = self.pmatrix(self.shape(xi))
             B = self.bmatrix(dNdx)
             D1, D2 = self.material.stiffness(self.ndir, self.nshr, disp=2)
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Ke += dot(dot(B.T, D2), B) * J * self.gaussw[p]
-            for dloadx in bload:
-                Fe += J * self.gaussw[p] * dot(P.T, dloadx)
 
         for (p, xi) in enumerate(self.rgaussp):
             # UPDATE MATERIAL STATE
@@ -252,17 +289,11 @@ class IsoPSelectiveReduced(IsoPElement):
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Ke += dot(dot(B.T, D1), B) * J * self.rgaussw[p]
 
-        for (i, typ) in enumerate(dltyp):
-            dloadx = dload[i]
-            if typ == DLOAD:
-                continue
-            elif typ == SLOAD:
-                # Surface load
-                Fe += self.surface_force(dloadx[0], dloadx[1:])
-            else:
-                logging.warn('UNRECOGNIZED DLOAD FLAG')
+        if flags[2] == 1:
+            return Ke, Fe
 
-        return Ke, Fe
+        elif flags[2] == 2:
+            return Ke
 
 # --------------------------------------------------------------------------- #
 # ---------------- INCOMPATIBLE MODES ISOPARAMETRIC ELEMENTS ---------------- #
@@ -270,22 +301,29 @@ class IsoPSelectiveReduced(IsoPElement):
 class IsoPIncompatibleModes(IsoPElement):
     numincomp = None
     def gmatrix(self, xi): raise NotImplementedError
-    def response(self, dltyp, dload):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags):
         """Assemble the element stiffness"""
+
+        if flags[2] in (1, 5):
+            flags1 = [i for i in flags]
+            flags1[2] = 5
+            Fe = super(IsoPIncompatibleModes, self).response(
+                u, du, time, dtime, istep, iframe, dltyp, dload, flags1)
+
+            if flags[2] == 5:
+                return Fe
+
         # incompatible modes stiffnesses
         n = sum([count_digits(nfs) for nfs in self.signature])
         m = count_digits(self.signature[0])
         Kcc = zeros((n, n))
         Kci = zeros((n, self.dimensions*m))
         Kii = zeros((self.dimensions*m, self.dimensions*m))
-        Fe = zeros(n)
 
-        bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
         for (p, xi) in enumerate(self.gaussp):
             # UPDATE MATERIAL STATE
             J = self.jacobian(self.xc, xi)
             dNdx = self.shapegradx(self.xc, xi)
-            P = self.pmatrix(self.shape(xi))
             B = self.bmatrix(dNdx)
             G = self.gmatrix(xi)
             D = self.material.stiffness(self.ndir, self.nshr)
@@ -293,19 +331,10 @@ class IsoPIncompatibleModes(IsoPElement):
             Kcc += dot(dot(B.T, D), B) * J * self.gaussw[p]
             Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]
             Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
-            for dloadx in bload:
-                Fe += J * self.gaussw[p] * dot(P.T, dloadx)
-
-        for (i, typ) in enumerate(dltyp):
-            dloadx = dload[i]
-            if typ == DLOAD:
-                continue
-            elif typ == SLOAD:
-                # Surface load
-                Fe += self.surface_force(dloadx[0], dloadx[1:])
-            else:
-                logging.warn('UNRECOGNIZED DLOAD FLAG')
-
         Ke = Kcc  - dot(dot(Kci, inv(Kii)), Kci.T)
 
-        return Ke, Fe
+        if flags[2] == 1:
+            return Ke, Fe
+
+        elif flags[2] == 2:
+            return Ke
