@@ -77,7 +77,7 @@ class IsoPElement(object):
         n = sum([count_digits(nfs) for nfs in self.signature])
         dNb = zeros(n).reshape(-1, self.nodes)
         for (p, xi) in enumerate(self.gaussp):
-            # Compute the integrals over the volume
+            # COMPUTE THE INTEGRALS OVER THE VOLUME
             fac = self.gaussw[p] * det[p] / self.dimensions / ev
             dNdxi = self.shapegrad(xi)
             dxdxi = dot(dNdxi, xc)
@@ -169,16 +169,14 @@ class IsoPElement(object):
             # SHAPE FUNCTION DERIVATIVE AT GAUSS POINTS
             dNdxi = self.shapegrad(xi)
 
-            # DEFORMATION GRADIENT
+            # JACOBIAN TO NATURAL COORDINATES
             dxdxi = dot(dNdxi, xc)
             dxidx = inv(dot(dNdxi, xc))
+            J = det(dxdxi)
 
             # CONVERT SHAPE FUNCTION DERIVATIVES TO DERIVATIVES WRT GLOBAL X
             dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
-
-            # JACOBIAN
-            J = det(dxdxi)
 
             # STRAIN AND INCREMENT
             e = dot(B, u)
@@ -255,7 +253,7 @@ class IsoPReduced(IsoPElement):
         elif cflag == STIFF_ONLY:
             Ke = response
 
-        # Perform hourglass correction
+        # PERFORM HOURGLASS CORRECTION
         Khg = zeros(Ke.shape)
         for (p, xi) in enumerate(self.hglassp):
             # SHAPE FUNCTION DERIVATIVE AT GAUSS POINTS
@@ -315,7 +313,7 @@ class IsoPSelectiveReduced(IsoPElement):
             if cflag == FORCE_ONLY:
                 return rhs
 
-        # compute integration point data
+        # COMPUTE INTEGRATION POINT DATA
         n = sum([count_digits(nfs) for nfs in self.signature])
         Ke = zeros((n, n))
 
