@@ -12,3 +12,7 @@ from .fem4 import Plane2DModel
 from .fem5 import PlaneBeamColumnTrussModel
 from .mat import Material
 from .mesh import Mesh
+
+set_printoptions(1, suppress=True)
+def printprecision(a):
+    set_printoptions(a)

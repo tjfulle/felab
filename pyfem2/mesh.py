@@ -107,7 +107,7 @@ class Mesh(object):
             self.init_from_file(filename)
 
         elif o3:
-            p, t = asarray(p), asarray(t)
+            p, t = asarray(p, dtype=float), asarray(t, dtype=int)
             nodmap = dict(zip(range(p.shape[0]), range(p.shape[0])))
             eletab = dict([(i,t[i]) for i in range(t.shape[0])])
             self.init1(nodmap, p, eletab)

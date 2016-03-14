@@ -151,7 +151,7 @@ class Material(object):
     def response(self, stress, statev, strain, dstrain, time, dtime,
                  temp, dtemp, ndir, nshr):
         D = self.stiffness(ndir, nshr)
-        stress += dot(D, dstrain)
+        stress = dot(D, strain+dstrain)
         return stress, statev, D
 
     def stiffness(self, ndir, nshr, disp=None):

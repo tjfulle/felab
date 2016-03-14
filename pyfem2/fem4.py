@@ -13,7 +13,7 @@ class Plane2DModel(FiniteElementModel):
         if solver is None:
             self.StaticPerturbation()
         elif solver == NEWTON:
-            self.NewtonSolve()
+            self.NewtonSolve(**kwds)
         else:
             raise ValueError('UNKNOWN SOLVER')
 
@@ -38,9 +38,9 @@ class Plane2DModel(FiniteElementModel):
 
         istep = 1
         flags = [1, 0, 1, 0]
-        for iframe in range(1, increments+1):
+        for iframe in range(increments):
 
-            load_fac = float(iframe) / float(increments)
+            load_fac = float(iframe+1) / float(increments)
             err1 = 1.
 
             # create frame to hold results
@@ -51,7 +51,7 @@ class Plane2DModel(FiniteElementModel):
             # Newton-Raphson loop
             for nit in range(maxiters):
 
-                K, rhs = self.assemble(self.dofs, u, time, dtime, istep, iframe,
+                K, rhs = self.assemble(self.dofs, u, time, dtime, istep, iframe+1,
                                        step_type=GENERAL, load_fac=load_fac)
 
                 # Enforce displacement boundary conditions
@@ -74,7 +74,7 @@ class Plane2DModel(FiniteElementModel):
 
             else:
                 raise RuntimeError('FAILED TO CONVERGE ON STEP {0}, '
-                                   'FRAME {1}'.format(istep, iframe))
+                                   'FRAME {1}'.format(istep, iframe+1))
 
             frame.converged = True
             time += dtime
