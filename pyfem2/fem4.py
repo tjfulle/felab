@@ -18,9 +18,8 @@ class Plane2DModel(FiniteElementModel):
             raise ValueError('UNKNOWN SOLVER')
 
     def StaticPerturbation(self):
-        flags = [1, 0, 1, 1]
         du = zeros(self.numdof)
-        K, rhs = self.assemble(self.dofs, du, [0, 0], 1., 1, 1, flags)
+        K, rhs = self.assemble(self.dofs, du)
         Kbc, Fbc = self.apply_bc(K, rhs)
         self.dofs[:] = linsolve(Kbc, Fbc)
         R = dot(K, self.dofs) - rhs
@@ -53,7 +52,7 @@ class Plane2DModel(FiniteElementModel):
             for nit in range(maxiters):
 
                 K, rhs = self.assemble(self.dofs, u, time, dtime, istep, iframe,
-                                       flags, load_fac=load_fac)
+                                       step_type=GENERAL, load_fac=load_fac)
 
                 # Enforce displacement boundary conditions
                 Kbc, Fbc = self.apply_bc(K, rhs, self.dofs, u, load_fac=load_fac)

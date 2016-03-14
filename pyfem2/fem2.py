@@ -19,15 +19,13 @@ class TrussModel(FiniteElementModel):
         self.setup(ElasticLinknD2, one=True)
 
         # Assemble the global stiffness and force
-        flags = [1, 0, 1, 1]
         du = zeros(self.numdof)
-        K, rhs = self.assemble(self.dofs, du, [0, 0], 1., 1, 1, flags)
+        K, rhs = self.assemble(self.dofs, du)
         Kbc, Fbc = self.apply_bc(K, rhs)
         self.dofs[:] = linsolve(Kbc, Fbc)
 
         # Total force, including reaction, and reaction
-        #flags[-1] = 100
-        #R = self.assemble(self.dofs, du, [0, 0], 1. 1, 1, flags)
+        #R = self.assemble(self.dofs, du, [0, 0], 1. 1, 1, cflag=LP_OUTPUT)
         R = dot(K, self.dofs) - rhs
 
         # reshape R to be the same shape as coord

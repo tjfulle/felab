@@ -16,8 +16,8 @@ class IsoPElement(object):
 
     def __init__(self, label, elenod, elecoord, elemat, **elefab):
         self.label = label
-        self.inodes = elenod
-        self.xc = elecoord
+        self.inodes = asarray(elenod)
+        self.xc = asarray(elecoord)
         self.material = elemat
         unknown = [key for key in elefab if key not in self.elefab]
         if unknown:
@@ -79,7 +79,7 @@ class IsoPElement(object):
         for (npt, xi) in enumerate(self.gaussp):
             # Compute the integrals over the volume
             fac = self.gaussw[npt] * det[npt] / self.dimensions / ev
-            dNb += fac*self.shapegradx(x,xi)
+            dNb += fac*self.shapegradx(x, xi)
         return dNb
 
     @classmethod
@@ -120,24 +120,13 @@ class IsoPElement(object):
 
         raise TypeError('Unknown data type')
 
-    def residual(self, xc, stress):
-        """Compute the element residual"""
-        # compute integration point data
-        n = sum([count_digits(nfs) for nfs in self.signature])
-        R = zeros(n)
-        for (p, xi) in enumerate(self.gaussp):
-            J = self.jacobian(xc, xi)
-            dNdx = self.shapegradx(xc, xi)
-            B = self.bmatrix(dNdx)
-            R += dot(stress[p], B) * J * self.gaussw[p]
-        return R
-
     def update_state(self, u, e, s):
+        xc = self.xc  # + u.reshape(self.xc.shape)
         de = zeros_like(e)
         for (p, xi) in enumerate(self.gaussp):
             # Update material state
-            J = self.jacobian(self.xc, xi)
-            dNdx = self.shapegradx(self.xc, xi)
+            J = self.jacobian(xc, xi)
+            dNdx = self.shapegradx(xc, xi)
             B = self.bmatrix(dNdx)
             de[p] = dot(B, u.flatten())
             e[p] += de[p]
@@ -145,16 +134,15 @@ class IsoPElement(object):
             s[p] += dot(D, de[p])
         return de, e, s
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
-                 load_fac):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+                 procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""
 
-        x = self.xc + u.reshape(self.xc.shape)
+        xc = self.xc  # + u.reshape(self.xc.shape)
 
         n = sum([count_digits(nfs) for nfs in self.signature])
-        compute_stiff = flags[2] in (1, 2)
-        compute_force = flags[2] in (1, 5)
-        linear_perturbation = flags[3] == 1
+        compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
+        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
 
         if compute_stiff:
             Ke = zeros((n, n))
@@ -162,16 +150,16 @@ class IsoPElement(object):
         if compute_force:
             rhs = zeros(n)
 
-        if not linear_perturbation:
+        if step_type == GENERAL:
             resid = zeros(n)
 
         # COMPUTE INTEGRATION POINT DATA
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
         for (p, xi) in enumerate(self.gaussp):
 
-            dNdx = self.shapegradx(self.xc, xi)
+            dNdx = self.shapegradx(xc, xi)
             B = self.bmatrix(dNdx)
-            J = self.jacobian(self.xc, xi)
+            J = self.jacobian(xc, xi)
 
             # STRAIN AND INCREMENT
             e = dot(B, u)
@@ -195,11 +183,11 @@ class IsoPElement(object):
                     # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
                     rhs += J * self.gaussw[p] * dot(P.T, dloadx)
 
-            if not linear_perturbation:
+            if step_type == GENERAL:
                 # SUBTRACT THE RESIDUAL FROM THE FORCE
                 resid +=  J * self.gaussw[p] * dot(s, B)
 
-        if flags[2] == 2:
+        if cflag == STIFF_ONLY:
             return Ke
 
         if compute_force:
@@ -215,13 +203,13 @@ class IsoPElement(object):
 
         rhs *= load_fac
 
-        if not linear_perturbation:
+        if step_type == GENERAL:
             rhs -= resid
 
-        if flags[2] == 1:
+        if cflag == STIFF_AND_FORCE:
             return Ke, rhs
 
-        elif flags[2] == 5:
+        elif cflag == FORCE_ONLY:
             return rhs
 
 # --------------------------------------------------------------------------- #
@@ -229,31 +217,35 @@ class IsoPElement(object):
 # --------------------------------------------------------------------------- #
 class IsoPReduced(IsoPElement):
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
-                 load_fac):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+                 procedure, nlgeom, cflag, step_type, load_fac):
+
+        xc = self.xc  # + u.reshape(self.xc.shape)
 
         # Get the nominal stiffness
         response = super(IsoPReduced, self).response(
-            u, du, time, dtime, istep, iframe, dltyp, dload, flags, load_fac)
-        if flags[2] == 5:
+            u, du, time, dtime, istep, iframe, dltyp, dload,
+            procedure, nlgeom, cflag, step_type, load_fac)
+
+        if cflag == FORCE_ONLY:
             return response
 
-        if flags[2] == 1:
+        if cflag == STIFF_AND_FORCE:
             Ke, rhs = response
 
-        elif flags[2] == 2:
+        elif cflag == STIFF_ONLY:
             Ke = response
 
         # Perform hourglass correction
         Khg = zeros(Ke.shape)
         for (npt, xi) in enumerate(self.hglassp):
-            dN = self.shapegradx(self.xc, xi)
-            Je = self.jacobian(self.xc, xi)
+            dN = self.shapegradx(xc, xi)
+            Je = self.jacobian(xc, xi)
 
             # Hourglass base vectors
             g = self.hglassv[npt]
             for i in range(len(xi)):
-                xi[i] = dot(g, self.xc[:,i])
+                xi[i] = dot(g, xc[:,i])
 
             # Correct the base vectors to ensure orthogonality
             scale = 0.
@@ -274,10 +266,10 @@ class IsoPReduced(IsoPElement):
                             Khg[K,L] += scale * g[a] * g[b] * Je * 4.
         Ke += Khg
 
-        if flags[2] == 1:
+        if cflag == STIFF_AND_FORCE:
             return Ke, rhs
 
-        elif flags[2] == 2:
+        elif cflag == STIFF_ONLY:
             return Ke
 
 # --------------------------------------------------------------------------- #
@@ -285,17 +277,18 @@ class IsoPReduced(IsoPElement):
 # --------------------------------------------------------------------------- #
 class IsoPSelectiveReduced(IsoPElement):
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
-                 load_fac):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+                 procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""
 
-        if flags[2] in (1, 5):
-            flags1 = [i for i in flags]
-            flags1[2] = 5
-            rhs = super(IsoPSelectiveReduced, self).response(
-                u, du, time, dtime, istep, iframe, dltyp, dload, flags1, load_fac)
+        xc = self.xc  # + u.reshape(self.xc.shape)
 
-            if flags[2] == 5:
+        if cflag in (STIFF_AND_FORCE, FORCE_ONLY):
+            rhs = super(IsoPSelectiveReduced, self).response(
+                u, du, time, dtime, istep, iframe, dltyp, dload,
+                procedure, nlgeom, FORCE_ONLY, step_type, load_fac)
+
+            if cflag == FORCE_ONLY:
                 return rhs
 
         # compute integration point data
@@ -304,8 +297,8 @@ class IsoPSelectiveReduced(IsoPElement):
 
         for (p, xi) in enumerate(self.gaussp):
             # Update material state
-            J = self.jacobian(self.xc, xi)
-            dNdx = self.shapegradx(self.xc, xi)
+            J = self.jacobian(xc, xi)
+            dNdx = self.shapegradx(xc, xi)
             B = self.bmatrix(dNdx)
             D1, D2 = self.material.stiffness(self.ndir, self.nshr, disp=2)
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
@@ -313,17 +306,17 @@ class IsoPSelectiveReduced(IsoPElement):
 
         for (p, xi) in enumerate(self.rgaussp):
             # UPDATE MATERIAL STATE
-            J = self.jacobian(self.xc, xi)
-            dNdx = self.shapegradx(self.xc, xi)
+            J = self.jacobian(xc, xi)
+            dNdx = self.shapegradx(xc, xi)
             B = self.bmatrix(dNdx)
             D1, D2 = self.material.stiffness(self.ndir, self.nshr, disp=2)
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Ke += dot(dot(B.T, D1), B) * J * self.rgaussw[p]
 
-        if flags[2] == 1:
+        if cflag == STIFF_AND_FORCE:
             return Ke, rhs
 
-        elif flags[2] == 2:
+        elif cflag == STIFF_ONLY:
             return Ke
 
 # --------------------------------------------------------------------------- #
@@ -332,17 +325,18 @@ class IsoPSelectiveReduced(IsoPElement):
 class IsoPIncompatibleModes(IsoPElement):
     numincomp = None
     def gmatrix(self, xi): raise NotImplementedError
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
-                 load_fac):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+                 procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""
 
-        if flags[2] in (1, 5):
-            flags1 = [i for i in flags]
-            flags1[2] = 5
-            rhs = super(IsoPIncompatibleModes, self).response(
-                u, du, time, dtime, istep, iframe, dltyp, dload, flags1, load_fac)
+        xc = self.xc  # + u.reshape(self.xc.shape)
 
-            if flags[2] == 5:
+        if cflag in (STIFF_AND_FORCE, FORCE_ONLY):
+            rhs = super(IsoPIncompatibleModes, self).response(
+                u, du, time, dtime, istep, iframe, dltyp, dload,
+                procedure, nlgeom, FORCE_ONLY, step_type, load_fac)
+
+            if cflag == FORCE_ONLY:
                 return rhs
 
         # incompatible modes stiffnesses
@@ -354,8 +348,8 @@ class IsoPIncompatibleModes(IsoPElement):
 
         for (p, xi) in enumerate(self.gaussp):
             # UPDATE MATERIAL STATE
-            J = self.jacobian(self.xc, xi)
-            dNdx = self.shapegradx(self.xc, xi)
+            J = self.jacobian(xc, xi)
+            dNdx = self.shapegradx(xc, xi)
             B = self.bmatrix(dNdx)
             G = self.gmatrix(xi)
             D = self.material.stiffness(self.ndir, self.nshr)
@@ -365,8 +359,8 @@ class IsoPIncompatibleModes(IsoPElement):
             Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
         Ke = Kcc  - dot(dot(Kci, inv(Kii)), Kci.T)
 
-        if flags[2] == 1:
+        if cflag == STIFF_AND_FORCE:
             return Ke, rhs
 
-        elif flags[2] == 2:
+        elif cflag == STIFF_ONLY:
             return Ke

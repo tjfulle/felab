@@ -35,8 +35,8 @@ class ElasticLinknD2(Element):
             raise UserInputError("Expected exactly area 'A' as the only element "
                                  "fabrication property")
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
-                 load_fac):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+                 procedure, nlgeom, cflag, step_type, load_fac):
         """Computes the response of a n-dimensional elastic link
 
         Parameters
@@ -52,9 +52,14 @@ class ElasticLinknD2(Element):
         """
         # INTERNAL FORCE
         ndof = count_digits(self.signature[0])
-        Fe = zeros(2*ndof)
 
-        if flags[2] == 5:
+        compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
+        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
+
+        if compute_force:
+            Fe = zeros(2*ndof)
+
+        if cflag == FORCE_ONLY:
             return Fe
 
         # ELEMENT NORMAL
@@ -73,10 +78,10 @@ class ElasticLinknD2(Element):
         Ke[0:i, i:j] = Ke[i:j, 0:i] = -nn # LOWER LEFT AND UPPER RIGHT 2X2
         Ke *= self.A * self.material.E / h
 
-        if flags[2] == 1:
+        if cflag == STIFF_AND_FORCE:
             return Ke, Fe
 
-        elif flags[2] == 2:
+        elif cflag == STIFF_ONLY:
             return Ke
 
     def internal_force(self, uc):
@@ -165,13 +170,13 @@ class BeamColumn2D(Element):
         if self.A is None or self.Izz is None:
             raise ValueError('Incorrect element fabrication properties')
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
-                 load_fac):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+                 procedure, nlgeom, cflag, step_type, load_fac):
 
         # INTERNAL FORCE
         Fe = zeros(6)
 
-        if flags[2] == 5:
+        if cflag == FORCE_ONLY:
             return Fe
 
         # COMPUTE ELEMENT NORMAL
@@ -201,8 +206,8 @@ class BeamColumn2D(Element):
 
         Ke = dot(dot(Te.T, K1+K2), Te)
 
-        if flags[2] == 1:
+        if cflag == STIFF_AND_FORCE:
             return Ke, Fe
 
-        elif flags[2] == 2:
+        elif cflag == STIFF_ONLY:
             return Ke

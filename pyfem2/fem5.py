@@ -22,7 +22,7 @@ class PlaneBeamColumnTrussModel(FiniteElementModel):
         # Assemble the global stiffness and force
         flags = [1, 0, 1, 1]
         du = zeros(self.numdof)
-        K, rhs = self.assemble(self.dofs, du, [0, 0], 1., 1, 1, flags)
+        K, rhs = self.assemble(self.dofs, du)
         Kbc, Fbc = self.apply_bc(K, rhs)
 
         # Solve

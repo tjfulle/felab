@@ -63,18 +63,19 @@ class DiffussiveHeatTransfer2D3(Element):
         s = he * (xp + 1) / 2.0
         return array([(he - s) / he, s / he, 0.])[o]
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload, flags,
-                 load_fac):
+    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+                 procedure, nlgeom, cflag, step_type, load_fac):
 
         # --- ELEMENT STIFFNESS AND FORCE
-        Fe = zeros(3)
 
-        compute_stiff = flags[2] in (1, 2)
-        compute_force = flags[2] in (1, 5)
+        compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
+        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
 
-        # MATERIAL CONTRIBUTION
         if compute_stiff:
             Ke = self.stiffness1()
+
+        if compute_force:
+            Fe = zeros(3)
 
         for (i, typ) in enumerate(dltyp):
             # CONTRIBUTIONS FROM EXTERNAL LOADS
@@ -98,11 +99,13 @@ class DiffussiveHeatTransfer2D3(Element):
                     iedge, qn = dload[i]
                     Fe += self.conduction_flux_array(iedge, qn)
 
-        if flags[2] == 1:
+        if cflag == STIFF_AND_FORCE:
             return Ke, Fe
-        elif flags[2] == 2:
+
+        elif cflag == STIFF_ONLY:
             return Ke
-        elif flags[2] == 5:
+
+        elif cflag == FORCE_ONLY:
             return Fe
 
     def stiffness1(self):

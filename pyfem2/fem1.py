@@ -312,19 +312,14 @@ class FiniteElementModel(object):
         self.exofile.snapshot(step)
         step.written = 1
 
-    def assemble(self, u, du, time, dtime, istep, iframe, flags, load_fac=1.):
+    def assemble(self, u, du, time=zeros(2), dtime=1., istep=1, iframe=1,
+                 procedure=STATIC, nlgeom=False, cflag=STIFF_AND_FORCE,
+                 step_type=LINEAR_PERTURBATION, load_fac=1.):
         """
         Assembles the global system of equations
 
         Parameters
         ----------
-        flags : ndarray of int
-            flags[0] - procedure type, 1:static, 21:heat transfer
-            flags[1] - 0:small, 1:large strain
-            flags[2] - 1:define K and F, 2: define just K, 5: define just F
-                       100: define perturbation quantifies for output
-            flags[3] - 0: general step, 1: linear perturbation
-
         Returns
         -------
         K : ndarray
@@ -344,11 +339,11 @@ class FiniteElementModel(object):
         - the global stiffness matrix is stored as a full symmetric matrix.
 
         """
-        if flags[2] not in (1, 2, 5):
-            raise ValueError('UNKNOWN FLAG')
+        if cflag not in (STIFF_AND_FORCE, STIFF_ONLY, FORCE_ONLY, LP_OUTPUT):
+            raise ValueError('UNKNOWN COMPUTE QUANTITY')
 
-        compute_stiff = flags[2] in (1, 2)
-        compute_force = flags[2] in (1, 5)
+        compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
+        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
         if compute_stiff:
             K = zeros((self.numdof, self.numdof))
 
@@ -367,25 +362,26 @@ class FiniteElementModel(object):
                 dload = self.dload[iel]
                 dltyp = self.dltyp[iel]
                 response = el.response(ue, due, time, dtime, istep, iframe,
-                                       dltyp, dload, flags, load_fac)
+                                       dltyp, dload, procedure, nlgeom, cflag,
+                                       step_type, load_fac)
 
-                if flags[2] == 1:
+                if cflag == STIFF_AND_FORCE:
                     K[IX(eft, eft)] += response[0]
                     rhs[eft] += response[1]
 
-                elif flags[2] == 2:
-                    K[IX(eft, eft)] += response[0]
+                elif cflag == STIFF_ONLY:
+                    K[IX(eft, eft)] += response
 
-                elif flags[2] == 5:
-                    rhs[eft] += response[0]
+                elif cflag == FORCE_ONLY:
+                    rhs[eft] += response
 
-        if flags[2] == 1:
+        if cflag == STIFF_AND_FORCE:
             return K, rhs + load_fac * self.external_force_array()
 
-        elif flags[2] == 2:
+        elif cflag == STIFF_ONLY:
             return K
 
-        elif flags[2] == 5:
+        elif cflag == FORCE_ONLY:
             return rhs + load_fac * self.external_force_array()
 
     def external_force_array(self):

@@ -12,7 +12,7 @@ class HeatTransfer2DModel(FiniteElementModel):
         self.setup(DiffussiveHeatTransfer2D3)
         flags = [21, 0, 1, 1]
         du = zeros(self.numdof)
-        K, rhs = self.assemble(self.dofs, du, [0, 0], 1., 1, 1, flags)
+        K, rhs = self.assemble(self.dofs, du, procedure=HEAT_TRANSFER)
         Kbc, Fbc = self.apply_bc(K, rhs)
         self.dofs[:] = linsolve(Kbc, Fbc)
         Q = dot(K, self.dofs) - rhs
