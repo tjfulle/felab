@@ -71,15 +71,19 @@ class IsoPElement(object):
         dxidx = inv(dot(dNdxi, x))
         return dot(dxidx, dNdxi)
 
-    def shapegradxbar(self, x):
-        det = array([self.jacobian(x, xi) for xi in self.gaussp])
+    def shapegradxbar(self, xc):
+        det = array([self.jacobian(xc, xi) for xi in self.gaussp])
         ev = dot(det, self.gaussw)
         n = sum([count_digits(nfs) for nfs in self.signature])
         dNb = zeros(n).reshape(-1, self.nodes)
-        for (npt, xi) in enumerate(self.gaussp):
+        for (p, xi) in enumerate(self.gaussp):
             # Compute the integrals over the volume
-            fac = self.gaussw[npt] * det[npt] / self.dimensions / ev
-            dNb += fac*self.shapegradx(x, xi)
+            fac = self.gaussw[p] * det[p] / self.dimensions / ev
+            dNdxi = self.shapegrad(xi)
+            dxdxi = dot(dNdxi, xc)
+            dxidx = inv(dot(dNdxi, xc))
+            dNdx = dot(dxidx, dNdxi)
+            dNb += fac*dNdx
         return dNb
 
     @classmethod
@@ -124,9 +128,11 @@ class IsoPElement(object):
         xc = self.xc  # + u.reshape(self.xc.shape)
         de = zeros_like(e)
         for (p, xi) in enumerate(self.gaussp):
-            # Update material state
-            J = self.jacobian(xc, xi)
-            dNdx = self.shapegradx(xc, xi)
+            # UPDATE MATERIAL STATE
+            dNdxi = self.shapegrad(xi)
+            dxdxi = dot(dNdxi, xc)
+            dxidx = inv(dot(dNdxi, xc))
+            dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
             de[p] = dot(B, u.flatten())
             e[p] += de[p]
@@ -157,9 +163,22 @@ class IsoPElement(object):
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
         for (p, xi) in enumerate(self.gaussp):
 
-            dNdx = self.shapegradx(xc, xi)
+            # SHAPE FUNCTION AND GRADIENT
+            N = self.shape(xi)
+
+            # SHAPE FUNCTION DERIVATIVE AT GAUSS POINTS
+            dNdxi = self.shapegrad(xi)
+
+            # DEFORMATION GRADIENT
+            dxdxi = dot(dNdxi, xc)
+            dxidx = inv(dot(dNdxi, xc))
+
+            # CONVERT SHAPE FUNCTION DERIVATIVES TO DERIVATIVES WRT GLOBAL X
+            dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
-            J = self.jacobian(xc, xi)
+
+            # JACOBIAN
+            J = det(dxdxi)
 
             # STRAIN AND INCREMENT
             e = dot(B, u)
@@ -178,7 +197,7 @@ class IsoPElement(object):
                 Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
 
             if compute_force:
-                P = self.pmatrix(self.shape(xi))
+                P = self.pmatrix(N)
                 for dloadx in bload:
                     # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
                     rhs += J * self.gaussw[p] * dot(P.T, dloadx)
@@ -238,12 +257,17 @@ class IsoPReduced(IsoPElement):
 
         # Perform hourglass correction
         Khg = zeros(Ke.shape)
-        for (npt, xi) in enumerate(self.hglassp):
-            dN = self.shapegradx(xc, xi)
-            Je = self.jacobian(xc, xi)
+        for (p, xi) in enumerate(self.hglassp):
+            # SHAPE FUNCTION DERIVATIVE AT GAUSS POINTS
+            dNdxi = self.shapegrad(xi)
+            dxdxi = dot(dNdxi, xc)
+            dxidx = inv(dot(dNdxi, xc))
+            dNdx = dot(dxidx, dNdxi)
+            B = self.bmatrix(dNdx)
+            J = det(dxdxi)
 
             # Hourglass base vectors
-            g = self.hglassv[npt]
+            g = self.hglassv[p]
             for i in range(len(xi)):
                 xi[i] = dot(g, xc[:,i])
 
@@ -251,8 +275,8 @@ class IsoPReduced(IsoPElement):
             scale = 0.
             for a in range(self.nodes):
                 for i in range(self.dimensions):
-                    g[a] -= xi[i] * dN[i,a]
-                    scale += dN[i,a] * dN[i,a]
+                    g[a] -= xi[i] * dNdx[i,a]
+                    scale += dNdx[i,a] * dNdx[i,a]
             scale *= .01 * self.material.G
 
             for a in range(self.nodes):
@@ -263,7 +287,7 @@ class IsoPReduced(IsoPElement):
                         for j in range(n2):
                             K = n1 * a + i
                             L = n2 * b + j
-                            Khg[K,L] += scale * g[a] * g[b] * Je * 4.
+                            Khg[K,L] += scale * g[a] * g[b] * J * 4.
         Ke += Khg
 
         if cflag == STIFF_AND_FORCE:
@@ -296,19 +320,27 @@ class IsoPSelectiveReduced(IsoPElement):
         Ke = zeros((n, n))
 
         for (p, xi) in enumerate(self.gaussp):
-            # Update material state
-            J = self.jacobian(xc, xi)
-            dNdx = self.shapegradx(xc, xi)
+            # SHAPE FUNCTION AND GRADIENT
+            dNdxi = self.shapegrad(xi)
+            dxdxi = dot(dNdxi, xc)
+            dxidx = inv(dot(dNdxi, xc))
+            dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
+            J = det(dxdxi)
+            # UPDATE MATERIAL STATE
             D1, D2 = self.material.stiffness(self.ndir, self.nshr, disp=2)
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Ke += dot(dot(B.T, D2), B) * J * self.gaussw[p]
 
         for (p, xi) in enumerate(self.rgaussp):
-            # UPDATE MATERIAL STATE
-            J = self.jacobian(xc, xi)
-            dNdx = self.shapegradx(xc, xi)
+            # SHAPE FUNCTION AND GRADIENT
+            dNdxi = self.shapegrad(xi)
+            dxdxi = dot(dNdxi, xc)
+            dxidx = inv(dot(dNdxi, xc))
+            dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
+            J = det(dxdxi)
+            # UPDATE MATERIAL STATE
             D1, D2 = self.material.stiffness(self.ndir, self.nshr, disp=2)
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Ke += dot(dot(B.T, D1), B) * J * self.rgaussw[p]
@@ -339,7 +371,7 @@ class IsoPIncompatibleModes(IsoPElement):
             if cflag == FORCE_ONLY:
                 return rhs
 
-        # incompatible modes stiffnesses
+        # INCOMPATIBLE MODES STIFFNESSES
         n = sum([count_digits(nfs) for nfs in self.signature])
         m = count_digits(self.signature[0])
         Kcc = zeros((n, n))
@@ -347,11 +379,15 @@ class IsoPIncompatibleModes(IsoPElement):
         Kii = zeros((self.dimensions*m, self.dimensions*m))
 
         for (p, xi) in enumerate(self.gaussp):
-            # UPDATE MATERIAL STATE
-            J = self.jacobian(xc, xi)
-            dNdx = self.shapegradx(xc, xi)
+            # SHAPE FUNCTION GRADIENT
+            dNdxi = self.shapegrad(xi)
+            dxdxi = dot(dNdxi, xc)
+            dxidx = inv(dot(dNdxi, xc))
+            dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
+            J = det(dxdxi)
             G = self.gmatrix(xi)
+            # UPDATE MATERIAL STATE
             D = self.material.stiffness(self.ndir, self.nshr)
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Kcc += dot(dot(B.T, D), B) * J * self.gaussw[p]
