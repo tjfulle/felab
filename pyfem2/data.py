@@ -169,7 +169,8 @@ class FieldOutput(object):
             self.keys = [self.key+x for x in components]
         else:
             self.keys = [self.key]
-        self.data = zeros(shape)
+        self.shape = shape
+        self.data = zeros(self.shape)
 
         a = kwargs.get('data')
         if a is not None:
@@ -179,6 +180,8 @@ class FieldOutput(object):
         return self.data[i]
 
     def add_data(self, data, ix=None):
+        if self.data is None:
+            self.data = zeros(self.shape)
         if not is_listlike(data):
             data = ones_like(self.data) * data
         else:

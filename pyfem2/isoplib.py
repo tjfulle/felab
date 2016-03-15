@@ -12,6 +12,8 @@ class IsoPElement(object):
     variables = ('E', 'DE', 'S')
     signature = None
     dimensions = None
+    integration = None
+    integration1 = 0
     edges = []
 
     def __init__(self, label, elenod, elecoord, elemat, **elefab):
@@ -76,8 +78,9 @@ class IsoPElement(object):
         ev = dot(det, self.gaussw)
         n = sum([count_digits(nfs) for nfs in self.signature])
         dNb = zeros(n).reshape(-1, self.nodes)
-        for (p, xi) in enumerate(self.gaussp):
+        for p in range(self.integration):
             # COMPUTE THE INTEGRALS OVER THE VOLUME
+            xi = self.gaussp[p]
             fac = self.gaussw[p] * det[p] / self.dimensions / ev
             dNdxi = self.shapegrad(xi)
             dxdxi = dot(dNdxi, xc)
@@ -105,21 +108,36 @@ class IsoPElement(object):
     @classmethod
     def average(cls, point, data, v=None):
         """Inverse distance weighted average of integration point data at point"""
-        ss = 0
-        if len(cls.gaussp) == 1:
-            weights = [1.]
-        else:
-            dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
-            weights = [1./dist(point, xi) for xi in cls.gaussp]
+
+        i1, i2 = cls.integration, 0
+        if cls.integration1:
+            i1, i2 = cls.integration1, cls.integration-cls.integration1
 
         if data.ndim == 1:
             # Scalar data
-            assert len(data) == len(cls.gaussp)
+            assert len(data) == i1+i2
+
+        elif len(data.shape) == 2:
+            # Vector or tensor data
+            assert data.shape[0] == i1+i2
+
+        else:
+            raise TypeError('Unknown data type')
+
+        data = data[:i1]
+
+        if i1 == 1:
+            weights = [1.]
+        else:
+            dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
+            weights = [1./dist(point, cls.gaussp[i]) for i in range(i1)]
+
+        if data.ndim == 1:
+            # Scalar data
             return average(data, weights=weights)
 
         elif len(data.shape) == 2:
             # Vector or tensor data
-            assert data.shape[0] == len(cls.gaussp)
             return average(data, axis=0, weights=weights)
 
         raise TypeError('Unknown data type')
@@ -143,16 +161,19 @@ class IsoPElement(object):
         if step_type == GENERAL:
             resid = zeros(n)
 
-        # COMPUTE INTEGRATION POINT DATA
+        # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
         m = len(self.variables) * ntens
 
+        # COMPUTE INTEGRATION POINT DATA
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
-        for (p, xi) in enumerate(self.gaussp):
+        for p in range(self.integration):
 
+            # INDEX TO START OF STATE VARIABLES
             ij = m * p
 
             # SHAPE FUNCTION AND GRADIENT
+            xi = self.gaussp[p]
             N = self.shape(xi)
 
             # SHAPE FUNCTION DERIVATIVE AT GAUSS POINTS
@@ -178,15 +199,24 @@ class IsoPElement(object):
             s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
                                               dtemp, self.ndir, self.nshr)
 
-            # STORE THE UPDATE VARIABLES
-            svars[1,ij+0*ntens:ij+1*ntens] = e
+            # STORE THE UPDATED VARIABLES
+            svars[1,ij+0*ntens:ij+1*ntens] = e + de
             svars[1,ij+1*ntens:ij+2*ntens] = de
             svars[1,ij+2*ntens:ij+3*ntens] = s
+
+            if self.integration1:
+                # SELECTIVELY REDUCED INTEGRATION
+                D1, D2 = iso_dev_split(self.ndir, self.nshr, D)
+                D = D1 if p >= self.integration1 else D2
 
             if compute_stiff:
                 # UPDATE MATERIAL STATE
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
                 Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
+
+            if self.integration1 and p >= self.integration1:
+                # DO NOT COMPUTE FORCE FOR REDUCED INTEGRATED PORTION
+                continue
 
             if compute_force:
                 P = self.pmatrix(N)
@@ -246,10 +276,10 @@ class IsoPReduced(IsoPElement):
         if cflag == LP_OUTPUT:
             return
 
-        if cflag == FORCE_ONLY:
+        elif cflag == FORCE_ONLY:
             return response
 
-        if cflag == STIFF_AND_FORCE:
+        elif cflag == STIFF_AND_FORCE:
             Ke, rhs = response
 
         elif cflag == STIFF_ONLY:
@@ -257,9 +287,10 @@ class IsoPReduced(IsoPElement):
 
         # PERFORM HOURGLASS CORRECTION
         Khg = zeros(Ke.shape)
-        for (p, xi) in enumerate(array(self.hglassp)):
+        for p in range(len(self.hglassp)):
 
-            # SHAPE FUNCTION DERIVATIVE AT GAUSS POINTS
+            # SHAPE FUNCTION DERIVATIVE AT HOURGLASS GAUSS POINTS
+            xi = self.hglassp[p]
             dNdxi = self.shapegrad(xi)
 
             # JACOBIAN TO NATURAL COORDINATES
@@ -300,98 +331,9 @@ class IsoPReduced(IsoPElement):
             return Ke
 
 # --------------------------------------------------------------------------- #
-# ---------- SELECTIVE REDUCED INTEGRATION ISOPARAMETRIC ELEMENTS ----------- #
-# --------------------------------------------------------------------------- #
-class IsoPSelectiveReduced(IsoPElement):
-
-    def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 procedure, nlgeom, cflag, step_type, load_fac):
-        """Assemble the element stiffness"""
-
-        xc = self.xc  # + u.reshape(self.xc.shape)
-        ntens = self.ndir + self.nshr
-        ij = (self.integration-len(self.rgaussp))*len(self.variables)*ntens
-
-        if cflag in (STIFF_AND_FORCE, FORCE_ONLY):
-            rhs = super(IsoPSelectiveReduced, self).response(
-                u, du, time, dtime, istep, iframe, svars[:,:ij], dltyp, dload,
-                procedure, nlgeom, FORCE_ONLY, step_type, load_fac)
-            if cflag == FORCE_ONLY:
-                return rhs
-
-        # COMPUTE INTEGRATION POINT DATA
-        ntens = self.ndir + self.nshr
-        m = len(self.variables) * ntens
-        n = sum([count_digits(nfs) for nfs in self.signature])
-        Ke = zeros((n, n))
-
-        for (p, xi) in enumerate(self.gaussp):
-            ij = m * p
-
-            # SHAPE FUNCTION AND GRADIENT
-            dNdxi = self.shapegrad(xi)
-            dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dxdxi)
-            dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx)
-            J = det(dxdxi)
-
-            # STRAIN, INCREMENT, AND STRESS
-            e, de = dot(B, u), dot(B, du)
-            s = svars[0,ij+2*ntens:ij+3*ntens]
-            xv = zeros(1)
-
-            # UPDATE MATERIAL STATE
-            s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
-                                              dtemp, self.ndir, self.nshr)
-            D1, D2 = iso_dev_split(self.ndir, self.nshr, D)
-
-            # STORE THE UPDATE VARIABLES
-            svars[1,ij+0*ntens:ij+1*ntens] = e
-            svars[1,ij+1*ntens:ij+2*ntens] = de
-            svars[1,ij+2*ntens:ij+3*ntens] = s
-
-            # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-            Ke += dot(dot(B.T, D2), B) * J * self.gaussw[p]
-
-        for (p, xi) in enumerate(self.rgaussp):
-            ij = m * (p + len(self.gaussp))
-
-            # SHAPE FUNCTION AND GRADIENT
-            dNdxi = self.shapegrad(xi)
-            dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dxdxi)
-            dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx)
-            J = det(dxdxi)
-            e, de = dot(B, u), dot(B, du)
-            s = svars[0,ij+2*ntens:ij+3*ntens]
-            xv = zeros(1)
-
-            # UPDATE MATERIAL STATE
-            s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
-                                              dtemp, self.ndir, self.nshr)
-            D1, D2 = iso_dev_split(self.ndir, self.nshr, D)
-
-            # STORE THE UPDATE VARIABLES
-            svars[1,ij+0*ntens:ij+1*ntens] = e
-            svars[1,ij+1*ntens:ij+2*ntens] = de
-            svars[1,ij+2*ntens:ij+3*ntens] = s
-
-            # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-            Ke += dot(dot(B.T, D1), B) * J * self.rgaussw[p]
-
-        if cflag == STIFF_AND_FORCE:
-            return Ke, rhs
-
-        elif cflag == STIFF_ONLY:
-            return Ke
-
-# --------------------------------------------------------------------------- #
 # ---------------- INCOMPATIBLE MODES ISOPARAMETRIC ELEMENTS ---------------- #
 # --------------------------------------------------------------------------- #
 class IsoPIncompatibleModes(IsoPElement):
-    numincomp = None
     def gmatrix(self, xi): raise NotImplementedError
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                  procedure, nlgeom, cflag, step_type, load_fac):
@@ -399,25 +341,33 @@ class IsoPIncompatibleModes(IsoPElement):
 
         xc = self.xc  # + u.reshape(self.xc.shape)
 
-        if cflag in (STIFF_AND_FORCE, FORCE_ONLY):
-            rhs = super(IsoPIncompatibleModes, self).response(
-                u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                procedure, nlgeom, FORCE_ONLY, step_type, load_fac)
+        response = super(IsoPIncompatibleModes, self).response(
+            u, du, time, dtime, istep, iframe, svars, dltyp, dload,
+            procedure, nlgeom, cflag, step_type, load_fac)
 
-            if cflag == FORCE_ONLY:
-                return rhs
+        if cflag == LP_OUTPUT:
+            return
+
+        elif cflag == FORCE_ONLY:
+            return response
+
+        elif cflag == STIFF_AND_FORCE:
+            Kcc, rhs = response
+
+        elif cflag == STIFF_ONLY:
+            Kcc = response
 
         # INCOMPATIBLE MODES STIFFNESSES
-        n = sum([count_digits(nfs) for nfs in self.signature])
+        n = Kcc.shape[0]
         m = count_digits(self.signature[0])
-        Kcc = zeros((n, n))
         Kci = zeros((n, self.dimensions*m))
         Kii = zeros((self.dimensions*m, self.dimensions*m))
 
-        # COMPUTE INTEGRATION POINT DATA
+        # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
         m = len(self.variables) * ntens
 
+        # COMPUTE INTEGRATION POINT DATA
         for (p, xi) in enumerate(self.gaussp):
             ij = m * p
 
@@ -430,6 +380,10 @@ class IsoPIncompatibleModes(IsoPElement):
             J = det(dxdxi)
             G = self.gmatrix(xi)
 
+            # STRAIN AND INCREMENT
+            e = dot(B, u)
+            de = dot(B, du)
+
             # MATERIAL RESPONSE
             temp, dtemp = 1., 1.
             xv = zeros(1)
@@ -437,13 +391,7 @@ class IsoPIncompatibleModes(IsoPElement):
             s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
                                               dtemp, self.ndir, self.nshr)
 
-            # STORE THE UPDATE VARIABLES
-            svars[1,ij+0*ntens:ij+1*ntens] = e
-            svars[1,ij+1*ntens:ij+2*ntens] = de
-            svars[1,ij+2*ntens:ij+3*ntens] = s
-
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-            Kcc += dot(dot(B.T, D), B) * J * self.gaussw[p]
             Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]
             Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
 

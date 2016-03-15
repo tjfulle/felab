@@ -1,8 +1,7 @@
 from numpy import *
 from numpy.linalg import inv, det
 
-from .isoplib import (IsoPElement, IsoPReduced, IsoPSelectiveReduced,
-                      IsoPIncompatibleModes)
+from .isoplib import (IsoPElement, IsoPReduced, IsoPIncompatibleModes)
 
 __all__ = ['PlaneStressQuad4', 'PlaneStrainQuad4', 'PlaneStrainQuad4Reduced',
            'PlaneStrainQuad4BBar', 'PlaneStrainQuad4SelectiveReduced',
@@ -136,8 +135,9 @@ class PlaneStrainQuad4Reduced(IsoPQuad4, IsoPReduced):
         B[1, 1::2] = B[3, 0::2] = dN[1, :]
         return B
 
-class PlaneStrainQuad4SelectiveReduced(PlaneStrainQuad4, IsoPSelectiveReduced):
+class PlaneStrainQuad4SelectiveReduced(PlaneStrainQuad4):
     integration = 5
+    integration1 = 4
     gaussp = array([[-1., -1.],
                     [ 1., -1.],
                     [-1.,  1.],
@@ -160,13 +160,15 @@ class PlaneStressQuad4Incompat(PlaneStressQuad4, IsoPIncompatibleModes):
         # The Finite Element Method: Its Basis and Fundamentals
         # By Olek C Zienkiewicz, Robert L Taylor, J.Z. Zhu
 
+        xc = self.xc
+
         # JACOBIAN AT ELEMENT CENTROID
         # COMPUTE THE SHAPE FUNCTION AT THE CENTROID
         dN0dxi = self.shapegrad(self.cp)
 
         # COMPUTE THE DEFORMATION GRADIENT AT CENTROID
         # AND THE JACOBIAN
-        dx0dxi = dot(dN0dxi, self.xc)
+        dx0dxi = dot(dN0dxi, xc)
         dxidx0 = inv(dx0dxi)
         J0 = det(dx0dxi)
 

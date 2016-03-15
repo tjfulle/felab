@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from pyfem2 import *
 
-El = PlaneStrainQuad4Reduced
+El = PlaneStrainQuad4SelectiveReduced
 
 E = 100
 Nu = 0

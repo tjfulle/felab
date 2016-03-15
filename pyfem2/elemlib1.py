@@ -66,7 +66,7 @@ def ElementFamily(dimensions, nodes, abaname=None):
 
 def InterpolateToCentroid(data):
     from .isoplib2_3 import IsoPTria3
-    from .isoplib2_4 import IsoPQuad4
+    from .isoplib2_4 import IsoPQuad4, PlaneStrainQuad4SelectiveReduced
     from .isoplib2_8 import IsoPQuad8
     numgauss, numcomp = data.shape
     if numgauss == 1:
@@ -75,6 +75,8 @@ def InterpolateToCentroid(data):
         return IsoPTria3.interpolate_to_centroid(data)
     if numgauss == 4:
         return IsoPQuad4.interpolate_to_centroid(data)
+    if numgauss == 5:
+        return PlaneStrainQuad4SelectiveReduced.interpolate_to_centroid(data)
     if numgauss == 9:
         return IsoPQuad8.interpolate_to_centroid(data)
     raise NotImplementedError
