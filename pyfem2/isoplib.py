@@ -9,7 +9,7 @@ from .utilities import *
 class IsoPElement(object):
     elefab = {}
     nodes = None
-    variables = None
+    variables = ('E', 'DE', 'S')
     signature = None
     dimensions = None
     edges = []
@@ -81,7 +81,7 @@ class IsoPElement(object):
             fac = self.gaussw[p] * det[p] / self.dimensions / ev
             dNdxi = self.shapegrad(xi)
             dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dot(dNdxi, xc))
+            dxidx = inv(dxdxi)
             dNdx = dot(dxidx, dNdxi)
             dNb += fac*dNdx
         return dNb
@@ -124,23 +124,7 @@ class IsoPElement(object):
 
         raise TypeError('Unknown data type')
 
-    def update_state(self, u, e, s):
-        xc = self.xc  # + u.reshape(self.xc.shape)
-        de = zeros_like(e)
-        for (p, xi) in enumerate(self.gaussp):
-            # UPDATE MATERIAL STATE
-            dNdxi = self.shapegrad(xi)
-            dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dot(dNdxi, xc))
-            dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx)
-            de[p] = dot(B, u.flatten())
-            e[p] += de[p]
-            D = self.material.stiffness(self.ndir, self.nshr)
-            s[p] += dot(D, de[p])
-        return de, e, s
-
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+    def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                  procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""
 
@@ -160,8 +144,13 @@ class IsoPElement(object):
             resid = zeros(n)
 
         # COMPUTE INTEGRATION POINT DATA
+        ntens = self.ndir + self.nshr
+        m = len(self.variables) * ntens
+
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
         for (p, xi) in enumerate(self.gaussp):
+
+            ij = m * p
 
             # SHAPE FUNCTION AND GRADIENT
             N = self.shape(xi)
@@ -171,7 +160,7 @@ class IsoPElement(object):
 
             # JACOBIAN TO NATURAL COORDINATES
             dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dot(dNdxi, xc))
+            dxidx = inv(dxdxi)
             J = det(dxdxi)
 
             # CONVERT SHAPE FUNCTION DERIVATIVES TO DERIVATIVES WRT GLOBAL X
@@ -183,11 +172,16 @@ class IsoPElement(object):
             de = dot(B, du)
 
             # MATERIAL RESPONSE
-            s = zeros(self.ndir+self.nshr)
             temp, dtemp = 1., 1.
             xv = zeros(1)
+            s = svars[0,ij+2*ntens:ij+3*ntens]
             s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
                                               dtemp, self.ndir, self.nshr)
+
+            # STORE THE UPDATE VARIABLES
+            svars[1,ij+0*ntens:ij+1*ntens] = e
+            svars[1,ij+1*ntens:ij+2*ntens] = de
+            svars[1,ij+2*ntens:ij+3*ntens] = s
 
             if compute_stiff:
                 # UPDATE MATERIAL STATE
@@ -201,8 +195,11 @@ class IsoPElement(object):
                     rhs += J * self.gaussw[p] * dot(P.T, dloadx)
 
             if step_type == GENERAL:
-                # SUBTRACT THE RESIDUAL FROM THE FORCE
+                # UPDATE THE RESIDUAL
                 resid +=  J * self.gaussw[p] * dot(s, B)
+
+        if cflag == LP_OUTPUT:
+            return
 
         if cflag == STIFF_ONLY:
             return Ke
@@ -218,9 +215,11 @@ class IsoPElement(object):
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')
 
-        rhs *= load_fac
+        if compute_force:
+            rhs *= load_fac
 
         if step_type == GENERAL:
+            # SUBTRACT RESIDUAL FROM INTERNAL FORCE
             rhs -= resid
 
         if cflag == STIFF_AND_FORCE:
@@ -234,15 +233,18 @@ class IsoPElement(object):
 # --------------------------------------------------------------------------- #
 class IsoPReduced(IsoPElement):
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+    def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                  procedure, nlgeom, cflag, step_type, load_fac):
 
         xc = self.xc  # + u.reshape(self.xc.shape)
 
         # Get the nominal stiffness
         response = super(IsoPReduced, self).response(
-            u, du, time, dtime, istep, iframe, dltyp, dload,
+            u, du, time, dtime, istep, iframe, svars, dltyp, dload,
             procedure, nlgeom, cflag, step_type, load_fac)
+
+        if cflag == LP_OUTPUT:
+            return
 
         if cflag == FORCE_ONLY:
             return response
@@ -255,27 +257,30 @@ class IsoPReduced(IsoPElement):
 
         # PERFORM HOURGLASS CORRECTION
         Khg = zeros(Ke.shape)
-        for (p, xi) in enumerate(self.hglassp):
+        for (p, xi) in enumerate(array(self.hglassp)):
+
             # SHAPE FUNCTION DERIVATIVE AT GAUSS POINTS
             dNdxi = self.shapegrad(xi)
+
+            # JACOBIAN TO NATURAL COORDINATES
             dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dot(dNdxi, xc))
+            dxidx = inv(dxdxi)
             dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
             J = det(dxdxi)
 
-            # Hourglass base vectors
-            g = self.hglassv[p]
+            # HOURGLASS BASE VECTORS
+            g = array(self.hglassv[p])
             for i in range(len(xi)):
                 xi[i] = dot(g, xc[:,i])
 
-            # Correct the base vectors to ensure orthogonality
+            # CORRECT THE BASE VECTORS TO ENSURE ORTHOGONALITY
             scale = 0.
             for a in range(self.nodes):
                 for i in range(self.dimensions):
                     g[a] -= xi[i] * dNdx[i,a]
                     scale += dNdx[i,a] * dNdx[i,a]
-            scale *= .01 * self.material.G
+            scale *= .01 # * self.material.G
 
             for a in range(self.nodes):
                 n1 = count_digits(self.signature[a])
@@ -299,47 +304,80 @@ class IsoPReduced(IsoPElement):
 # --------------------------------------------------------------------------- #
 class IsoPSelectiveReduced(IsoPElement):
 
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+    def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                  procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""
 
         xc = self.xc  # + u.reshape(self.xc.shape)
+        ntens = self.ndir + self.nshr
+        ij = (self.integration-len(self.rgaussp))*len(self.variables)*ntens
 
         if cflag in (STIFF_AND_FORCE, FORCE_ONLY):
             rhs = super(IsoPSelectiveReduced, self).response(
-                u, du, time, dtime, istep, iframe, dltyp, dload,
+                u, du, time, dtime, istep, iframe, svars[:,:ij], dltyp, dload,
                 procedure, nlgeom, FORCE_ONLY, step_type, load_fac)
-
             if cflag == FORCE_ONLY:
                 return rhs
 
         # COMPUTE INTEGRATION POINT DATA
+        ntens = self.ndir + self.nshr
+        m = len(self.variables) * ntens
         n = sum([count_digits(nfs) for nfs in self.signature])
         Ke = zeros((n, n))
 
         for (p, xi) in enumerate(self.gaussp):
+            ij = m * p
+
             # SHAPE FUNCTION AND GRADIENT
             dNdxi = self.shapegrad(xi)
             dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dot(dNdxi, xc))
+            dxidx = inv(dxdxi)
             dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
             J = det(dxdxi)
+
+            # STRAIN, INCREMENT, AND STRESS
+            e, de = dot(B, u), dot(B, du)
+            s = svars[0,ij+2*ntens:ij+3*ntens]
+            xv = zeros(1)
+
             # UPDATE MATERIAL STATE
-            D1, D2 = self.material.stiffness(self.ndir, self.nshr, disp=2)
+            s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
+                                              dtemp, self.ndir, self.nshr)
+            D1, D2 = iso_dev_split(self.ndir, self.nshr, D)
+
+            # STORE THE UPDATE VARIABLES
+            svars[1,ij+0*ntens:ij+1*ntens] = e
+            svars[1,ij+1*ntens:ij+2*ntens] = de
+            svars[1,ij+2*ntens:ij+3*ntens] = s
+
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Ke += dot(dot(B.T, D2), B) * J * self.gaussw[p]
 
         for (p, xi) in enumerate(self.rgaussp):
+            ij = m * (p + len(self.gaussp))
+
             # SHAPE FUNCTION AND GRADIENT
             dNdxi = self.shapegrad(xi)
             dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dot(dNdxi, xc))
+            dxidx = inv(dxdxi)
             dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
             J = det(dxdxi)
+            e, de = dot(B, u), dot(B, du)
+            s = svars[0,ij+2*ntens:ij+3*ntens]
+            xv = zeros(1)
+
             # UPDATE MATERIAL STATE
-            D1, D2 = self.material.stiffness(self.ndir, self.nshr, disp=2)
+            s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
+                                              dtemp, self.ndir, self.nshr)
+            D1, D2 = iso_dev_split(self.ndir, self.nshr, D)
+
+            # STORE THE UPDATE VARIABLES
+            svars[1,ij+0*ntens:ij+1*ntens] = e
+            svars[1,ij+1*ntens:ij+2*ntens] = de
+            svars[1,ij+2*ntens:ij+3*ntens] = s
+
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Ke += dot(dot(B.T, D1), B) * J * self.rgaussw[p]
 
@@ -355,7 +393,7 @@ class IsoPSelectiveReduced(IsoPElement):
 class IsoPIncompatibleModes(IsoPElement):
     numincomp = None
     def gmatrix(self, xi): raise NotImplementedError
-    def response(self, u, du, time, dtime, istep, iframe, dltyp, dload,
+    def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                  procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""
 
@@ -363,7 +401,7 @@ class IsoPIncompatibleModes(IsoPElement):
 
         if cflag in (STIFF_AND_FORCE, FORCE_ONLY):
             rhs = super(IsoPIncompatibleModes, self).response(
-                u, du, time, dtime, istep, iframe, dltyp, dload,
+                u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                 procedure, nlgeom, FORCE_ONLY, step_type, load_fac)
 
             if cflag == FORCE_ONLY:
@@ -376,21 +414,39 @@ class IsoPIncompatibleModes(IsoPElement):
         Kci = zeros((n, self.dimensions*m))
         Kii = zeros((self.dimensions*m, self.dimensions*m))
 
+        # COMPUTE INTEGRATION POINT DATA
+        ntens = self.ndir + self.nshr
+        m = len(self.variables) * ntens
+
         for (p, xi) in enumerate(self.gaussp):
+            ij = m * p
+
             # SHAPE FUNCTION GRADIENT
             dNdxi = self.shapegrad(xi)
             dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dot(dNdxi, xc))
+            dxidx = inv(dxdxi)
             dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
             J = det(dxdxi)
             G = self.gmatrix(xi)
-            # UPDATE MATERIAL STATE
-            D = self.material.stiffness(self.ndir, self.nshr)
+
+            # MATERIAL RESPONSE
+            temp, dtemp = 1., 1.
+            xv = zeros(1)
+            s = svars[0,ij+2*ntens:ij+3*ntens]
+            s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
+                                              dtemp, self.ndir, self.nshr)
+
+            # STORE THE UPDATE VARIABLES
+            svars[1,ij+0*ntens:ij+1*ntens] = e
+            svars[1,ij+1*ntens:ij+2*ntens] = de
+            svars[1,ij+2*ntens:ij+3*ntens] = s
+
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Kcc += dot(dot(B.T, D), B) * J * self.gaussw[p]
             Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]
             Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
+
         Ke = Kcc  - dot(dot(Kci, inv(Kii)), Kci.T)
 
         if cflag == STIFF_AND_FORCE:

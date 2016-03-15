@@ -121,7 +121,6 @@ class IsoPQuad8(IsoPElement):
 # ------------------------ USER ELEMENT TYPES ------------------------------- #
 # --------------------------------------------------------------------------- #
 class PlaneStrainQuad8(IsoPQuad8):
-    variables = ('S', 'E', 'DE')
     ndir, nshr = 3, 1
     def bmatrix(self, dN):
         """Assemble and return the B matrix"""
@@ -131,7 +130,6 @@ class PlaneStrainQuad8(IsoPQuad8):
         return B
 
 class PlaneStrainQuad8BBar(IsoPQuad8):
-    variables = ('S', 'E', 'DE')
     ndir, nshr = 3, 1
     def bmatrix(self, dN):
         """Assemble and return the B matrix"""
@@ -150,7 +148,6 @@ class PlaneStrainQuad8BBar(IsoPQuad8):
         return B
 
 class PlaneStressQuad8(IsoPQuad8):
-    variables = ('S', 'E', 'DE')
     ndir, nshr = 2, 1
     def bmatrix(self, dN):
         """Assemble and return the B matrix"""
@@ -160,7 +157,6 @@ class PlaneStressQuad8(IsoPQuad8):
         return B
 
 class PlaneStrainQuad8Reduced(IsoPQuad8):
-    variables = ('S', 'E', 'DE')
     integration = 4
     ndir, nshr = 3, 1
     gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)

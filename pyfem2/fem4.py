@@ -18,16 +18,16 @@ class Plane2DModel(FiniteElementModel):
             raise ValueError('UNKNOWN SOLVER')
 
     def StaticPerturbation(self):
-        du = zeros(self.numdof)
-        K, rhs = self.assemble(self.dofs, du)
+        z = zeros(self.numdof)
+        K, rhs = self.assemble(self.dofs, z)
         Kbc, Fbc = self.apply_bc(K, rhs)
         self.dofs[:] = linsolve(Kbc, Fbc)
         R = dot(K, self.dofs) - rhs
         R = R.reshape(self.mesh.coord.shape)
-
-        # Create new frame to hold updated state
+        self.assemble(z, self.dofs, cflag=LP_OUTPUT)
+        # CREATE NEW FRAME TO HOLD UPDATED STATE
         frame =self.steps.last.Frame(1.)
-        self.update_state(1., R=R)
+        self.advance(R=R)
         frame.converged = True
 
     def NewtonSolve(self, period=1., increments=5, maxiters=10, tolerance=1e-4,
@@ -43,12 +43,12 @@ class Plane2DModel(FiniteElementModel):
             load_fac = float(iframe+1) / float(increments)
             err1 = 1.
 
-            # create frame to hold results
+            # CREATE FRAME TO HOLD RESULTS
             frame = self.steps.last.Frame(dtime)
 
             u = zeros(self.numdof)
 
-            # Newton-Raphson loop
+            # NEWTON-RAPHSON LOOP
             for nit in range(maxiters):
 
                 K, rhs = self.assemble(self.dofs, u, time, dtime, istep, iframe+1,
@@ -70,20 +70,24 @@ class Plane2DModel(FiniteElementModel):
                 if err1 < tolerance or err2 < tolerance:
                     break
 
+                # RESET DATA TO BEGINNING OF INCREMENT
+                self.svars[1] = self.svars[0]
+
                 continue
 
             else:
                 raise RuntimeError('FAILED TO CONVERGE ON STEP {0}, '
                                    'FRAME {1}'.format(istep, iframe+1))
 
-            frame.converged = True
             time += dtime
             self.dofs += u
+            self.advance()
+            frame.converged = True
 
-        self.update_state(time[0])
         return
 
-    def update_state(self, dtime, **kwds):
+    def advance(self, **kwds):
+        self.svars[0] = self.svars[1]
         u = self.dofs.reshape(self.mesh.coord.shape)
         frame = self.steps.last.frames[-1]
         frame.field_outputs['U'].add_data(u)
@@ -91,17 +95,19 @@ class Plane2DModel(FiniteElementModel):
             frame.field_outputs[kwd].add_data(val)
         frame_n = self.steps.last.frames[frame.number-1]
         if not frame_n.converged:
-            raise RuntimeError('ATTEMPTING TO UPDATE AFTER UNCONVERGED FRAME')
+            raise RuntimeError('ATTEMPTING TO UPDATE AN UNCONVERGED FRAME')
         for (ieb, eb) in enumerate(self.mesh.eleblx):
-            # get strain and stress from last converged frame
-            E = frame_n.field_outputs[eb.name, 'E']
-            S = frame_n.field_outputs[eb.name, 'S']
+            # GET STRAIN AND STRESS FROM LAST CONVERGED FRAME
+            if not eb.eletyp.variables:
+                continue
+            ntens = eb.eletyp.ndir + eb.eletyp.nshr
+            m = 1 if not eb.eletyp.integration else eb.eletyp.integration
+            n = len(eb.eletyp.variables)
             for (e, xel) in enumerate(eb.labels):
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
                 ue = u[el.inodes]
-                de1, e1, s1 = el.update_state(ue, E.data[e], S.data[e])
-                frame.field_outputs[eb.name, 'S'].add_data(s1, e)
-                frame.field_outputs[eb.name, 'E'].add_data(e1, e)
-                frame.field_outputs[eb.name, 'DE'].add_data(de1, e)
+                svars = self.svars[0,self.svtab[iel]].reshape(m,n,ntens)
+                for (j, name) in enumerate(el.variables):
+                    frame.field_outputs[eb.name,name].add_data(svars[:,j], e)
         return

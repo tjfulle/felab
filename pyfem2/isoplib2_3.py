@@ -80,7 +80,6 @@ class IsoPTria3(IsoPElement):
 # ------------------------ USER ELEMENT TYPES ------------------------------- #
 # --------------------------------------------------------------------------- #
 class PlaneStressTria3(IsoPTria3):
-    variables = ('E', 'DE', 'S')
     ndir, nshr = 2, 1
     def bmatrix(self, dN):
         B = zeros((3, 6))
@@ -89,7 +88,6 @@ class PlaneStressTria3(IsoPTria3):
         return B
 
 class PlaneStrainTria3(IsoPTria3):
-    variables = ('E', 'DE', 'S')
     ndir, nshr = 3, 1
     def bmatrix(self, dN):
         B = zeros((4, 6))

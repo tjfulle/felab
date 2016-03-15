@@ -242,6 +242,23 @@ class FiniteElementModel(object):
         node_labels = sorted(self.mesh.nodmap, key=lambda k: self.mesh.nodmap[k])
 
         # --- ALLOCATE STORAGE FOR SIMULATION DATA
+        # STATE VARIABLE TABLE
+        ix = 0
+        svtab = []
+        for el in self.elements:
+            if not el.variables:
+                svtab.append([])
+                continue
+            m = el.ndir + el.nshr
+            m *= len(el.variables)
+            if el.integration:
+                m *= el.integration
+            a = [ix, ix+m]
+            svtab.append(slice(*a))
+            ix += m
+        self.svars = zeros((2, ix))
+        self.svtab = svtab
+
         self.steps = StepRepository()
         step = self.steps.Step()
         frame = step.frames[0]
@@ -361,7 +378,8 @@ class FiniteElementModel(object):
                 due = du[eft]
                 dload = self.dload[iel]
                 dltyp = self.dltyp[iel]
-                response = el.response(ue, due, time, dtime, istep, iframe,
+                svars = self.svars[:,self.svtab[iel]]
+                response = el.response(ue, due, time, dtime, istep, iframe, svars,
                                        dltyp, dload, procedure, nlgeom, cflag,
                                        step_type, load_fac)
 

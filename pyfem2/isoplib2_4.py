@@ -35,7 +35,6 @@ class IsoPQuad4(IsoPElement):
                  (1,1,0,0,0,0,0)]
     dimensions = 2
     integration = 4
-    variables = ('E', 'DE', 'S')
     gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
     gaussw = ones(4)
     cp = array([0, 0], dtype=float64)
@@ -127,7 +126,6 @@ class PlaneStrainQuad4BBar(IsoPQuad4):
 class PlaneStrainQuad4Reduced(IsoPQuad4, IsoPReduced):
     integration = 1
     ndir, nshr = 3, 1
-    variables = ('E', 'DE', 'S')
     gaussp = array([[0., 0.]])
     gaussw = array([4.])
     hglassp = array([[0., 0.]])
@@ -139,8 +137,13 @@ class PlaneStrainQuad4Reduced(IsoPQuad4, IsoPReduced):
         return B
 
 class PlaneStrainQuad4SelectiveReduced(PlaneStrainQuad4, IsoPSelectiveReduced):
-    rgaussp = array([[0., 0.]])
-    rgaussw = array([4.])
+    integration = 5
+    gaussp = array([[-1., -1.],
+                    [ 1., -1.],
+                    [-1.,  1.],
+                    [ 1.,  1.],
+                    [ 0.,  0.]]) / sqrt(3.)
+    gaussw = array([1., 1., 1., 1., 4.])
 
 class PlaneStressQuad4Incompat(PlaneStressQuad4, IsoPIncompatibleModes):
     ndir, nshr = 2, 1
@@ -157,27 +160,28 @@ class PlaneStressQuad4Incompat(PlaneStressQuad4, IsoPIncompatibleModes):
         # The Finite Element Method: Its Basis and Fundamentals
         # By Olek C Zienkiewicz, Robert L Taylor, J.Z. Zhu
 
-        # Jacobian at element centroid
-        # compute the shape function at the centroid (self.cp)
-        dNdxi = self.shapegrad(self.cp)
+        # JACOBIAN AT ELEMENT CENTROID
+        # COMPUTE THE SHAPE FUNCTION AT THE CENTROID
+        dN0dxi = self.shapegrad(self.cp)
 
-        # compute the deformation gradient at centroid (coordinates are self.xc)
-        # and the jacobian
-        dxdxi = dot(dNdxi, self.xc)
-        dxidx = inv(dxdxi)
-        J0 = det(dxidx)
+        # COMPUTE THE DEFORMATION GRADIENT AT CENTROID
+        # AND THE JACOBIAN
+        dx0dxi = dot(dN0dxi, self.xc)
+        dxidx0 = inv(dx0dxi)
+        J0 = det(dx0dxi)
 
-        # compute the jacobian of the element
-        J = self.jacobian(self.xc, xi)
+        # COMPUTE THE JACOBIAN OF THE ELEMENT
+        dNdxi = self.shapegrad(xi)
+        dxdxi = dot(dNdxi, xc)
+        J = det(dxdxi)
 
-        # compute dNdxi associated with the incompatible modes and then from it
-        # and the jacobians computed above compute dNdx
+        # COMPUTE DNDXI ASSOCIATED WITH THE INCOMPATIBLE MODES AND THEN FROM IT
+        # AND THE JACOBIANS COMPUTED ABOVE COMPUTE DNDX
         # N = [1 - xi**2, 1 - eta**2]
         dNdxi = array([[-2*xi[0], 0], [0, -2*xi[1]]])
-        dNdx = J0 / J * dot(dxidx, dNdxi)
+        dNdx = J0 / J * dot(dxidx0, dNdxi)
 
-        # form the incompatible G matrix
-        # this is BI in the pdf file
+        # FORM THE INCOMPATIBLE G MATRIX
         G = array([[dNdx[0,0], 0,         dNdx[0,1], 0],
                    [0,         dNdx[1,0], 0,         dNdx[1,1]],
                    [dNdx[0,1], dNdx[0,0], dNdx[1,1], dNdx[1,0]]])

@@ -130,3 +130,9 @@ def linsolve(A, b, symmetric=True):
         x = lstsq(A, F)[0]
 
     return x
+
+def iso_dev_split(ndir, nshr, D):
+    ntens = ndir + nshr
+    D1, D2 = zeros((ntens, ntens)), eye(ntens)
+    D1[:ndir,:ndir] = D[0,1]
+    return D1, D-D1

@@ -17,7 +17,7 @@ def LinearSolution(ax=None):
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
     V.Pressure('Surface-1', 1.)
-    V.Solve()
+    V.Solve(solver=NEWTON)
     V.WriteResults()
     ax = V.Plot2D(deformed=1, color='b', linestyle='-.', ax=ax, label='Linear',
                   xlim=(-.2,5), ylim=(-.2, 5))
@@ -28,12 +28,12 @@ def ReducedIntegrationSolution(ax=None):
     V.GenesisMesh('QuarterCylinderQuad4.g')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad4Reduced, 'Material-1', t=1)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad4BBar, 'Material-1', t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
     V.Pressure('Surface-1', 1.)
-    V.Solve()
+    V.Solve(solver=NEWTON)
     V.WriteResults()
     ax = V.Plot2D(deformed=1, ax=ax, color='b', label='Reduced integration')
     return ax
@@ -52,7 +52,7 @@ def QuadraticSolution(ax=None):
     #V.SurfaceLoad("Surface-301", [0.555570233, 0.831469612])
     #V.SurfaceLoad("Surface-302", [0.831469612, 0.555570233])
     #V.SurfaceLoad("Surface-303", [0.98078528, 0.195090322])
-    V.Solve()
+    V.Solve(solver=NEWTON)
     V.WriteResults()
 
 def WriteAnalyticSolution(ax=None):
@@ -74,9 +74,9 @@ def WriteAnalyticSolution(ax=None):
 
 ax = None
 ax = WriteAnalyticSolution(ax)
-ax = ReducedIntegrationSolution(ax)
+#ax = ReducedIntegrationSolution(ax)
 ax = LinearSolution(ax)
-QuadraticSolution()
+#QuadraticSolution()
 
 if not os.environ.get('NOGRAPHICS'):
     plt.legend()
