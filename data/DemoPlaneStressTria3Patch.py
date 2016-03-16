@@ -12,7 +12,8 @@ V.PrescribedBC(30, Y, .24e-3)
 V.PrescribedBC(40, X, .06e-3)
 V.PrescribedBC(40, Y, .12e-3)
 #V.Plot2D(show=1)
-V.Solve()
+V.Solve(solver=NEWTON)
+#V.Solve()
 V.WriteResults()
 step = V.steps.last
 field = step.frames[-1].field_outputs['S']

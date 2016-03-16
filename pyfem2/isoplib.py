@@ -147,9 +147,6 @@ class IsoPElement(object):
         """Assemble the element stiffness"""
 
         xc = self.xc  # + u.reshape(self.xc.shape)
-        npredef = predef.shape[1]
-        pd = zeros(npredef)
-        dpd = zeros(npredef)
 
         n = sum([count_digits(nfs) for nfs in self.signature])
         compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
@@ -167,6 +164,7 @@ class IsoPElement(object):
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
         m = len(self.variables) * ntens
+        a1, a2, a3 = [self.variables.index(x) for x in ('E', 'DE', 'S')]
 
         # COMPUTE INTEGRATION POINT DATA
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
@@ -204,15 +202,15 @@ class IsoPElement(object):
 
             # MATERIAL RESPONSE
             xv = zeros(1)
-            e = svars[0,ij+0*ntens:ij+1*ntens]
-            s = svars[0,ij+2*ntens:ij+3*ntens]
+            e = svars[0,ij+a1*ntens:ij+(a1+1)*ntens]
+            s = svars[0,ij+a3*ntens:ij+(a3+1)*ntens]
             s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
                                               dtemp, self.ndir, self.nshr, F0, F)
 
             # STORE THE UPDATED VARIABLES
-            svars[1,ij+0*ntens:ij+1*ntens] += de
-            svars[1,ij+1*ntens:ij+2*ntens] = de
-            svars[1,ij+2*ntens:ij+3*ntens] = s
+            svars[1,ij+a1*ntens:ij+(a1+1)*ntens] += de  # STRAIN
+            svars[1,ij+a2*ntens:ij+(a2+1)*ntens] = de  # STRAIN INCREMENT
+            svars[1,ij+a3*ntens:ij+(a3+1)*ntens] = s  # STRESS
 
             if self.integration1:
                 # SELECTIVELY REDUCED INTEGRATION
@@ -376,6 +374,7 @@ class IsoPIncompatibleModes(IsoPElement):
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
         m = len(self.variables) * ntens
+        a1, a2, a3 = [self.variables.index(x) for x in ('E', 'DE', 'S')]
 
         # COMPUTE INTEGRATION POINT DATA
         for (p, xi) in enumerate(self.gaussp):
@@ -398,15 +397,16 @@ class IsoPIncompatibleModes(IsoPElement):
             F = eye(self.ndir+self.nshr)
 
             # PREDEF AND INCREMENT
+            N = self.shape(xi)
             temp = dot(N, predef[0,0])
             dtemp = dot(N, predef[1,0])
 
             # MATERIAL RESPONSE
             xv = zeros(1)
-            e = svars[0,ij+0*ntens:ij+1*ntens]
-            s = svars[0,ij+2*ntens:ij+3*ntens]
+            e = svars[0,ij+a1*ntens:ij+(a1+1)*ntens]
+            s = svars[0,ij+a3*ntens:ij+(a3+1)*ntens]
             s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
-                                              dtemp, self.ndir, self.nshr)
+                                              dtemp, self.ndir, self.nshr, F0, F)
 
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]

@@ -109,7 +109,7 @@ class DiffussiveHeatTransfer2D3(Element):
             return Fe
 
     def stiffness1(self):
-        # Material stiffness - "resistance" to conduction
+        # MATERIAL STIFFNESS - "RESISTANCE" TO CONDUCTION
         Je = self.jacobian()
         B = self.shapegrad()
         N = [self.shape(self.isop_map(xi)) for xi in self.gaussp]
@@ -117,9 +117,9 @@ class DiffussiveHeatTransfer2D3(Element):
         return Je/2.*sum([w[i]*dot(dot(B.T,k),B) for (i, Ni) in enumerate(N)], 0)
 
     def stiffness2(self, edge, h):
-        # convection stiffness
+        # CONVECTION STIFFNESS
         xi, w = array([-1., 1.])/sqrt(3.), ones(2)
-        # Determine edge length
+        # DETERMINE EDGE LENGTH
         xb = self.xc[self.edges[edge]]
         he = sqrt((xb[1,0]-xb[0,0])**2 + (xb[1,1]-xb[0,1])**2)
         s = he * (xi + 1.) / 2.

@@ -712,8 +712,8 @@ def ReadInput(filename):
         eleblx[elset] = (et, els)
 
     if notread:
-        logging.warn('THE FOLLOWING KEYWORDS AND THEIR DATA WERE NOT READ:\n'
-                     '{0}'.format(', '.join(notread)))
+        logging.debug('THE FOLLOWING KEYWORDS AND THEIR DATA WERE NOT READ:\n'
+                      '{0}'.format(', '.join(notread)))
 
     # Generate the mesh info
     eletab = [[key]+eletab[key] for key in sorted(eletab)]

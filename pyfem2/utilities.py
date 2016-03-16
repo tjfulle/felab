@@ -136,3 +136,10 @@ def iso_dev_split(ndir, nshr, D):
     D1, D2 = zeros((ntens, ntens)), eye(ntens)
     D1[:ndir,:ndir] = D[0,1]
     return D1, D-D1
+
+def get_procname(proc):
+    return {STATIC: 'STATIC', HEAT_TRANSFER: 'HEAT TRANSFER'}[proc]
+
+def get_steptypname(step_type):
+    return {GENERAL: 'GENERAL',
+            LINEAR_PERTURBATION: 'LINEAR PERTURBATION'}[step_type]

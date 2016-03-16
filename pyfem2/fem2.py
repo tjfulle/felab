@@ -14,21 +14,21 @@ class TrussModel(FiniteElementModel):
         """Solves the finite element problem
 
         """
-        # active DOF set dynamically
+        # ACTIVE DOF SET DYNAMICALLY
         self.active_dof = range(count_digits(self.elements[0].signature))
         self.setup(ElasticLinknD2, one=True)
 
-        # Assemble the global stiffness and force
+        # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
         du = zeros(self.numdof)
         K, rhs = self.assemble(self.dofs, du)
         Kbc, Fbc = self.apply_bc(K, rhs)
         self.dofs[:] = linsolve(Kbc, Fbc)
 
-        # Total force, including reaction, and reaction
-        #R = self.assemble(self.dofs, du, [0, 0], 1. 1, 1, cflag=LP_OUTPUT)
+        # TOTAL FORCE, INCLUDING REACTION, AND REACTION
+        #R = self.assemble(self.dofs, du, cflag=LP_OUTPUT)
         R = dot(K, self.dofs) - rhs
 
-        # reshape R to be the same shape as coord
+        # RESHAPE R TO BE THE SAME SHAPE AS COORD
         u = self.dofs.reshape(self.numnod, -1)
         R = R.reshape(self.numnod, -1)
         p = self.internal_forces(u)

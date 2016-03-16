@@ -12,16 +12,16 @@ def LinearSolution(ax=None, solver=None):
     V.GenesisMesh('QuarterCylinderQuad4.g')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
-    V.InitialTemperature(ALL,90)
-    V.Temperature(ALL,30)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad4BBar, 'Material-1', t=1)
+    V.InitialTemperature(ALL, 90)
+    V.Temperature(ALL, 30)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad4Reduced, 'Material-1', t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
     V.Pressure('Surface-1', 1.)
     V.Solve(solver=solver)
     V.WriteResults()
-    ax = V.Plot2D(deformed=1, color='b' if solver is None else 'k',
+    ax = V.Plot2D(deformed=1, color='b' if solver is None else 'r',
                   linestyle='-.', ax=ax,
                   label='Linear + {0}'.format(solver),
                   xlim=(-.2,5), ylim=(-.2, 5))

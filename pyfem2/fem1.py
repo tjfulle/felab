@@ -335,7 +335,7 @@ class FiniteElementModel(object):
         step.written = 1
 
     def assemble(self, u, du, time=array([0.,0.]), dtime=1., period=1.,
-                 istep=1, iframe=1, procedure=STATIC, nlgeom=False,
+                 istep=1, iframe=1, procedure=STATIC, nlgeom=False, ninc=None,
                  cflag=STIFF_AND_FORCE, step_type=LINEAR_PERTURBATION, load_fac=1.):
         """
         Assembles the global system of equations
@@ -361,6 +361,16 @@ class FiniteElementModel(object):
         - the global stiffness matrix is stored as a full symmetric matrix.
 
         """
+        procname = get_procname(procedure)
+        steptypname = get_steptypname(step_type)
+        msg  = 'ASSEMBING GLOBAL SYSTEM OF EQUATIONS\n      '
+        msg += 'PROCEDURE: {0}, STEP TYPE: {1}, NLGEOM: {2}\n      '.format(
+            procname, steptypname, nlgeom)
+        tf = time[-1]+dtime
+        msg += 'STEP: {0}, FRAME: {1}, TIME: {2}'.format(istep, iframe, tf)
+        if ninc is not None:
+            msg += ', INCREMENT: {0}'.format(ninc)
+        logging.debug(msg)
 
         if cflag not in (STIFF_AND_FORCE, STIFF_ONLY, FORCE_ONLY, LP_OUTPUT):
             raise ValueError('UNKNOWN COMPUTE QUANTITY')

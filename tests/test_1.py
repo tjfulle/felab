@@ -474,7 +474,7 @@ def test_elemlibN_2_1():
     class mat: E = 1
     El = ElasticLink1D2(1, [0, 1], [0, 1], mat, A=1)
     Ke = El.response(zeros(2), zeros(2), [0,0], 1., 1, 1, [], [], [], STATIC,
-                     False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
+                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
     assert allclose([[1,-1],[-1,1]], Ke)
 
 def test_elemlibN_2_2():
@@ -482,7 +482,7 @@ def test_elemlibN_2_2():
     class mat: E=1000
     El = ElasticLink2D2(1, [0, 1], [[0,0], [30,40]], mat, A=5)
     Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,[],[],[],STATIC,
-                     False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
+                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
     assert allclose([[ 36.,  48., -36., -48.],
                      [ 48.,  64., -48., -64.],
                      [-36., -48.,  36.,  48.],
@@ -493,7 +493,7 @@ def test_elemlibN_2_3():
     class mat: E = 343
     El = ElasticLink3D2(1, [0, 1], [[0,0,0],[2,3,6]], mat, A=10)
     Ke = El.response(zeros((2,3)),zeros((2,3)),[0,0],1.,1,1,[],[],[],STATIC,
-                     False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
+                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
     assert allclose([[  40.,   60.,  120.,  -40.,  -60., -120.],
                      [  60.,   90.,  180.,  -60.,  -90., -180.],
                      [ 120.,  180.,  360., -120., -180., -360.],
@@ -508,7 +508,7 @@ def test_elemlibN_2_4():
     A, Izz = 125, 250
     El = BeamColumn2D(1, [0, 1], coord, mat, A=A, Izz=Izz)
     Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,[],[],[],STATIC,
-                     False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
+                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
 
 @pytest.mark.demos
 def test_demos():

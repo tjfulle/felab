@@ -25,17 +25,15 @@ class Plane2DModel(FiniteElementModel):
         R = dot(K, self.dofs) - rhs
         R = R.reshape(self.mesh.coord.shape)
         self.assemble(z, self.dofs, cflag=LP_OUTPUT)
-        # CREATE NEW FRAME TO HOLD UPDATED STATE
-        frame =self.steps.last.Frame(1.)
         self.advance(R=R)
-        frame.converged = True
 
-    def NewtonSolve(self, period=1., increments=5, maxiters=10, tolerance=1e-4,
-                    relax=1.):
+    def NewtonSolve(self, period=1., increments=5, maxiters=10,
+                    tolerance=1e-4, relax=1., tolerance1=1e-6):
 
         ti = self.steps.last.frames[-1].start
         time = array([ti, ti])
         dtime = period / float(increments)
+        maxiter1 = max(int(maxiters/2.),1)
 
         istep = 1
         for iframe in range(increments):
@@ -43,17 +41,14 @@ class Plane2DModel(FiniteElementModel):
             load_fac = float(iframe+1) / float(increments)
             err1 = 1.
 
-            # CREATE FRAME TO HOLD RESULTS
-            frame = self.steps.last.Frame(dtime)
-
             u = zeros(self.numdof)
 
             # NEWTON-RAPHSON LOOP
             for nit in range(maxiters):
 
                 K, rhs = self.assemble(self.dofs, u, time, dtime, period,
-                                       istep, iframe+1, step_type=GENERAL,
-                                       load_fac=load_fac)
+                                       istep, iframe+1, ninc=nit+1,
+                                       step_type=GENERAL, load_fac=load_fac)
 
                 # Enforce displacement boundary conditions
                 Kbc, Fbc = self.apply_bc(K, rhs, self.dofs, u, load_fac=load_fac)
@@ -68,11 +63,15 @@ class Plane2DModel(FiniteElementModel):
                 err1 = sqrt(dot(w, w) / dot(u, u))
                 err2 = sqrt(dot(rhs, rhs)) / float(self.numdof)
 
-                if err1 < tolerance or err2 < tolerance:
-                    break
-
-                # RESET DATA TO BEGINNING OF INCREMENT
-                self.svars[1] = self.svars[0]
+                if nit < maxiter1:
+                    if err1 < tolerance1:
+                        break
+                else:
+                    if err1 < tolerance:
+                        break
+                    elif err2 < 5e-2:
+                        logging.debug('CONVERGING TO LOSER TOLERANCE')
+                        break
 
                 continue
 
@@ -82,25 +81,31 @@ class Plane2DModel(FiniteElementModel):
 
             time[1] += dtime
             self.dofs += u
-            self.advance()
-            frame.converged = True
+            self.advance(dtime=dtime)
 
         return
 
-    def advance(self, **kwds):
+    def advance(self, dtime=1., **kwds):
+
+        frame_n = self.steps.last.frames[-1]
+        if not frame_n.converged:
+            raise RuntimeError('ATTEMPTING TO UPDATE AN UNCONVERGED FRAME')
+
+        # ADVANCE STATE VARIABLES
         self.svars[0] = self.svars[1]
         u = self.dofs.reshape(self.mesh.coord.shape)
-        frame = self.steps.last.frames[-1]
+
+        # CREATE FRAME TO HOLD RESULTS
+        frame = self.steps.last.Frame(dtime)
         frame.field_outputs['U'].add_data(u)
         for (kwd, val) in kwds.items():
             frame.field_outputs[kwd].add_data(val)
-        frame_n = self.steps.last.frames[frame.number-1]
-        if not frame_n.converged:
-            raise RuntimeError('ATTEMPTING TO UPDATE AN UNCONVERGED FRAME')
+
         for (ieb, eb) in enumerate(self.mesh.eleblx):
-            # GET STRAIN AND STRESS FROM LAST CONVERGED FRAME
             if not eb.eletyp.variables:
                 continue
+
+            # PASS VALUES FROM SVARS TO THE FRAME OUTPUT
             ntens = eb.eletyp.ndir + eb.eletyp.nshr
             m = 1 if not eb.eletyp.integration else eb.eletyp.integration
             n = len(eb.eletyp.variables)
@@ -111,4 +116,6 @@ class Plane2DModel(FiniteElementModel):
                 svars = self.svars[0,self.svtab[iel]].reshape(m,n,ntens)
                 for (j, name) in enumerate(el.variables):
                     frame.field_outputs[eb.name,name].add_data(svars[:,j], e)
+
+        frame.converged = True
         return
