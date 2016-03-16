@@ -363,10 +363,10 @@ class FiniteElementModel(object):
         """
         procname = get_procname(procedure)
         steptypname = get_steptypname(step_type)
-        msg  = 'ASSEMBING GLOBAL SYSTEM OF EQUATIONS\n      '
+        msg  = 'ASSEMBLING GLOBAL SYSTEM OF EQUATIONS\n      '
         msg += 'PROCEDURE: {0}, STEP TYPE: {1}, NLGEOM: {2}\n      '.format(
             procname, steptypname, nlgeom)
-        tf = time[-1]+dtime
+        tf = time[-1] + dtime
         msg += 'STEP: {0}, FRAME: {1}, TIME: {2}'.format(istep, iframe, tf)
         if ninc is not None:
             msg += ', INCREMENT: {0}'.format(ninc)

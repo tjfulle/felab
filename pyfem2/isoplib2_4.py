@@ -123,10 +123,16 @@ class PlaneStrainQuad4BBar(IsoPQuad4):
         return B
 
 class PlaneStrainQuad4Reduced(IsoPQuad4, IsoPReduced):
-    integration = 1
+    integration = 5
+    integration1 = 4
+    fully_reduced = True
     ndir, nshr = 3, 1
-    gaussp = array([[0., 0.]])
-    gaussw = array([4.])
+    gaussp = array([[-1., -1.],
+                    [ 1., -1.],
+                    [-1.,  1.],
+                    [ 1.,  1.],
+                    [ 0.,  0.]]) / sqrt(3.)
+    gaussw = array([1., 1., 1., 1., 4.])
     hglassp = array([[0., 0.]])
     hglassv = array([[1., -1., 1., -1.]]) # hourglass vector
     def bmatrix(self, dN):
@@ -138,6 +144,7 @@ class PlaneStrainQuad4Reduced(IsoPQuad4, IsoPReduced):
 class PlaneStrainQuad4SelectiveReduced(PlaneStrainQuad4):
     integration = 5
     integration1 = 4
+    selectively_reduced = True
     gaussp = array([[-1., -1.],
                     [ 1., -1.],
                     [-1.,  1.],

@@ -14,6 +14,8 @@ class IsoPElement(object):
     dimensions = None
     integration = None
     integration1 = 0
+    fully_reduced = False
+    selectively_reduced = False
     edges = []
 
     def __init__(self, label, elenod, elecoord, elemat, **elefab):
@@ -212,15 +214,17 @@ class IsoPElement(object):
             svars[1,ij+a2*ntens:ij+(a2+1)*ntens] = de  # STRAIN INCREMENT
             svars[1,ij+a3*ntens:ij+(a3+1)*ntens] = s  # STRESS
 
-            if self.integration1:
+            if self.selectively_reduced:
                 # SELECTIVELY REDUCED INTEGRATION
                 D1, D2 = iso_dev_split(self.ndir, self.nshr, D)
                 D = D1 if p >= self.integration1 else D2
 
             if compute_stiff:
-                # UPDATE MATERIAL STATE
-                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
+                if self.fully_reduced and p < self.integration1:
+                    pass
+                else:
+                    # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
+                    Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
 
             if self.integration1 and p >= self.integration1:
                 # DO NOT COMPUTE FORCE FOR REDUCED INTEGRATED PORTION
@@ -244,10 +248,10 @@ class IsoPElement(object):
 
         if compute_force:
             for (i, typ) in enumerate(dltyp):
-                dloadx = dload[i]
                 if typ == DLOAD:
                     continue
-                elif typ == SLOAD:
+                dloadx = dload[i]
+                if typ == SLOAD:
                     # Surface load
                     rhs += self.surface_force(dloadx[0], dloadx[1:])
                 else:
@@ -276,7 +280,7 @@ class IsoPReduced(IsoPElement):
 
         xc = self.xc  # + u.reshape(self.xc.shape)
 
-        # Get the nominal stiffness
+        # GET THE NOMINAL RESPONSE
         response = super(IsoPReduced, self).response(
             u, du, time, dtime, istep, iframe, svars, dltyp, dload,
             predef, procedure, nlgeom, cflag, step_type, load_fac)
@@ -298,7 +302,7 @@ class IsoPReduced(IsoPElement):
         for p in range(len(self.hglassp)):
 
             # SHAPE FUNCTION DERIVATIVE AT HOURGLASS GAUSS POINTS
-            xi = self.hglassp[p]
+            xi = array(self.hglassp[p])
             dNdxi = self.shapegrad(xi)
 
             # JACOBIAN TO NATURAL COORDINATES
@@ -342,7 +346,10 @@ class IsoPReduced(IsoPElement):
 # ---------------- INCOMPATIBLE MODES ISOPARAMETRIC ELEMENTS ---------------- #
 # --------------------------------------------------------------------------- #
 class IsoPIncompatibleModes(IsoPElement):
-    def gmatrix(self, xi): raise NotImplementedError
+
+    def gmatrix(self, xi):
+        raise NotImplementedError
+
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                  predef, procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""

@@ -26,6 +26,7 @@ def LinearSolution(ax=None, solver=None):
                   label='Linear + {0}'.format(solver),
                   xlim=(-.2,5), ylim=(-.2, 5))
     if solver is None:
+        return ax
         ax = V.Plot2D(color='g',
                   linestyle='-', ax=ax,
                   label='undeformed',

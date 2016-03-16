@@ -10,6 +10,10 @@ class Plane2DModel(FiniteElementModel):
 
     def Solve(self, solver=None, **kwds):
         self.setup(IsoPElement)
+        h = '='.center(85, '=')
+        logging.debug(h)
+        logging.debug('RUNNING A PYFEM2 PLANE2DMODEL'.center(85,'='))
+        logging.debug(h)
         if solver is None:
             self.StaticPerturbation()
         elif solver == NEWTON:
@@ -33,7 +37,9 @@ class Plane2DModel(FiniteElementModel):
         ti = self.steps.last.frames[-1].start
         time = array([ti, ti])
         dtime = period / float(increments)
-        maxiter1 = max(int(maxiters/2.),1)
+
+        maxit2 = int(maxiters)
+        maxit1 = max(int(maxit2/2.),1)
 
         istep = 1
         for iframe in range(increments):
@@ -44,40 +50,43 @@ class Plane2DModel(FiniteElementModel):
             u = zeros(self.numdof)
 
             # NEWTON-RAPHSON LOOP
-            for nit in range(maxiters):
+            for nit in range(maxit2):
 
                 K, rhs = self.assemble(self.dofs, u, time, dtime, period,
                                        istep, iframe+1, ninc=nit+1,
                                        step_type=GENERAL, load_fac=load_fac)
 
-                # Enforce displacement boundary conditions
+                # ENFORCE DISPLACEMENT BOUNDARY CONDITIONS
                 Kbc, Fbc = self.apply_bc(K, rhs, self.dofs, u, load_fac=load_fac)
 
-                # --- Solve for the nodal displacement
+                # --- SOLVE FOR THE NODAL DISPLACEMENT
                 w = linsolve(Kbc, Fbc)
 
-                # --- update displacement increment
+                # --- UPDATE DISPLACEMENT INCREMENT
                 u += relax * w
 
-                # --- Check convergence
+                # --- CHECK CONVERGENCE
                 err1 = sqrt(dot(w, w) / dot(u, u))
                 err2 = sqrt(dot(rhs, rhs)) / float(self.numdof)
 
-                if nit < maxiter1:
+                if nit < maxit1:
                     if err1 < tolerance1:
                         break
                 else:
                     if err1 < tolerance:
                         break
                     elif err2 < 5e-2:
-                        logging.debug('CONVERGING TO LOSER TOLERANCE')
+                        logging.debug('CONVERGING TO LOSER TOLERANCE ON STEP '
+                                      '{0}, FRAME {1}'.format(istep, iframe+1))
                         break
 
                 continue
 
             else:
-                raise RuntimeError('FAILED TO CONVERGE ON STEP {0}, '
-                                   'FRAME {1}'.format(istep, iframe+1))
+                message  = 'FAILED TO CONVERGE ON STEP '
+                message += '{0}, FRAME {1}'.format(istep, iframe+1)
+                logging.error(message)
+                raise RuntimeError(message)
 
             time[1] += dtime
             self.dofs += u
@@ -93,11 +102,15 @@ class Plane2DModel(FiniteElementModel):
 
         # ADVANCE STATE VARIABLES
         self.svars[0] = self.svars[1]
-        u = self.dofs.reshape(self.mesh.coord.shape)
 
         # CREATE FRAME TO HOLD RESULTS
         frame = self.steps.last.Frame(dtime)
+
+        # STORE DEGREES OF FREEDOM
+        u = self.dofs.reshape(self.mesh.coord.shape)
         frame.field_outputs['U'].add_data(u)
+
+        # STORE KEYWORDS
         for (kwd, val) in kwds.items():
             frame.field_outputs[kwd].add_data(val)
 
