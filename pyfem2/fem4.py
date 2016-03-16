@@ -33,11 +33,11 @@ class Plane2DModel(FiniteElementModel):
     def NewtonSolve(self, period=1., increments=5, maxiters=10, tolerance=1e-4,
                     relax=1.):
 
-        time = array([0., self.steps.last.frames[-1].value])
+        ti = self.steps.last.frames[-1].start
+        time = array([ti, ti])
         dtime = period / float(increments)
 
         istep = 1
-        flags = [1, 0, 1, 0]
         for iframe in range(increments):
 
             load_fac = float(iframe+1) / float(increments)
@@ -51,8 +51,9 @@ class Plane2DModel(FiniteElementModel):
             # NEWTON-RAPHSON LOOP
             for nit in range(maxiters):
 
-                K, rhs = self.assemble(self.dofs, u, time, dtime, istep, iframe+1,
-                                       step_type=GENERAL, load_fac=load_fac)
+                K, rhs = self.assemble(self.dofs, u, time, dtime, period,
+                                       istep, iframe+1, step_type=GENERAL,
+                                       load_fac=load_fac)
 
                 # Enforce displacement boundary conditions
                 Kbc, Fbc = self.apply_bc(K, rhs, self.dofs, u, load_fac=load_fac)
@@ -79,7 +80,7 @@ class Plane2DModel(FiniteElementModel):
                 raise RuntimeError('FAILED TO CONVERGE ON STEP {0}, '
                                    'FRAME {1}'.format(istep, iframe+1))
 
-            time += dtime
+            time[1] += dtime
             self.dofs += u
             self.advance()
             frame.converged = True

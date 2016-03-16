@@ -36,7 +36,7 @@ class ElasticLinknD2(Element):
                                  "fabrication property")
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type, load_fac):
         """Computes the response of a n-dimensional elastic link
 
         Parameters
@@ -171,7 +171,7 @@ class BeamColumn2D(Element):
             raise ValueError('Incorrect element fabrication properties')
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type, load_fac):
 
         # INTERNAL FORCE
         Fe = zeros(6)

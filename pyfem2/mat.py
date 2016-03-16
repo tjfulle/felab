@@ -149,7 +149,7 @@ class Material(object):
         return self.k_iso * eye(ndim)
 
     def response(self, stress, statev, strain, dstrain, time, dtime,
-                 temp, dtemp, ndir, nshr):
+                 temp, dtemp, ndir, nshr, F0, F):
         D = self.stiffness(ndir, nshr)
         stress += dot(D, dstrain)
         return stress, statev, D
@@ -162,15 +162,15 @@ class Material(object):
         D = self.isotropic_elastic_stiffness()
 
         if nshr == 1:
-            # Modify the stiffness for 2D according to:
-            # 1) Plane strain: Remove rows and columns of the stiffness
-            #    corresponding to the plane of zero strain
-            # 2) Plane stress: Invert the stiffness and remove the rows
-            #    and columns of the compliance corresponding the plane of
-            #    zero stress.
+            # MODIFY THE STIFFNESS FOR 2D ACCORDING TO:
+            # 1) PLANE STRAIN: REMOVE ROWS AND COLUMNS OF THE STIFFNESS
+            #    CORRESPONDING TO THE PLANE OF ZERO STRAIN
+            # 2) PLANE STRESS: INVERT THE STIFFNESS AND REMOVE THE ROWS
+            #    AND COLUMNS OF THE COMPLIANCE CORRESPONDING THE PLANE OF
+            #    ZERO STRESS.
             if ndir == 2:
-                # plane stress
-                # Invert the stiffness to get the compliance
+                # PLANE STRESS
+                # INVERT THE STIFFNESS TO GET THE COMPLIANCE
                 idx = [[[0], [1], [3]], [0, 1, 3]]
                 D = inv(inv(D)[idx])
             elif ndir == 3:

@@ -143,10 +143,13 @@ class IsoPElement(object):
         raise TypeError('Unknown data type')
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""
 
         xc = self.xc  # + u.reshape(self.xc.shape)
+        npredef = predef.shape[1]
+        pd = zeros(npredef)
+        dpd = zeros(npredef)
 
         n = sum([count_digits(nfs) for nfs in self.signature])
         compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
@@ -188,19 +191,26 @@ class IsoPElement(object):
             dNdx = dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx)
 
-            # STRAIN AND INCREMENT
-            e = dot(B, u)
+            # STRAIN INCREMENT
             de = dot(B, du)
 
+            # SET DEFORMATION GRADIENT TO THE IDENTITY
+            F0 = eye(self.ndir+self.nshr)
+            F = eye(self.ndir+self.nshr)
+
+            # PREDEF AND INCREMENT
+            temp = dot(N, predef[0,0])
+            dtemp = dot(N, predef[1,0])
+
             # MATERIAL RESPONSE
-            temp, dtemp = 1., 1.
             xv = zeros(1)
+            e = svars[0,ij+0*ntens:ij+1*ntens]
             s = svars[0,ij+2*ntens:ij+3*ntens]
             s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
-                                              dtemp, self.ndir, self.nshr)
+                                              dtemp, self.ndir, self.nshr, F0, F)
 
             # STORE THE UPDATED VARIABLES
-            svars[1,ij+0*ntens:ij+1*ntens] = e + de
+            svars[1,ij+0*ntens:ij+1*ntens] += de
             svars[1,ij+1*ntens:ij+2*ntens] = de
             svars[1,ij+2*ntens:ij+3*ntens] = s
 
@@ -264,14 +274,14 @@ class IsoPElement(object):
 class IsoPReduced(IsoPElement):
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type, load_fac):
 
         xc = self.xc  # + u.reshape(self.xc.shape)
 
         # Get the nominal stiffness
         response = super(IsoPReduced, self).response(
             u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-            procedure, nlgeom, cflag, step_type, load_fac)
+            predef, procedure, nlgeom, cflag, step_type, load_fac)
 
         if cflag == LP_OUTPUT:
             return
@@ -336,14 +346,14 @@ class IsoPReduced(IsoPElement):
 class IsoPIncompatibleModes(IsoPElement):
     def gmatrix(self, xi): raise NotImplementedError
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""
 
         xc = self.xc  # + u.reshape(self.xc.shape)
 
         response = super(IsoPIncompatibleModes, self).response(
             u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-            procedure, nlgeom, cflag, step_type, load_fac)
+            predef, procedure, nlgeom, cflag, step_type, load_fac)
 
         if cflag == LP_OUTPUT:
             return
@@ -381,12 +391,19 @@ class IsoPIncompatibleModes(IsoPElement):
             G = self.gmatrix(xi)
 
             # STRAIN AND INCREMENT
-            e = dot(B, u)
             de = dot(B, du)
 
+            # SET DEFORMATION GRADIENT TO THE IDENTITY
+            F0 = eye(self.ndir+self.nshr)
+            F = eye(self.ndir+self.nshr)
+
+            # PREDEF AND INCREMENT
+            temp = dot(N, predef[0,0])
+            dtemp = dot(N, predef[1,0])
+
             # MATERIAL RESPONSE
-            temp, dtemp = 1., 1.
             xv = zeros(1)
+            e = svars[0,ij+0*ntens:ij+1*ntens]
             s = svars[0,ij+2*ntens:ij+3*ntens]
             s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
                                               dtemp, self.ndir, self.nshr)

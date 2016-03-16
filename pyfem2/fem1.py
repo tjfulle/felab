@@ -34,6 +34,7 @@ class FiniteElementModel(object):
         self.mesh = None
         self.materials = {}
         self.initial_temp = None
+        self.final_temp = None
         self.fh = None
 
     @property
@@ -258,6 +259,7 @@ class FiniteElementModel(object):
             ix += m
         self.svars = zeros((2, ix))
         self.svtab = svtab
+        self.predef = zeros((3, 1, self.numnod))
 
         self.steps = StepRepository()
         step = self.steps.Step()
@@ -267,11 +269,14 @@ class FiniteElementModel(object):
         nd = self.dimensions
         if 6 in active_dof:
             frame.ScalarField('Q', NODE, node_labels)
+
         frame.ScalarField('T', NODE, node_labels)
         frame.VectorField('U', NODE, node_labels, self.dimensions)
         frame.VectorField('R', NODE, node_labels, self.dimensions)
         if self.initial_temp is not None:
             frame.field_outputs['T'].add_data(self.initial_temp)
+            self.predef[0,0,:] = self.initial_temp
+            self.predef[1,0,:] = self.final_temp
 
         # ELEMENT DATA
         for eb in self.mesh.eleblx:
@@ -329,9 +334,9 @@ class FiniteElementModel(object):
         self.exofile.snapshot(step)
         step.written = 1
 
-    def assemble(self, u, du, time=zeros(2), dtime=1., istep=1, iframe=1,
-                 procedure=STATIC, nlgeom=False, cflag=STIFF_AND_FORCE,
-                 step_type=LINEAR_PERTURBATION, load_fac=1.):
+    def assemble(self, u, du, time=array([0.,0.]), dtime=1., period=1.,
+                 istep=1, iframe=1, procedure=STATIC, nlgeom=False,
+                 cflag=STIFF_AND_FORCE, step_type=LINEAR_PERTURBATION, load_fac=1.):
         """
         Assembles the global system of equations
 
@@ -356,6 +361,7 @@ class FiniteElementModel(object):
         - the global stiffness matrix is stored as a full symmetric matrix.
 
         """
+
         if cflag not in (STIFF_AND_FORCE, STIFF_ONLY, FORCE_ONLY, LP_OUTPUT):
             raise ValueError('UNKNOWN COMPUTE QUANTITY')
 
@@ -367,21 +373,25 @@ class FiniteElementModel(object):
         if compute_force:
             rhs = zeros(self.numdof)
 
-        # compute the element stiffness and scatter to global array
+        # INTERPOLATE FIELD VARIABLES
+        fac1 = time[1] / (time[0] + period)
+        fac2 = (time[1]+dtime) / (time[0] + period)
+        x0 = (1. - fac1) * self.predef[0] + fac1 * self.predef[1]
+        xf = (1. - fac2) * self.predef[0] + fac2 * self.predef[1]
+        predef = array([x0, xf-x0])
+
+        # COMPUTE THE ELEMENT STIFFNESS AND SCATTER TO GLOBAL ARRAY
         for (ieb, eb) in enumerate(self.mesh.eleblx):
             for (e, xel) in enumerate(eb.labels):
                 # Element stiffness
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
                 eft = self.eftab[iel]
-                ue = u[eft]
-                due = du[eft]
-                dload = self.dload[iel]
-                dltyp = self.dltyp[iel]
-                svars = self.svars[:,self.svtab[iel]]
-                response = el.response(ue, due, time, dtime, istep, iframe, svars,
-                                       dltyp, dload, procedure, nlgeom, cflag,
-                                       step_type, load_fac)
+                response = el.response(u[eft], du[eft], time, dtime, istep,
+                                       iframe, self.svars[:,self.svtab[iel]],
+                                       self.dltyp[iel], self.dload[iel],
+                                       predef[:,:,el.inodes], procedure, nlgeom,
+                                       cflag, step_type, load_fac)
 
                 if cflag == STIFF_AND_FORCE:
                     K[IX(eft, eft)] += response[0]
@@ -779,6 +789,24 @@ class FiniteElementModel(object):
             # amplitude is a list of amplitudes
             a = asarray(amplitude)
         self.initial_temp = a
+        self.final_temp = a
+
+    def Temperature(self, nodes, amplitude):
+        if self.mesh is None:
+            raise UserInputError('MESH MUST FIRST BE CREATED')
+        inodes = self.mesh.get_internal_node_ids(nodes)
+        if hasattr(amplitude, '__call__'):
+            # amplitude is a function
+            a = amplitude(self.mesh.coord[inodes])
+        elif not is_listlike(amplitude):
+            # create a single amplitude for each node
+            a = ones(len(inodes)) * amplitude
+        else:
+            if len(amplitude) != len(inodes):
+                raise UserInputError('INCORRECT AMPLITUDE LENGTH')
+            # amplitude is a list of amplitudes
+            a = asarray(amplitude)
+        self.final_temp = a
 
     # ----------------------------------------------------------------------- #
     # --- ELEMENT BLOCKS AND SETS-------------------------------------------- #
