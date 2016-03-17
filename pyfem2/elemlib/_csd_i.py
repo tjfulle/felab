@@ -2,14 +2,14 @@ import logging
 from numpy import *
 from numpy.linalg import det, inv
 
-from .element import Element
+from ._csd import CSDElement
 from ..utilities import *
 
 # --------------------------------------------------------------------------- #
-# ------------------------ ISOPARAMETRIC ELEMENTS --------------------------- #
+# ---------------- INCOMPATIBLE MODES ISOPARAMETRIC ELEMENTS ---------------- #
 # --------------------------------------------------------------------------- #
-class CIPSDElement(Element):
-    """Continuum Isoparametric Stress Displacement Element"""
+class CSDIElement(CSDElement):
+    """Continuum isoparametric stress displacement element, incompatible modes"""
     gaussp = None
     gaussw = None
     variables = ('E', 'DE', 'S')
@@ -21,58 +21,15 @@ class CIPSDElement(Element):
     def shape(self, *args):
         raise NotImplementedError
 
+    def gmatrix(self, xi):
+        raise NotImplementedError
+
     def pmatrix(self, N):
         n = count_digits(self.signature[0])
         S = zeros((n, self.nodes*n))
         for i in range(self.dimensions):
             S[i, i::self.dimensions] = N
         return S
-
-    def jacobian(self, x, xi):
-        """Element Jacobian
-
-        1. Shape function derivative at Gauss points
-           dNdxi = shapegrad(xi)
-
-        2. Compute the Jacobian matrix J = dNdxi.x
-           dxdxi = dot(dNdxi, X)
-           J = det(dxdxi)
-        """
-        dNdxi = self.shapegrad(xi)
-        dxdxi = dot(dNdxi, x)
-        return det(dxdxi)
-
-    def shapegradx(self, x, xi):
-        """Shape function derivatives with respect to global coordinates
-
-        1. shape function derivative at Gauss points
-           dNdxi = shapegrad(xi)
-           dxdxi = dot(dNdxi, X)
-
-        2. Convert shape function derivatives to derivatives
-           wrt global X
-           dxidx = inv(dxdxi)
-           dNdx = dot(dxidx, dNdxi)
-        """
-        dNdxi = self.shapegrad(xi)
-        dxidx = inv(dot(dNdxi, x))
-        return dot(dxidx, dNdxi)
-
-    def shapegradxbar(self, xc):
-        det = array([self.jacobian(xc, xi) for xi in self.gaussp])
-        ev = dot(det, self.gaussw)
-        n = sum([count_digits(nfs) for nfs in self.signature])
-        dNb = zeros(n).reshape(-1, self.nodes)
-        for p in range(self.integration):
-            # COMPUTE THE INTEGRALS OVER THE VOLUME
-            xi = self.gaussp[p]
-            fac = self.gaussw[p] * det[p] / self.dimensions / ev
-            dNdxi = self.shapegrad(xi)
-            dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dxdxi)
-            dNdx = dot(dxidx, dNdxi)
-            dNb += fac*dNdx
-        return dNb
 
     @classmethod
     def interpolate_to_centroid(cls, data):
@@ -96,17 +53,17 @@ class CIPSDElement(Element):
 
         if data.ndim == 1:
             # Scalar data
-            assert len(data) == self.integration
+            assert len(data) == cls.integration
 
         elif len(data.shape) == 2:
             # Vector or tensor data
-            assert data.shape[0] == self.integration
+            assert data.shape[0] == cls.integration
 
         else:
             raise TypeError('Unknown data type')
 
         dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
-        weights = [1./dist(point, cls.gaussp[i]) for i in range(self.integration)]
+        weights = [1./dist(point, cls.gaussp[i]) for i in range(cls.integration)]
 
         if data.ndim == 1:
             # Scalar data
@@ -127,7 +84,11 @@ class CIPSDElement(Element):
         compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
 
         if compute_stiff:
-            Ke = zeros((n, n))
+            Kcc = zeros((n, n))
+            # INCOMPATIBLE MODES STIFFNESSES
+            m = count_digits(self.signature[0])
+            Kci = zeros((n, self.dimensions*m))
+            Kii = zeros((self.dimensions*m, self.dimensions*m))
 
         if compute_force:
             rhs = zeros(n)
@@ -138,7 +99,7 @@ class CIPSDElement(Element):
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
         m = len(self.variables) * ntens
-        a1, a2, a3 = [self.variables.index(x) for x in ('E', 'DE', 'S')]
+        a1, a2, a3 = 0, 1, 2
 
         # COMPUTE INTEGRATION POINT DATA
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
@@ -188,7 +149,10 @@ class CIPSDElement(Element):
 
             if compute_stiff:
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
+                G = self.gmatrix(xi)
+                Kcc += J * self.gaussw[p] * dot(dot(B.T, D), B)
+                Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]
+                Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
 
             if compute_force:
                 P = self.pmatrix(N)
@@ -202,6 +166,9 @@ class CIPSDElement(Element):
 
         if cflag == LP_OUTPUT:
             return
+
+        if compute_stiff:
+            Ke = Kcc  - dot(dot(Kci, inv(Kii)), Kci.T)
 
         if cflag == STIFF_ONLY:
             return Ke

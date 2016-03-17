@@ -6,9 +6,10 @@ import datetime
 from numpy import *
 from os.path import basename, join, splitext, isfile
 
-from .constants import *
 from .mesh import ElementBlock
-from .data import StepRepository
+from ..constants import *
+from ..data import StepRepository
+from ..elemlib import ElementFamily
 
 # True if we are running on Python 3.
 PY3 = sys.version_info[0] == 3
@@ -21,9 +22,6 @@ except ImportError:
         logging.warn('USING SCIPY.IO.NETCDF LIBRARY TO WRITE EXODUSII FILES.  '
                      'INSTALL NETCDF4 FOR BETTER RELIABILITY.')
     from .netcdf import netcdf_file as Dataset
-
-from .elemlib1 import ElementFamily
-from .data import StepRepository
 
 __all__ = ['File', 'PutNodalSolution']
 

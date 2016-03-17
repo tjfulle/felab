@@ -1,12 +1,12 @@
 from numpy import *
 from numpy.linalg import inv, det
 
-from ._cipsd import CIPSDElement
+from ._csd_f import CSDFElement
 
 # --------------------------------------------------------------------------- #
 # --------------------- QUADRATIC ISOPARAMETRIC ELEMENTS -------------------- #
 # --------------------------------------------------------------------------- #
-class CIPSDQ4Element(CIPSDElement):
+class CSDQ4FElement(CSDFElement):
     """4-node isoparametric element
 
     Notes
@@ -47,9 +47,6 @@ class CIPSDQ4Element(CIPSDElement):
     @property
     def volume(self):
         return self.t * self.area
-
-    def isop_map(self, xi):
-        raise NotImplementedError
 
     def shape(self, xi, edge=None):
         if edge is not None:

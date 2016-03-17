@@ -2,14 +2,14 @@ import logging
 from numpy import *
 from numpy.linalg import det, inv
 
-from .element import Element
+from ._csd import CSDElement
 from ..utilities import *
 
 # --------------------------------------------------------------------------- #
-# -------------- REDUCED INTEGRATION ISOPARAMETRIC ELEMENTS ----------------- #
+# ----------------FULLY INTEGRATED ISOPARAMETRIC ELEMENTS ------------------- #
 # --------------------------------------------------------------------------- #
-class CIPSDRElement(Element):
-    """Continue Isoparametric Stress Displacement Element, Reduced Integration"""
+class CSDFElement(CSDElement):
+    """Continuum Isoparametric Stress Displacement Element"""
     gaussp = None
     gaussw = None
     variables = ('E', 'DE', 'S')
@@ -18,58 +18,18 @@ class CIPSDRElement(Element):
     def surface_force(self, *args):
         raise NotImplementedError
 
+    def shape(self, *args):
+        raise NotImplementedError
+
+    def shapegrad(self, *args):
+        raise NotImplementedError
+
     def pmatrix(self, N):
         n = count_digits(self.signature[0])
         S = zeros((n, self.nodes*n))
         for i in range(self.dimensions):
             S[i, i::self.dimensions] = N
         return S
-
-    def jacobian(self, x, xi):
-        """Element Jacobian
-
-        1. Shape function derivative at Gauss points
-           dNdxi = shapegrad(xi)
-
-        2. Compute the Jacobian matrix J = dNdxi.x
-           dxdxi = dot(dNdxi, X)
-           J = det(dxdxi)
-        """
-        dNdxi = self.shapegrad(xi)
-        dxdxi = dot(dNdxi, x)
-        return det(dxdxi)
-
-    def shapegradx(self, x, xi):
-        """Shape function derivatives with respect to global coordinates
-
-        1. shape function derivative at Gauss points
-           dNdxi = shapegrad(xi)
-           dxdxi = dot(dNdxi, X)
-
-        2. Convert shape function derivatives to derivatives
-           wrt global X
-           dxidx = inv(dxdxi)
-           dNdx = dot(dxidx, dNdxi)
-        """
-        dNdxi = self.shapegrad(xi)
-        dxidx = inv(dot(dNdxi, x))
-        return dot(dxidx, dNdxi)
-
-    def shapegradxbar(self, xc):
-        det = array([self.jacobian(xc, xi) for xi in self.gaussp])
-        ev = dot(det, self.gaussw)
-        n = sum([count_digits(nfs) for nfs in self.signature])
-        dNb = zeros(n).reshape(-1, self.nodes)
-        for p in range(self.integration):
-            # COMPUTE THE INTEGRALS OVER THE VOLUME
-            xi = self.gaussp[p]
-            fac = self.gaussw[p] * det[p] / self.dimensions / ev
-            dNdxi = self.shapegrad(xi)
-            dxdxi = dot(dNdxi, xc)
-            dxidx = inv(dxdxi)
-            dNdx = dot(dxidx, dNdxi)
-            dNb += fac*dNdx
-        return dNb
 
     @classmethod
     def interpolate_to_centroid(cls, data):
@@ -91,26 +51,19 @@ class CIPSDRElement(Element):
     def average(cls, point, data, v=None):
         """Inverse distance weighted average of integration point data at point"""
 
-        i1, i2 = cls.integration, cls.integration - cls.integration1
-
         if data.ndim == 1:
             # Scalar data
-            assert len(data) == i1+i2
+            assert len(data) == cls.integration
 
         elif len(data.shape) == 2:
             # Vector or tensor data
-            assert data.shape[0] == i1+i2
+            assert data.shape[0] == cls.integration
 
         else:
             raise TypeError('Unknown data type')
 
-        data = data[:i1]
-
-        if i1 == 1:
-            weights = [1.]
-        else:
-            dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
-            weights = [1./dist(point, cls.gaussp[i]) for i in range(i1)]
+        dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
+        weights = [1./dist(point, cls.gaussp[i]) for i in range(cls.integration)]
 
         if data.ndim == 1:
             # Scalar data
@@ -190,11 +143,9 @@ class CIPSDRElement(Element):
             svars[1,ij+a2*ntens:ij+(a2+1)*ntens] = de  # STRAIN INCREMENT
             svars[1,ij+a3*ntens:ij+(a3+1)*ntens] = s  # STRESS
 
-            if compute_stiff and p >= self.integration1:
-                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL ONLY FOR
-                # REDUCED INTEGRATION PORTION
+            if compute_stiff:
+                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
                 Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
-                continue
 
             if compute_force:
                 P = self.pmatrix(N)
@@ -208,46 +159,6 @@ class CIPSDRElement(Element):
 
         if cflag == LP_OUTPUT:
             return
-
-        if compute_stiff:
-            # PERFORM HOURGLASS CORRECTION
-            Khg = zeros(Ke.shape)
-            for p in range(len(self.hglassp)):
-
-                # SHAPE FUNCTION DERIVATIVE AT HOURGLASS GAUSS POINTS
-                xi = array(self.hglassp[p])
-                dNdxi = self.shapegrad(xi)
-
-                # JACOBIAN TO NATURAL COORDINATES
-                dxdxi = dot(dNdxi, xc)
-                dxidx = inv(dxdxi)
-                dNdx = dot(dxidx, dNdxi)
-                B = self.bmatrix(dNdx)
-                J = det(dxdxi)
-
-                # HOURGLASS BASE VECTORS
-                g = array(self.hglassv[p])
-                for i in range(len(xi)):
-                    xi[i] = dot(g, xc[:,i])
-
-                # CORRECT THE BASE VECTORS TO ENSURE ORTHOGONALITY
-                scale = 0.
-                for a in range(self.nodes):
-                    for i in range(self.dimensions):
-                        g[a] -= xi[i] * dNdx[i,a]
-                        scale += dNdx[i,a] * dNdx[i,a]
-                scale *= .01 * self.material.G
-
-                for a in range(self.nodes):
-                    n1 = count_digits(self.signature[a])
-                    for i in range(n1):
-                        for b in range(self.nodes):
-                            n2 = count_digits(self.signature[b])
-                            for j in range(n2):
-                                K = n1 * a + i
-                                L = n2 * b + j
-                                Khg[K,L] += scale * g[a] * g[b] * J * 4.
-            Ke += Khg
 
         if cflag == STIFF_ONLY:
             return Ke

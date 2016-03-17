@@ -6,9 +6,9 @@ import numpy.linalg as la
 from .utilities import *
 from .constants import *
 from .data import StepRepository
-from .mesh import Mesh
+from .mesh.mesh import Mesh
 from .mat import Material
-from .exodusii import File
+from .mesh.exodusii import File
 
 __all__ = ['FiniteElementModel']
 
@@ -282,6 +282,8 @@ class FiniteElementModel(object):
         for eb in self.mesh.eleblx:
             if not eb.eletyp.variables:
                 continue
+            ielems = [self.mesh.elemap[xel] for xel in eb.labels]
+            elems = self.elements[ielems]
             if eb.eletyp.integration:
                 args = (INTEGRATION_POINT, eb.labels,
                         eb.eletyp.ndir, eb.eletyp.nshr,
@@ -290,7 +292,7 @@ class FiniteElementModel(object):
                 args = (ELEMENT_CENTROID, eb.labels,
                         eb.eletyp.ndir, eb.eletyp.nshr, eb.name)
             for variable in eb.eletyp.variables:
-                frame.SymmetricTensorField(variable, *args)
+                frame.SymmetricTensorField(variable, *args, elements=elems)
 
         frame.converged = True
 

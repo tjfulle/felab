@@ -1,14 +1,12 @@
 from numpy import *
 
-from .utilities import *
-from .elemlib1 import Element
-
-__all__ = ['DiffussiveHeatTransfer2D3']
+from ..utilities import *
+from ._cht import CHTElement
 
 # --------------------------------------------------------------------------- #
 # ------------------------ HEAT TRANSFER ELEMENT ---------------------------- #
 # --------------------------------------------------------------------------- #
-class DiffussiveHeatTransfer2D3(Element):
+class PlaneDiffussiveHeatTransferTria3(CHTElement):
     nodes = 3
     signature = [(0,0,0,0,0,0,1),  # 3 NODE 2D HEAT TRANSFER
                  (0,0,0,0,0,0,1),
@@ -17,14 +15,6 @@ class DiffussiveHeatTransfer2D3(Element):
     edges = array([[0,1], [1,2], [2,0]])
     gaussp = array([[1., 1.], [4., 1.], [1., 4.]]) / 6.
     gaussw = ones(3) / 3.
-    def __init__(self, label, elenod, elecoord, elemat, **elefab):
-        self.label = label
-        self.inodes = asarray(elenod, dtype=int)
-        self.xc = asarray(elecoord, dtype=float)
-        self.material = elemat
-        if elefab:
-            raise UserInputError('DiffussiveHeatTransfer2D3 element does not '
-                                 'take element fabrication properties')
 
     def isop_map(self, xi):
         xc = self.xc
@@ -63,52 +53,7 @@ class DiffussiveHeatTransfer2D3(Element):
         s = he * (xp + 1) / 2.0
         return array([(he - s) / he, s / he, 0.])[o]
 
-    def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type, load_fac):
-
-        # --- ELEMENT STIFFNESS AND FORCE
-
-        compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
-
-        if compute_stiff:
-            Ke = self.stiffness1()
-
-        if compute_force:
-            Fe = zeros(3)
-
-        for (i, typ) in enumerate(dltyp):
-            # CONTRIBUTIONS FROM EXTERNAL LOADS
-
-            if typ == SFILM:
-                # EVALUATE THE CONVECTION CONTRIBUTION
-                iedge, Too, h = dload[i]
-                if compute_stiff:
-                    Ke += self.stiffness2(iedge, h)
-                if compute_force:
-                    Fe += self.convection_flux_array(iedge, Too, h)
-
-            elif typ == HSRC:
-                # EVALUATE THE HEAT SOURCE CONTRIBUTION
-                if compute_force:
-                    Fe += self.heat_source(dload[i])
-
-            elif typ == SFLUX:
-                # EVALUATE THE BOUNDARY FLUX CONTRIBUTION
-                if compute_force:
-                    iedge, qn = dload[i]
-                    Fe += self.conduction_flux_array(iedge, qn)
-
-        if cflag == STIFF_AND_FORCE:
-            return Ke, Fe
-
-        elif cflag == STIFF_ONLY:
-            return Ke
-
-        elif cflag == FORCE_ONLY:
-            return Fe
-
-    def stiffness1(self):
+    def conduction_stiff_contrib(self):
         # MATERIAL STIFFNESS - "RESISTANCE" TO CONDUCTION
         Je = self.jacobian()
         B = self.shapegrad()
@@ -116,7 +61,7 @@ class DiffussiveHeatTransfer2D3(Element):
         w, k = self.gaussw, self.material.isotropic_thermal_conductivity(2)
         return Je/2.*sum([w[i]*dot(dot(B.T,k),B) for (i, Ni) in enumerate(N)], 0)
 
-    def stiffness2(self, edge, h):
+    def convection_stiff_contrib(self, edge, h):
         # CONVECTION STIFFNESS
         xi, w = array([-1., 1.])/sqrt(3.), ones(2)
         # DETERMINE EDGE LENGTH

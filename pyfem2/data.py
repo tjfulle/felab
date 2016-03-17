@@ -4,7 +4,6 @@ from collections import OrderedDict
 from copy import deepcopy
 
 from .utilities import *
-from .elemlib1 import InterpolateToCentroid
 
 __all__ = ['StepRepository']
 
@@ -176,6 +175,13 @@ class FieldOutput(object):
         if a is not None:
             self.add_data(a)
 
+        self._elements = None
+        e = kwargs.get('elements')
+        if self.position in (ELEMENT_CENTROID,INTEGRATION_POINT):
+            self._elements = e
+        elif e is not None:
+            raise TypeError('Field position not element based')
+
     def __getitem__(self, i):
         return self.data[i]
 
@@ -203,7 +209,10 @@ class FieldOutput(object):
             if self.position != INTEGRATION_POINT:
                 raise ValueError('Cannot project data to centroid')
             # Interpolate Gauss point data to element center
-            return array([InterpolateToCentroid(x) for x in self.data])
+            if self._elements is None:
+                raise ValueError('No elements assigned')
+            return array([self._elements[e].interpolate_to_centroid(x)
+                          for (i,x) in enumerate(self.data)])
 
         raise ValueError('Unknown position')
 

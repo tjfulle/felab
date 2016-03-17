@@ -2,9 +2,9 @@ import os
 from numpy import *
 from argparse import ArgumentParser
 
-from .constants import *
-from .utilities import is_listlike, UserInputError
-from .elemlib1 import ElementFamily
+from ..constants import *
+from ..utilities import is_listlike, UserInputError
+from ..elemlib import ElementFamily
 
 __all__ = ['Mesh']
 
@@ -170,9 +170,9 @@ class Mesh(object):
         self.num_assigned = self.numele
 
     def init_from_file(self, filename):
-        import pyfem2.aba as aba
-        import pyfem2.vtk as vtk
-        import pyfem2.exodusii as exodusii
+        import pyfem2.mesh.aba as aba
+        import pyfem2.mesh.vtk as vtk
+        import pyfem2.mesh.exodusii as exodusii
         if filename.endswith(('.vtk', '.vtu')):
             data = self.parse_nod_and_elem_tables(*vtk.ReadMesh(filename))
             self.init1(*data)
@@ -580,7 +580,7 @@ class Mesh(object):
         return
 
     def PutNodalSolution(self, filename, u):
-        import pyfem2.exodusii as exodusii
+        import pyfem2.mesh.exodusii as exodusii
         if not self.eleblx:
             self.ElementBlock('ElementBlock1', ALL)
         if not filename.endswith(('.exo', '.e')):

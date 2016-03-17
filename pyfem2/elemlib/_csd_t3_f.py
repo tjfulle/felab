@@ -1,13 +1,12 @@
 from numpy import *
+from numpy.linalg import inv, det
 
-from .isoplib import IsoPElement
-
-__all__ = ['PlaneStressTria3', 'PlaneStrainTria3']
+from .csd_f import CSDFElement
 
 # --------------------------------------------------------------------------- #
 # --------------------- TRIANGLE ISOPARAMETRIC ELEMENTS --------------------- #
 # --------------------------------------------------------------------------- #
-class IsoPTria3(IsoPElement):
+class CSDT3FElement(CSDFElement):
     """3-node isoparametric element
 
     Notes
@@ -30,12 +29,11 @@ class IsoPTria3(IsoPElement):
                  (1,1,0,0,0,0,0)]
     dimensions = 2
     integration = 3
-
-    edges = array([[0, 1], [1, 2], [2, 0]])
     gaussp = array([[.6, .2], [.2, .6], [.2, .2]])
     gaussw = ones(3) / 6.
     cp = array([1., 1.]) / 3.
     xp = array([[1., 0.], [0., 1.], [0., 0.]])
+    edges = array([[0, 1], [1, 2], [2, 0]])
 
     @property
     def area(self):
@@ -75,22 +73,3 @@ class IsoPTria3(IsoPElement):
             Pe = self.pmatrix(Ne)
             Fe += he / 2. * gw[p] * dot(Pe.T, qe)
         return Fe
-
-# --------------------------------------------------------------------------- #
-# ------------------------ USER ELEMENT TYPES ------------------------------- #
-# --------------------------------------------------------------------------- #
-class PlaneStressTria3(IsoPTria3):
-    ndir, nshr = 2, 1
-    def bmatrix(self, dN):
-        B = zeros((3, 6))
-        B[0, 0::2] = B[2, 1::2] = dN[0, :]
-        B[1, 1::2] = B[2, 0::2] = dN[1, :]
-        return B
-
-class PlaneStrainTria3(IsoPTria3):
-    ndir, nshr = 3, 1
-    def bmatrix(self, dN):
-        B = zeros((4, 6))
-        B[0, 0::2] = B[3, 1::2] = dN[0, :]
-        B[1, 1::2] = B[3, 0::2] = dN[1, :]
-        return B

@@ -3,7 +3,7 @@ from numpy import *
 from .constants import *
 from .utilities import *
 from .fem1 import FiniteElementModel
-from .isoplib import IsoPElement
+from .elemlib import IsoPElement
 
 class Plane2DModel(FiniteElementModel):
     dimensions = 2

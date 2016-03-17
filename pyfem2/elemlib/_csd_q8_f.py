@@ -1,15 +1,13 @@
 from numpy import *
-from .isoplib import IsoPElement
+from ._csd_f import CSDFElement
 
 c = -sqrt(3./5.)
-__all__ = ['PlaneStrainQuad8', 'PlaneStressQuad8', 'PlaneStrainQuad8BBar',
-           'PlaneStrainQuad8Reduced']
 
 # --------------------------------------------------------------------------- #
 # --------------------- QUADRATIC ISOPARAMETRIC ELEMENTS -------------------- #
 # --------------------------------------------------------------------------- #
-class IsoPQuad8(IsoPElement):
-    """8-node isoparametric element
+class CSDQ8FElement(CSDFElement):
+    """8-node isoparametric element, fully integrated
 
     Notes
     -----
@@ -59,21 +57,18 @@ class IsoPQuad8(IsoPElement):
     def volume(self):
         return self.t * self.area
 
-    def isop_map(self, xi):
-        raise NotImplementedError
-
     def shape(self, xi, edge=None):
         if edge is not None:
-            # Evaluate shape function on specific edge
+            # EVALUATE SHAPE FUNCTION ON SPECIFIC EDGE
             xi = array([[xi,-1.],[1.,xi],[xi,1.],[-1.,xi]][edge])
         x, y = xi[:2]
         N = zeros(8)
-        # corner nodes
+        # CORNER NODES
         N[0] = -0.25 * (1. - x) * (1. - y) * (1. + x + y)
         N[1] =  0.25 * (1. + x) * (1. - y) * (x - y - 1.)
         N[2] =  0.25 * (1. + x) * (1. + y) * (x + y - 1.)
         N[3] =  0.25 * (1. - x) * (1. + y) * (y - x - 1.)
-        # midside nodes
+        # MIDSIDE NODES
         N[4] =  0.5 * (1. - x * x) * (1. - y)
         N[5] =  0.5 * (1. + x) * (1. - y * y)
         N[6] =  0.5 * (1. - x * x) * (1. + y)
@@ -116,54 +111,3 @@ class IsoPQuad8(IsoPElement):
             Pe = self.pmatrix(Ne)
             Fe += Jac * gw[p] * dot(Pe.T, qe)
         return Fe
-
-# --------------------------------------------------------------------------- #
-# ------------------------ USER ELEMENT TYPES ------------------------------- #
-# --------------------------------------------------------------------------- #
-class PlaneStrainQuad8(IsoPQuad8):
-    ndir, nshr = 3, 1
-    def bmatrix(self, dN):
-        """Assemble and return the B matrix"""
-        B = zeros((4, 16))
-        B[0, 0::2] = B[3, 1::2] = dN[0, :]
-        B[1, 1::2] = B[3, 0::2] = dN[1, :]
-        return B
-
-class PlaneStrainQuad8BBar(IsoPQuad8):
-    ndir, nshr = 3, 1
-    def bmatrix(self, dN):
-        """Assemble and return the B matrix"""
-        B = zeros((4, 16))
-        B[0, 0::2] = B[3, 1::2] = dN[0, :]
-        B[1, 1::2] = B[3, 0::2] = dN[1, :]
-        # mean dilatational formulation
-        dNb = self.shapegradxbar(self.xc)
-        for a in range(self.nodes):
-            i = 2 * a
-            j = i + 1
-            bb1 = (dNb[0, a] - dN[0, a]) / 2.
-            bb2 = (dNb[1, a] - dN[1, a]) / 2.
-            B[0, i:i+2] += [bb1, bb2]
-            B[1, i:i+2] += [bb1, bb2]
-        return B
-
-class PlaneStressQuad8(IsoPQuad8):
-    ndir, nshr = 2, 1
-    def bmatrix(self, dN):
-        """Assemble and return the B matrix"""
-        B = zeros((3, 16))
-        B[0, 0::2] = B[2, 1::2] = dN[0, :]
-        B[1, 1::2] = B[2, 0::2] = dN[1, :]
-        return B
-
-class PlaneStrainQuad8Reduced(IsoPQuad8):
-    integration = 4
-    ndir, nshr = 3, 1
-    gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
-    gaussw = ones(4)
-    def bmatrix(self, dN):
-        """Assemble and return the B matrix"""
-        B = zeros((4, 16))
-        B[0, 0::2] = B[3, 1::2] = dN[0, :]
-        B[1, 1::2] = B[3, 0::2] = dN[1, :]
-        return B

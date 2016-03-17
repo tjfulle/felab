@@ -2,7 +2,7 @@ from numpy import array, dot, zeros
 from numpy.linalg import solve, LinAlgError
 
 from .fem1 import FiniteElementModel
-from .elemlibN_2 import ElasticLinknD2
+from .elemlib import ElasticLink1D2, ElasticLink2D2, ElasticLink3D2
 from .constants import *
 from .utilities import *
 
@@ -16,7 +16,7 @@ class TrussModel(FiniteElementModel):
         """
         # ACTIVE DOF SET DYNAMICALLY
         self.active_dof = range(count_digits(self.elements[0].signature))
-        self.setup(ElasticLinknD2, one=True)
+        self.setup((ElasticLink1D2, ElasticLink2D2, ElasticLink3D2), one=True)
 
         # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
         du = zeros(self.numdof)

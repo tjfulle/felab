@@ -2,18 +2,20 @@ import logging
 from numpy import *
 from numpy.linalg import det, inv
 
-from .element import Element
+from ._csd import CSDElement
 from ..utilities import *
 
 # --------------------------------------------------------------------------- #
-# ---------------- INCOMPATIBLE MODES ISOPARAMETRIC ELEMENTS ---------------- #
+# ---------SELECTIVELY REDUCED INTEGRATON ISOPARAMETRIC ELEMENT-------------- #
 # --------------------------------------------------------------------------- #
-class CIPSDIElement(Element):
-    """Continuum Isoparametric Stress Displacement Element, Incompatible Modes"""
+class CSDSElement(CSDElement):
+    """Continuum Isoparametric Stress Displacement Element, Selectively
+    Reduced Integration"""
     gaussp = None
     gaussw = None
     variables = ('E', 'DE', 'S')
     integration = None
+    integration1 = None
 
     def surface_force(self, *args):
         raise NotImplementedError
@@ -21,7 +23,7 @@ class CIPSDIElement(Element):
     def shape(self, *args):
         raise NotImplementedError
 
-    def gmatrix(self, xi):
+    def shapegrad(self, *args):
         raise NotImplementedError
 
     def pmatrix(self, N):
@@ -30,36 +32,6 @@ class CIPSDIElement(Element):
         for i in range(self.dimensions):
             S[i, i::self.dimensions] = N
         return S
-
-    def jacobian(self, x, xi):
-        """Element Jacobian
-
-        1. Shape function derivative at Gauss points
-           dNdxi = shapegrad(xi)
-
-        2. Compute the Jacobian matrix J = dNdxi.x
-           dxdxi = dot(dNdxi, X)
-           J = det(dxdxi)
-        """
-        dNdxi = self.shapegrad(xi)
-        dxdxi = dot(dNdxi, x)
-        return det(dxdxi)
-
-    def shapegradx(self, x, xi):
-        """Shape function derivatives with respect to global coordinates
-
-        1. shape function derivative at Gauss points
-           dNdxi = shapegrad(xi)
-           dxdxi = dot(dNdxi, X)
-
-        2. Convert shape function derivatives to derivatives
-           wrt global X
-           dxidx = inv(dxdxi)
-           dNdx = dot(dxidx, dNdxi)
-        """
-        dNdxi = self.shapegrad(xi)
-        dxidx = inv(dot(dNdxi, x))
-        return dot(dxidx, dNdxi)
 
     @classmethod
     def interpolate_to_centroid(cls, data):
@@ -81,19 +53,23 @@ class CIPSDIElement(Element):
     def average(cls, point, data, v=None):
         """Inverse distance weighted average of integration point data at point"""
 
+        i1, i2 = cls.integration1, cls.integration-cls.integration1
+
         if data.ndim == 1:
             # Scalar data
-            assert len(data) == cls.integration
+            assert len(data) == i1+i2
 
         elif len(data.shape) == 2:
             # Vector or tensor data
-            assert data.shape[0] == cls.integration
+            assert data.shape[0] == i1+i2
 
         else:
             raise TypeError('Unknown data type')
 
+        data = data[:i1]
+
         dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
-        weights = [1./dist(point, cls.gaussp[i]) for i in range(cls.integration)]
+        weights = [1./dist(point, cls.gaussp[i]) for i in range(i1)]
 
         if data.ndim == 1:
             # Scalar data
@@ -114,11 +90,7 @@ class CIPSDIElement(Element):
         compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
 
         if compute_stiff:
-            Kcc = zeros((n, n))
-            # INCOMPATIBLE MODES STIFFNESSES
-            m = count_digits(self.signature[0])
-            Kci = zeros((n, self.dimensions*m))
-            Kii = zeros((self.dimensions*m, self.dimensions*m))
+            Ke = zeros((n, n))
 
         if compute_force:
             rhs = zeros(n)
@@ -129,7 +101,7 @@ class CIPSDIElement(Element):
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
         m = len(self.variables) * ntens
-        a1, a2, a3 = 0, 1, 2
+        a1, a2, a3 = [self.variables.index(x) for x in ('E', 'DE', 'S')]
 
         # COMPUTE INTEGRATION POINT DATA
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
@@ -178,11 +150,11 @@ class CIPSDIElement(Element):
             svars[1,ij+a3*ntens:ij+(a3+1)*ntens] = s  # STRESS
 
             if compute_stiff:
+                # SELECTIVELY REDUCED INTEGRATION
+                D1, D2 = iso_dev_split(self.ndir, self.nshr, D)
+                D = D1 if p >= self.integration1 else D2
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                G = self.gmatrix(xi)
-                Kcc += J * self.gaussw[p] * dot(dot(B.T, D), B)
-                Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]
-                Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
+                Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
 
             if compute_force:
                 P = self.pmatrix(N)
@@ -196,9 +168,6 @@ class CIPSDIElement(Element):
 
         if cflag == LP_OUTPUT:
             return
-
-        if compute_stiff:
-            Ke = Kcc  - dot(dot(Kci, inv(Kii)), Kci.T)
 
         if cflag == STIFF_ONLY:
             return Ke
@@ -226,38 +195,3 @@ class CIPSDIElement(Element):
 
         elif cflag == FORCE_ONLY:
             return rhs
-
-class IsoPIncompatibleModes(IsoPElement):
-
-    def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type, load_fac):
-        """Assemble the element stiffness"""
-
-        xc = self.xc  # + u.reshape(self.xc.shape)
-
-        response = super(IsoPIncompatibleModes, self).response(
-            u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-            predef, procedure, nlgeom, cflag, step_type, load_fac)
-
-        if cflag == LP_OUTPUT:
-            return
-
-        elif cflag == FORCE_ONLY:
-            return response
-
-        elif cflag == STIFF_AND_FORCE:
-            Kcc, rhs = response
-
-        elif cflag == STIFF_ONLY:
-            Kcc = response
-
-        # DATA FOR INDEXING STATE VARIABLE ARRAY
-        ntens = self.ndir + self.nshr
-        m = len(self.variables) * ntens
-        a1, a2, a3 = [self.variables.index(x) for x in ('E', 'DE', 'S')]
-
-        if cflag == STIFF_AND_FORCE:
-            return Ke, rhs
-
-        elif cflag == STIFF_ONLY:
-            return Ke

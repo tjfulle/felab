@@ -4,12 +4,12 @@ from numpy.linalg import solve, LinAlgError
 from .constants import *
 from .utilities import *
 from .fem1 import FiniteElementModel
-from .elemlib2_3T import DiffussiveHeatTransfer2D3
+from .elemlib import PlaneDiffussiveHeatTransferTria3
 
 class HeatTransfer2DModel(FiniteElementModel):
     dimensions = 2
     def Solve(self):
-        self.setup(DiffussiveHeatTransfer2D3)
+        self.setup(PlaneDiffussiveHeatTransferTria3)
         flags = [21, 0, 1, 1]
         du = zeros(self.numdof)
         K, rhs = self.assemble(self.dofs, du, procedure=HEAT_TRANSFER)
