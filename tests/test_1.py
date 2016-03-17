@@ -37,7 +37,7 @@ def test_fem5_1():
     V.ElementBlock('B1', (1,2))
     V.ElementBlock('B2', (3,5))
     V.ElementBlock('B3', (4,))
-    V.AssignProperties('B1', BeamColumn2D, 'Material-1', A=.02, Izz=.004)
+    V.AssignProperties('B1', PlaneBeamColumn, 'Material-1', A=.02, Izz=.004)
     V.AssignProperties('B2', ElasticLink2D2, 'Material-2', A=.001)
     V.AssignProperties('B3', ElasticLink2D2, 'Material-2', A=.003)
     V.PrescribedBC(1, (X,Y,TZ))
@@ -67,7 +67,7 @@ def test_fem5_2():
 
 @pytest.mark.plane
 def test_fem4_1_gravity_load1():
-    V = Plane2DModel()
+    V = Plane2DModel('Gravity')
     V.RectilinearMesh((101, 11), (100, 10))
     V.Material('Material-1')
     V.materials['Material-1'].Density(1.)
@@ -77,12 +77,12 @@ def test_fem4_1_gravity_load1():
     V.FixNodes(ILO)
     V.GravityLoad(ALL, [0, -1e2])
     V.Solve()
-    V.WriteResults('Job4.exo')
+    V.WriteResults()
 
 @pytest.mark.heat
 def test_fem3_plate_with_hole():
     V = HeatTransfer2DModel()
-    V.GenesisMesh(join(D, 'meshes/PlateWithHoleTria3Fine.g'))
+    V.GenesisMesh(join(D, 'data/PlateWithHoleTria3Fine.g'))
     k, h, Too = 12, 250, 25
     fun = lambda x: 1000 / sqrt(x[:,0] ** 2 + x[:,1] ** 2)
     V.Material('Material-1')
@@ -106,7 +106,7 @@ def test_fem3_1():
         u = (1-x[:,0]**2)/2.-16./pi**3*sum([fun(k) for k in range(1, N, 2)],0)
         return u
     V = HeatTransfer2DModel()
-    V.GenesisMesh(join(D, 'meshes/UniformPlateTria3Fine.g'))
+    V.GenesisMesh(join(D, 'data/UniformPlateTria3Fine.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
@@ -122,7 +122,7 @@ def test_fem3_2():
     def solution(x):
         return 2. * (1. + x[:,1]) / ((3. + x[:,0])**2 + (1 + x[:,1])**2)
     V = HeatTransfer2DModel()
-    V.GenesisMesh(join(D, 'meshes/UniformPlateTria3.g'))
+    V.GenesisMesh(join(D, 'data/UniformPlateTria3.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
@@ -222,8 +222,8 @@ def test_fem3_5():
 @pytest.mark.heat
 def test_fem3_plate_with_hole2():
     k, h, Too = 12, 250, 25
-    V = HeatTransfer2DModel()
-    V.GenesisMesh(join(D, 'meshes/PlateWithHoleTria3.g'))
+    V = HeatTransfer2DModel('HeatPlateWithHole')
+    V.GenesisMesh(join(D, 'data/PlateWithHoleTria3.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(k)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
@@ -232,7 +232,7 @@ def test_fem3_plate_with_hole2():
     V.HeatGeneration(ALL, fun)
     V.InitialTemperature(ALL, 50)
     V.Solve()
-    V.WriteResults('Job3.exo')
+    V.WriteResults()
 
 @pytest.mark.truss
 def test_fem2_1():
@@ -263,8 +263,8 @@ def test_fem2_1():
     V.ConcentratedLoad(7, Y, -16)
 
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
-    R = V.steps[-1].field_outputs['R'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
+    R = V.steps.last.frames[-1].field_outputs['R'].data
     assert allclose([[0.,      0.,      0.],
                      [0.80954,-1.7756,  0.],
                      [0.28,   -1.79226, 0.],
@@ -318,8 +318,8 @@ def test_fem2_1a():
     V.ConcentratedLoad(7, Y, -16)
 
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
-    R = V.steps[-1].field_outputs['R'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
+    R = V.steps.last.frames[-1].field_outputs['R'].data
     assert allclose([[0.,      0.     ],
                      [0.80954,-1.7756 ],
                      [0.28,   -1.79226],
@@ -360,7 +360,7 @@ def test_fem2_2a():
     V.PrescribedBC(1, X, -.05)
     V.ConcentratedLoad(1, Y, 1000e3)
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
     assert allclose([[-0.05,     0.0882842],
                      [ 0.,       0.,      ],
                      [ 0.,       0.,      ]], u)
@@ -381,7 +381,7 @@ def test_fem2_2b():
     V.PrescribedBC(1, Z)
     V.ConcentratedLoad(1, Y, 1000e3)
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
     assert allclose([[-0.05,     0.0882842, 0.],
                      [ 0.,       0.,        0.],
                      [ 0.,       0.,        0.]], u)
@@ -403,7 +403,7 @@ def test_fem2_3():
     # Concentrated force in 'z' direction on node 1
     V.ConcentratedLoad(1, Z, -1000)
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
     ua = array([[-8.5337228, 0., -31.9486913],
                 [ 0.,        0.,   0.       ],
                 [ 0.,        0.,   0.       ],
@@ -447,7 +447,7 @@ def test_fem2_4():
 
     # Solve and write results
     V.Solve()
-    u = V.steps[-1].field_outputs['U'].data
+    u = V.steps.last.frames[-1].field_outputs['U'].data
 
     assert allclose([[0.00851510679597,0.349956039184,-0.0221277138856],
                      [0.0319156311642,0.349956039184,-0.0322420125936],
@@ -456,8 +456,6 @@ def test_fem2_4():
                      [0.000447704186587,-0.00508916981698,0.0705078974296],
                      [0.00704244773528,-0.00410032427032,0.0773745623519],
                      [0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]], u)
-
-    V.WriteResults('Job2')
 
 def test_fem1_1():
     xa, xb = 0., 1.
@@ -475,41 +473,46 @@ def test_elemlibN_2_1():
     """ElasticLink2 stiffness test"""
     class mat: E = 1
     El = ElasticLink1D2(1, [0, 1], [0, 1], mat, A=1)
-    K1D = El.stiffness()
-    assert allclose([[1,-1],[-1,1]], K1D)
+    Ke = El.response(zeros(2), zeros(2), [0,0], 1., 1, 1, [], [], [], STATIC,
+                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
+    assert allclose([[1,-1],[-1,1]], Ke)
 
 def test_elemlibN_2_2():
     """ElasticLink2 stiffness test"""
     class mat: E=1000
     El = ElasticLink2D2(1, [0, 1], [[0,0], [30,40]], mat, A=5)
-    K2D = El.stiffness()
+    Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,[],[],[],STATIC,
+                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
     assert allclose([[ 36.,  48., -36., -48.],
                      [ 48.,  64., -48., -64.],
                      [-36., -48.,  36.,  48.],
-                     [-48., -64.,  48.,  64.]], K2D)
+                     [-48., -64.,  48.,  64.]], Ke)
 
 def test_elemlibN_2_3():
     """ElasticLink2 stiffness test"""
     class mat: E = 343
     El = ElasticLink3D2(1, [0, 1], [[0,0,0],[2,3,6]], mat, A=10)
-    K3D = El.stiffness()
+    Ke = El.response(zeros((2,3)),zeros((2,3)),[0,0],1.,1,1,[],[],[],STATIC,
+                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
     assert allclose([[  40.,   60.,  120.,  -40.,  -60., -120.],
                      [  60.,   90.,  180.,  -60.,  -90., -180.],
                      [ 120.,  180.,  360., -120., -180., -360.],
                      [ -40.,  -60., -120.,   40.,   60.,  120.],
                      [ -60.,  -90., -180.,   60.,   90.,  180.],
-                     [-120., -180., -360.,  120.,  180.,  360.]], K3D)
+                     [-120., -180., -360.,  120.,  180.,  360.]], Ke)
 
 def test_elemlibN_2_4():
     """Beam-Column stiffness test"""
     coord = array([[0, 0], [3, 4]], dtype=float)
     class mat: E = 100
     A, Izz = 125, 250
-    El = BeamColumn2D(1, [0, 1], coord, mat, A=A, Izz=Izz)
-    Ke = El.stiffness()
+    El = PlaneBeamColumn(1, [0, 1], coord, mat, A=A, Izz=Izz)
+    Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,[],[],[],STATIC,
+                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
 
-def test_tutorials():
-    d = realpath(join(D, 'tutorials'))
+@pytest.mark.demos
+def test_demos():
+    d = realpath(join(D, 'data'))
     env = dict(os.environ)
     env['PYTHONPATH'] = D
     env['NOGRAPHICS'] = '1'
@@ -517,7 +520,7 @@ def test_tutorials():
     cwd = os.getcwd()
     os.chdir(d)
     for filename in glob.glob(join(d, '*.py')):
-        if basename(filename) == 'Runall.py':
+        if not re.search(r'(?i)Demo[a-z0-9]+\.py', filename):
             continue
         proc = Popen(['python', filename], env=env)
         proc.wait()
@@ -527,4 +530,4 @@ def test_tutorials():
     assert not failed
 
 if __name__ == '__main__':
-    test_fem3_2()
+    test_demos()

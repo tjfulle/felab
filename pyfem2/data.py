@@ -1,222 +1,300 @@
 from numpy import *
 from numpy.linalg import eigvalsh
-import logging
 from collections import OrderedDict
+from copy import deepcopy
 
 from .utilities import *
 
-def component_labels(type, numdim, ndir, nshr):
-    if type == SYMTENSOR:
-        components = ['xx','yy','zz'][:ndir] + ['xy','yz','xz'][:nshr]
-    elif type == VECTOR:
-        components = ['x','y','z'][:numdim]
-    else:
-        components = None
-    return components
+__all__ = ['StepRepository']
 
-class TimeStepRepository(object):
-
-    def __init__(self, mesh, first=1):
-        self.mesh = mesh
-        self.time = 0.
-        self.steps = []
-        if first:
-            self.TimeStep(0.)
-    def __getitem__(self, i):
-        return self.steps[i]
-    def __iter__(self):
-        return iter(self.steps)
+class StepRepository(object):
+    def __init__(self):
+        self._keys = []
+        self._values = []
+    def __setitem__(self, key, value):
+        self._keys.append(key)
+        self._values.append(value)
+    def __getitem__(self, key):
+        return self._values[self._keys.index(key)]
+        try:
+            i = self._keys.index(key)
+        except ValueError:
+            raise KeyError(key)
+        return self._values[i]
     def __len__(self):
-        return len(self.steps)
+        return len(self._keys)
+    def __iter__(self):
+        return iter(self._keys)
+    def keys(self):
+        return self._keys
+    def values(self):
+        return self._values
+    def items(self):
+        for (i, key) in enumerate(self._keys):
+            yield (key, self._values[i])
+    def Step(self, name=None, copy=1):
+        if name is None:
+            j = 1
+            while 1:
+                name = 'Step-{0}'.format(len(self._keys)+j)
+                if name not in self._keys:
+                    break
+                j += 1
+        if not self._values:
+            step = Step(name, 0.)
+        else:
+            last = self._values[-1].framces[-1]
+            step = Step(name, last.value)
+            if copy:
+                step.frames[0].field_outputs = deepcopy(last.field_outputs)
+        self[name] = step
+        return self._values[-1]
+    @property
+    def last(self):
+        return self._values[-1]
+    @property
+    def first(self):
+        return self._values[0]
 
-    def TimeStep(self, dtime, copy=0):
-        ts = TimeStep(self.mesh, self.time, dtime)
+class Step(object):
+    def __init__(self, name, start):
+        self.written = 0
+        self.name = name
+        self.time = start
+        self.frames = []
+        self.Frame(0.)
+        self.temp_frame = None
+
+    def __len__(self):
+        return len(self.frames)
+
+    @property
+    def last_converged_frame(self):
+        for frame in reversed(self.frames):
+            if frame.converged:
+                return frame
+
+    def Frame(self, dtime, copy=1):
+        frame = Frame(self.time, dtime)
         self.time += dtime
-        if copy:
-            tsn = self.steps[-1]
-            for fo in tsn.field_outputs.values():
-                fo1 = ts.FieldOutput(fo.name, fo.type, fo.position)
-                data = tsn.field_outputs[fo.name].get_data()
-                if fo1.position == NODE:
-                    fo1.add_data(data)
-                else:
-                    for (i, dx) in enumerate(data):
-                        fo1.add_data(dx, block=i)
-        self.steps.append(ts)
-        return ts
+        if self.frames and copy:
+            frame_n = self.frames[-1]
+            frame.field_outputs = deepcopy(frame_n.field_outputs)
+        frame.number = len(self.frames)
+        self.frames.append(frame)
+        return frame
 
-class TimeStep(object):
-    def __init__(self, mesh, time, dtime, copy=None):
-        self.mesh = mesh
-        self.start = time
+    def TempFrame(self):
+        self.temp_frame = Frame(self.time, 0.)
+        self.temp_frame.field_outputs = deepcopy(self.frames[-1].field_outputs)
+
+class Frame(object):
+    def __init__(self, start, dtime):
+        self.start = start
         self.increment = dtime
-        self.value = time + dtime
+        self.value = start + dtime
         self.field_outputs = FieldOutputs()
+        self.converged = False
 
-    def FieldOutput(self, name, type, position, numcomp=None):
-        fo = FieldOutput(self.mesh, name, type, position, numcomp=numcomp)
-        self.field_outputs[name] = fo
-        return fo
+    def adjust_dt(self, dtime):
+        self.increment = dtime
+        self.value = self.start + dtime
 
-    def add_data(self, **kwargs):
-        for (key, value) in kwargs.items():
-            kwds = {}
+    def SymmetricTensorField(self, name, position, labels, ndir, nshr,
+                             eleblk=None, ngauss=None,  elements=None, data=None):
+        field = SymmetricTensorField(name, position, labels, ndir, nshr,
+                                     eleblk=eleblk, ngauss=ngauss,
+                                     elements=elements, data=data)
+
+        if field.eleblk is not None:
+            name = (field.eleblk, name)
+        self.field_outputs[name] = field
+
+        return field
+
+    def VectorField(self, name, position, labels, ncomp, eleblk=None,
+                    ngauss=None, elements=None, data=None):
+
+        field = VectorField(name, position, labels, ncomp, eleblk=eleblk,
+                            ngauss=ngauss, elements=elements, data=data)
+
+        if field.eleblk is not None:
+            name = (field.eleblk, name)
+        self.field_outputs[name] = field
+
+        return field
+
+    def ScalarField(self, name, position, labels, eleblk=None, ngauss=None,
+                    elements=None, data=None):
+
+        field = ScalarField(name, position, labels, eleblk=eleblk,
+                            ngauss=ngauss, elements=elements, data=data)
+
+        if field.eleblk is not None:
+            name = (field.eleblk, name)
+        self.field_outputs[name] = field
+
+        return field
+
+    def add_data(self, **kwds):
+        for (key, value) in kwds.items():
+            d = {}
             if isinstance(value, tuple):
                 if len(value) == 2:
+                    d['ix'] = value[1]
                     value = value[0]
-                    kwds['ix'] = value[1]
                 else:
                     raise ValueError('Unknown add_data option for {0}'.format(key))
-            self.field_outputs[key].add_data(value, **kwds)
+            self.field_outputs[key].add_data(value, **d)
 
 class FieldOutputs(OrderedDict):
-    pass
+    def __getitem__(self, key):
+        try:
+            return super(FieldOutputs, self).__getitem__(key)
+        except KeyError as E:
+            pass
+        keys = []
+        for k in self.keys():
+            if is_listlike(k) and k[1] == key:
+                # ELEMENT BLOCK PROPERTY
+                keys.append(k)
+        if not keys:
+            raise KeyError(key)
+        a = self[keys[0]]
+        for k in keys[1:]:
+            a = row_stack((a, self[k]))
+        return a
 
 class FieldOutput(object):
-    def __init__(self, mesh, name, type, position, numcomp=None):
-        self._values = None
+
+    def __init__(self, name, position, labels, type, components, shape, eleblk,
+                 elements=None, data=None):
         self.name = name
-        self.key = 'displ' if name.upper() == 'U' else name
-        self.type = type
         self.position = position
-        self.mesh = mesh
-        numdim, numele, numnod = mesh.numdim, mesh.numele, mesh.numnod
-
-        if self.position not in (NODE, INTEGRATION_POINT, ELEMENT):
-            raise ValueError('Unknown field position')
-
-        if self.type not in (SCALAR, VECTOR, SYMTENSOR):
-            raise ValueError('Unknown field type')
-
-        if self.position == NODE:
-            if self.type == SCALAR:
-                self.components = None
-                self.data = zeros((mesh.numnod,1))
-            elif self.type == VECTOR:
-                self.components = ('x','y','z')[:numdim]
-                self.data = zeros((mesh.numnod, numdim))
-            else:
-                raise ValueError('Node tensors not yet supported')
-
-        elif self.position == ELEMENT:
-            if self.type == SCALAR:
-                self.components = None
-                self.data = [zeros((eb.numele,1)) for eb in mesh.eleblx]
-            elif self.type == VECTOR:
-                self.components = ('x','y','z')[:numdim]
-                self.data = [zeros((eb.numele, numdim)) for eb in mesh.eleblx]
-            elif self.type == SYMTENSOR:
-                self.data = []
-                for eb in mesh.eleblx:
-                    if numcomp is None:
-                        ndir, nshr = eb.eletyp.ndir, eb.eletyp.nshr
-                    else:
-                        ndir, nshr = {3:(2,1), 4:(3,1), 6:(3,3)}[numcomp]
-                    numcomp = ndir + nshr
-                    self.components = ('xx','yy','zz')[:ndir]+('xy','yz','xz')[:nshr]
-                    self.data.append(zeros((eb.numele, numcomp)))
-
+        self.labels = labels
+        self.type = type
+        self.components = components
+        self.key = 'displ' if name == 'U' else name
+        self.eleblk = eleblk
+        self._values = None
+        if components is not None:
+            self.keys = [self.key+x for x in components]
         else:
-            if self.type == SCALAR:
-                self.components = None
-                self.data = [zeros(eb.numele, eb.npt) for eb in mesh.eleblx]
-            elif self.type == VECTOR:
-                self.components = ('x','y','z')[:numdim]
-                self.data = [zeros((eb.numele, eb.npt, numdim))
-                             for eb in mesh.eleblx]
-            elif self.type == SYMTENSOR:
-                self.data = []
-                for eb in mesh.eleblx:
-                    if numcomp is None:
-                        ndir, nshr = eb.eletyp.ndir, eb.eletyp.nshr
-                    else:
-                        ndir, nshr = {3:(2,1), 4:(3,1), 6:(3,3)}[numcomp]
-                    numcomp = ndir + nshr
-                    npt = len(eb.eletyp.gaussp)
-                    self.components = ('xx','yy','zz')[:ndir]+('xy','yz','xz')[:nshr]
-                    self.data.append(zeros((eb.numele, npt, numcomp)))
+            self.keys = [self.key]
+        self.shape = shape
+        self.data = zeros(self.shape)
 
-    def __getitem__(self, args):
-        return self.data[args]
+        if data is not None:
+            self.add_data(data)
 
-    def add_data(self, data, ix=None, block=None, column=None):
-        data = asarray(data)
-        if self.position == NODE:
-            if ix is None:
-                ix = arange(self.data.shape[0])
-            if column is not None:
-                self.data[ix, column] = data
-            else:
-                assert data.size == self.data[ix].size, 'Incorrect data shape'
-                data.resize(self.data[ix].shape)
-                self.data[ix] = data
+        self._elements = elements
+        reqels = position in (ELEMENT_CENTROID,INTEGRATION_POINT)
+        if reqels:
+            if elements is None:
+                raise TypeError('Expected elements to be passed')
         else:
-            # group element data by block
-            if data.ndim == 1:
-                data = data.reshape(-1, 1)
-            for (i, blk) in enumerate(self.mesh.eleblx):
-                ix = [self.mesh.elemap[xel] for xel in blk.labels]
-                if column is not None:
-                    self.data[i][ix, column] = data[:,0]
-                else:
-                    self.data[i][ix] = data
+            if elements is not None:
+                raise TypeError('Field position not element based')
 
-    def get_data(self, position=None, block=None):
+    def __getitem__(self, i):
+        return self.data[i]
 
-        if position is None and block is None:
-            return array(self.data)
+    def add_data(self, data, ix=None):
+        if self.data is None:
+            self.data = zeros(self.shape)
+        if not is_listlike(data):
+            data = ones_like(self.data) * data
+        else:
+            data = asarray(data)
+        if ix is not None:
+            self.data[ix] = data
+        else:
+            assert data.size == self.data.size
+            self.data[:] = reshape(data, self.data.shape)
 
-        position = position or self.position
+    def get_data(self, position=None):
 
-        if block is not None:
-            for eb in self.mesh.eleblx:
-                if eb.name == block:
-                    theblk = eb
-                    break
-            else:
-                raise ValueError('Unrecognized element block {0!r}'.format(block))
+        if position is None:
+            return self.data
 
-        if self.position == ELEMENT:
-            if position not in (ELEMENT, ELEMENT_CENTROID):
-                raise ValueError('Bad position request for ELEMENT data')
-            if block is None:
-                return array(self.data)
-            return array(self.data[theblk.elems])
+        if position == ELEMENT_CENTROID:
+            if self.position == ELEMENT_CENTROID:
+                return self.data
+            if self.position != INTEGRATION_POINT:
+                raise ValueError('Cannot project data to centroid')
+            # INTERPOLATE GAUSS POINT DATA TO ELEMENT CENTER
+            return array([self._elements[e].interpolate_to_centroid(x)
+                          for (i,x) in enumerate(self.data)])
 
-        elif self.position == NODE:
-            if position != NODE:
-                raise ValueError('Bad position request for NODE data')
-            if block is not None:
-                raise ValueError('Cannot get block data for NODE position')
-                ix = sorted(unique(theblk.elecon))
-                return self.data[ix]
-            return array(self.data)
-
-        # Interpolate Gauss point data to element center
-        ave = []
-        for (i, dx) in enumerate(self.data):
-            et = self.mesh.eleblx[i].eletyp
-            ave.append(et.interpolate_to_centroid(dx))
-        return ave
+        raise ValueError('Unknown position')
 
     @property
     def values(self):
         if self._values is not None:
             return self._values
         self._values = []
-        if self.position == NODE:
-            xd = self.data
-        else:
-            xd = vstack(self.data)
-        for (i, row) in enumerate(xd):
-            if self.position == NODE:
-                label = self.mesh.inodmap[i]
-            else:
-                label = self.mesh.ielemap[i]
+        for (i, label) in enumerate(self.labels):
             fv = FieldValue(self.position, label, self.type,
-                            self.components, row)
+                            self.components, self.data[i])
             self._values.append(fv)
         return self._values
+
+class SymmetricTensorField(FieldOutput):
+    def __init__(self, name, position, labels, ndir, nshr, eleblk=None,
+                 ngauss=None, elements=None, data=None):
+
+        if position == INTEGRATION_POINT and not ngauss:
+            raise TypeError('Expected ngauss')
+
+        components = ('xx', 'yy', 'zz')[:ndir] + ('xy', 'yz', 'xz')[:nshr]
+
+        num = len(labels)
+        ntens = ndir + nshr
+        if ngauss:
+            shape = (num, ngauss, ntens)
+        else:
+            shape = (num, ntens)
+
+        super(SymmetricTensorField, self).__init__(
+            name, position, labels, SYMTENSOR, components, shape, eleblk,
+            elements=elements, data=data)
+
+class VectorField(FieldOutput):
+    def __init__(self, name, position, labels, nc, eleblk=None, ngauss=None,
+                 elements=None, data=None):
+
+        if position == INTEGRATION_POINT and not ngauss:
+            raise TypeError('Expected ngauss')
+
+        components = ('x', 'y', 'z')[:nc]
+
+        num = len(labels)
+        if ngauss:
+            shape = (num, ngauss, nc)
+        else:
+            shape = (num, nc)
+
+        super(VectorField, self).__init__(
+            name, position, labels, VECTOR, components, shape, eleblk,
+            elements=elements, data=data)
+
+class ScalarField(FieldOutput):
+    def __init__(self, name, position, labels, eleblk=None, ngauss=None,
+                 elements=None, data=None):
+
+        if position == INTEGRATION_POINT and not ngauss:
+            raise TypeError('Expected ngauss')
+
+        components = None
+
+        num = len(labels)
+        if ngauss:
+            shape = (num, ngauss)
+        else:
+            shape = (num, 1)
+        super(ScalarField, self).__init__(
+            name, position, labels, SCALAR, components, shape, eleblk,
+            elements=elements, data=data)
 
 class FieldValue:
     def __init__(self, position, label, type, components, data):
@@ -225,20 +303,26 @@ class FieldValue:
         self.data = data
         self.type = type
         self.components = components
+        self._mag = None
+        self._prin = None
 
     @property
     def magnitude(self):
-        if self.type in (SCALAR, VECTOR):
-            return sqrt(dot(self.data, self.data))
-
+        if self._mag is None:
+            if self.type in (SCALAR, VECTOR):
+                self._mag = sqrt(dot(self.data, self.data))
+            else:
+                w = array([1.,1.,1.,2.,2.,2.])
+                self._mag = sqrt(sum(self.data * self.data * w))
+        return self._mag
 
     def _tensor_components(self):
         if len(self.components) == 3:
-            # Plane stress
+            # PLANE STRESS
             sx, sy, txy = self.data
             sz, tyz, txz = 0, 0, 0
         elif len(self.components) == 4:
-            # Plane strain
+            # PLANE STRAIN
             sx, sy, sz, txy = self.data
             tyz, txz = 0, 0
         else:
@@ -246,20 +330,27 @@ class FieldValue:
         return sx, sy, sz, txy, tyz, txz
 
     @property
+    def prinvals(self):
+        if self.type != SYMTENSOR:
+            return None
+        if self._prin is None:
+            sx, sy, sz, txy, tyz, txz = self._tensor_components()
+            s3, s2, s1 = sorted(eigvalsh([[sx,txy,txz],[txy,sy,tyz],[txz,tyz,sz]]))
+            self._prin = array([s3, s2, s1])
+        return self._prin
+
+    @property
     def max_principal(self):
         if self.type != SYMTENSOR:
             return None
-        sx, sy, sz, txy, tyz, txz = self._tensor_components()
-        s3, s2, s1 = sorted(eigvalsh([[sx,txy,txz],[txy,sy,tyz],[txz,tyz,sz]]))
-        return s1
+        return self.prinvals[-1]
 
     @property
     def min_principal(self):
         if self.type != SYMTENSOR:
             return None
-        sx, sy, sz, txy, tyz, txz = self._tensor_components()
-        s3, s2, s1 = sorted(eigvalsh([[sx,txy,txz],[txy,sy,tyz],[txz,tyz,sz]]))
+        p = self.prinvals
         if len(self.components) == 6:
-            return s3
+            return p[0]
         else:
-            return s2
+            return p[1]

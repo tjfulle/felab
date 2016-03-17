@@ -1,49 +1,134 @@
 from numpy import *
-from numpy.linalg import solve, LinAlgError, det
 
 from .constants import *
 from .utilities import *
 from .fem1 import FiniteElementModel
-from .isoplib import IsoPElement
+from .elemlib import IsoPElement
 
 class Plane2DModel(FiniteElementModel):
-    numdim = 2
-    def init(self):
-        self.request_output_variable('U', VECTOR, NODE)
-        self.request_output_variable('R', VECTOR, NODE)
-        self.request_output_variable('S', SYMTENSOR, INTEGRATION_POINT)
-        self.request_output_variable('E', SYMTENSOR, INTEGRATION_POINT)
-        self.request_output_variable('DE', SYMTENSOR, INTEGRATION_POINT)
+    dimensions = 2
 
-    def Solve(self):
-        self.validate(IsoPElement)
-        K = self.assemble_global_stiffness()
-        F, Q = self.assemble_global_force(self.dload, self.sload)
-        Kbc, Fbc = self.apply_bc(K, F+Q)
-        try:
-            u = solve(Kbc, Fbc)
-        except LinAlgError:
-            raise RuntimeError('attempting to solve under constrained system')
-        Ft = dot(K, u)
-        self.dofs[:] = u.reshape(self.dofs.shape)
-        R = Ft - F - Q
+    def Solve(self, solver=None, **kwds):
+        self.setup(IsoPElement)
+        h = '='.center(85, '=')
+        logging.debug(h)
+        logging.debug('RUNNING A PYFEM2 PLANE2DMODEL'.center(85,'='))
+        logging.debug(h)
+        if solver is None:
+            self.StaticPerturbation()
+        elif solver == NEWTON:
+            self.NewtonSolve(**kwds)
+        else:
+            raise ValueError('UNKNOWN SOLVER')
+
+    def StaticPerturbation(self):
+        z = zeros(self.numdof)
+        K, rhs = self.assemble(self.dofs, z)
+        Kbc, Fbc = self.apply_bc(K, rhs)
+        self.dofs[:] = linsolve(Kbc, Fbc)
+        R = dot(K, self.dofs) - rhs
         R = R.reshape(self.mesh.coord.shape)
-        u = u.reshape(self.mesh.coord.shape)
-        self.u = u
-        self.update_state()
-        self.snapshot(U=u, R=R)
+        self.assemble(z, self.dofs, cflag=LP_OUTPUT)
+        self.advance(R=R)
 
-    def update_state(self):
-        # compute the element stiffness and scatter to global array
+    def NewtonSolve(self, period=1., increments=5, maxiters=10,
+                    tolerance=1e-4, relax=1., tolerance1=1e-6):
+
+        ti = self.steps.last.frames[-1].start
+        time = array([ti, ti])
+        dtime = period / float(increments)
+
+        maxit2 = int(maxiters)
+        maxit1 = max(int(maxit2/2.),1)
+
+        istep = 1
+        for iframe in range(increments):
+
+            load_fac = float(iframe+1) / float(increments)
+            err1 = 1.
+
+            u = zeros(self.numdof)
+
+            # NEWTON-RAPHSON LOOP
+            for nit in range(maxit2):
+
+                K, rhs = self.assemble(self.dofs, u, time, dtime, period,
+                                       istep, iframe+1, ninc=nit+1,
+                                       step_type=GENERAL, load_fac=load_fac)
+
+                # ENFORCE DISPLACEMENT BOUNDARY CONDITIONS
+                Kbc, Fbc = self.apply_bc(K, rhs, self.dofs, u, load_fac=load_fac)
+
+                # --- SOLVE FOR THE NODAL DISPLACEMENT
+                w = linsolve(Kbc, Fbc)
+
+                # --- UPDATE DISPLACEMENT INCREMENT
+                u += relax * w
+
+                # --- CHECK CONVERGENCE
+                err1 = sqrt(dot(w, w) / dot(u, u))
+                err2 = sqrt(dot(rhs, rhs)) / float(self.numdof)
+
+                if nit < maxit1:
+                    if err1 < tolerance1:
+                        break
+                else:
+                    if err1 < tolerance:
+                        break
+                    elif err2 < 5e-2:
+                        logging.debug('CONVERGING TO LOSER TOLERANCE ON STEP '
+                                      '{0}, FRAME {1}'.format(istep, iframe+1))
+                        break
+
+                continue
+
+            else:
+                message  = 'FAILED TO CONVERGE ON STEP '
+                message += '{0}, FRAME {1}'.format(istep, iframe+1)
+                logging.error(message)
+                raise RuntimeError(message)
+
+            time[1] += dtime
+            self.dofs += u
+            self.advance(dtime=dtime)
+
+        return
+
+    def advance(self, dtime=1., **kwds):
+
+        frame_n = self.steps.last.frames[-1]
+        if not frame_n.converged:
+            raise RuntimeError('ATTEMPTING TO UPDATE AN UNCONVERGED FRAME')
+
+        # ADVANCE STATE VARIABLES
+        self.svars[0] = self.svars[1]
+
+        # CREATE FRAME TO HOLD RESULTS
+        frame = self.steps.last.Frame(dtime)
+
+        # STORE DEGREES OF FREEDOM
+        u = self.dofs.reshape(self.mesh.coord.shape)
+        frame.field_outputs['U'].add_data(u)
+
+        # STORE KEYWORDS
+        for (kwd, val) in kwds.items():
+            frame.field_outputs[kwd].add_data(val)
+
         for (ieb, eb) in enumerate(self.mesh.eleblx):
-            E = self.steps[-1].field_outputs['E'][ieb]
-            S = self.steps[-1].field_outputs['S'][ieb]
+            if not eb.eletyp.variables:
+                continue
+
+            # PASS VALUES FROM SVARS TO THE FRAME OUTPUT
+            ntens = eb.eletyp.ndir + eb.eletyp.nshr
+            m = 1 if not eb.eletyp.integration else eb.eletyp.integration
+            n = len(eb.eletyp.variables)
             for (e, xel) in enumerate(eb.labels):
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
-                u = self.dofs[el.nodes]
-                de1, e1, s1 = el.update_state(u, E[e], S[e])
-                self.steps[-1].field_outputs['DE'].data[ieb][iel] = de1
-                self.steps[-1].field_outputs['E'].data[ieb][iel] = e1
-                self.steps[-1].field_outputs['S'].data[ieb][iel] = s1
+                ue = u[el.inodes]
+                svars = self.svars[0,self.svtab[iel]].reshape(m,n,ntens)
+                for (j, name) in enumerate(el.variables):
+                    frame.field_outputs[eb.name,name].add_data(svars[:,j], e)
+
+        frame.converged = True
         return

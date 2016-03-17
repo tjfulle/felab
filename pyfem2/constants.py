@@ -1,5 +1,6 @@
+import os
 from numpy import sqrt, array, float64, zeros
-# Maximum number of possible DOF per node
+# MAXIMUM NUMBER OF POSSIBLE DOF PER NODE
 MDOF = 7
 
 # FREEDOM LABELS
@@ -26,6 +27,10 @@ SCALAR = 'Scalar'
 VECTOR = 'Vector'
 SYMTENSOR = 'Tensor'
 
+# SOLVERS
+NEWTON = 'Newton'
+RIKS = 'Riks'
+
 # FIELD POSITIONS
 NODE = 'Node'
 ELEMENT = 'Element'
@@ -45,3 +50,35 @@ ROOT3 = sqrt(3.0)
 TOOR2 = 1.0 / ROOT2
 TOOR3 = 1.0 / ROOT3
 ROOT23 = ROOT2 / ROOT3
+
+_d = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+DATA_D = os.path.join(_d, 'data')
+if not os.path.isdir(DATA_D):
+    import logging
+    logging.warn('PYFEM2 DATA DIRECTORY NOT LOCATED')
+
+# TENSORS
+ONED = '1D'
+TWOD = '3D'
+THREED = '3D'
+PSTRAIN = 'Plane Strain'
+PSTRESS = 'Plane Stress'
+
+# DISTRIBUTED LOADS
+SLOAD = 1
+DLOAD = 2
+SFLUX = 3
+SFILM = 4
+HSRC = 5
+
+# PROCEDURE TYPES
+STATIC = 1
+HEAT_TRANSFER = 21
+
+STIFF_AND_FORCE = 1
+STIFF_ONLY = 2
+FORCE_ONLY = 5
+LP_OUTPUT = 100
+
+GENERAL = 0
+LINEAR_PERTURBATION = 1

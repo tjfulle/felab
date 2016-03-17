@@ -2,7 +2,7 @@ import logging
 from numpy import *
 from numpy.linalg import inv
 from .elas import elas
-from .utilities import UserInputError
+from .utilities import UserInputError, is_listlike
 
 __all__ = ['Material']
 
@@ -42,13 +42,13 @@ class Material(object):
     def __init__(self, name, **kwds):
         self.name = name
 
-        # Young's modulus and Poisson's ratio
+        # YOUNG'S MODULUS AND POISSON'S RATIO
         self.E, self.Nu = None, None
 
-        # Thermal conductivity
-        self.k = None
+        # THERMAL CONDUCTIVITY
+        self.k_iso = None
 
-        # Density
+        # DENSITY
         self.density = None
         for (kwd, v) in kwds.items():
             k = kwd.lower()
@@ -58,12 +58,12 @@ class Material(object):
                 try:
                     self.Elastic(**v)
                 except TypeError:
-                    raise UserInputError('elastic properties must be a '
-                                         'dict, not {0}'.format(type(v)))
-            elif k == 'isotropic_thermal_conductivity':
-                self.IsotropicThermalConductivity(v)
+                    raise UserInputError('ELASTIC PROPERTIES MUST BE A '
+                                         'DICT, NOT {0}'.format(type(v)))
+            elif 'thermal_conductivity' in k:
+                self.ThermalConductivity(v)
             else:
-                logging.warn('Setting unknown material property {0!r}'.format(kwd))
+                logging.warn('SETTING UNKNOWN MATERIAL PROPERTY {0!r}'.format(kwd))
                 setattr(self, kwd, v)
 
     def Density(self, rho):
@@ -109,54 +109,72 @@ class Material(object):
         """
         if 'rho' in [s.lower() for s in kwds.keys()]:
             if len(kwds) != 3:
-                raise ValueError('Exactly 2 elastic constants required')
+                raise UserInputError('EXACTLY 2 ELASTIC CONSTANTS REQUIRED')
             for (k,v) in kwds.items():
                 if k.lower() == 'rho':
                     self.Density(v)
         elif len(kwds) != 2:
-            raise ValueError('Exactly 2 elastic constants required')
+            raise UserInputError('EXACTLY 2 ELASTIC CONSTANTS REQUIRED')
         props = elas(**kwds)
         self.E, self.Nu = props['E'], props['Nu']
         self.G, self.K = props['G'], props['K']
         self.Mu = self.G
         self.Lambda = props['Lame']
 
-    def IsotropicThermalConductivity(self, k):
+    def ThermalConductivity(self, k):
         """Assign the coefficient of thermal conductivity
 
         Parameters
         ----------
-        k : float
+        k : ndarray or float
             Coefficient of thermal conductivity
 
         """
-        self.k = k
+        if not is_listlike(k):
+            self.k_iso = k
+        else:
+            k = asarray(k)
+            self.k_aniso = eye(3)
+            if len(k) == 3:
+                fill_diagonal(self.k_aniso, k)
+            elif k.size == 9:
+                self.k_aniso[:] = k.reshape(3,3)
+            else:
+                raise UserInputError('K MUST BE A 3 VECTOR OR 3X3 ARRAY')
+            self.k_iso = trace(self.k_aniso) / 3.
+    IsotropicThermalConductivity = ThermalConductivity
 
     def isotropic_thermal_conductivity(self, ndim):
         """The isotropic thermal conductivity matrix"""
-        return self.k * eye(ndim)
+        return self.k_iso * eye(ndim)
+
+    def response(self, stress, statev, strain, dstrain, time, dtime,
+                 temp, dtemp, ndir, nshr, F0, F):
+        D = self.stiffness(ndir, nshr)
+        stress += dot(D, dstrain)
+        return stress, statev, D
 
     def stiffness(self, ndir, nshr, disp=None):
         if self.E is None:
-            raise ValueError('Elastic modulus not set')
+            raise UserInputError('ELASTIC MODULUS NOT SET')
         if self.Nu is None:
-            raise ValueError("Poisson's ration not set")
+            raise UserInputError("POISSON'S RATIO NOT SET")
         D = self.isotropic_elastic_stiffness()
 
         if nshr == 1:
-            # Modify the stiffness for 2D according to:
-            # 1) Plane strain: Remove rows and columns of the stiffness
-            #    corresponding to the plane of zero strain
-            # 2) Plane stress: Invert the stiffness and remove the rows
-            #    and columns of the compliance corresponding the plane of
-            #    zero stress.
+            # MODIFY THE STIFFNESS FOR 2D ACCORDING TO:
+            # 1) PLANE STRAIN: REMOVE ROWS AND COLUMNS OF THE STIFFNESS
+            #    CORRESPONDING TO THE PLANE OF ZERO STRAIN
+            # 2) PLANE STRESS: INVERT THE STIFFNESS AND REMOVE THE ROWS
+            #    AND COLUMNS OF THE COMPLIANCE CORRESPONDING THE PLANE OF
+            #    ZERO STRESS.
             if ndir == 2:
-                # plane stress
-                # Invert the stiffness to get the compliance
+                # PLANE STRESS
+                # INVERT THE STIFFNESS TO GET THE COMPLIANCE
                 idx = [[[0], [1], [3]], [0, 1, 3]]
                 D = inv(inv(D)[idx])
             elif ndir == 3:
-                # plane strain
+                # PLANE STRAIN
                 idx = [[[0], [1], [2], [3]], [0, 1, 2, 3]]
                 D = D[idx]
 

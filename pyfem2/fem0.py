@@ -43,22 +43,22 @@ def UniformBar(xa, xb, A, E, p, q, numele=10):
 
     """
 
-    # Number of nodes, coordinates, and element connectivity
+    # NUMBER OF NODES, COORDINATES, AND ELEMENT CONNECTIVITY
     numnod = numele + 1
     coord = linspace(xa, xb, numnod)
     elecon = array([[el, el+1] for el in range(numele)])
 
-    # loop over elements in the connectivity and assemble global stiffness, force
+    # LOOP OVER ELEMENTS IN THE CONNECTIVITY AND ASSEMBLE GLOBAL STIFFNESS, FORCE
     K, F = zeros((numnod, numnod)), zeros(numnod)
     for iel in range(numele):
-        # Element length, stiffness, and force
+        # ELEMENT LENGTH, STIFFNESS, AND FORCE
         nodes = elecon[iel]
         xe = coord[nodes]
         he = xe[1] - xe[0]
         ke = A * E / he * array([[1., -1.], [-1., 1.]])
-        qe = q * he / 2. * ones(2)  # distributed load contribution
+        qe = q * he / 2. * ones(2)  # DISTRIBUTED LOAD CONTRIBUTION
 
-        # add contributions to global matrices
+        # ADD CONTRIBUTIONS TO GLOBAL MATRICES
         F[nodes] += qe
         for i in range(2):
             I = nodes[i]
@@ -67,16 +67,16 @@ def UniformBar(xa, xb, A, E, p, q, numele=10):
                 K[I,J] += ke[i,j]
                 K[J,I] = K[I,J]
 
-    # Apply boundary conditions
+    # APPLY BOUNDARY CONDITIONS
     K[0, :] = 0.
     K[0, 0] = 1.
     F[0] = 0
     F[-1] = p
 
-    # Solve for u
+    # SOLVE FOR U
     u = solve(K, F)
 
-    # determine element forces and strains
+    # DETERMINE ELEMENT FORCES AND STRAINS
     elefor, e = zeros(numele), zeros(numele)
     for i in range(numele):
         du = u[i+1] - u[i]

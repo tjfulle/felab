@@ -2,47 +2,44 @@ from numpy import array, dot, zeros
 from numpy.linalg import solve, LinAlgError
 
 from .fem1 import FiniteElementModel
-from .elemlibN_2 import ElasticLinknD2
+from .elemlib import ElasticLink1D2, ElasticLink2D2, ElasticLink3D2
 from .constants import *
+from .utilities import *
 
 __all__ = ['TrussModel']
 
 class TrussModel(FiniteElementModel):
-    numdim = None
-
-    def init(self):
-        # Request allocation of field variables
-        self.request_output_variable('U', VECTOR, NODE)
-        self.request_output_variable('R', VECTOR, NODE)
-        self.request_output_variable('S', SCALAR, ELEMENT)
-        self.request_output_variable('P', SCALAR, ELEMENT)
-
+    dimensions = None
     def Solve(self):
         """Solves the finite element problem
 
         """
-        # active DOF set dynamically
-        self.active_dof = range(self.elements[0].ndof)
-        self.validate(ElasticLinknD2, one=True)
-        # Assemble the global stiffness and force
-        K = self.assemble_global_stiffness()
-        F, Q = self.assemble_global_force()
-        Kbc, Fbc = self.apply_bc(K, F+Q)
-        try:
-            self.dofs = solve(Kbc, Fbc)
-        except LinAlgError:
-            raise RuntimeError('attempting to solve under constrained system')
+        # ACTIVE DOF SET DYNAMICALLY
+        self.active_dof = range(count_digits(self.elements[0].signature))
+        self.setup((ElasticLink1D2, ElasticLink2D2, ElasticLink3D2), one=True)
 
-        # Total force, including reaction, and reaction
-        Ft = dot(K, self.dofs)
-        R = Ft - F - Q
+        # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
+        du = zeros(self.numdof)
+        K, rhs = self.assemble(self.dofs, du)
+        Kbc, Fbc = self.apply_bc(K, rhs)
+        self.dofs[:] = linsolve(Kbc, Fbc)
 
-        # reshape R to be the same shape as coord
+        # TOTAL FORCE, INCLUDING REACTION, AND REACTION
+        #R = self.assemble(self.dofs, du, cflag=LP_OUTPUT)
+        R = dot(K, self.dofs) - rhs
+
+        # RESHAPE R TO BE THE SAME SHAPE AS COORD
         u = self.dofs.reshape(self.numnod, -1)
         R = R.reshape(self.numnod, -1)
         p = self.internal_forces(u)
         s = self.stresses(p)
-        self.snapshot(U=u, R=R, P=p, S=s)
+
+        frame = self.steps.last.Frame(1.)
+        frame.field_outputs['U'].add_data(u)
+        frame.field_outputs['P'].add_data(p)
+        frame.field_outputs['S'].add_data(s)
+        frame.field_outputs['R'].add_data(R)
+        frame.converged = True
 
     # ----------------------------------------------------------------------- #
     # --------------------------- POSTPROCESSING ---------------------------- #
@@ -73,7 +70,7 @@ class TrussModel(FiniteElementModel):
         p = zeros(self.numele)
         for el in self.elements:
             iel = self.mesh.elemap[el.label]
-            p[iel] = el.internal_force(u[el.nodes])
+            p[iel] = el.internal_force(u[el.inodes])
         return p
 
     def stresses(self, p):
