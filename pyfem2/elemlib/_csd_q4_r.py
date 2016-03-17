@@ -52,7 +52,7 @@ class CSDQ4RElement(CSDRElement):
 
     def shape(self, xi, edge=None):
         if edge is not None:
-            # Evaluate shape function on specific edge
+            # EVALUATE SHAPE FUNCTION ON SPECIFIC EDGE
             xi = array([[xi,-1.],[1.,xi],[xi,1.],[-1.,xi]][edge])
         N = array([(1. - xi[0]) * (1. - xi[1]),
                    (1. + xi[0]) * (1. - xi[1]),
@@ -73,7 +73,7 @@ class CSDQ4RElement(CSDRElement):
         he = sqrt((xb[1,1]-xb[0,1])**2+(xb[1,0]-xb[0,0])**2)
         Fe = zeros(8)
         for (p, xi) in enumerate(gp):
-            # Form Gauss point on specific edge
+            # FORM GAUSS POINT ON SPECIFIC EDGE
             Ne = self.shape(xi, edge=edge)
             Pe = self.pmatrix(Ne)
             Fe += he / 2. * gw[p] * dot(Pe.T, qe)

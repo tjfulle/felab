@@ -65,7 +65,7 @@ def count_digits(seq, d=1):
 def normal2d(xc):
     xc = asarray(xc)
     if xc.shape[0] == 2:
-        # linear element
+        # LINEAR ELEMENT
         dx, dy  = xc[1,:] - xc[0,:]
         n = array([dy, -dx], dtype=float)
     elif xc.shape[0] == 3:

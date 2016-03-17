@@ -17,7 +17,7 @@ class HeatTransfer2DModel(FiniteElementModel):
         self.dofs[:] = linsolve(Kbc, Fbc)
         Q = dot(K, self.dofs) - rhs
 
-        # Create new frame to hold updated state
+        # CREATE NEW FRAME TO HOLD UPDATED STATE
         frame = self.steps.last.Frame(1.)
         frame.field_outputs['T'].add_data(self.dofs)
         frame.field_outputs['Q'].add_data(Q)

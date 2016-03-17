@@ -16,9 +16,9 @@ class PlaneStressQuad4Incompat(CSDQ4IElement):
 
     def gmatrix(self, xi):
         """Assemble and return the G matrix"""
-        # Algorithm in
-        # The Finite Element Method: Its Basis and Fundamentals
-        # By Olek C Zienkiewicz, Robert L Taylor, J.Z. Zhu
+        # ALGORITHM IN
+        # THE FINITE ELEMENT METHOD: ITS BASIS AND FUNDAMENTALS
+        # BY OLEK C ZIENKIEWICZ, ROBERT L TAYLOR, J.Z. ZHU
 
         xc = self.xc
 

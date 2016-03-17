@@ -107,7 +107,7 @@ class CSDQ8RElement(CSDRElement):
         gw = array([0.5555555556, 0.8888888889, 0.5555555556])
         Fe = zeros(16)
         for (p, xi) in enumerate(gp):
-            # Evaluate shape function on edge
+            # EVALUATE SHAPE FUNCTION ON EDGE
             dxdxi = dot([[-.5 + xi, .5 + xi, -2. * xi]], xb)
             Jac = sqrt(dxdxi[0, 0] ** 2 + dxdxi[0, 1] ** 2)
             Ne = self.shape(xi, edge=edge)

@@ -45,11 +45,11 @@ class CSDRElement(CSDElement):
         i1, i2 = cls.integration, cls.integration - cls.integration1
 
         if data.ndim == 1:
-            # Scalar data
+            # SCALAR DATA
             assert len(data) == i1+i2
 
         elif len(data.shape) == 2:
-            # Vector or tensor data
+            # VECTOR OR TENSOR DATA
             assert data.shape[0] == i1+i2
 
         else:
@@ -64,11 +64,11 @@ class CSDRElement(CSDElement):
             weights = [1./dist(point, cls.gaussp[i]) for i in range(i1)]
 
         if data.ndim == 1:
-            # Scalar data
+            # SCALAR DATA
             return average(data, weights=weights)
 
         elif len(data.shape) == 2:
-            # Vector or tensor data
+            # VECTOR OR TENSOR DATA
             return average(data, axis=0, weights=weights)
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
@@ -209,7 +209,7 @@ class CSDRElement(CSDElement):
                     continue
                 dloadx = dload[i]
                 if typ == SLOAD:
-                    # Surface load
+                    # SURFACE LOAD
                     rhs += self.surface_force(dloadx[0], dloadx[1:])
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')

@@ -9,8 +9,8 @@ from ..utilities import *
 # ---------SELECTIVELY REDUCED INTEGRATON ISOPARAMETRIC ELEMENT-------------- #
 # --------------------------------------------------------------------------- #
 class CSDSElement(CSDElement):
-    """Continuum Isoparametric Stress Displacement Element, Selectively
-    Reduced Integration"""
+    """Continuum isoparametric stress displacement element, selectively
+    reduced integration"""
     gaussp = None
     gaussw = None
     variables = ('E', 'DE', 'S')
@@ -56,11 +56,11 @@ class CSDSElement(CSDElement):
         i1, i2 = cls.integration1, cls.integration-cls.integration1
 
         if data.ndim == 1:
-            # Scalar data
+            # SCALAR DATA
             assert len(data) == i1+i2
 
         elif len(data.shape) == 2:
-            # Vector or tensor data
+            # VECTOR OR TENSOR DATA
             assert data.shape[0] == i1+i2
 
         else:
@@ -72,11 +72,11 @@ class CSDSElement(CSDElement):
         weights = [1./dist(point, cls.gaussp[i]) for i in range(i1)]
 
         if data.ndim == 1:
-            # Scalar data
+            # SCALAR DATA
             return average(data, weights=weights)
 
         elif len(data.shape) == 2:
-            # Vector or tensor data
+            # VECTOR OR TENSOR DATA
             return average(data, axis=0, weights=weights)
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
@@ -178,7 +178,7 @@ class CSDSElement(CSDElement):
                     continue
                 dloadx = dload[i]
                 if typ == SLOAD:
-                    # Surface load
+                    # SURFACE LOAD
                     rhs += self.surface_force(dloadx[0], dloadx[1:])
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')

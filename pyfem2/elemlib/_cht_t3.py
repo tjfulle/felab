@@ -23,7 +23,7 @@ class PlaneDiffussiveHeatTransferTria3(CHTElement):
         return x, y
 
     def jacobian(self):
-        # Element Jacobian
+        # ELEMENT JACOBIAN
         ((X1, Y1), (X2, Y2), (X3, Y3)) = self.xc
         return (X1*Y2 - X2*Y1 - X1*Y3 + X3*Y1 + X2*Y3 - X3*Y2)
 
@@ -31,7 +31,7 @@ class PlaneDiffussiveHeatTransferTria3(CHTElement):
         Je = self.jacobian()
         ((X1, Y1), (X2, Y2), (X3, Y3)) = self.xc
         x, y = xp
-        # Element shape functions
+        # ELEMENT SHAPE FUNCTIONS
         Ne = array([X2*Y3 - X3*Y2 + (Y2 - Y3) * x + (X3 - X2) * y,
                     X3*Y1 - X1*Y3 + (Y3 - Y1) * x + (X1 - X3) * y,
                     X1*Y2 - X2*Y1 + (Y1 - Y2) * x + (X2 - X1) * y]) / Je
@@ -40,13 +40,13 @@ class PlaneDiffussiveHeatTransferTria3(CHTElement):
     def shapegrad(self):
         Je = self.jacobian()
         ((X1, Y1), (X2, Y2), (X3, Y3)) = self.xc
-        # Element shape function gradients
+        # ELEMENT SHAPE FUNCTION GRADIENTS
         dN = array([[Y2 - Y3, Y3 - Y1, Y1 - Y2],
                     [X3 - X2, X1 - X3, X2 - X1]]) / Je
         return dN
 
     def edge_shape(self, edge, xp):
-        # ordering of nodes
+        # ORDERING OF NODES
         xb = self.xc[self.edges[edge]]
         he = sqrt((xb[1,0]-xb[0,0])**2 + (xb[1,1]-xb[0,1])**2)
         o = array({0:[0,1,2],1:[2,0,1],2:[1,2,0]}[edge])

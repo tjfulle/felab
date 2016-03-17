@@ -408,7 +408,7 @@ class FiniteElementModel(object):
         # COMPUTE THE ELEMENT STIFFNESS AND SCATTER TO GLOBAL ARRAY
         for (ieb, eb) in enumerate(self.mesh.eleblx):
             for (e, xel) in enumerate(eb.labels):
-                # Element stiffness
+                # ELEMENT STIFFNESS
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
                 eft = self.eftab[iel]
@@ -438,7 +438,7 @@ class FiniteElementModel(object):
             return rhs + load_fac * self.external_force_array()
 
     def external_force_array(self):
-        # compute contribution from Neumann boundary
+        # COMPUTE CONTRIBUTION FROM NEUMANN BOUNDARY
         Q = zeros(self.numdof)
         for n in range(self.numnod):
             ix = 0
@@ -481,11 +481,11 @@ class FiniteElementModel(object):
         if  u is None:  u = zeros(self.numdof)
         if du is None: du = zeros(self.numdof)
 
-        # copy the global arrays
+        # COPY THE GLOBAL ARRAYS
         Kbc, Fbc = K.copy(), F.copy()
         ubc, mask = [], array([False]*self.numdof)
 
-        # Dirichlet boundary conditions
+        # DIRICHLET BOUNDARY CONDITIONS
         for i in range(self.numnod):
             ix = 0
             for j in range(MDOF):
@@ -626,15 +626,15 @@ class FiniteElementModel(object):
     def assign_dof(self, doftype, nodes, dof, amplitude):
         inodes = self.mesh.get_internal_node_ids(nodes)
         if hasattr(amplitude, '__call__'):
-            # amplitude is a function
+            # AMPLITUDE IS A FUNCTION
             a = amplitude(self.mesh.coord[inodes])
         elif not is_listlike(amplitude):
-            # create a single amplitude for each node
+            # CREATE A SINGLE AMPLITUDE FOR EACH NODE
             a = ones(len(inodes)) * amplitude
         else:
             if len(amplitude) != len(inodes):
                 raise UserInputError('INCORRECT AMPLITUDE LENGTH')
-            # amplitude is a list of amplitudes
+            # AMPLITUDE IS A LIST OF AMPLITUDES
             a = asarray(amplitude)
         dofs = dof if is_listlike(dof) else [dof]
         for (i,inode) in enumerate(inodes):
@@ -729,7 +729,7 @@ class FiniteElementModel(object):
         surface = self.mesh.find_surface(surface)
         orphans = self.orphaned_elements
         for (iel, iedge) in surface:
-            # determine the normal to the edge
+            # DETERMINE THE NORMAL TO THE EDGE
             if iel in orphans:
                 raise UserInputError('ELEMENT PROPERTIES MUST BE ASSIGNED '
                                      'BEFORE SURFACELOADN')
@@ -781,7 +781,7 @@ class FiniteElementModel(object):
                     inodes.extend(eb.elecon[i])
         inodes = unique(inodes)
         if hasattr(amplitude, '__call__'):
-            # amplitude is a function
+            # AMPLITUDE IS A FUNCTION
             x = self.mesh.coord[inodes]
             a = amplitude(x)
         elif not is_listlike(amplitude):
@@ -803,15 +803,15 @@ class FiniteElementModel(object):
             raise UserInputError('MESH MUST FIRST BE CREATED')
         inodes = self.mesh.get_internal_node_ids(nodes)
         if hasattr(amplitude, '__call__'):
-            # amplitude is a function
+            # AMPLITUDE IS A FUNCTION
             a = amplitude(self.mesh.coord[inodes])
         elif not is_listlike(amplitude):
-            # create a single amplitude for each node
+            # CREATE A SINGLE AMPLITUDE FOR EACH NODE
             a = ones(len(inodes)) * amplitude
         else:
             if len(amplitude) != len(inodes):
                 raise UserInputError('INCORRECT AMPLITUDE LENGTH')
-            # amplitude is a list of amplitudes
+            # AMPLITUDE IS A LIST OF AMPLITUDES
             a = asarray(amplitude)
         self.initial_temp = a
         self.final_temp = a
@@ -821,15 +821,15 @@ class FiniteElementModel(object):
             raise UserInputError('MESH MUST FIRST BE CREATED')
         inodes = self.mesh.get_internal_node_ids(nodes)
         if hasattr(amplitude, '__call__'):
-            # amplitude is a function
+            # AMPLITUDE IS A FUNCTION
             a = amplitude(self.mesh.coord[inodes])
         elif not is_listlike(amplitude):
-            # create a single amplitude for each node
+            # CREATE A SINGLE AMPLITUDE FOR EACH NODE
             a = ones(len(inodes)) * amplitude
         else:
             if len(amplitude) != len(inodes):
                 raise UserInputError('INCORRECT AMPLITUDE LENGTH')
-            # amplitude is a list of amplitudes
+            # AMPLITUDE IS A LIST OF AMPLITUDES
             a = asarray(amplitude)
         self.final_temp = a
 
@@ -895,8 +895,8 @@ class FiniteElementModel(object):
             raise UserInputError('NODE TYPE NOT CONSISTENT WITH ELEMENT BLOCK')
 
         if elefab:
-            # element fabrication properties given, make sure there is one
-            # property per element
+            # ELEMENT FABRICATION PROPERTIES GIVEN, MAKE SURE THERE IS ONE
+            # PROPERTY PER ELEMENT
             for (key, val) in elefab.items():
                 if not is_listlike(val) or len(val) != len(blk.labels):
                     elefab[key] = [val] * len(blk.labels)

@@ -16,7 +16,9 @@ def PlaneStressBeam(ratio):
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=nu)
     V.ElementBlock('ElementBlock1', ALL)
-    V.AssignProperties('ElementBlock1', PlaneStressQuad4Incompat, 'Material-1', t=1)
+    El = PlaneStressQuad4Incompat
+    El = PlaneStressQuad4
+    V.AssignProperties('ElementBlock1', PlaneStressQuad4, 'Material-1', t=1)
     V.PrescribedBC(IHI, (X,Y))
     V.SurfaceLoad(ILO, [0, -q])
     V.Solve()
@@ -48,5 +50,5 @@ def AnalyticSolution(coord, q):
     return u
 
 # ---- Change the aspect ratio to see shear locking
-ratio = .0015
+ratio = .015
 PlaneStressBeam(ratio)

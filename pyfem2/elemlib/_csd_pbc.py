@@ -59,7 +59,7 @@ class PlaneBeamColumn(Element):
                              [-1., 0., 0., 1., 0., 0.],
                              [ 0., 0., 0., 0., 0., 0.],
                              [ 0., 0., 0., 0., 0., 0.]])
-        # Beam stiffness
+        # BEAM STIFFNESS
         K2 = 2. * EI / h**3 * array([[0.,  0.,    0.,     0.,  0.,   0     ],
                                      [0.,  6.,    3.*h,   0., -6.,   3.*h  ],
                                      [0.,  3.*h,  2.*h*h, 0., -3.*h, h*h   ],

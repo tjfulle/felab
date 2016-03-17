@@ -1,6 +1,6 @@
 import os
 from numpy import sqrt, array, float64, zeros
-# Maximum number of possible DOF per node
+# MAXIMUM NUMBER OF POSSIBLE DOF PER NODE
 MDOF = 7
 
 # FREEDOM LABELS

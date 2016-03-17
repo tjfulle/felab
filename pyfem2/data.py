@@ -156,7 +156,7 @@ class FieldOutputs(OrderedDict):
         keys = []
         for k in self.keys():
             if is_listlike(k) and k[1] == key:
-                # element block property
+                # ELEMENT BLOCK PROPERTY
                 keys.append(k)
         if not keys:
             raise KeyError(key)
@@ -222,7 +222,7 @@ class FieldOutput(object):
                 return self.data
             if self.position != INTEGRATION_POINT:
                 raise ValueError('Cannot project data to centroid')
-            # Interpolate Gauss point data to element center
+            # INTERPOLATE GAUSS POINT DATA TO ELEMENT CENTER
             return array([self._elements[e].interpolate_to_centroid(x)
                           for (i,x) in enumerate(self.data)])
 
@@ -318,11 +318,11 @@ class FieldValue:
 
     def _tensor_components(self):
         if len(self.components) == 3:
-            # Plane stress
+            # PLANE STRESS
             sx, sy, txy = self.data
             sz, tyz, txz = 0, 0, 0
         elif len(self.components) == 4:
-            # Plane strain
+            # PLANE STRAIN
             sx, sy, sz, txy = self.data
             tyz, txz = 0, 0
         else:

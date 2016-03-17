@@ -42,13 +42,13 @@ class Material(object):
     def __init__(self, name, **kwds):
         self.name = name
 
-        # Young's modulus and Poisson's ratio
+        # YOUNG'S MODULUS AND POISSON'S RATIO
         self.E, self.Nu = None, None
 
-        # Thermal conductivity
+        # THERMAL CONDUCTIVITY
         self.k_iso = None
 
-        # Density
+        # DENSITY
         self.density = None
         for (kwd, v) in kwds.items():
             k = kwd.lower()
@@ -174,7 +174,7 @@ class Material(object):
                 idx = [[[0], [1], [3]], [0, 1, 3]]
                 D = inv(inv(D)[idx])
             elif ndir == 3:
-                # plane strain
+                # PLANE STRAIN
                 idx = [[[0], [1], [2], [3]], [0, 1, 2, 3]]
                 D = D[idx]
 
