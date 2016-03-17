@@ -2,6 +2,8 @@
 import sys
 from pyfem2 import *
 import matplotlib.pyplot as plt
+El = PlaneStrainQuad4BBar
+El = PlaneStrainQuad4Reduced
 
 mu = 1.
 Nu = .499
@@ -14,7 +16,7 @@ def LinearSolution(ax=None, solver=None):
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
     V.InitialTemperature(ALL, 90)
     V.Temperature(ALL, 30)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad4Reduced, 'Material-1', t=1)
+    V.AssignProperties('ElementBlock1', El, 'Material-1', t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
@@ -51,8 +53,8 @@ def WriteAnalyticSolution(ax=None):
     return ax
 
 ax = None
-ax = WriteAnalyticSolution(ax)
-ax = LinearSolution(ax)
+#ax = WriteAnalyticSolution(ax)
+#ax = LinearSolution(ax)
 ax = LinearSolution(ax, solver=NEWTON)
 plt.legend()
 plt.show()
