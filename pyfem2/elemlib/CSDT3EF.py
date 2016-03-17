@@ -1,5 +1,5 @@
-from numpy import zeros
-from .csd_t3_f import CSDT3FElement
+from numpy import *
+from ._csd_t3_f import CSDT3FElement
 class PlaneStrainTria3(CSDT3FElement):
     ndir = 3
     nshr = 1

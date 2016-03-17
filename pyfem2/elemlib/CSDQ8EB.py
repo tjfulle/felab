@@ -1,4 +1,5 @@
-from numpy import zeros
+from numpy import *
+from numpy.linalg import det, inv
 from ._csd_q8_f import CSDQ8FElement
 class PlaneStrainQuad8BBar(CSDQ8FElement):
     ndir = 3
@@ -11,8 +12,6 @@ class PlaneStrainQuad8BBar(CSDQ8FElement):
 
         # MEAN DILATATIONAL FORMULATION
         xc = self.xc
-        det = array([self.jacobian(xc, xi) for xi in self.gaussp])
-        ev = dot(det, self.gaussw)
 
         dNb = zeros((2,8))
         jac = zeros(self.integration)

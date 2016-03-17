@@ -37,7 +37,7 @@ def test_fem5_1():
     V.ElementBlock('B1', (1,2))
     V.ElementBlock('B2', (3,5))
     V.ElementBlock('B3', (4,))
-    V.AssignProperties('B1', BeamColumn2D, 'Material-1', A=.02, Izz=.004)
+    V.AssignProperties('B1', PlaneBeamColumn, 'Material-1', A=.02, Izz=.004)
     V.AssignProperties('B2', ElasticLink2D2, 'Material-2', A=.001)
     V.AssignProperties('B3', ElasticLink2D2, 'Material-2', A=.003)
     V.PrescribedBC(1, (X,Y,TZ))
@@ -506,7 +506,7 @@ def test_elemlibN_2_4():
     coord = array([[0, 0], [3, 4]], dtype=float)
     class mat: E = 100
     A, Izz = 125, 250
-    El = BeamColumn2D(1, [0, 1], coord, mat, A=A, Izz=Izz)
+    El = PlaneBeamColumn(1, [0, 1], coord, mat, A=A, Izz=Izz)
     Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,[],[],[],STATIC,
                      [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
 

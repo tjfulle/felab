@@ -1,4 +1,4 @@
-from numpy import zeros, array
+from numpy import *
 from ._csd_q4_r import CSDQ4RElement
 
 class PlaneStrainQuad4Reduced(CSDQ4RElement):

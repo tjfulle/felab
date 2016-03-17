@@ -1,4 +1,4 @@
-from numpy import zeros
+from numpy import *
 
 from ._csd_q4_f import CSDQ4FElement
 

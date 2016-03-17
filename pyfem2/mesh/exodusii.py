@@ -738,6 +738,7 @@ class EXOFileReader(EXOFile):
 
         # ELEMENT DATA
         for (ieb, eb) in enumerate(self.eleblx):
+            elems = [eb.elefam] * len(eb.labels)
             for (i, name) in scalars2:
                 frame.ScalarField(name, ELEMENT_CENTROID, eb.labels, eb.name)
             for (name, item) in vectors2.items():
@@ -746,7 +747,8 @@ class EXOFileReader(EXOFile):
             for (name, item) in tensors2.items():
                 ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
                 frame.SymmetricTensorField(name, ELEMENT_CENTROID, eb.labels,
-                                           ndir, nshr, eb.name)
+                                           ndir, nshr, eleblk=eb.name,
+                                           elements=elems)
 
         for (count, time) in enumerate(times):
             if count > 0:

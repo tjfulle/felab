@@ -1,4 +1,4 @@
-from numpy import zeros
+from numpy import *
 from ._csd_q8_f import CSDQ8FElement
 class PlaneStrainQuad8(CSDQ8FElement):
     ndir = 3

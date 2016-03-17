@@ -1,5 +1,6 @@
 from numpy import *
 
+from ..constants import *
 from .element import Element
 
 # --------------------------------------------------------------------------- #

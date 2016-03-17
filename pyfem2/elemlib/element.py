@@ -4,6 +4,8 @@ from numpy import *
 # ------------------------- BASE ELEMENT CLASS ------------------------------ #
 # --------------------------------------------------------------------------- #
 class Element(object):
+    ndir = None
+    nshr = None
     nodes = None
     elefab = None
     variables = None
@@ -30,6 +32,9 @@ class Element(object):
                                      'properties: {0}'.format(','.join(unknown)))
             for (name, default) in self.elefab.items():
                 p = elefab.get(name, default)
+                if p is None:
+                    raise UserInputError('Missing required fabrication '
+                                         'property {0}'.format(name))
                 setattr(self, name, p)
 
     def response(self, *args):

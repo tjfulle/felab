@@ -22,10 +22,9 @@ class ND2NodeLinkElement(Element):
         Requires area 'A'
 
     """
-    ndir = 1
-    nshr = 0
     nodes = 2
     elefab = {'A': 1.}
+    variables = ('P', 'S')
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                  predef, procedure, nlgeom, cflag, step_type, load_fac):

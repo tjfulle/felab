@@ -250,7 +250,10 @@ class FiniteElementModel(object):
             if not el.variables:
                 svtab.append([])
                 continue
-            m = el.ndir + el.nshr
+            if not el.ndir:
+                m = 1
+            else:
+                m = el.ndir + el.nshr
             m *= len(el.variables)
             if el.integration:
                 m *= el.integration
@@ -282,17 +285,27 @@ class FiniteElementModel(object):
         for eb in self.mesh.eleblx:
             if not eb.eletyp.variables:
                 continue
+
             ielems = [self.mesh.elemap[xel] for xel in eb.labels]
             elems = self.elements[ielems]
+
             if eb.eletyp.integration:
-                args = (INTEGRATION_POINT, eb.labels,
-                        eb.eletyp.ndir, eb.eletyp.nshr,
-                        eb.eletyp.integration, eb.name)
+                position = INTEGRATION_POINT
             else:
-                args = (ELEMENT_CENTROID, eb.labels,
-                        eb.eletyp.ndir, eb.eletyp.nshr, eb.name)
+                position = ELEMENT_CENTROID
+
             for variable in eb.eletyp.variables:
-                frame.SymmetricTensorField(variable, *args, elements=elems)
+                if elems[0].ndir is None:
+                    # SCALAR DATA
+                    frame.ScalarField(variable, position, eb.labels,
+                                      eleblk=eb.name, ngauss=elems[0].integration,
+                                      elements=elems)
+                else:
+                    # TENSOR DATA
+                    frame.SymmetricTensorField(variable, position, eb.labels,
+                                               elems[0].ndir, elems[0].nshr,
+                                               ngauss=elems[0].integration,
+                                               eleblk=eb.name, elements=elems)
 
         frame.converged = True
 

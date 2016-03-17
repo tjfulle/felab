@@ -100,27 +100,40 @@ class Frame(object):
         self.increment = dtime
         self.value = self.start + dtime
 
-    def SymmetricTensorField(self, name, position, labels,
-                             ndir, nshr, *args, **kwargs):
-        field = SymmetricTensorField(name, position, labels,
-                                     ndir, nshr, *args, **kwargs)
-        if position in (INTEGRATION_POINT, ELEMENT_CENTROID):
-            name = (args[-1], name)
+    def SymmetricTensorField(self, name, position, labels, ndir, nshr,
+                             eleblk=None, ngauss=None,  elements=None, data=None):
+        field = SymmetricTensorField(name, position, labels, ndir, nshr,
+                                     eleblk=eleblk, ngauss=ngauss,
+                                     elements=elements, data=data)
+
+        if field.eleblk is not None:
+            name = (field.eleblk, name)
         self.field_outputs[name] = field
+
         return field
 
-    def VectorField(self, name, position, labels, ncomp, *args, **kwargs):
-        field = VectorField(name, position, labels, ncomp, *args, **kwargs)
-        if position in (INTEGRATION_POINT, ELEMENT_CENTROID):
-            name = (args[-1], name)
+    def VectorField(self, name, position, labels, ncomp, eleblk=None,
+                    ngauss=None, elements=None, data=None):
+
+        field = VectorField(name, position, labels, ncomp, eleblk=eleblk,
+                            ngauss=ngauss, elements=elements, data=data)
+
+        if field.eleblk is not None:
+            name = (field.eleblk, name)
         self.field_outputs[name] = field
+
         return field
 
-    def ScalarField(self, name, position, labels, *args, **kwargs):
-        field = ScalarField(name, position, labels, *args, **kwargs)
-        if position in (INTEGRATION_POINT, ELEMENT_CENTROID):
-            name = (args[-1], name)
+    def ScalarField(self, name, position, labels, eleblk=None, ngauss=None,
+                    elements=None, data=None):
+
+        field = ScalarField(name, position, labels, eleblk=eleblk,
+                            ngauss=ngauss, elements=elements, data=data)
+
+        if field.eleblk is not None:
+            name = (field.eleblk, name)
         self.field_outputs[name] = field
+
         return field
 
     def add_data(self, **kwds):
@@ -155,7 +168,7 @@ class FieldOutputs(OrderedDict):
 class FieldOutput(object):
 
     def __init__(self, name, position, labels, type, components, shape, eleblk,
-                 **kwargs):
+                 elements=None, data=None):
         self.name = name
         self.position = position
         self.labels = labels
@@ -171,16 +184,17 @@ class FieldOutput(object):
         self.shape = shape
         self.data = zeros(self.shape)
 
-        a = kwargs.get('data')
-        if a is not None:
-            self.add_data(a)
+        if data is not None:
+            self.add_data(data)
 
-        self._elements = None
-        e = kwargs.get('elements')
-        if self.position in (ELEMENT_CENTROID,INTEGRATION_POINT):
-            self._elements = e
-        elif e is not None:
-            raise TypeError('Field position not element based')
+        self._elements = elements
+        reqels = position in (ELEMENT_CENTROID,INTEGRATION_POINT)
+        if reqels:
+            if elements is None:
+                raise TypeError('Expected elements to be passed')
+        else:
+            if elements is not None:
+                raise TypeError('Field position not element based')
 
     def __getitem__(self, i):
         return self.data[i]
@@ -209,8 +223,6 @@ class FieldOutput(object):
             if self.position != INTEGRATION_POINT:
                 raise ValueError('Cannot project data to centroid')
             # Interpolate Gauss point data to element center
-            if self._elements is None:
-                raise ValueError('No elements assigned')
             return array([self._elements[e].interpolate_to_centroid(x)
                           for (i,x) in enumerate(self.data)])
 
@@ -228,51 +240,61 @@ class FieldOutput(object):
         return self._values
 
 class SymmetricTensorField(FieldOutput):
-    def __init__(self, name, position, labels, ndir, nshr, *args, **kwargs):
-        eleblk = None
+    def __init__(self, name, position, labels, ndir, nshr, eleblk=None,
+                 ngauss=None, elements=None, data=None):
+
+        if position == INTEGRATION_POINT and not ngauss:
+            raise TypeError('Expected ngauss')
+
         components = ('xx', 'yy', 'zz')[:ndir] + ('xy', 'yz', 'xz')[:nshr]
-        if position == INTEGRATION_POINT:
-            ngauss, eleblk = args
-        if ndir is not None and nshr is not None:
-            ntens = ndir + nshr
-        else:
-            ntens = 0
+
         num = len(labels)
-        if position == INTEGRATION_POINT:
-            if ngauss:
-                shape = (num, ngauss, ntens)
-            else:
-                shape = (num, ntens)
+        ntens = ndir + nshr
+        if ngauss:
+            shape = (num, ngauss, ntens)
         else:
             shape = (num, ntens)
+
         super(SymmetricTensorField, self).__init__(
-            name, position, labels, SYMTENSOR, components, shape, eleblk, **kwargs)
+            name, position, labels, SYMTENSOR, components, shape, eleblk,
+            elements=elements, data=data)
 
 class VectorField(FieldOutput):
-    def __init__(self, name, position, labels, nc, *args, **kwargs):
-        eleblk = None
-        num = len(labels)
+    def __init__(self, name, position, labels, nc, eleblk=None, ngauss=None,
+                 elements=None, data=None):
+
+        if position == INTEGRATION_POINT and not ngauss:
+            raise TypeError('Expected ngauss')
+
         components = ('x', 'y', 'z')[:nc]
-        if position == INTEGRATION_POINT:
-            ngauss, eleblk = args
+
+        num = len(labels)
+        if ngauss:
             shape = (num, ngauss, nc)
         else:
             shape = (num, nc)
+
         super(VectorField, self).__init__(
-            name, position, labels, VECTOR, components, shape, eleblk, **kwargs)
+            name, position, labels, VECTOR, components, shape, eleblk,
+            elements=elements, data=data)
 
 class ScalarField(FieldOutput):
-    def __init__(self, name, position, labels, *args, **kwargs):
-        eleblk = None
-        num = len(labels)
+    def __init__(self, name, position, labels, eleblk=None, ngauss=None,
+                 elements=None, data=None):
+
+        if position == INTEGRATION_POINT and not ngauss:
+            raise TypeError('Expected ngauss')
+
         components = None
-        if position == INTEGRATION_POINT:
-            ngauss, eleblk = args
+
+        num = len(labels)
+        if ngauss:
             shape = (num, ngauss)
         else:
             shape = (num, 1)
         super(ScalarField, self).__init__(
-            name, position, labels, SCALAR, components, shape, eleblk, **kwargs)
+            name, position, labels, SCALAR, components, shape, eleblk,
+            elements=elements, data=data)
 
 class FieldValue:
     def __init__(self, position, label, type, components, data):

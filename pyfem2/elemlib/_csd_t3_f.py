@@ -1,7 +1,7 @@
 from numpy import *
 from numpy.linalg import inv, det
 
-from .csd_f import CSDFElement
+from ._csd_f import CSDFElement
 
 # --------------------------------------------------------------------------- #
 # --------------------- TRIANGLE ISOPARAMETRIC ELEMENTS --------------------- #
