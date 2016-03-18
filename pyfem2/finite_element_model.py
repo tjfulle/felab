@@ -23,9 +23,9 @@ class FiniteElementModel(object):
     implemented in class' derived from this one.
 
     """
-    dimensions = None
     def __init__(self, jobid=None):
         self.jobid = jobid or 'Job-1'
+        self.dimensions = None
         self.mesh = None
         self.materials = {}
         self.initial_temp = []
@@ -167,36 +167,22 @@ class FiniteElementModel(object):
 
         if self.mesh is None:
             raise UserInputError('MESH MUST FIRST BE CREATED')
-
-        if self.dimensions is not None and self.mesh.dimensions != self.dimensions:
-            raise UserInputError('INCORRECT MESH DIMENSION')
-
+        self.dimensions = self.mesh.dimensions
         self.numele = self.mesh.numele
         self.elements = empty(self.numele, dtype=object)
         self.numnod = self.mesh.numnod
-        self.dimensions = self.mesh.dimensions
-
         self._setup = False
 
     @property
     def orphaned_elements(self):
         return [iel for (iel, el) in enumerate(self.elements) if el is None]
 
-    def setup(self, eletyp=None, one=False):
+    def setup(self):
 
         # VALIDATE USER INPUT
-
         if self.orphaned_elements:
             raise UserInputError('ALL ELEMENTS MUST BE ASSIGNED '
                                  'TO AN ELEMENT BLOCK')
-
-        if eletyp is not None:
-            if not all([isinstance(el, eletyp) for el in self.elements]):
-                raise UserInputError('INCORRECT ELEMENT TYPE')
-
-        if one:
-            if len(set([type(el) for el in self.elements])) != 1:
-                raise UserInputError('EXPECTED ONLY 1 ELEMENT TYPE')
 
         # NODE FREEDOM ASSOCIATION TABLE
         active_dof = [None] * MDOF
