@@ -8,10 +8,14 @@ V.GenesisMesh('PlateWithHoleQuad4QuarterSym.g')
 V.Material('Material-1')
 V.materials['Material-1'].Elastic(E=100, Nu=.2)
 V.AssignProperties('', PlaneStrainQuad4, 'Material-1', t=1)
-V.PrescribedBC('SymYZ', X, 0.)
-V.PrescribedBC('SymXZ', Y, 0.)
-V.SurfaceLoad('RightHandSide', [1,0])
-V.Solve()
+V.PrescribedBC('SymYZ', X)
+V.PrescribedBC('SymXZ', Y)
+V.InitialTemperature(ALL, 60)
+
+step = V.LinearPerturbationStep('Step-1')
+step.SurfaceLoad('RightHandSide', [1,0])
+step.run()
+
 V.WriteResults()
 
 F = File('PlateWithHoleQuad4QuarterSym.exo')

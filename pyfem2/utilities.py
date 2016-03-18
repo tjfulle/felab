@@ -143,3 +143,8 @@ def get_procname(proc):
 def get_steptypname(step_type):
     return {GENERAL: 'GENERAL',
             LINEAR_PERTURBATION: 'LINEAR PERTURBATION'}[step_type]
+
+def emptywithlists(n):
+    a = zeros(n, dtype=object)
+    a[:] = [[] for _ in range(n)]
+    return a

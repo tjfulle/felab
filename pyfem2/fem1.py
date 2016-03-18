@@ -5,17 +5,12 @@ import numpy.linalg as la
 
 from .utilities import *
 from .constants import *
-from .data import StepRepository
+from .step import StepRepository
 from .mesh.mesh import Mesh
 from .mat import Material
 from .mesh.exodusii import File
 
 __all__ = ['FiniteElementModel']
-
-def emptywithlists(n):
-    a = zeros(n, dtype=object)
-    a[:] = [[] for _ in range(n)]
-    return a
 
 class FiniteElementModel(object):
     """
@@ -28,14 +23,15 @@ class FiniteElementModel(object):
     implemented in class' derived from this one.
 
     """
-    active_dof = range(MDOF)
     def __init__(self, jobid=None):
         self.jobid = jobid or 'Job-1'
         self.mesh = None
         self.materials = {}
-        self.initial_temp = None
-        self.final_temp = None
+        self.initial_temp = []
+        self.pr_bc = []
         self.fh = None
+        self.steps = None
+        self._setup = False
 
     @property
     def exofile(self):
@@ -175,21 +171,13 @@ class FiniteElementModel(object):
         self.numnod = self.mesh.numnod
         self.dimensions = self.mesh.dimensions
 
-        # CONTAINERS TO HOLD DOF INFORMATION
-        self.doftags = zeros((self.numnod, MDOF), dtype=int)
-        self.dofvals = zeros((self.numnod, MDOF), dtype=float)
-
-        # CONTAINERS TO HOLD LOADS
-        self.dload = emptywithlists(self.numele)
-        self.dltyp = emptywithlists(self.numele)
-
         self._setup = False
 
     @property
     def orphaned_elements(self):
         return [iel for (iel, el) in enumerate(self.elements) if el is None]
 
-    def setup(self, eletyp=None, one=False, fields=None):
+    def setup(self, eletyp=None, one=False):
 
         # VALIDATE USER INPUT
 
@@ -205,12 +193,6 @@ class FiniteElementModel(object):
             if len(set([type(el) for el in self.elements])) != 1:
                 raise UserInputError('EXPECTED ONLY 1 ELEMENT TYPE')
 
-        # CHECK CONSISTENT LOADING
-        nod_with_bc = {}
-        for (i,tag) in enumerate(self.doftags):
-            if [t for t in tag[:3] if t == DIRICHLET]:
-                nod_with_bc[i] = tag[:3]
-
         # NODE FREEDOM ASSOCIATION TABLE
         active_dof = [None] * MDOF
         self.nodfat = zeros((self.numnod, MDOF), dtype=int)
@@ -222,64 +204,54 @@ class FiniteElementModel(object):
                 for (j, k) in enumerate(nfs):
                     if k:
                         active_dof[j] = j
-        active_dof = array([x for x in active_dof if x is not None])
+        self.active_dof = array([x for x in active_dof if x is not None])
 
         # TOTAL NUMBER OF DEGREES OF FREEDOM
         self.numdof = sum(count_digits(p) for p in self.nodfat)
 
         # NODE FREEDOM MAP TABLE
         self.nodfmt = zeros(self.numnod, dtype=int)
-        for i in range(self.numnod-1):
-            self.nodfmt[i+1] = self.nodfmt[i] + count_digits(self.nodfat[i])
+        self._dofmap = {}
+        dof = 0
+        nodfmt = [0]
+        for i in range(self.numnod):
+            for (j, k) in enumerate(self.nodfat[i]):
+                if not k: continue
+                self._dofmap[i,j] = dof
+                dof += 1
+            nodfmt.append(dof)
+        self.nodfmt = array(nodfmt[:-1], dtype=int)
 
         # ELEMENT FREEDOM TABLE
         self.eftab = self._element_freedom_table()
 
-        self.active_dof = array(active_dof)
-        self.dofs = zeros(self.numdof)
-
         self._setup = True
+
+    def dofmap(self, inode, dof):
+        return self._dofmap.get((inode,dof))
+
+    def initialize_steps(self):
 
         node_labels = sorted(self.mesh.nodmap, key=lambda k: self.mesh.nodmap[k])
 
-        # --- ALLOCATE STORAGE FOR SIMULATION DATA
-        # STATE VARIABLE TABLE
-        ix = 0
-        svtab = []
-        for el in self.elements:
-            if not el.variables:
-                svtab.append([])
-                continue
-            if not el.ndir:
-                m = 1
-            else:
-                m = el.ndir + el.nshr
-            m *= len(el.variables)
-            if el.integration:
-                m *= el.integration
-            a = [ix, ix+m]
-            svtab.append(slice(*a))
-            ix += m
-        self.svars = zeros((2, ix))
-        self.svtab = svtab
-        self.predef = zeros((3, 1, self.numnod))
+        self.steps = StepRepository(self)
+        step = self.steps.Step('Step-0')
+        for (nodes, dof) in self.pr_bc:
+            step.PrescribedBC(nodes, dof, amplitude=0.)
 
-        self.steps = StepRepository()
-        step = self.steps.Step()
         frame = step.frames[0]
 
         # NODE DATA
         nd = self.dimensions
-        if 6 in active_dof:
+        if 6 in self.active_dof:
             frame.ScalarField('Q', NODE, node_labels)
-
         frame.ScalarField('T', NODE, node_labels)
         frame.VectorField('U', NODE, node_labels, self.dimensions)
         frame.VectorField('R', NODE, node_labels, self.dimensions)
-        if self.initial_temp is not None:
-            frame.field_outputs['T'].add_data(self.initial_temp)
-            self.predef[0,0,:] = self.initial_temp
-            self.predef[1,0,:] = self.final_temp
+
+        if self.initial_temp:
+            itemp = self.get_initial_temperature()
+            frame.field_outputs['T'].add_data(itemp)
 
         # ELEMENT DATA
         for eb in self.mesh.eleblx:
@@ -308,6 +280,7 @@ class FiniteElementModel(object):
                                                eleblk=eb.name, elements=elems)
 
         frame.converged = True
+        return
 
     def _element_freedom_table(self):
         eftab = []
@@ -349,7 +322,8 @@ class FiniteElementModel(object):
         self.exofile.snapshot(step)
         step.written = 1
 
-    def assemble(self, u, du, time=array([0.,0.]), dtime=1., period=1.,
+    def assemble(self, u, du, Q, svtab, svars, dltyp, dload, predef,
+                 time=array([0.,0.]), dtime=1., period=1.,
                  istep=1, iframe=1, procedure=STATIC, nlgeom=False, ninc=None,
                  cflag=STIFF_AND_FORCE, step_type=LINEAR_PERTURBATION, load_fac=1.):
         """
@@ -401,9 +375,9 @@ class FiniteElementModel(object):
         # INTERPOLATE FIELD VARIABLES
         fac1 = time[1] / (time[0] + period)
         fac2 = (time[1]+dtime) / (time[0] + period)
-        x0 = (1. - fac1) * self.predef[0] + fac1 * self.predef[1]
-        xf = (1. - fac2) * self.predef[0] + fac2 * self.predef[1]
-        predef = array([x0, xf-x0])
+        x0 = (1. - fac1) * predef[0] + fac1 * predef[1]
+        xf = (1. - fac2) * predef[0] + fac2 * predef[1]
+        predef_i = array([x0, xf-x0])
 
         # COMPUTE THE ELEMENT STIFFNESS AND SCATTER TO GLOBAL ARRAY
         for (ieb, eb) in enumerate(self.mesh.eleblx):
@@ -413,9 +387,9 @@ class FiniteElementModel(object):
                 el = self.elements[iel]
                 eft = self.eftab[iel]
                 response = el.response(u[eft], du[eft], time, dtime, istep,
-                                       iframe, self.svars[:,self.svtab[iel]],
-                                       self.dltyp[iel], self.dload[iel],
-                                       predef[:,:,el.inodes], procedure, nlgeom,
+                                       iframe, svars[:,svtab[iel]],
+                                       dltyp[iel], dload[iel],
+                                       predef_i[:,:,el.inodes], procedure, nlgeom,
                                        cflag, step_type, load_fac)
 
                 if cflag == STIFF_AND_FORCE:
@@ -429,28 +403,15 @@ class FiniteElementModel(object):
                     rhs[eft] += response
 
         if cflag == STIFF_AND_FORCE:
-            return K, rhs + load_fac * self.external_force_array()
+            return K, rhs + load_fac * Q
 
         elif cflag == STIFF_ONLY:
             return K
 
         elif cflag == FORCE_ONLY:
-            return rhs + load_fac * self.external_force_array()
+            return rhs + load_fac * Q
 
-    def external_force_array(self):
-        # COMPUTE CONTRIBUTION FROM NEUMANN BOUNDARY
-        Q = zeros(self.numdof)
-        for n in range(self.numnod):
-            ix = 0
-            for j in range(MDOF):
-                if self.nodfat[n,j] > 0:
-                    if self.doftags[n,j] == NEUMANN:
-                        I = self.nodfmt[n] + ix
-                        Q[I] = self.dofvals[n,j]
-                    ix += 1
-        return Q
-
-    def apply_bc(self, K, F, u=None, du=None, load_fac=1.):
+    def apply_bc(self, K, F, doftags, dofvals, u=None, du=None, load_fac=1.):
         """
         .. _apply_bc:
 
@@ -477,32 +438,20 @@ class FiniteElementModel(object):
         application code's ``Solve`` method.
 
         """
-
         if  u is None:  u = zeros(self.numdof)
         if du is None: du = zeros(self.numdof)
 
         # COPY THE GLOBAL ARRAYS
         Kbc, Fbc = K.copy(), F.copy()
-        ubc, mask = [], array([False]*self.numdof)
 
         # DIRICHLET BOUNDARY CONDITIONS
-        for i in range(self.numnod):
-            ix = 0
-            for j in range(MDOF):
-                if self.nodfat[i,j] <= 0:
-                    continue
-                if self.doftags[i,j] == DIRICHLET:
-                    I = self.nodfmt[i] + ix
-                    u_cur = u[I] + du[I]
-                    ufac = load_fac * self.dofvals[i,j] - u_cur
-                    Fbc -= [K[k,I] * ufac for k in range(self.numdof)]
-                    ubc.append(ufac)
-                    mask[I] = True
-                    Kbc[I,:] = Kbc[:,I] = 0
-                    Kbc[I,I] = 1
-                ix += 1
-
-        Fbc[mask] = ubc
+        for (i, I) in enumerate(doftags):
+            u_cur = u[I] + du[I]
+            ufac = load_fac * dofvals[i] - u_cur
+            Fbc -= [K[k,I] * ufac for k in range(self.numdof)]
+            Kbc[I,:] = Kbc[:,I] = 0.
+            Kbc[I,I] = 1.
+        Fbc[doftags] = dofvals
         return Kbc, Fbc
 
     # ----------------------------------------------------------------------- #
@@ -530,308 +479,61 @@ class FiniteElementModel(object):
             raise UserInputError('DUPLICATE MATERIAL {0!r}'.format(name))
         self.materials[name] = Material(name)
 
-    # ----------------------------------------------------------------------- #
-    # --- BOUNDARY CONDITIONS ----------------------------------------------- #
-    # ----------------------------------------------------------------------- #
-    def FixNodes(self, nodes):
-        """Fix nodal degrees of freedom
-
-        Parameters
-        ----------
-        nodes : int, list of int, or symbolic constant
-            Nodes to fix
-
-        Notes
-        -----
-        ``nodes`` can be a single external node label, a list of external node
-        labels, or one of the region symbolic constants.
-
-        All active displacement and rotation degrees of freedom are set to 0.
-
-        """
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        self.assign_dof(DIRICHLET, nodes, self.active_dof, 0.)
-    FixDOF = FixNodes
-
-    def PinNodes(self, nodes):
-        """Pin nodal degrees of freedom
-
-        Parameters
-        ----------
-        nodes : int, list of int, or symbolic constant
-            Nodes to fix
-
-        Notes
-        -----
-        ``nodes`` can be a single external node label, a list of external node
-        labels, or one of the region symbolic constants.
-
-        All active displacement degrees of freedom are set to 0.
-
-        """
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        dof = [x for x in (X,Y,Z) if x in self.active_dof]
-        self.assign_dof(DIRICHLET, nodes, dof, 0.)
-
-    def PrescribedBC(self, nodes, dof, amplitude=0.):
-        """Prescribe nodal degrees of freedom
-
-        Parameters
-        ----------
-        nodes : int, list of int, or symbolic constant
-            Nodes to fix
-        dof : symbolic constant
-            Degree of freedom to fix.  One of ``X,Y,Z,TX,TY,TZ,T``.
-        amplitude : float or callable {0}
-            The magnitude of the prescribed boundary condition
-
-        Notes
-        -----
-        ``nodes`` can be a single external node label, a list of external node
-        labels, or one of the region symbolic constants.
-
-        ``amplitude`` can either be a float or a callable function. If a
-        float, that value is assigned to all ``nodes``. If a callable
-        function, the value assigned to each node is ``amplitude(x)``, where
-        ``x`` is the node's coordinate position. The coordinate positions of
-        all nodes are sent to the function as a n-dimensional column vector.
-
-        Examples
-        --------
-
-        - Assign constant amplitude BC to the :math:`x` displacement of all
-          nodes on left side of domain:
-
-          .. code:: python
-
-             self.PrescribedBC(ILO, X, 5.)
-
-        - Assign variable amplitude BC to the :math:`x` displacement of all
-          nodes on left side of domain. The variable amplitude function is
-          :math:`\Delta_x=y^2`.
-
-          .. code:: python
-
-             fun = lambda x: x[:,1]**2
-             self.PrescribedBC(ILO, X, fun)
-
-        """
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        self.assign_dof(DIRICHLET, nodes, dof, amplitude)
-    PrescribedDOF = PrescribedBC
-
-    def assign_dof(self, doftype, nodes, dof, amplitude):
-        inodes = self.mesh.get_internal_node_ids(nodes)
-        if hasattr(amplitude, '__call__'):
-            # AMPLITUDE IS A FUNCTION
-            a = amplitude(self.mesh.coord[inodes])
-        elif not is_listlike(amplitude):
-            # CREATE A SINGLE AMPLITUDE FOR EACH NODE
-            a = ones(len(inodes)) * amplitude
-        else:
-            if len(amplitude) != len(inodes):
-                raise UserInputError('INCORRECT AMPLITUDE LENGTH')
-            # AMPLITUDE IS A LIST OF AMPLITUDES
-            a = asarray(amplitude)
-        dofs = dof if is_listlike(dof) else [dof]
-        for (i,inode) in enumerate(inodes):
-            for j in dofs:
-                if (doftype == DIRICHLET and
-                    (self.doftags[inode,j] == NEUMANN and
-                     abs(self.doftags[inode,j])>1e-12)):
-                    msg = 'ATTEMPTING TO APPLY LOAD AND DISPLACEMENT '
-                    msg += 'ON SAME DOF'
-                    raise UserInputError(msg)
-                elif doftype == NEUMANN and self.doftags[inode,j]==DIRICHLET:
-                    msg = 'ATTEMPTING TO APPLY LOAD AND DISPLACEMENT '
-                    msg += 'ON SAME DOF'
-                    raise UserInputError(msg)
-                self.doftags[inode, j] = doftype
-                self.dofvals[inode, j] = float(a[i])
-
-    # ----------------------------------------------------------------------- #
-    # --- LOADING CONDITIONS ------------------------------------------------ #
-    # ----------------------------------------------------------------------- #
-    def ConcentratedLoad(self, nodes, dof, amplitude=0.):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        self.assign_dof(NEUMANN, nodes, dof, amplitude)
-
-    def GravityLoad(self, region, components):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        orphans = self.orphaned_elements
-        if region == ALL:
-            ielems = range(self.numele)
-        else:
-            ielems = [self.mesh.elemap[el] for el in region]
-        if not is_listlike(components):
-            raise UserInputError('EXPECTED GRAVITY LOAD VECTOR')
-        if len(components) != self.dimensions:
-            raise UserInputError('EXPECTED {0} GRAVITY LOAD '
-                                 'COMPONENTS'.format(len(self.active_dof)))
-        a = asarray(components)
-        for iel in ielems:
-            if iel in orphans:
-                raise UserInputError('ELEMENT BLOCKS MUST BE ASSIGNED '
-                                     'BEFORE GRAVITY LOADS')
-            el = self.elements[iel]
-            rho = el.material.density
-            if rho is None:
-                raise UserInputError('ELEMENT MATERIAL DENSITY MUST BE ASSIGNED '
-                                     'BEFORE GRAVITY LOADS')
-            self.dltyp[iel].append(DLOAD)
-            self.dload[iel].append(rho*a)
-
-    def DistributedLoad(self, region, components):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        if not is_listlike(components):
-            raise UserInputError('EXPECTED DISTRIBUTED LOAD VECTOR')
-        if len(components) != self.dimensions:
-            raise UserInputError('EXPECTED {0} DISTRIBUTED LOAD '
-                                 'COMPONENTS'.format(len(self.active_dof)))
-        if region == ALL:
-            ielems = range(self.numele)
-        elif not is_listlike(region):
-            ielems = [self.mesh.elemap[region]]
-        else:
-            ielems = [self.mesh.elemap[el] for el in region]
-        if any(in1d(ielems, self.orphaned_elements)):
-            raise UserInputError('ELEMENT PROPERTIES MUST BE ASSIGNED '
-                                 'BEFORE DISTRIBUTEDLOAD')
-        self.dltyp[ielem].append(DLOAD)
-        self.dload[ielem].append(asarray(components))
-
-    def SurfaceLoad(self, surface, components):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        if not is_listlike(components):
-            raise UserInputError('EXPECTED SURFACE LOAD VECTOR')
-        if len(components) != self.dimensions:
-            raise UserInputError('EXPECTED {0} SURFACE LOAD '
-                                 'COMPONENTS'.format(len(self.active_dof)))
-        surface = self.mesh.find_surface(surface)
-        orphans = self.orphaned_elements
-        for (iel, iedge) in surface:
-            if iel in orphans:
-                raise UserInputError('ELEMENT PROPERTIES MUST BE ASSIGNED '
-                                     'BEFORE SURFACELOAD')
-            self.dltyp[iel].append(SLOAD)
-            self.dload[iel].append([iedge]+[x for x in components])
-
-    def SurfaceLoadN(self, surface, amplitude):
-        if self.mesh is None:
-            raise UserInputError('Mesh must first be created')
-        surface = self.mesh.find_surface(surface)
-        orphans = self.orphaned_elements
-        for (iel, iedge) in surface:
-            # DETERMINE THE NORMAL TO THE EDGE
-            if iel in orphans:
-                raise UserInputError('ELEMENT PROPERTIES MUST BE ASSIGNED '
-                                     'BEFORE SURFACELOADN')
-            el = self.elements[iel]
-            edgenod = el.edges[iedge]
-            xb = el.xc[edgenod]
-            if self.dimensions == 2:
-                n = normal2d(xb)
-            else:
-                raise NotImplementedError('3D SURFACE NORMAL')
-            self.dltyp[iel].append(SLOAD)
-            self.dload[iel].append([iedge]+[x for x in amplitude*n])
-
-    def Pressure(self, surface, amplitude):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        self.SurfaceLoadN(surface, -amplitude)
-
-    # ----------------------------------------------------------------------- #
-    # --- HEAT TRANSFER LOADINGS -------------------------------------------- #
-    # ----------------------------------------------------------------------- #
-    def SurfaceFlux(self, surface, qn):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        surf = self.mesh.find_surface(surface)
-        for (iel, iedge) in surf:
-            self.dltyp[iel].append(SFLUX)
-            self.dload[iel].append([iedge, qn])
-
-    def SurfaceConvection(self, surface, Too, h):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        surf = self.mesh.find_surface(surface)
-        for (iel, iedge) in surf:
-            self.dltyp[iel].append(SFILM)
-            self.dload[iel].append([iedge, Too, h])
-
-    def HeatGeneration(self, region, amplitude):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        if region == ALL:
-            xelems = sorted(self.mesh.elemap.keys())
-        else:
-            xelems = region
-        inodes = []
-        for eb in self.mesh.eleblx:
-            for (i, xel) in enumerate(eb.labels):
-                if xel in xelems:
-                    inodes.extend(eb.elecon[i])
-        inodes = unique(inodes)
-        if hasattr(amplitude, '__call__'):
-            # AMPLITUDE IS A FUNCTION
-            x = self.mesh.coord[inodes]
-            a = amplitude(x)
-        elif not is_listlike(amplitude):
-            a = amplitude * ones(len(inodes))
-        else:
-            if len(amplitude) != len(inodes):
-                raise UserInputError('HEAT GENERATION AMPLITUDE MUST HAVE '
-                                     'LENGTH {0}'.format(len(inodes)))
-            a = asarray(amplitude)
-        nodmap = dict(zip(inodes, range(inodes.shape[0])))
-        for xelem in xelems:
-            ielem = self.mesh.elemap[xelem]
-            ix = [nodmap[n] for n in self.elements[ielem].inodes]
-            self.dltyp[ielem].append(HSRC)
-            self.dload[ielem].append(a[ix])
+    def PrescribedBC(self, nodes, dof):
+        if self.steps is not None:
+            raise UserInputError('Boundary conditions must be assigned to steps '
+                                 'after creation of first step')
+        self.pr_bc.append((nodes, dof))
 
     def InitialTemperature(self, nodes, amplitude):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        inodes = self.mesh.get_internal_node_ids(nodes)
-        if hasattr(amplitude, '__call__'):
-            # AMPLITUDE IS A FUNCTION
-            a = amplitude(self.mesh.coord[inodes])
-        elif not is_listlike(amplitude):
-            # CREATE A SINGLE AMPLITUDE FOR EACH NODE
-            a = ones(len(inodes)) * amplitude
-        else:
-            if len(amplitude) != len(inodes):
-                raise UserInputError('INCORRECT AMPLITUDE LENGTH')
-            # AMPLITUDE IS A LIST OF AMPLITUDES
-            a = asarray(amplitude)
-        self.initial_temp = a
-        self.final_temp = a
+        if self.steps is not None:
+            raise UserInputError('Intial temperatures must be assigned '
+                                 'before creating first step')
+        self.initial_temp.append((nodes, amplitude))
 
-    def Temperature(self, nodes, amplitude):
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        inodes = self.mesh.get_internal_node_ids(nodes)
-        if hasattr(amplitude, '__call__'):
-            # AMPLITUDE IS A FUNCTION
-            a = amplitude(self.mesh.coord[inodes])
-        elif not is_listlike(amplitude):
-            # CREATE A SINGLE AMPLITUDE FOR EACH NODE
-            a = ones(len(inodes)) * amplitude
-        else:
-            if len(amplitude) != len(inodes):
-                raise UserInputError('INCORRECT AMPLITUDE LENGTH')
-            # AMPLITUDE IS A LIST OF AMPLITUDES
-            a = asarray(amplitude)
-        self.final_temp = a
+    def get_initial_temperature(self):
+        itemp = zeros(self.numnod)
+        for (nodes, amplitude) in self.initial_temp:
+            inodes = self.mesh.get_internal_node_ids(nodes)
+            if hasattr(amplitude, '__call__'):
+                # AMPLITUDE IS A FUNCTION
+                a = amplitude(self.mesh.coord[inodes])
+            elif not is_listlike(amplitude):
+                # CREATE A SINGLE AMPLITUDE FOR EACH NODE
+                a = ones(len(inodes)) * amplitude
+            else:
+                if len(amplitude) != len(inodes):
+                    raise UserInputError('INCORRECT AMPLITUDE LENGTH')
+                # AMPLITUDE IS A LIST OF AMPLITUDES
+                a = asarray(amplitude)
+            itemp[inodes] = a
+        return itemp
+
+    # ----------------------------------------------------------------------- #
+    # --- STEPS ------------------------------------------------------------- #
+    # ----------------------------------------------------------------------- #
+    def StaticStep(self, name=None, type=GENERAL, period=1., increments=None):
+
+        if self.steps is None:
+            self.setup()
+            self.initialize_steps()
+
+        if name is None:
+            i = len(self.steps)
+            while 1:
+                name = 'Step-{0}'.format(i)
+                if name not in self.steps:
+                    break
+                i += 1
+                continue
+        if name in self.steps:
+            raise UserInputError('Duplicate step name {0!r}'.format(name))
+        step = self.steps.Step(name, type=type,
+                               period=period, increments=increments)
+        return step
+
+    def LinearPerturbationStep(self, name=None):
+        return self.StaticStep(name=name, type=LINEAR_PERTURBATION)
 
     # ----------------------------------------------------------------------- #
     # --- ELEMENT BLOCKS AND SETS-------------------------------------------- #
@@ -1014,7 +716,7 @@ class FiniteElementModel(object):
             raise UserInputError('Plot2D IS ONLY APPLICABLE TO 2D PROBLEMS')
         xy = array(self.mesh.coord)
         if deformed:
-            xy += scale * self.dofs.reshape(xy.shape)
+            xy += scale * self.steps.last.dofs.reshape(xy.shape)
         elecon = []
         for blk in self.mesh.eleblx:
             if (blk.eletyp.dimensions, blk.eletyp.nodes) == (2,8):

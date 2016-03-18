@@ -8,7 +8,7 @@ from os.path import basename, join, splitext, isfile
 
 from .mesh import ElementBlock
 from ..constants import *
-from ..data import StepRepository
+from ..post import StepRepository1
 from ..elemlib import ElementFamily
 
 # True if we are running on Python 3.
@@ -720,7 +720,7 @@ class EXOFileReader(EXOFile):
         scalars1, vectors1, tensors1 = self.parse_names_and_components(nodvarnames)
         scalars2, vectors2, tensors2 = self.parse_names_and_components(elevarnames)
 
-        self.steps = StepRepository()
+        self.steps = StepRepository1()
         step = self.steps.Step()
         frame = step.frames[0]
 
