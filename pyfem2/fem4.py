@@ -80,6 +80,8 @@ class Plane2DModel(FiniteElementModel):
                                       '{0}, FRAME {1}'.format(istep, iframe+1))
                         break
 
+                logging.debug('STEP {0}, FRAME {1}, ITER {2}, ERROR: '
+                              '{3}, {4}'.format(istep, iframe+1, nit+1, err1, err2))
                 continue
 
             else:

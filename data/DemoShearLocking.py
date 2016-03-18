@@ -18,10 +18,10 @@ def PlaneStressBeam(ratio):
     V.ElementBlock('ElementBlock1', ALL)
     El = PlaneStressQuad4Incompat
     El = PlaneStressQuad4
-    V.AssignProperties('ElementBlock1', PlaneStressQuad4, 'Material-1', t=1)
+    V.AssignProperties('ElementBlock1', PlaneStressQuad4Incompat, 'Material-1', t=1)
     V.PrescribedBC(IHI, (X,Y))
     V.SurfaceLoad(ILO, [0, -q])
-    V.Solve()
+    V.Solve(solver=NEWTON)
     if not os.getenv('NOGRAPHICS'):
         ax = V.Plot2D(deformed=1, color='b')
     u = AnalyticSolution(V.mesh.coord, q)

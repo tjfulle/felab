@@ -77,7 +77,7 @@ class CSDIElement(CSDElement):
                  predef, procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""
 
-        xc = self.xc  # + u.reshape(self.xc.shape)
+        xc = self.xc # + u.reshape(self.xc.shape)
 
         n = sum([count_digits(nfs) for nfs in self.signature])
         compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)

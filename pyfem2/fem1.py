@@ -386,7 +386,8 @@ class FiniteElementModel(object):
         msg += 'STEP: {0}, FRAME: {1}, TIME: {2}'.format(istep, iframe, tf)
         if ninc is not None:
             msg += ', INCREMENT: {0}'.format(ninc)
-        logging.debug(msg)
+        if ninc in (None, 1):
+            logging.debug(msg)
 
         if cflag not in (STIFF_AND_FORCE, STIFF_ONLY, FORCE_ONLY, LP_OUTPUT):
             raise ValueError('UNKNOWN COMPUTE QUANTITY')
