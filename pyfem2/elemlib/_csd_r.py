@@ -14,7 +14,7 @@ class CSDRElement(CSDElement):
     gaussw = None
     variables = ('E', 'DE', 'S')
     integration = None
-    integration1 = None
+    hourglass_control = False
 
     def shape(self, *args):
         raise NotImplementedError
@@ -42,26 +42,20 @@ class CSDRElement(CSDElement):
     def average(cls, point, data, v=None):
         """Inverse distance weighted average of integration point data at point"""
 
-        i1, i2 = cls.integration, cls.integration - cls.integration1
-
         if data.ndim == 1:
             # SCALAR DATA
-            assert len(data) == i1+i2
-
+            assert len(data) == cls.integration
         elif len(data.shape) == 2:
             # VECTOR OR TENSOR DATA
-            assert data.shape[0] == i1+i2
-
+            assert data.shape[0] == cls.integration
         else:
             raise TypeError('Unknown data type')
 
-        data = data[:i1]
-
-        if i1 == 1:
+        if cls.integration == 1:
             weights = [1.]
         else:
             dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
-            weights = [1./dist(point, cls.gaussp[i]) for i in range(i1)]
+            weights = [1./dist(point, cls.gaussp[i]) for i in range(cls.integration)]
 
         if data.ndim == 1:
             # SCALAR DATA
@@ -141,7 +135,7 @@ class CSDRElement(CSDElement):
             svars[1,ij+a2*ntens:ij+(a2+1)*ntens] = de  # STRAIN INCREMENT
             svars[1,ij+a3*ntens:ij+(a3+1)*ntens] = s  # STRESS
 
-            if compute_stiff and p >= self.integration1:
+            if compute_stiff:
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL ONLY FOR
                 # REDUCED INTEGRATION PORTION
                 Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
@@ -160,7 +154,7 @@ class CSDRElement(CSDElement):
         if cflag == LP_OUTPUT:
             return
 
-        if compute_stiff:
+        if compute_stiff and self.hourglass_control:
             # PERFORM HOURGLASS CORRECTION
             Khg = zeros(Ke.shape)
             for p in range(len(self.hglassp)):

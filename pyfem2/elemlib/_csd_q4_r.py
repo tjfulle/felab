@@ -20,20 +20,15 @@ class CSDQ4RElement(CSDRElement):
 
     """
     nodes = 4
-    elefab = {'t':1.}
+    elefab = {'t':1., 'hourglass_control': False}
     signature = [(1,1,0,0,0,0,0),
                  (1,1,0,0,0,0,0),
                  (1,1,0,0,0,0,0),
                  (1,1,0,0,0,0,0)]
     dimensions = 2
-    integration = 5
-    integration1 = 4
-    gaussp = array([[-1., -1.],
-                    [ 1., -1.],
-                    [-1.,  1.],
-                    [ 1.,  1.],
-                    [ 0.,  0.]]) / sqrt(3.)
-    gaussw = array([1., 1., 1., 1., 4.])
+    integration = 1
+    gaussp = array([[ 0.,  0.]])
+    gaussw = array([4.])
     cp = array([0, 0], dtype=float64)
     xp = array([[-1, -1], [1, -1], [1, 1], [-1, 1],
                 [0, -1], [1, 0], [0, 1], [-1, 0]], dtype=float64),

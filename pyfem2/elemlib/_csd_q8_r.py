@@ -23,7 +23,7 @@ class CSDQ8RElement(CSDRElement):
 
     """
     nodes = 8
-    elefab = {'t':1.}
+    elefab = {'t':1., 'hourglass_control': False}
     signature = [(1,1,0,0,0,0,0),
                  (1,1,0,0,0,0,0),
                  (1,1,0,0,0,0,0),
@@ -33,17 +33,10 @@ class CSDQ8RElement(CSDRElement):
                  (1,1,0,0,0,0,0),
                  (1,1,0,0,0,0,0)]
     dimensions = 2
-    integration = 13
-    integration1 = 9
-    gaussp = array([[c,  c], [0,  c], [-c,  c],
-                    [c,  0], [0,  0], [-c,  0],
-                    [c, -c], [0, -c], [-c, -c],
-                    [-TOOR3, -TOOR3], [ TOOR3, -TOOR3],
+    integration = 4
+    gaussp = array([[-TOOR3, -TOOR3], [ TOOR3, -TOOR3],
                     [-TOOR3,  TOOR3], [ TOOR3,  TOOR3]])
-    gaussw = array([0.30864197, 0.49382716, 0.30864197,
-                    0.49382716, 0.79012346, 0.49382716,
-                    0.30864197, 0.49382716, 0.30864198,
-                    1., 1., 1., 1.])
+    gaussw = array([1., 1., 1., 1.])
     cp = array([0, 0], dtype=float64)
     xp = array([[-1, -1], [1, -1], [1, 1], [-1, 1],
                 [0, -1], [1, 0], [0, 1], [-1, 0]], dtype=float64),

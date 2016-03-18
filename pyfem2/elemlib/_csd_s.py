@@ -53,28 +53,23 @@ class CSDSElement(CSDElement):
     def average(cls, point, data, v=None):
         """Inverse distance weighted average of integration point data at point"""
 
-        i1, i2 = cls.integration1, cls.integration-cls.integration1
-
         if data.ndim == 1:
             # SCALAR DATA
-            assert len(data) == i1+i2
-
+            assert len(data) == cls.integration
         elif len(data.shape) == 2:
             # VECTOR OR TENSOR DATA
-            assert data.shape[0] == i1+i2
-
+            assert data.shape[0] == cls.integration
         else:
             raise TypeError('Unknown data type')
 
-        data = data[:i1]
+        data = data[:cls.integration1]
 
         dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
-        weights = [1./dist(point, cls.gaussp[i]) for i in range(i1)]
+        weights = [1./dist(point, cls.gaussp[i]) for i in range(cls.integration1)]
 
         if data.ndim == 1:
             # SCALAR DATA
             return average(data, weights=weights)
-
         elif len(data.shape) == 2:
             # VECTOR OR TENSOR DATA
             return average(data, axis=0, weights=weights)
@@ -143,7 +138,6 @@ class CSDSElement(CSDElement):
             s = svars[0,ij+a3*ntens:ij+(a3+1)*ntens]
             s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
                                               dtemp, self.ndir, self.nshr, F0, F)
-
             # STORE THE UPDATED VARIABLES
             svars[1,ij+a1*ntens:ij+(a1+1)*ntens] += de  # STRAIN
             svars[1,ij+a2*ntens:ij+(a2+1)*ntens] = de  # STRAIN INCREMENT
@@ -151,10 +145,13 @@ class CSDSElement(CSDElement):
 
             if compute_stiff:
                 # SELECTIVELY REDUCED INTEGRATION
-                D1, D2 = iso_dev_split(self.ndir, self.nshr, D)
-                D = D1 if p >= self.integration1 else D2
+                Diso, Ddev = iso_dev_split(self.ndir, self.nshr, D)
+                D = Diso if p >= self.integration1 else Ddev
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
                 Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
+
+            if p >= self.integration1:
+                continue
 
             if compute_force:
                 P = self.pmatrix(N)
@@ -164,7 +161,7 @@ class CSDSElement(CSDElement):
 
             if step_type == GENERAL:
                 # UPDATE THE RESIDUAL
-                resid +=  J * self.gaussw[p] * dot(s, B)
+                resid +=  J * self.gaussw[p] * dot(s, s)
 
         if cflag == LP_OUTPUT:
             return
