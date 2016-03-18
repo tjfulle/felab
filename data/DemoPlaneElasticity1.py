@@ -4,7 +4,7 @@ sys.path.insert(0, '../')
 from numpy import *
 from pyfem2 import *
 
-V = Plane2DModel(jobid='Plane1')
+V = FiniteElementModel(jobid='Plane1')
 V.GenesisMesh('PlateWithHoleQuad4.g')
 
 V.Material('Material-1')
@@ -12,11 +12,12 @@ V.materials['Material-1'].Elastic(E=10e6, Nu=.29)
 
 V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1', t=1)
 
-V.PrescribedBC('LeftHandSide', X, 0.)
-V.PrescribedBC('PinNode', Y, 0.)
-V.PrescribedBC('RightHandSide', X, .1)
+step = V.StaticStep()
+step.PrescribedBC('LeftHandSide', X, 0.)
+step.PrescribedBC('PinNode', Y, 0.)
+step.PrescribedBC('RightHandSide', X, .1)
 
-V.Solve()
+step.run()
 
 V.WriteResults()
 

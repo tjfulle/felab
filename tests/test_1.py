@@ -66,38 +66,40 @@ def test_fem5_2():
                      [ 0.,       0.,      ]], V.u)
 
 @pytest.mark.plane
-def test_fem4_1_gravity_load1():
-    V = Plane2DModel('Gravity')
+def test_gravity_load1():
+    V = FiniteElementModel('Gravity')
     V.RectilinearMesh((101, 11), (100, 10))
     V.Material('Material-1')
     V.materials['Material-1'].Density(1.)
     V.materials['Material-1'].Elastic(E=10e6, Nu=.333)
     V.ElementBlock('Block1', ALL)
     V.AssignProperties('Block1', PlaneStrainQuad4, 'Material-1', t=1)
-    V.FixNodes(ILO)
-    V.GravityLoad(ALL, [0, -1e2])
-    V.Solve()
+    step = V.StaticStep()
+    step.FixNodes(ILO)
+    step.GravityLoad(ALL, [0, -1e2])
+    step.run()
     V.WriteResults()
 
 @pytest.mark.heat
-def test_fem3_plate_with_hole():
-    V = HeatTransfer2DModel()
+def test_heat_transfer_plate_with_hole():
+    V = FiniteElementModel()
     V.GenesisMesh(join(D, 'data/PlateWithHoleTria3Fine.g'))
     k, h, Too = 12, 250, 25
     fun = lambda x: 1000 / sqrt(x[:,0] ** 2 + x[:,1] ** 2)
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(k)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
-    V.PrescribedBC(ILO, T, 200)
-    V.PrescribedBC(IHI, T, 50)
-    V.SurfaceFlux(JLO, 2000)
-    V.SurfaceConvection(JHI, Too, h)
-    V.HeatGeneration(ALL, fun)
-    V.Solve()
-    V.mesh.PlotScalar2D(V.dofs.flatten())
+    step = V.HeatTransferStep()
+    step.PrescribedBC(ILO, T, 200)
+    step.PrescribedBC(IHI, T, 50)
+    step.SurfaceFlux(JLO, 2000)
+    step.SurfaceConvection(JHI, Too, h)
+    step.HeatGeneration(ALL, fun)
+    step.run()
+    V.mesh.PlotScalar2D(step.dofs.flatten())
 
 @pytest.mark.heat
-def test_fem3_1():
+def test_heat_transfer_1():
     def solution(x, N=20):
         def fun(k):
             a = sin(k * pi * (1 + x[:,0]) / 2.) / (k ** 3 * sinh(k * pi))
@@ -105,37 +107,39 @@ def test_fem3_1():
             return a * b
         u = (1-x[:,0]**2)/2.-16./pi**3*sum([fun(k) for k in range(1, N, 2)],0)
         return u
-    V = HeatTransfer2DModel()
+    V = FiniteElementModel()
     V.GenesisMesh(join(D, 'data/UniformPlateTria3Fine.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
-    V.HeatGeneration(ALL, 1)
-    V.PrescribedBC(BOUNDARY, T, 0)
-    V.Solve()
+    step = V.HeatTransferStep()
+    step.HeatGeneration(ALL, 1)
+    step.PrescribedBC(BOUNDARY, T, 0)
+    step.run()
     Tn = solution(V.mesh.coord)
-    err = sqrt(mean((V.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
+    err = sqrt(mean((step.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
     assert err < 1e-4
 
 @pytest.mark.heat
-def test_fem3_2():
+def test_heat_transfer_2():
     def solution(x):
         return 2. * (1. + x[:,1]) / ((3. + x[:,0])**2 + (1 + x[:,1])**2)
-    V = HeatTransfer2DModel()
+    V = FiniteElementModel()
     V.GenesisMesh(join(D, 'data/UniformPlateTria3.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
-    V.PrescribedBC(BOUNDARY, T, solution)
-    V.HeatGeneration(ALL, 0)
-    V.Solve()
+    step = V.HeatTransferStep()
+    step.PrescribedBC(BOUNDARY, T, solution)
+    step.HeatGeneration(ALL, 0)
+    step.run()
     Tn = solution(V.mesh.coord)
-    err = sqrt(mean((V.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
+    err = sqrt(mean((step.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
     assert err < 5e-5
 
 @pytest.mark.heat
 @pytest.mark.skipif(dm is None, reason='distmesh not import')
-def test_fem3_3():
+def test_heat_transfer_3():
     def solution(x, N=20):
         def fun(n):
             return sin(2.*n*pi/3.)/n**2/sinh(n*pi)*sin(n*pi*x[:,0])*sinh(n*pi*x[:,1])
@@ -146,24 +150,25 @@ def test_fem3_3():
     coord, elecon = dm.distmesh2d(fd, fh, .05, (0, 0, 1, 1),
                                   [(0, 0),(0, 1),(1, 0),(1, 1)])
     f2 = lambda x: where(x[:,0] <= 2./3., 75*x[:,0], 150*(1-x[:,0]))
-    V = HeatTransfer2DModel()
+    V = FiniteElementModel()
     V.Mesh(p=coord, t=elecon)
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.ElementBlock('ElementBlock1', ALL)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
-    V.PrescribedBC(JLO, T, 0)
-    V.PrescribedBC(JHI, T, f2)
-    V.PrescribedBC(ILO, T, 0)
-    V.PrescribedBC(IHI, T, 0)
-    V.HeatGeneration(ALL, 0)
-    V.Solve()
+    step = V.HeatTransferStep()
+    step.PrescribedBC(JLO, T, 0)
+    step.PrescribedBC(JHI, T, f2)
+    step.PrescribedBC(ILO, T, 0)
+    step.PrescribedBC(IHI, T, 0)
+    step.HeatGeneration(ALL, 0)
+    step.run()
     Tn = solution(V.mesh.coord)
-    err = sqrt(mean((V.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
+    err = sqrt(mean((step.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
     assert err < 5e-3
 
 @pytest.mark.heat
-def test_fem3_4():
+def test_heat_transfer_4():
     def solution(x, q0=1., k=1., N=20):
         def fun(n):
             al = .5 * (2. * n - 1.) * pi
@@ -176,23 +181,24 @@ def test_fem3_4():
               [7,0.,1.], [8,.5,1.], [9,1.,1.]]
     eletab = [[1,1,2,5], [2,1,5,4], [3,2,3,6], [4,2,6,5],
               [5,4,5,8], [6,4,8,7], [7,5,6,9], [8,5,9,8]]
-    V = HeatTransfer2DModel()
+    V = FiniteElementModel()
     V.Mesh(nodtab=nodtab, eletab=eletab)
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.ElementBlock('ElementBlock1', ALL)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
-    V.PrescribedBC(IHI, T)
-    V.PrescribedBC(JHI, T)
-    V.HeatGeneration(ALL, 1)
-    V.Solve()
+    step = V.HeatTransferStep()
+    step.PrescribedBC(IHI, T)
+    step.PrescribedBC(JHI, T)
+    step.HeatGeneration(ALL, 1)
+    step.Solve()
     Tn = solution(V.mesh.coord)
-    err = sqrt(mean((V.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
+    err = sqrt(mean((step.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
     assert err < .045
 
 @pytest.mark.heat
 @pytest.mark.skipif(dm is None, reason='distmesh not import')
-def test_fem3_5():
+def test_heat_transfer_5():
     def solution(x, q0=1., k=1., N=20):
         def fun(n):
             al = .5 * (2. * n - 1.) * pi
@@ -205,33 +211,35 @@ def test_fem3_5():
     fh = dm.huniform
     coord, elecon = dm.distmesh2d(fd, fh, .025, (0, 0, 1, 1),
                                   [(0, 0),(0, 1),(1, 0),(1, 1)])
-    V = HeatTransfer2DModel()
+    V = FiniteElementModel()
     V.Mesh(p=coord, t=elecon)
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(1.)
     V.ElementBlock('ElementBlock1', ALL)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
-    V.PrescribedBC(IHI, T)
-    V.PrescribedBC(JHI, T)
-    V.HeatGeneration(ALL, 1)
-    V.Solve()
+    step = V.HeatTransferStep()
+    step.PrescribedBC(IHI, T)
+    step.PrescribedBC(JHI, T)
+    step.HeatGeneration(ALL, 1)
+    step.run()
     Tn = solution(V.mesh.coord)
-    err = sqrt(mean((V.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
+    err = sqrt(mean((step.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
     assert err < 1e-4
 
 @pytest.mark.heat
-def test_fem3_plate_with_hole2():
+def test_heat_transfer_plate_with_hole2():
     k, h, Too = 12, 250, 25
-    V = HeatTransfer2DModel('HeatPlateWithHole')
+    V = FiniteElementModel('HeatPlateWithHole')
     V.GenesisMesh(join(D, 'data/PlateWithHoleTria3.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(k)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
-    V.PrescribedBC(BOUNDARY, T, 50)
+    step = V.HeatTransferStep()
+    step.PrescribedBC(BOUNDARY, T, 50)
     fun = lambda x: 1000 / sqrt(x[:,0] ** 2 + x[:,1] ** 2)
-    V.HeatGeneration(ALL, fun)
-    V.InitialTemperature(ALL, 50)
-    V.Solve()
+    step.HeatGeneration(ALL, fun)
+    step.InitialTemperature(ALL, 50)
+    step.run()
     V.WriteResults()
 
 @pytest.mark.truss
@@ -474,7 +482,7 @@ def test_elemlibN_2_1():
     class mat: E = 1
     El = ElasticLink1D2(1, [0, 1], [0, 1], mat, A=1)
     Ke = El.response(zeros(2), zeros(2), [0,0], 1., 1, 1, [], [], [], STATIC,
-                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
+                     [], False, STIFF_ONLY, DIRECT, 1.)
     assert allclose([[1,-1],[-1,1]], Ke)
 
 def test_elemlibN_2_2():
@@ -482,7 +490,7 @@ def test_elemlibN_2_2():
     class mat: E=1000
     El = ElasticLink2D2(1, [0, 1], [[0,0], [30,40]], mat, A=5)
     Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,[],[],[],STATIC,
-                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
+                     [], False, STIFF_ONLY, DIRECT, 1.)
     assert allclose([[ 36.,  48., -36., -48.],
                      [ 48.,  64., -48., -64.],
                      [-36., -48.,  36.,  48.],
@@ -493,7 +501,7 @@ def test_elemlibN_2_3():
     class mat: E = 343
     El = ElasticLink3D2(1, [0, 1], [[0,0,0],[2,3,6]], mat, A=10)
     Ke = El.response(zeros((2,3)),zeros((2,3)),[0,0],1.,1,1,[],[],[],STATIC,
-                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
+                     [], False, STIFF_ONLY, DIRECT, 1.)
     assert allclose([[  40.,   60.,  120.,  -40.,  -60., -120.],
                      [  60.,   90.,  180.,  -60.,  -90., -180.],
                      [ 120.,  180.,  360., -120., -180., -360.],
@@ -508,7 +516,7 @@ def test_elemlibN_2_4():
     A, Izz = 125, 250
     El = PlaneBeamColumn(1, [0, 1], coord, mat, A=A, Izz=Izz)
     Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,[],[],[],STATIC,
-                     [], False, STIFF_ONLY, LINEAR_PERTURBATION, 1.)
+                     [], False, STIFF_ONLY, DIRECT, 1.)
 
 @pytest.mark.demos
 def test_demos():

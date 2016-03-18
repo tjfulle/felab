@@ -141,8 +141,7 @@ def get_procname(proc):
     return {STATIC: 'STATIC', HEAT_TRANSFER: 'HEAT TRANSFER'}[proc]
 
 def get_steptypname(step_type):
-    return {GENERAL: 'GENERAL',
-            LINEAR_PERTURBATION: 'LINEAR PERTURBATION'}[step_type]
+    return step_type.upper()
 
 def emptywithlists(n):
     a = zeros(n, dtype=object)

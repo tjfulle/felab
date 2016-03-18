@@ -5,7 +5,7 @@ from numpy import *
 from pyfem2 import *
 
 # Create the model
-V = HeatTransfer2DModel(jobid='Heat1')
+V = FiniteElementModel(jobid='Heat1')
 
 # Read mesh from file
 V.GenesisMesh('PlateWithHoleTria3Fine.g')
@@ -18,27 +18,28 @@ V.materials['Material-1'].IsotropicThermalConductivity(12)
 V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
 
 # Fix temperatures on left and right edge
-V.PrescribedBC(ILO, T, 200)
-V.PrescribedBC(IHI, T, 50)
+step = V.HeatTransferStep()
+step.PrescribedBC(ILO, T, 200)
+step.PrescribedBC(IHI, T, 50)
 
 # Define surface flux on bottome edge of domain
-V.SurfaceFlux(JLO, 2000)
+step.SurfaceFlux(JLO, 2000)
 
 # Define surface convection on top edge of domain
 Too, h = 25, 250
-V.SurfaceConvection(JHI, Too, h)
+step.SurfaceConvection(JHI, Too, h)
 
 # Define a function specifying the heat generation
 def fun(x):
     return 1000. / sqrt(x[:,0] ** 2 + x[:,1] ** 2)
-V.HeatGeneration(ALL, fun)
+step.HeatGeneration(ALL, fun)
 
 # Solve for the unknown degrees of freedom
-V.Solve()
+step.run()
 
 V.WriteResults()
 
 if not os.environ.get('NOGRAPHICS'):
-    V.Plot2D(colorby=V.dofs.flatten(), show=1)
+    V.Plot2D(colorby=step.dofs.flatten(), show=1)
 
 #PlotScalar2D(V.mesh.coord, V.mesh.elecon, V.dofs.flatten())

@@ -5,7 +5,7 @@ import numpy.linalg as la
 
 from .utilities import *
 from .constants import *
-from .step import StepRepository
+from .step_repository import StepRepository
 from .mesh.mesh import Mesh
 from .mat import Material
 from .mesh.exodusii import File
@@ -23,6 +23,7 @@ class FiniteElementModel(object):
     implemented in class' derived from this one.
 
     """
+    dimensions = None
     def __init__(self, jobid=None):
         self.jobid = jobid or 'Job-1'
         self.mesh = None
@@ -158,6 +159,10 @@ class FiniteElementModel(object):
         self.mesh = Mesh(**kwds)
         self._initialize()
 
+    @property
+    def dofs(self):
+        return self.steps.last.dofs
+
     def _initialize(self):
 
         if self.mesh is None:
@@ -235,7 +240,7 @@ class FiniteElementModel(object):
         node_labels = sorted(self.mesh.nodmap, key=lambda k: self.mesh.nodmap[k])
 
         self.steps = StepRepository(self)
-        step = self.steps.Step('Step-0')
+        step = self.steps.InitialStep('Step-0')
         for (nodes, dof) in self.pr_bc:
             step.PrescribedBC(nodes, dof, amplitude=0.)
 
@@ -323,9 +328,9 @@ class FiniteElementModel(object):
         step.written = 1
 
     def assemble(self, u, du, Q, svtab, svars, dltyp, dload, predef,
-                 time=array([0.,0.]), dtime=1., period=1.,
-                 istep=1, iframe=1, procedure=STATIC, nlgeom=False, ninc=None,
-                 cflag=STIFF_AND_FORCE, step_type=LINEAR_PERTURBATION, load_fac=1.):
+                 procedure, step_type, time=array([0.,0.]), dtime=1., period=1.,
+                 istep=1, iframe=1, nlgeom=False, ninc=None,
+                 cflag=STIFF_AND_FORCE, load_fac=1.):
         """
         Assembles the global system of equations
 
@@ -485,6 +490,19 @@ class FiniteElementModel(object):
                                  'after creation of first step')
         self.pr_bc.append((nodes, dof))
 
+    def FixNodes(self, nodes):
+        if self.steps is not None:
+            raise UserInputError('Boundary conditions must be assigned to steps '
+                                 'after creation of first step')
+        self.pr_bc.append((nodes, ALL))
+    FixDOF = FixNodes
+
+    def PinNodes(self, nodes):
+        if self.steps is not None:
+            raise UserInputError('Boundary conditions must be assigned to steps '
+                                 'after creation of first step')
+        self.pr_bc.append((nodes, PIN))
+
     def InitialTemperature(self, nodes, amplitude):
         if self.steps is not None:
             raise UserInputError('Intial temperatures must be assigned '
@@ -512,28 +530,39 @@ class FiniteElementModel(object):
     # ----------------------------------------------------------------------- #
     # --- STEPS ------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def StaticStep(self, name=None, type=GENERAL, period=1., increments=None):
+    def unique_step_name(self):
+        i = len(self.steps)
+        while 1:
+            name = 'Step-{0}'.format(i)
+            if name not in self.steps:
+                break
+            i += 1
+            continue
+        return name
 
+    def StaticStep(self, name=None, period=1., increments=None, maxiters=10,
+                   nlgeom=False, solver=None):
         if self.steps is None:
             self.setup()
             self.initialize_steps()
-
         if name is None:
-            i = len(self.steps)
-            while 1:
-                name = 'Step-{0}'.format(i)
-                if name not in self.steps:
-                    break
-                i += 1
-                continue
+            name = self.unique_step_name()
         if name in self.steps:
             raise UserInputError('Duplicate step name {0!r}'.format(name))
-        step = self.steps.Step(name, type=type,
-                               period=period, increments=increments)
+        step = self.steps.StaticStep(name, period, increments,
+                                     maxiters, nlgeom, solver)
         return step
 
-    def LinearPerturbationStep(self, name=None):
-        return self.StaticStep(name=name, type=LINEAR_PERTURBATION)
+    def HeatTransferStep(self, name=None, period=1.):
+        if self.steps is None:
+            self.setup()
+            self.initialize_steps()
+        if name is None:
+            name = self.unique_step_name()
+        if name in self.steps:
+            raise UserInputError('Duplicate step name {0!r}'.format(name))
+        step = self.steps.HeatTransferStep(name, period=period)
+        return step
 
     # ----------------------------------------------------------------------- #
     # --- ELEMENT BLOCKS AND SETS-------------------------------------------- #

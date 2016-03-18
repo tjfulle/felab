@@ -9,23 +9,24 @@ Nu = .499
 E = 2. * mu * (1. + Nu)
 
 def LinearSolution(ax=None):
-    V = Plane2DModel(jobid='VolumeLocking.Linear')
+    V = FiniteElementModel(jobid='VolumeLocking.Linear')
     V.GenesisMesh('ThickCylinder_Linear.inp')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ALL', PlaneStrainQuad4, 'Material-1', t=1)
+    V.AssignProperties('ALL', PlaneStrainQuad4Reduced, 'Material-1', t=1)
     V.PrescribedBC('SymYZ', X)
     V.PrescribedBC('SymXZ', Y)
+    step = V.StaticStep()
     # Pressure on inside face
-    V.Pressure('SurfID', 1.)
-    V.Solve()
+    step.Pressure('SurfID', 1.)
+    step.run()
     V.WriteResults()
     ax = V.Plot2D(deformed=1, color='b', linestyle='-.', ax=ax, label='Linear',
                   xlim=(-.2,5), ylim=(-.2, 5))
     return ax
 
 def QuadraticSolution(ax=None):
-    V = Plane2DModel(jobid='VolumeLocking.Quadratic')
+    V = FiniteElementModel(jobid='VolumeLocking.Quadratic')
     V.GenesisMesh('ThickCylinder_Quadratic.inp')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)
@@ -33,8 +34,9 @@ def QuadraticSolution(ax=None):
     V.PrescribedBC('SymYZ', X)
     V.PrescribedBC('SymXZ', Y)
     # Pressure on inside face
-    V.Pressure('SurfID', 1.)
-    V.Solve()
+    step = V.StaticStep()
+    step.Pressure('SurfID', 1.)
+    step.run()
     V.WriteResults()
     return ax
 

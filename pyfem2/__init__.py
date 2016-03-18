@@ -6,11 +6,8 @@ from numpy import *
 from .constants import *
 from .elemlib import *
 from .mesh.exodusii import File, PutNodalSolution
-from .fem0 import UniformBar
-from .fem1 import FiniteElementModel
+from .finite_element_model import FiniteElementModel
 from .fem2 import TrussModel
-from .fem3 import HeatTransfer2DModel
-from .fem4 import Plane2DModel
 from .fem5 import PlaneBeamColumnTrussModel
 from .mat import Material
 from .mesh.mesh import Mesh
@@ -20,7 +17,7 @@ def printprecision(a):
     set_printoptions(a, suppress=True)
 
 p = argparse.ArgumentParser()
-p.add_argument('-v', default=0, type=int,
+p.add_argument('-v', default=1, type=int,
                help='Level of verbosity [default: %(default)s]')
 p.add_argument('-p', default=4, type=int,
                help='Print precision [default: %(default)s')

@@ -3,16 +3,19 @@ import sys
 sys.path.insert(0, '../')
 from pyfem2 import *
 
-V = Plane2DModel(jobid='PlateWithHoleQuad4')
+V = FiniteElementModel(jobid='PlateWithHoleQuad4')
 V.GenesisMesh('PlateWithHoleQuad4.g')
 
 V.Material('Material-1')
 V.materials['Material-1'].Elastic(E=100, Nu=.2)
 V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1', t=1)
-V.PrescribedBC('LeftHandSide', X, 0.)
+V.PrescribedBC('LeftHandSide', X)
 V.FixNodes('PinNode')
-V.SurfaceLoad(IHI, [1,0])
-V.Solve()
+
+step = V.StaticStep()
+step.SurfaceLoad(IHI, [1,0])
+step.run()
+
 V.WriteResults()
 
 F = File('PlateWithHoleQuad4.exo')

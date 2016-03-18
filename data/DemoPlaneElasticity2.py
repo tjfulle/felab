@@ -5,7 +5,7 @@ from numpy import *
 from pyfem2 import *
 
 # Create the model
-V = Plane2DModel(jobid='Plane2')
+V = FiniteElementModel(jobid='Plane2')
 
 # Read mesh from file
 V.GenesisMesh('PlateWithHoleTria3.g')
@@ -15,12 +15,13 @@ V.materials['Material-1'].Elastic(E=10e6, Nu=.29)
 
 V.AssignProperties('ElementBlock1', PlaneStrainTria3, 'Material-1', t=1)
 
-V.PrescribedBC('LeftHandSide', X, 0.)
-V.PrescribedBC('BottomLeft', Y, 0)
-V.PrescribedBC('RightHandSide', X, .1)
+step = V.StaticStep()
+step.PrescribedBC('LeftHandSide', X, 0.)
+step.PrescribedBC('BottomLeft', Y, 0)
+step.PrescribedBC('RightHandSide', X, .1)
 
 # Solve for the unknown degrees of freedom
-V.Solve()
+step.run()
 
 V.WriteResults()
 

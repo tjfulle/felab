@@ -1,7 +1,7 @@
 from numpy import array, dot, zeros
 from numpy.linalg import solve, LinAlgError
 
-from .fem1 import FiniteElementModel
+from .finite_element_model import FiniteElementModel
 from .elemlib import ElasticLink1D2, ElasticLink2D2, ElasticLink3D2
 from .constants import *
 from .utilities import *

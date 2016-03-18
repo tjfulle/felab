@@ -10,7 +10,7 @@ Nu = .499
 E = 2. * mu * (1. + Nu)
 
 def LinearSolution(ax=None, solver=None):
-    V = Plane2DModel(jobid='VolumeLocking.Linear')
+    V = FiniteElementModel(jobid='VolumeLocking.Linear')
     V.GenesisMesh('QuarterCylinderQuad4.g')
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=E, Nu=Nu)

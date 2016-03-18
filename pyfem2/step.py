@@ -5,81 +5,16 @@ from .utilities import *
 from .constants import *
 from .data import *
 
-__all__ = ['StepRepository']
-
-class StepRepository(object):
-    def __init__(self, model):
-        self.model = model
-        self._keys = []
-        self._values = []
-
-    def __setitem__(self, key, value):
-        self._keys.append(key)
-        self._values.append(value)
-
-    def __getitem__(self, key):
-        return self._values[self._keys.index(key)]
-        try:
-            i = self._keys.index(key)
-        except ValueError:
-            raise KeyError(key)
-        return self._values[i]
-
-    def __len__(self):
-        return len(self._keys)
-
-    def __iter__(self):
-        return iter(self._keys)
-
-    def __contains__(self, key):
-        return key in self._keys
-
-    def keys(self):
-        return self._keys
-
-    def values(self):
-        return self._values
-
-    def items(self):
-        for (i, key) in enumerate(self._keys):
-            yield (key, self._values[i])
-
-    def Step(self, name, type=GENERAL, period=1., increments=None, copy=1):
-        if not self._values:
-            step = Step(self.model, name, 0.)
-        else:
-            last = self._values[-1].frames[-1]
-            if not last.converged:
-                raise RuntimeError('PREVIOUS STEP HAS UNCONVERGED FRAMES')
-            step = Step(self.model, name, last.value, type, period, increments)
-            if copy:
-                step.frames[0].field_outputs = deepcopy(last.field_outputs)
-            step.frames[0].converged = True
-        self[name] = step
-        return self._values[-1]
-
-    @property
-    def last(self):
-        return self._values[-1]
-
-    @property
-    def first(self):
-        return self._values[0]
-
 class Step(object):
-    def __init__(self, model, name, start, type=None, period=None, increments=None):
+    def __init__(self, model, number, name, start, period):
         self.model = model
         self.written = 0
         self.name = name
-        if type is None and abs(start) > 1e-12:
-            raise ValueError('No step type given')
         self.time = start
         self.frames = []
         self.Frame(0.)
-
-        self.type = type
         self.period = period
-        self.increments = increments
+        self.number = number
 
         # DOF CONTAINERS
         self.dofs = zeros(self.model.numdof)
@@ -131,6 +66,17 @@ class Step(object):
         self.frames.append(frame)
         return frame
 
+    def copy_from(self, step):
+        self.frames[0].field_outputs = deepcopy(step.frames[-1].field_outputs)
+        self.dofs[:] = step.dofs
+        self.doftags = list(step.doftags)
+        self.dofvals = list(step.dofvals)
+        self.cltags = list(step.cltags)
+        self.clvals = list(step.clvals)
+        self.dload[:] = step.dload
+        self.dltyp[:] = step.dltyp
+        self.predef[:] = step.predef
+
     # ----------------------------------------------------------------------- #
     # --- BOUNDARY CONDITIONS ----------------------------------------------- #
     # ----------------------------------------------------------------------- #
@@ -150,27 +96,8 @@ class Step(object):
         All active displacement and rotation degrees of freedom are set to 0.
 
         """
-        self.assign_dof(DIRICHLET, nodes, self.model.active_dof, 0.)
+        self.assign_dof(DIRICHLET, nodes, ALL, 0.)
     FixDOF = FixNodes
-
-    def PinNodes(self, nodes):
-        """Pin nodal degrees of freedom
-
-        Parameters
-        ----------
-        nodes : int, list of int, or symbolic constant
-            Nodes to fix
-
-        Notes
-        -----
-        ``nodes`` can be a single external node label, a list of external node
-        labels, or one of the region symbolic constants.
-
-        All active displacement degrees of freedom are set to 0.
-
-        """
-        dof = [x for x in (X,Y,Z) if x in self.model.active_dof]
-        self.assign_dof(DIRICHLET, nodes, dof, 0.)
 
     def PrescribedBC(self, nodes, dof, amplitude=0.):
         """Prescribe nodal degrees of freedom
@@ -219,6 +146,16 @@ class Step(object):
     PrescribedDOF = PrescribedBC
 
     def assign_dof(self, doftype, nodes, dof, amplitude):
+
+        if dof == ALL:
+            dofs = self.model.active_dof
+        elif dof == PIN:
+            dofs = [x for x in (X,Y,Z) if x in self.model.active_dof]
+        elif not is_listlike(dof):
+            dofs = [dof]
+        else:
+            dofs = dof
+
         inodes = self.model.mesh.get_internal_node_ids(nodes)
         if hasattr(amplitude, '__call__'):
             # AMPLITUDE IS A FUNCTION
@@ -232,7 +169,6 @@ class Step(object):
             # AMPLITUDE IS A LIST OF AMPLITUDES
             a = asarray(amplitude)
 
-        dofs = dof if is_listlike(dof) else [dof]
         for (i,inode) in enumerate(inodes):
             for j in dofs:
                 I = self.model.dofmap(inode, j)
@@ -259,130 +195,6 @@ class Step(object):
     def ConcentratedLoad(self, nodes, dof, amplitude=0.):
         self.assign_dof(NEUMANN, nodes, dof, amplitude)
 
-    def GravityLoad(self, region, components):
-        orphans = self.model.orphaned_elements
-        if region == ALL:
-            ielems = range(self.model.numele)
-        else:
-            ielems = [self.model.mesh.elemap[el] for el in region]
-        if not is_listlike(components):
-            raise UserInputError('EXPECTED GRAVITY LOAD VECTOR')
-        if len(components) != self.model.dimensions:
-            raise UserInputError('EXPECTED {0} GRAVITY LOAD '
-                                 'COMPONENTS'.format(len(self.model.active_dof)))
-        a = asarray(components)
-        for iel in ielems:
-            if iel in orphans:
-                raise UserInputError('ELEMENT BLOCKS MUST BE ASSIGNED '
-                                     'BEFORE GRAVITY LOADS')
-            el = self.model.elements[iel]
-            rho = el.material.density
-            if rho is None:
-                raise UserInputError('ELEMENT MATERIAL DENSITY MUST BE ASSIGNED '
-                                     'BEFORE GRAVITY LOADS')
-            self.dltyp[iel].append(DLOAD)
-            self.dload[iel].append(rho*a)
-
-    def DistributedLoad(self, region, components):
-        if not is_listlike(components):
-            raise UserInputError('EXPECTED DISTRIBUTED LOAD VECTOR')
-        if len(components) != self.model.dimensions:
-            raise UserInputError('EXPECTED {0} DISTRIBUTED LOAD '
-                                 'COMPONENTS'.format(len(self.model.active_dof)))
-        if region == ALL:
-            ielems = range(self.model.numele)
-        elif not is_listlike(region):
-            ielems = [self.model.mesh.elemap[region]]
-        else:
-            ielems = [self.model.mesh.elemap[el] for el in region]
-        if any(in1d(ielems, self.model.orphaned_elements)):
-            raise UserInputError('ELEMENT PROPERTIES MUST BE ASSIGNED '
-                                 'BEFORE DISTRIBUTEDLOAD')
-        self.dltyp[ielem].append(DLOAD)
-        self.dload[ielem].append(asarray(components))
-
-    def SurfaceLoad(self, surface, components):
-        if not is_listlike(components):
-            raise UserInputError('EXPECTED SURFACE LOAD VECTOR')
-        if len(components) != self.model.dimensions:
-            raise UserInputError('EXPECTED {0} SURFACE LOAD '
-                                 'COMPONENTS'.format(len(self.model.active_dof)))
-        surface = self.model.mesh.find_surface(surface)
-        orphans = self.model.orphaned_elements
-        for (iel, iedge) in surface:
-            if iel in orphans:
-                raise UserInputError('ELEMENT PROPERTIES MUST BE ASSIGNED '
-                                     'BEFORE SURFACELOAD')
-            self.dltyp[iel].append(SLOAD)
-            self.dload[iel].append([iedge]+[x for x in components])
-
-    def SurfaceLoadN(self, surface, amplitude):
-        surface = self.model.mesh.find_surface(surface)
-        orphans = self.model.orphaned_elements
-        for (iel, iedge) in surface:
-            # DETERMINE THE NORMAL TO THE EDGE
-            if iel in orphans:
-                raise UserInputError('ELEMENT PROPERTIES MUST BE ASSIGNED '
-                                     'BEFORE SURFACELOADN')
-            el = self.model.elements[iel]
-            edgenod = el.edges[iedge]
-            xb = el.xc[edgenod]
-            if self.model.dimensions == 2:
-                n = normal2d(xb)
-            else:
-                raise NotImplementedError('3D SURFACE NORMAL')
-            self.dltyp[iel].append(SLOAD)
-            self.dload[iel].append([iedge]+[x for x in amplitude*n])
-
-    def Pressure(self, surface, amplitude):
-        self.SurfaceLoadN(surface, -amplitude)
-
-    # ----------------------------------------------------------------------- #
-    # --- HEAT TRANSFER LOADINGS -------------------------------------------- #
-    # ----------------------------------------------------------------------- #
-    def SurfaceFlux(self, surface, qn):
-        surf = self.model.mesh.find_surface(surface)
-        for (iel, iedge) in surf:
-            self.dltyp[iel].append(SFLUX)
-            self.dload[iel].append([iedge, qn])
-
-    def SurfaceConvection(self, surface, Too, h):
-        if self.model.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
-        surf = self.model.mesh.find_surface(surface)
-        for (iel, iedge) in surf:
-            self.dltyp[iel].append(SFILM)
-            self.dload[iel].append([iedge, Too, h])
-
-    def HeatGeneration(self, region, amplitude):
-        if region == ALL:
-            xelems = sorted(self.model.mesh.elemap.keys())
-        else:
-            xelems = region
-        inodes = []
-        for eb in self.model.mesh.eleblx:
-            for (i, xel) in enumerate(eb.labels):
-                if xel in xelems:
-                    inodes.extend(eb.elecon[i])
-        inodes = unique(inodes)
-        if hasattr(amplitude, '__call__'):
-            # AMPLITUDE IS A FUNCTION
-            x = self.model.mesh.coord[inodes]
-            a = amplitude(x)
-        elif not is_listlike(amplitude):
-            a = amplitude * ones(len(inodes))
-        else:
-            if len(amplitude) != len(inodes):
-                raise UserInputError('HEAT GENERATION AMPLITUDE MUST HAVE '
-                                     'LENGTH {0}'.format(len(inodes)))
-            a = asarray(amplitude)
-        nodmap = dict(zip(inodes, range(inodes.shape[0])))
-        for xelem in xelems:
-            ielem = self.model.mesh.elemap[xelem]
-            ix = [nodmap[n] for n in self.model.elements[ielem].inodes]
-            self.dltyp[ielem].append(HSRC)
-            self.dload[ielem].append(a[ix])
-
     def Temperature(self, nodes, amplitude):
         inodes = self.model.mesh.get_internal_node_ids(nodes)
         if hasattr(amplitude, '__call__'):
@@ -397,46 +209,6 @@ class Step(object):
             # AMPLITUDE IS A LIST OF AMPLITUDES
             a = asarray(amplitude)
         self.final_temp = a
-
-    # ----------------------------------------------------------------------- #
-    # --- RUN AND SOLVING --------------------------------------------------- #
-    # ----------------------------------------------------------------------- #
-    def run(self):
-        if self.type == LINEAR_PERTURBATION:
-            return self._linear_perturbation_step()
-        elif self.type == GENERAL:
-            return self._general_static_step()
-        raise NotImplementedError
-
-    def _linear_perturbation_step(self):
-
-        # CONCENTRATED FORCES
-        Q = zeros_like(self.dofs)
-        Q[self.cltags] = self.clvals
-
-        # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
-        du = zeros_like(self.dofs)
-        K, rhs = self.model.assemble(self.dofs, du, Q, self.svtab, self.svars,
-                                     self.dltyp, self.dload, self.predef,
-                                     step_type=LINEAR_PERTURBATION)
-
-        # APPLY BOUNDARY CONDITIONS
-        Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, self.dofvals)
-
-        # SOLVE FOR UNKNOWN DOFS
-        u = linsolve(Kbc, Fbc)
-
-        # SANITY CHECK
-        if not allclose(u[self.doftags], self.dofvals):
-            logging.warn('INCORRECT SOLUTION TO DOFS')
-
-        # TOTAL FORCE, INCLUDING REACTION, AND REACTION
-        R = dot(K, u) - rhs
-        self.model.assemble(self.dofs, u, Q, self.svtab, self.svars,
-                            self.dltyp, self.dload, self.predef,
-                            step_type=LINEAR_PERTURBATION, cflag=LP_OUTPUT)
-        self.dofs += u
-        self.advance(self.period, R=R)
 
     def advance(self, dtime, **kwds):
         frame_n = self.frames[-1]

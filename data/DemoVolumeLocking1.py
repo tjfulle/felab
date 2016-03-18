@@ -29,16 +29,18 @@ def Runall(ax=None):
                          label=r'Analytic, $\nu=%g$'%Nu, weight=8)
 
         # Linear finite element solution
-        V = Plane2DModel()
+        V = FiniteElementModel()
         V.GenesisMesh('QuarterCylinderQuad4.g')
         V.Material('Material-1')
         V.materials['Material-1'].Elastic(E=E, Nu=Nu)
         V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1')
         V.PrescribedBC('Nodeset-200', X)
         V.PrescribedBC('Nodeset-201', Y)
+
+        step = V.StaticStep()
         # Pressure on inside face
-        V.Pressure('Surface-1', 1.)
-        V.Solve()
+        step.Pressure('Surface-1', 1.)
+        step.run()
         V.Plot2D(deformed=1, color='b', linestyle='-.',
                  label=r'Linear, $\nu=%g$'%Nu, ax=ax, filename=filename,
                  xlim=(-.2,5), ylim=(-.2, 5))

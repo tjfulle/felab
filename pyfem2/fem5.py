@@ -6,7 +6,7 @@ from numpy.linalg import solve, LinAlgError
 
 from .constants import *
 from .utilities import linsolve
-from .fem1 import FiniteElementModel
+from .finite_element_model import FiniteElementModel
 from .elemlib import ElasticLink2D2, PlaneBeamColumn
 
 # --------------------------------------------------------------------------- #

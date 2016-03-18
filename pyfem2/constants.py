@@ -9,13 +9,14 @@ TX, TY, TZ = 3, 4, 5  # ROTATIONS
 T = 6  # TEMPERATURE
 
 # BOUNDARY LABELS
-ALL = 'ALL'
-ILO, IHI = 'ILO', 'IHI'
-JLO, JHI = 'JLO', 'JHI'
-KLO, KHI = 'KLO', 'KHI'
-BOUNDARY = 'BOUNDARY'
-NEUMANN = 0
-DIRICHLET = 1
+ALL = '_All'
+PIN = '_Pin'
+ILO, IHI = '_Ilo', '_Ihi'
+JLO, JHI = '_Jlo', '_Jhi'
+KLO, KHI = '_Klo', '_Khi'
+BOUNDARY = '_Boundary'
+NEUMANN = 'Neumann'
+DIRICHLET = 'Dirichlet'
 
 # EDGES
 S1, S2, S3, S4, S5, S6, S7, S8, S9, S10 = range(10)
@@ -80,5 +81,6 @@ STIFF_ONLY = 2
 FORCE_ONLY = 5
 LP_OUTPUT = 100
 
-GENERAL = 0
-LINEAR_PERTURBATION = 1
+GENERAL = 'General'
+DIRECT = 'Direct'
+ITERATIVE = 'Iterative'

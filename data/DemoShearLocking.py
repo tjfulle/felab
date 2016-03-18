@@ -7,7 +7,7 @@ nu = 0.
 E = 2. * mu * (1. + nu)
 
 def PlaneStressBeam(ratio):
-    V = Plane2DModel()
+    V = FiniteElementModel()
     length = 10.
     a = ratio * length
     P = 2.22 / length ** 3 * E * a ** 3
@@ -20,8 +20,11 @@ def PlaneStressBeam(ratio):
     El = PlaneStressQuad4
     V.AssignProperties('ElementBlock1', PlaneStressQuad4, 'Material-1', t=1)
     V.PrescribedBC(IHI, (X,Y))
-    V.SurfaceLoad(ILO, [0, -q])
-    V.Solve()
+
+    step = V.StaticStep()
+    step.SurfaceLoad(ILO, [0, -q])
+    step.run()
+
     if not os.getenv('NOGRAPHICS'):
         ax = V.Plot2D(deformed=1, color='b')
     u = AnalyticSolution(V.mesh.coord, q)
