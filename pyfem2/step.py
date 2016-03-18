@@ -61,12 +61,15 @@ class Step(object):
     @property
     def doftags(self):
         return array(sorted(self.dofx), dtype=int)
+
     @property
     def dofvals(self):
         return array([self.dofx[key] for key in self.doftags])
+
     @property
     def cltags(self):
         return array(sorted(self.cloadx), dtype=int)
+
     @property
     def clvals(self):
         return array([self.cloadx[key] for key in self.cltags])

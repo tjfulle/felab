@@ -177,12 +177,8 @@ class StaticStep(Step):
 
         # DISPLACEMENT BOUNDARY CONDITIONS AT END OF LAST STEP AND END OF THIS
         # STEP
-        xtags, X0, Xf = [], [], []
-        for (I, x) in self.dofx.items():
-            xtags.append(I)
-            X0.append(self.previous.dofx.get(I, 0))
-            Xf.append(x)
-        X0, Xf = array(X0), array(Xf)
+        Xf = self.dofvals
+        X0 = array([self.previous.dofx.get(I, 0) for I in self.doftags])
 
         for iframe in range(increments):
 
@@ -204,7 +200,7 @@ class StaticStep(Step):
                                              istep=self.number, iframe=iframe+1,
                                              ninc=nit+1, load_fac=load_fac,)
                 # ENFORCE DISPLACEMENT BOUNDARY CONDITIONS
-                Kbc, Fbc = self.model.apply_bc(K, rhs, xtags, X, self.dofs, u)
+                Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, X, self.dofs, u)
 
                 # --- SOLVE FOR THE NODAL DISPLACEMENT
                 w = linsolve(Kbc, Fbc)
