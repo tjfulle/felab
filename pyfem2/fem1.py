@@ -28,6 +28,7 @@ class FiniteElementModel(object):
     implemented in class' derived from this one.
 
     """
+    dimensions = None
     active_dof = range(MDOF)
     def __init__(self, jobid=None):
         self.jobid = jobid or 'Job-1'
@@ -508,7 +509,7 @@ class FiniteElementModel(object):
     # ----------------------------------------------------------------------- #
     # --- MATERIAL MODELS --------------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def Material(self, name):
+    def Material(self, name, **kwargs):
         """Create an empty material object.
 
         Parameters
@@ -528,7 +529,7 @@ class FiniteElementModel(object):
         """
         if name in self.materials:
             raise UserInputError('DUPLICATE MATERIAL {0!r}'.format(name))
-        self.materials[name] = Material(name)
+        self.materials[name] = Material(name, **kwargs)
 
     # ----------------------------------------------------------------------- #
     # --- BOUNDARY CONDITIONS ----------------------------------------------- #
