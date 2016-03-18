@@ -5,9 +5,9 @@ from .utilities import *
 from .step import Step
 
 class StaticStep(Step):
-    def __init__(self, model, number, name, start, period, increments,
+    def __init__(self, model, number, name, previous, period, increments,
                  maxiters, nlgeom, solver):
-        super(StaticStep, self).__init__(model, number, name, start, period)
+        super(StaticStep, self).__init__(model, number, name, previous, period)
         self.nlgeom = nlgeom
         self.solver = solver
         self.increments = increments
@@ -132,12 +132,12 @@ class StaticStep(Step):
     def direct_solve(self):
 
         # CONCENTRATED FORCES
-        Q = zeros_like(self.dofs)
-        Q[self.cltags] = self.clvals
+        Qf = zeros_like(self.dofs)
+        Qf[self.cltags] = self.clvals
 
         # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
         du = zeros_like(self.dofs)
-        K, rhs = self.model.assemble(self.dofs, du, Q, self.svtab, self.svars,
+        K, rhs = self.model.assemble(self.dofs, du, Qf, self.svtab, self.svars,
                                      self.dltyp, self.dload, self.predef,
                                      STATIC, DIRECT)
 
@@ -153,7 +153,7 @@ class StaticStep(Step):
 
         # TOTAL FORCE, INCLUDING REACTION, AND REACTION
         R = dot(K, u) - rhs
-        self.model.assemble(self.dofs, u, Q, self.svtab, self.svars,
+        self.model.assemble(self.dofs, u, Qf, self.svtab, self.svars,
                             self.dltyp, self.dload, self.predef,
                             STATIC, DIRECT, cflag=LP_OUTPUT)
         self.dofs += u
@@ -170,18 +170,31 @@ class StaticStep(Step):
         maxit2 = int(maxiters)
         maxit1 = max(int(maxit2/2.),1)
 
-        # CONCENTRATED FORCES
-        Q = zeros_like(self.dofs)
-        Q[self.cltags] = self.clvals
+        # CONCENTRATED FORCES AT END OF LAST STEP AND END OF THIS STEP
+        Q0, Qf = zeros_like(self.dofs), zeros_like(self.dofs)
+        Q0[self.previous.cltags] = self.previous.clvals
+        Qf[self.cltags] = self.clvals
+
+        # DISPLACEMENT BOUNDARY CONDITIONS AT END OF LAST STEP AND END OF THIS
+        # STEP
+        xtags, X0, Xf = [], [], []
+        for (I, x) in self.dofx.items():
+            xtags.append(I)
+            X0.append(self.previous.dofx.get(I, 0))
+            Xf.append(x)
+        X0, Xf = array(X0), array(Xf)
 
         for iframe in range(increments):
 
             load_fac = float(iframe+1) / float(increments)
-            err1 = 1.
 
-            u = zeros(self.model.numdof)
+            # INTERPOLATED CONCENTRATED LOADS AND DISPLACEMENTS
+            Q = (1. - load_fac) * Q0 + load_fac * Qf
+            X = (1. - load_fac) * X0 + load_fac * Xf
 
             # NEWTON-RAPHSON LOOP
+            err1 = 1.
+            u = zeros(self.model.numdof)
             for nit in range(maxit2):
 
                 K, rhs = self.model.assemble(self.dofs, u, Q,
@@ -190,10 +203,8 @@ class StaticStep(Step):
                                              STATIC, GENERAL,
                                              istep=self.number, iframe=iframe+1,
                                              ninc=nit+1, load_fac=load_fac,)
-
                 # ENFORCE DISPLACEMENT BOUNDARY CONDITIONS
-                Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, self.dofvals,
-                                               self.dofs, u, load_fac=load_fac)
+                Kbc, Fbc = self.model.apply_bc(K, rhs, xtags, X, self.dofs, u)
 
                 # --- SOLVE FOR THE NODAL DISPLACEMENT
                 w = linsolve(Kbc, Fbc)
@@ -202,7 +213,10 @@ class StaticStep(Step):
                 u += relax * w
 
                 # --- CHECK CONVERGENCE
-                err1 = sqrt(dot(w, w) / dot(u, u))
+                err1 = sqrt(dot(w, w))
+                dnom = sqrt(dot(u, u))
+                if dnom > 1e-8:
+                    err1 /= dnom
                 err2 = sqrt(dot(rhs, rhs)) / float(self.model.numdof)
 
                 if nit < maxit1:
@@ -224,6 +238,8 @@ class StaticStep(Step):
                 logging.error(message)
                 raise RuntimeError(message)
 
+            logging.debug('STEP {0}, FRAME {1}, '
+                          'COMPLETE.'.format(self.number, iframe+1))
             time[1] += dtime
             self.dofs += u
             self.advance(dtime)

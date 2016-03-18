@@ -379,7 +379,7 @@ class ElasticConstants(object):
 
             # ask for name, value pairs
             try:
-                o = raw_input('{0}: '.format(query.format(*args)))
+                o = str(input('{0}: '.format(query.format(*args))))
             except (KeyboardInterrupt, EOFError):
                 raise SystemExit('\n')
 

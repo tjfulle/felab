@@ -142,6 +142,29 @@ class FiniteElementModel(object):
         self.mesh = Mesh.RectilinearMesh2D(shape, lengths)
         self._initialize()
 
+    def UnitSquareMesh(self, shape):
+        """
+        Generates a rectilinear 2D finite element mesh.
+
+        Parameters
+        ----------
+        shape : tuple
+            (nx, ny) where nx is the number elements in :math:`x` and ny
+            number of element in :math:`y`.
+
+        Notes
+        -----
+        This method calls the ``Mesh.RectilinearMesh2D`` class method and
+        stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
+
+        See Also
+        --------
+        pyfem2.mesh.Mesh.RectilinearMesh2D
+
+        """
+        self.mesh = Mesh.RectilinearMesh2D(shape, (1, 1))
+        self._initialize()
+
     def Mesh(self, **kwds):
         """
         Generates the finite element mesh.
@@ -350,7 +373,10 @@ class FiniteElementModel(object):
         msg += 'STEP: {0}, FRAME: {1}, TIME: {2}'.format(istep, iframe, tf)
         if ninc is not None:
             msg += ', INCREMENT: {0}'.format(ninc)
-        logging.debug(msg)
+        if not ninc:
+            logging.debug(msg)
+        elif ninc == 1 and iframe == 1:
+            logging.debug(msg)
 
         if cflag not in (STIFF_AND_FORCE, STIFF_ONLY, FORCE_ONLY, LP_OUTPUT):
             raise ValueError('UNKNOWN COMPUTE QUANTITY')
@@ -394,15 +420,15 @@ class FiniteElementModel(object):
                     rhs[eft] += response
 
         if cflag == STIFF_AND_FORCE:
-            return K, rhs + load_fac * Q
+            return K, rhs + Q
 
         elif cflag == STIFF_ONLY:
             return K
 
         elif cflag == FORCE_ONLY:
-            return rhs + load_fac * Q
+            return rhs + Q
 
-    def apply_bc(self, K, F, doftags, dofvals, u=None, du=None, load_fac=1.):
+    def apply_bc(self, K, F, doftags, dofvals, u=None, du=None):
         """
         .. _apply_bc:
 
@@ -438,7 +464,7 @@ class FiniteElementModel(object):
         # DIRICHLET BOUNDARY CONDITIONS
         for (i, I) in enumerate(doftags):
             u_cur = u[I] + du[I]
-            ufac = load_fac * dofvals[i] - u_cur
+            ufac = dofvals[i] - u_cur
             Fbc -= [K[k,I] * ufac for k in range(self.numdof)]
             Kbc[I,:] = Kbc[:,I] = 0.
             Kbc[I,I] = 1.
@@ -448,7 +474,7 @@ class FiniteElementModel(object):
     # ----------------------------------------------------------------------- #
     # --- MATERIAL MODELS --------------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def Material(self, name):
+    def Material(self, name, **kwargs):
         """Create an empty material object.
 
         Parameters
@@ -468,7 +494,7 @@ class FiniteElementModel(object):
         """
         if name in self.materials:
             raise UserInputError('DUPLICATE MATERIAL {0!r}'.format(name))
-        self.materials[name] = Material(name)
+        self.materials[name] = Material(name, **kwargs)
 
     def PrescribedBC(self, nodes, dof):
         if self.steps is not None:

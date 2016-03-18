@@ -6,8 +6,9 @@ from .step import Step
 from .elemlib import PlaneDiffussiveHeatTransferTria3
 
 class HeatTransferStep(Step):
-    def __init__(self, model, number, name, start, period):
-        super(HeatTransferStep, self).__init__(model, number, name, start, period)
+    def __init__(self, model, number, name, previous, period):
+        super(HeatTransferStep, self).__init__(model, number, name, previous,
+                                               period)
 
         # CHECK ELEMENTS
         eletyp = (PlaneDiffussiveHeatTransferTria3,)

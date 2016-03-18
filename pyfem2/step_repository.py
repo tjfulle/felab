@@ -47,7 +47,7 @@ class StepRepository(object):
 
     def InitialStep(self, name):
         start, period = 0., 0.
-        step = Step(self.model, len(self), name, start, period)
+        step = Step(self.model, len(self), name, None, period)
         self[name] = step
         return self.last
 
@@ -55,7 +55,7 @@ class StepRepository(object):
         last = self._values[-1].frames[-1]
         if not last.converged:
             raise RuntimeError('PREVIOUS STEP HAS UNCONVERGED FRAMES')
-        step = StaticStep(self.model, len(self), name, last.value, period,
+        step = StaticStep(self.model, len(self), name, self.last, period,
                           increments, maxiters, nlgeom, solver)
         if copy:
             step.copy_from(self.last)
@@ -67,7 +67,7 @@ class StepRepository(object):
         last = self._values[-1].frames[-1]
         if not last.converged:
             raise RuntimeError('PREVIOUS STEP HAS UNCONVERGED FRAMES')
-        step = HeatTransferStep(self.model, len(self), name, last.value, period)
+        step = HeatTransferStep(self.model, len(self), name, self.last, period)
         if copy:
             step.copy_from(self.last)
         step.frames[0].converged = True

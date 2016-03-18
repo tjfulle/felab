@@ -6,24 +6,26 @@ from .constants import *
 from .data import *
 
 class Step(object):
-    def __init__(self, model, number, name, start, period):
+    def __init__(self, model, number, name, previous, period):
         self.model = model
         self.written = 0
         self.name = name
-        self.time = start
+        if previous is None:
+            self.time = 0.
+        else:
+            self.time = previous.frames[-1].value
         self.frames = []
         self.Frame(0.)
         self.period = period
         self.number = number
+        self.previous = previous
 
         # DOF CONTAINERS
         self.dofs = zeros(self.model.numdof)
-        self.doftags = []
-        self.dofvals = []
+        self.dofx = {}
 
         # CONCENTRATED LOAD CONTAINERS
-        self.cltags = []
-        self.clvals = []
+        self.cloadx = {}
 
         # CONTAINERS TO HOLD LOADS
         self.dload = emptywithlists(self.model.numele)
@@ -56,6 +58,19 @@ class Step(object):
     def __len__(self):
         return len(self.frames)
 
+    @property
+    def doftags(self):
+        return array(sorted(self.dofx), dtype=int)
+    @property
+    def dofvals(self):
+        return array([self.dofx[key] for key in self.doftags])
+    @property
+    def cltags(self):
+        return array(sorted(self.cloadx), dtype=int)
+    @property
+    def clvals(self):
+        return array([self.cloadx[key] for key in self.cltags])
+
     def Frame(self, dtime, copy=1):
         frame = Frame(self.time, dtime)
         self.time += dtime
@@ -69,13 +84,12 @@ class Step(object):
     def copy_from(self, step):
         self.frames[0].field_outputs = deepcopy(step.frames[-1].field_outputs)
         self.dofs[:] = step.dofs
-        self.doftags = list(step.doftags)
-        self.dofvals = list(step.dofvals)
-        self.cltags = list(step.cltags)
-        self.clvals = list(step.clvals)
+        self.dofx = dict(step.dofx)
+        self.cloadx = dict(step.cloadx)
         self.dload[:] = step.dload
         self.dltyp[:] = step.dltyp
         self.predef[:] = step.predef
+        self.svars[:] = step.svars
 
     # ----------------------------------------------------------------------- #
     # --- BOUNDARY CONDITIONS ----------------------------------------------- #
@@ -174,20 +188,18 @@ class Step(object):
                 I = self.model.dofmap(inode, j)
                 if I is None:
                     raise UserInputError('INVALID DOF FOR NODE {0}'.format(inode))
-                if I in self.cltags and doftype == DIRICHLET:
+                if I in self.cloadx and doftype == DIRICHLET:
                     msg = 'ATTEMPTING TO APPLY LOAD AND DISPLACEMENT '
                     msg += 'ON SAME DOF'
                     raise UserInputError(msg)
-                elif I in self.doftags and doftype == NEUMANN:
+                elif I in self.dofx and doftype == NEUMANN:
                     msg = 'ATTEMPTING TO APPLY LOAD AND DISPLACEMENT '
                     msg += 'ON SAME DOF'
                     raise UserInputError(msg)
                 if doftype == DIRICHLET:
-                    self.doftags.append(I)
-                    self.dofvals.append(float(a[i]))
+                    self.dofx[I] = float(a[i])
                 else:
-                    self.cltags.append(I)
-                    self.clvals.append(float(a[i]))
+                    self.cloadx[I] = float(a[i])
 
     # ----------------------------------------------------------------------- #
     # --- LOADING CONDITIONS ------------------------------------------------ #
