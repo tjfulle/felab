@@ -462,13 +462,15 @@ class FiniteElementModel(object):
         Kbc, Fbc = K.copy(), F.copy()
 
         # DIRICHLET BOUNDARY CONDITIONS
+        ubc = []
         for (i, I) in enumerate(doftags):
             u_cur = u[I] + du[I]
             ufac = dofvals[i] - u_cur
+            ubc.append(ufac)
             Fbc -= [K[k,I] * ufac for k in range(self.numdof)]
             Kbc[I,:] = Kbc[:,I] = 0.
             Kbc[I,I] = 1.
-        Fbc[doftags] = dofvals
+        Fbc[doftags] = ubc
         return Kbc, Fbc
 
     # ----------------------------------------------------------------------- #
