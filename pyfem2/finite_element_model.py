@@ -257,11 +257,17 @@ class FiniteElementModel(object):
 
         # NODE DATA
         nd = self.dimensions
-        if 6 in self.active_dof:
+        if T in self.active_dof:
             frame.ScalarField('Q', NODE, node_labels)
         frame.ScalarField('T', NODE, node_labels)
         frame.VectorField('U', NODE, node_labels, self.dimensions)
-        frame.VectorField('R', NODE, node_labels, self.dimensions)
+        frame.VectorField('RF', NODE, node_labels, self.dimensions)
+
+        a = in1d((TX,TY,TZ), self.active_dof)
+        if any(a):
+            n = len([x for x in a if x])
+            frame.VectorField('R', NODE, node_labels, n)
+            frame.VectorField('M', NODE, node_labels, n)
 
         if self.initial_temp:
             itemp = self.get_initial_temperature()
@@ -295,6 +301,35 @@ class FiniteElementModel(object):
 
         frame.converged = True
         return
+
+    def format_dof(self, dofs):
+        # CONSTRUCT DISPLACEMENT AND ROTATION VECTORS
+        d1 = len([x for x in self.active_dof if x in (X,Y,Z)])
+        u = zeros((self.numnod, d1))
+
+        d2 = len([x for x in self.active_dof if x in (TX,TY,TZ)])
+        r = zeros((self.numnod, d2))
+
+        if T in self.active_dof:
+            temp = zeros(self.numnod)
+        else:
+            temp = None
+
+        for n in range(self.numnod):
+            ix, ui, ri = 0, 0, 0
+            for j in range(MDOF):
+                if self.nodfat[n,j] > 0:
+                    ii = self.nodfmt[n] + ix
+                    if j in (X,Y,Z):
+                        u[n,ui] = dofs[ii]
+                        ui += 1
+                    elif j in (TX,TY,TZ):
+                        r[n,ri] = dofs[ii]
+                        ri += 1
+                    else:
+                        temp[n] = dofs[ii]
+                    ix += 1
+        return u, r, temp
 
     def _element_freedom_table(self):
         eftab = []

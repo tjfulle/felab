@@ -27,7 +27,7 @@ from pyfem2 import *
 def test_fem5_1():
     nodtab = [[1,-4,3], [2,0,0], [3,0,3], [4,nan,nan], [5,4,3]]
     eletab = [[1,1,3], [2,3,5], [3,1,2], [4,2,3], [5,2,5]]
-    V = PlaneBeamColumnTrussModel()
+    V = FiniteElementModel()
     V.Mesh(nodtab=nodtab, eletab=eletab)
     Ec, Em = 30000, 200000
     V.Material('Material-1')
@@ -42,28 +42,31 @@ def test_fem5_1():
     V.AssignProperties('B3', ElasticLink2D2, 'Material-2', A=.003)
     V.PrescribedBC(1, (X,Y,TZ))
     V.PrescribedBC(5, Y)
-    V.ConcentratedLoad(2, Y, 100)
-    V.ConcentratedLoad(5, TZ, 200)
-    V.ConcentratedLoad(5, X, 300)
-    V.Solve()
+    step = V.StaticStep()
+    step.ConcentratedLoad(2, Y, 100)
+    step.ConcentratedLoad(5, TZ, 200)
+    step.ConcentratedLoad(5, X, 300)
+    step.run()
 
 @pytest.mark.beamcol
 def test_fem5_2():
     nodtab = [[1,0,0], [2,3,4], [3,0,4]]
     eletab = [[1,1,2], [2,1,3]]
-    V = PlaneBeamColumnTrussModel()
+    V = FiniteElementModel()
     V.Mesh(nodtab=nodtab, eletab=eletab)
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=70e9, Nu=.3)
     V.ElementBlock('B1', ALL)
     V.AssignProperties('B1', ElasticLink2D2, 'Material-1', A=5*.01*.01)
-    V.PrescribedBC(1, X, -.05)
-    V.PrescribedBC((2,3), (X,Y))
-    V.ConcentratedLoad(1, Y, 1000e3)
-    V.Solve()
+    step = V.StaticStep()
+    step.PrescribedBC(1, X, -.05)
+    step.PrescribedBC((2,3), (X,Y))
+    step.ConcentratedLoad(1, Y, 1000e3)
+    step.run()
+    u = V.steps.last.frames[-1].field_outputs['U'].data
     assert allclose([[-0.05,     0.0882842],
                      [ 0.,       0.,      ],
-                     [ 0.,       0.,      ]], V.u)
+                     [ 0.,       0.,      ]], u)
 
 @pytest.mark.plane
 def test_gravity_load1():
@@ -191,7 +194,7 @@ def test_heat_transfer_4():
     step.PrescribedBC(IHI, T)
     step.PrescribedBC(JHI, T)
     step.HeatGeneration(ALL, 1)
-    step.Solve()
+    step.run()
     Tn = solution(V.mesh.coord)
     err = sqrt(mean((step.dofs.flatten()-Tn)**2)) / sqrt(mean(Tn**2))
     assert err < .045
@@ -234,11 +237,11 @@ def test_heat_transfer_plate_with_hole2():
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(k)
     V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
+    V.InitialTemperature(ALL, 50)
     step = V.HeatTransferStep()
     step.PrescribedBC(BOUNDARY, T, 50)
     fun = lambda x: 1000 / sqrt(x[:,0] ** 2 + x[:,1] ** 2)
     step.HeatGeneration(ALL, fun)
-    step.InitialTemperature(ALL, 50)
     step.run()
     V.WriteResults()
 
@@ -251,7 +254,7 @@ def test_fem2_1():
               [7,1,2], [8,2,4], [9,4,6], [10,6,8], [11,8,10], [12,10,12],
               [13,2,3], [14,4,5], [15,6,7], [16,8,9], [17,10,11], [18,2,5],
               [19,4,7], [20,7,8], [21,9,10]]
-    V = TrussModel()
+    V = FiniteElementModel()
     V.Mesh(nodtab=nodtab, eletab=eletab)
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=1000, Nu=.333)
@@ -263,16 +266,17 @@ def test_fem2_1():
     V.ElementBlock('ElementBlock-1', ALL)
     V.AssignProperties('ElementBlock-1', ElasticLink3D2, 'Material-1', A=A)
 
-    V.PrescribedBC(1, (X,Y))
-    V.PrescribedBC(12, Y)
-    V.PrescribedBC(ALL, Z)
+    step = V.StaticStep()
+    step.PrescribedBC(1, (X,Y))
+    step.PrescribedBC(12, Y)
+    step.PrescribedBC(ALL, Z)
 
-    V.ConcentratedLoad((3,5,9,11), Y, -10)
-    V.ConcentratedLoad(7, Y, -16)
+    step.ConcentratedLoad((3,5,9,11), Y, -10)
+    step.ConcentratedLoad(7, Y, -16)
 
-    V.Solve()
+    step.run()
     u = V.steps.last.frames[-1].field_outputs['U'].data
-    R = V.steps.last.frames[-1].field_outputs['R'].data
+    RF = V.steps.last.frames[-1].field_outputs['RF'].data
     assert allclose([[0.,      0.,      0.],
                      [0.80954,-1.7756,  0.],
                      [0.28,   -1.79226, 0.],
@@ -296,7 +300,7 @@ def test_fem2_1():
                      [ 0.,  -0.,   0.],
                      [ 0.,   0.,   0.],
                      [ 0.,   0.,   0.],
-                     [ 0.,  28.,   0.]], R)
+                     [ 0.,  28.,   0.]], RF)
 
 @pytest.mark.truss
 def test_fem2_1a():
@@ -307,7 +311,7 @@ def test_fem2_1a():
               [7,1,2], [8,2,4], [9,4,6], [10,6,8], [11,8,10], [12,10,12],
               [13,2,3], [14,4,5], [15,6,7], [16,8,9], [17,10,11], [18,2,5],
               [19,4,7], [20,7,8], [21,9,10]]
-    V = TrussModel()
+    V = FiniteElementModel()
     V.Mesh(nodtab=nodtab, eletab=eletab)
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=1000, Nu=.333)
@@ -319,15 +323,16 @@ def test_fem2_1a():
     V.ElementBlock('ElementBlock-1', ALL)
     V.AssignProperties('ElementBlock-1', ElasticLink2D2, 'Material-1', A=A)
 
-    V.PrescribedBC(1, (X,Y))
-    V.PrescribedBC(12, Y)
+    step = V.StaticStep()
+    step.PrescribedBC(1, (X,Y))
+    step.PrescribedBC(12, Y)
 
-    V.ConcentratedLoad((3,5,9,11), Y, -10)
-    V.ConcentratedLoad(7, Y, -16)
+    step.ConcentratedLoad((3,5,9,11), Y, -10)
+    step.ConcentratedLoad(7, Y, -16)
 
-    V.Solve()
+    step.run()
     u = V.steps.last.frames[-1].field_outputs['U'].data
-    R = V.steps.last.frames[-1].field_outputs['R'].data
+    RF = V.steps.last.frames[-1].field_outputs['RF'].data
     assert allclose([[0.,      0.     ],
                      [0.80954,-1.7756 ],
                      [0.28,   -1.79226],
@@ -351,23 +356,24 @@ def test_fem2_1a():
                      [ 0.,  -0.],
                      [ 0.,   0.],
                      [ 0.,   0.],
-                     [ 0.,  28.]], R)
+                     [ 0.,  28.]], RF)
 
 @pytest.mark.truss
 def test_fem2_2a():
     nodtab = [[1, 0., 0.], [2, 3., 4.], [3, 0., 4.]]
     eletab = [[1, 1, 2], [2, 1, 3]]
-    V = TrussModel()
+    V = FiniteElementModel()
     V.Mesh(nodtab=nodtab, eletab=eletab)
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=70e9, Nu=.333)
     A = 5 * .01 * .01
     V.ElementBlock('ElementBlock-1', ALL)
     V.AssignProperties('ElementBlock-1', ElasticLink2D2, 'Material-1', A=A)
-    V.FixNodes((2,3))
-    V.PrescribedBC(1, X, -.05)
-    V.ConcentratedLoad(1, Y, 1000e3)
-    V.Solve()
+    step = V.StaticStep()
+    step.FixNodes((2,3))
+    step.PrescribedBC(1, X, -.05)
+    step.ConcentratedLoad(1, Y, 1000e3)
+    step.run()
     u = V.steps.last.frames[-1].field_outputs['U'].data
     assert allclose([[-0.05,     0.0882842],
                      [ 0.,       0.,      ],
@@ -377,18 +383,19 @@ def test_fem2_2a():
 def test_fem2_2b():
     nodtab = [[1, 0., 0., 0.], [2, 3., 4., 0.], [3, 0., 4., 0.]]
     eletab = [[1, 1, 2], [2, 1, 3]]
-    V = TrussModel()
+    V = FiniteElementModel()
     V.Mesh(nodtab=nodtab, eletab=eletab)
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=70e9, Nu=.333)
     A = 5 * .01 * .01
     V.ElementBlock('ElementBlock-1', ALL)
     V.AssignProperties('ElementBlock-1', ElasticLink3D2, 'Material-1', A=A)
-    V.FixNodes((2,3))
-    V.PrescribedBC(1, X, -.05)
-    V.PrescribedBC(1, Z)
-    V.ConcentratedLoad(1, Y, 1000e3)
-    V.Solve()
+    step = V.StaticStep()
+    step.FixNodes((2,3))
+    step.PrescribedBC(1, X, -.05)
+    step.PrescribedBC(1, Z)
+    step.ConcentratedLoad(1, Y, 1000e3)
+    step.run()
     u = V.steps.last.frames[-1].field_outputs['U'].data
     assert allclose([[-0.05,     0.0882842, 0.],
                      [ 0.,       0.,        0.],
@@ -398,19 +405,20 @@ def test_fem2_2b():
 def test_fem2_3():
     nodtab = [[1, 72, 0, 0], [2, 0, 36, 0], [3, 0, 36, 72], [4, 0, 0, -48]]
     eletab = [[1, 1, 2], [2, 1, 3], [3, 1, 4]]
-    V = TrussModel()
+    V = FiniteElementModel()
     V.Mesh(nodtab=nodtab, eletab=eletab)
     V.Material('Material-1')
     V.materials['Material-1'].Elastic(E=10e4, Nu=.333)
     A = [.302, .729, .187]
     V.ElementBlock('ElementBlock-1', ALL)
     V.AssignProperties('ElementBlock-1', ElasticLink3D2, 'Material-1', A=A)
+    step = V.StaticStep()
     # Boundary conditions
-    V.FixNodes((2,3,4))
-    V.PrescribedBC(1, Y)
+    step.FixNodes((2,3,4))
+    step.PrescribedBC(1, Y)
     # Concentrated force in 'z' direction on node 1
-    V.ConcentratedLoad(1, Z, -1000)
-    V.Solve()
+    step.ConcentratedLoad(1, Z, -1000)
+    step.run()
     u = V.steps.last.frames[-1].field_outputs['U'].data
     ua = array([[-8.5337228, 0., -31.9486913],
                 [ 0.,        0.,   0.       ],
@@ -441,20 +449,22 @@ def test_fem2_4():
     V.ElementBlock('ElementBlock-1', ALL)
     V.AssignProperties('ElementBlock-1', ElasticLink3D2, 'Material-1', A=A)
 
+    step = V.StaticStep()
+
     # Define boundary conditons
-    V.FixNodes([7, 8, 9, 10])
+    step.FixNodes([7, 8, 9, 10])
 
     # Define concentrated loads
-    V.ConcentratedLoad(1, X, 1000)
-    V.ConcentratedLoad(1, Y, 10000)
-    V.ConcentratedLoad(1, Z, -5000)
-    V.ConcentratedLoad(2, Y, 10000)
-    V.ConcentratedLoad(2, Z, -5000)
-    V.ConcentratedLoad(3, X, 500)
-    V.ConcentratedLoad(6, X, 500)
+    step.ConcentratedLoad(1, X, 1000)
+    step.ConcentratedLoad(1, Y, 10000)
+    step.ConcentratedLoad(1, Z, -5000)
+    step.ConcentratedLoad(2, Y, 10000)
+    step.ConcentratedLoad(2, Z, -5000)
+    step.ConcentratedLoad(3, X, 500)
+    step.ConcentratedLoad(6, X, 500)
 
     # Solve and write results
-    V.Solve()
+    step.run()
     u = V.steps.last.frames[-1].field_outputs['U'].data
 
     assert allclose([[0.00851510679597,0.349956039184,-0.0221277138856],
@@ -480,16 +490,18 @@ def test_fem1_2():
 def test_elemlibN_2_1():
     """ElasticLink2 stiffness test"""
     class mat: E = 1
+    svars = zeros((2, 3))
     El = ElasticLink1D2(1, [0, 1], [0, 1], mat, A=1)
-    Ke = El.response(zeros(2), zeros(2), [0,0], 1., 1, 1, [], [], [], STATIC,
+    Ke = El.response(zeros(2), zeros(2), [0,0], 1., 1, 1, svars, [], [], STATIC,
                      [], False, STIFF_ONLY, DIRECT, 1.)
     assert allclose([[1,-1],[-1,1]], Ke)
 
 def test_elemlibN_2_2():
     """ElasticLink2 stiffness test"""
     class mat: E=1000
+    svars = zeros((2, 3))
     El = ElasticLink2D2(1, [0, 1], [[0,0], [30,40]], mat, A=5)
-    Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,[],[],[],STATIC,
+    Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,svars,[],[],STATIC,
                      [], False, STIFF_ONLY, DIRECT, 1.)
     assert allclose([[ 36.,  48., -36., -48.],
                      [ 48.,  64., -48., -64.],
@@ -499,8 +511,9 @@ def test_elemlibN_2_2():
 def test_elemlibN_2_3():
     """ElasticLink2 stiffness test"""
     class mat: E = 343
+    svars = zeros((2, 3))
     El = ElasticLink3D2(1, [0, 1], [[0,0,0],[2,3,6]], mat, A=10)
-    Ke = El.response(zeros((2,3)),zeros((2,3)),[0,0],1.,1,1,[],[],[],STATIC,
+    Ke = El.response(zeros((2,3)),zeros((2,3)),[0,0],1.,1,1,svars,[],[],STATIC,
                      [], False, STIFF_ONLY, DIRECT, 1.)
     assert allclose([[  40.,   60.,  120.,  -40.,  -60., -120.],
                      [  60.,   90.,  180.,  -60.,  -90., -180.],
@@ -513,9 +526,10 @@ def test_elemlibN_2_4():
     """Beam-Column stiffness test"""
     coord = array([[0, 0], [3, 4]], dtype=float)
     class mat: E = 100
+    svars = zeros((2, 3))
     A, Izz = 125, 250
     El = PlaneBeamColumn(1, [0, 1], coord, mat, A=A, Izz=Izz)
-    Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,[],[],[],STATIC,
+    Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,svars,[],[],STATIC,
                      [], False, STIFF_ONLY, DIRECT, 1.)
 
 @pytest.mark.demos

@@ -225,7 +225,7 @@ class Step(object):
             a = asarray(amplitude)
         self.final_temp = a
 
-    def advance(self, dtime, **kwds):
+    def advance(self, dtime, dofs, react=None, **kwds):
         frame_n = self.frames[-1]
         if not frame_n.converged:
             raise RuntimeError('ATTEMPTING TO UPDATE AN UNCONVERGED FRAME')
@@ -237,8 +237,22 @@ class Step(object):
         frame = self.Frame(dtime)
 
         # STORE DEGREES OF FREEDOM
-        u = self.dofs.reshape(self.model.mesh.coord.shape)
-        frame.field_outputs['U'].add_data(u)
+        u, R, temp = self.model.format_dof(dofs)
+        if react is not None:
+            RF, M, Q = self.model.format_dof(react)
+
+        if temp is not None:
+            frame.field_outputs['T'].add_data(temp)
+            if react is not None:
+                frame.field_outputs['Q'].add_data(Q)
+        if u.shape[1]:
+            frame.field_outputs['U'].add_data(u)
+            if react is not None:
+                frame.field_outputs['RF'].add_data(RF)
+        if R.shape[1]:
+            frame.field_outputs['R'].add_data(R)
+            if react is not None:
+                frame.field_outputs['M'].add_data(M)
 
         # STORE KEYWORDS
         for (kwd, val) in kwds.items():
@@ -249,14 +263,20 @@ class Step(object):
                 continue
 
             # PASS VALUES FROM SVARS TO THE FRAME OUTPUT
-            ntens = eb.eletyp.ndir + eb.eletyp.nshr
+            if eb.eletyp.ndir is not None:
+                ntens = eb.eletyp.ndir + eb.eletyp.nshr
+            else:
+                ntens = None
             m = 1 if not eb.eletyp.integration else eb.eletyp.integration
             n = len(eb.eletyp.variables)
             for (e, xel) in enumerate(eb.labels):
                 iel = self.model.mesh.elemap[xel]
                 el = self.model.elements[iel]
                 ue = u[el.inodes]
-                svars = self.svars[0,self.svtab[iel]].reshape(m,n,ntens)
+                if ntens is not None:
+                    svars = self.svars[0,self.svtab[iel]].reshape(m,n,ntens)
+                else:
+                    svars = self.svars[0,self.svtab[iel]].reshape(m,n)
                 for (j, name) in enumerate(el.variables):
                     frame.field_outputs[eb.name,name].add_data(svars[:,j], e)
 

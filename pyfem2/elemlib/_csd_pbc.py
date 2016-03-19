@@ -37,6 +37,7 @@ class PlaneBeamColumn(Element):
         Fe = zeros(6)
 
         if cflag == LP_OUTPUT:
+            return
             raise NotImplementError
 
         if cflag == FORCE_ONLY:

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-import sys
-sys.path.insert(0, '../')
 from pyfem2 import *
 
-V = TrussModel(jobid='Truss2')
+V = FiniteElementModel(jobid='Truss2')
 
 # Create mesh and define function space
 nodtab = [[1,-37.5,0,200],[2,37.5,0,200],[3,-37.5,37.5,100],
@@ -29,14 +27,16 @@ V.AssignProperties('ElementBlock1', ElasticLink3D2, 'Material-1', A=A)
 V.FixNodes((7, 8, 9, 10))
 
 # Define concentrated loads
+step = V.StaticStep()
+
 P1, P2, P3, P4 = 1000, 10000, -5000, 500
-V.ConcentratedLoad(1, X, P1)
-V.ConcentratedLoad(1, Y, P2)
-V.ConcentratedLoad(1, Z, P3)
-V.ConcentratedLoad(2, Y, P2)
-V.ConcentratedLoad(2, Z, P3)
-V.ConcentratedLoad((3, 6), X, P4)
+step.ConcentratedLoad(1, X, P1)
+step.ConcentratedLoad(1, Y, P2)
+step.ConcentratedLoad(1, Z, P3)
+step.ConcentratedLoad(2, Y, P2)
+step.ConcentratedLoad(2, Z, P3)
+step.ConcentratedLoad((3, 6), X, P4)
 
 # Solve and write results
-V.Solve()
+step.run()
 V.WriteResults()

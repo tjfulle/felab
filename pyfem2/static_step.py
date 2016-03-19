@@ -35,7 +35,6 @@ class StaticStep(Step):
     # --- LOADING CONDITIONS ------------------------------------------------ #
     # ----------------------------------------------------------------------- #
     def GravityLoad(self, region, components):
-        orphans = self.model.orphaned_elements
         if region == ALL:
             ielems = range(self.model.numele)
         else:
@@ -47,9 +46,6 @@ class StaticStep(Step):
                                  'COMPONENTS'.format(len(self.model.active_dof)))
         a = asarray(components)
         for iel in ielems:
-            if iel in orphans:
-                raise UserInputError('ELEMENT BLOCKS MUST BE ASSIGNED '
-                                     'BEFORE GRAVITY LOADS')
             el = self.model.elements[iel]
             rho = el.material.density
             if rho is None:
@@ -70,9 +66,6 @@ class StaticStep(Step):
             ielems = [self.model.mesh.elemap[region]]
         else:
             ielems = [self.model.mesh.elemap[el] for el in region]
-        if any(in1d(ielems, self.model.orphaned_elements)):
-            raise UserInputError('ELEMENT PROPERTIES MUST BE ASSIGNED '
-                                 'BEFORE DISTRIBUTEDLOAD')
         self.dltyp[ielem].append(DLOAD)
         self.dload[ielem].append(asarray(components))
 
@@ -83,22 +76,14 @@ class StaticStep(Step):
             raise UserInputError('EXPECTED {0} SURFACE LOAD '
                                  'COMPONENTS'.format(len(self.model.active_dof)))
         surface = self.model.mesh.find_surface(surface)
-        orphans = self.model.orphaned_elements
         for (iel, iedge) in surface:
-            if iel in orphans:
-                raise UserInputError('ELEMENT PROPERTIES MUST BE ASSIGNED '
-                                     'BEFORE SURFACELOAD')
             self.dltyp[iel].append(SLOAD)
             self.dload[iel].append([iedge]+[x for x in components])
 
     def SurfaceLoadN(self, surface, amplitude):
         surface = self.model.mesh.find_surface(surface)
-        orphans = self.model.orphaned_elements
         for (iel, iedge) in surface:
             # DETERMINE THE NORMAL TO THE EDGE
-            if iel in orphans:
-                raise UserInputError('ELEMENT PROPERTIES MUST BE ASSIGNED '
-                                     'BEFORE SURFACELOADN')
             el = self.model.elements[iel]
             edgenod = el.edges[iedge]
             xb = el.xc[edgenod]
@@ -152,12 +137,12 @@ class StaticStep(Step):
             logging.warn('INCORRECT SOLUTION TO DOFS')
 
         # TOTAL FORCE, INCLUDING REACTION, AND REACTION
-        R = dot(K, u) - rhs
+        react = dot(K, u) - rhs
         self.model.assemble(self.dofs, u, Qf, self.svtab, self.svars,
                             self.dltyp, self.dload, self.predef,
                             STATIC, DIRECT, cflag=LP_OUTPUT)
-        self.dofs += u
-        self.advance(self.period, R=R)
+        self.dofs = u
+        self.advance(self.period, self.dofs, react=react)
 
     def newton_solve(self, tolerance=1e-4, relax=1., tolerance1=1e-6):
 
@@ -238,6 +223,6 @@ class StaticStep(Step):
                           'COMPLETE.'.format(self.number, iframe+1))
             time[1] += dtime
             self.dofs += u
-            self.advance(dtime)
+            self.advance(dtime, self.dofs)
 
         return

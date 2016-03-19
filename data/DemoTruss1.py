@@ -2,12 +2,10 @@
 pyfem2 tutorial demo program: Plane truss.
 
 """
-import sys
-sys.path.insert(0, '../')
 from pyfem2 import *
 
 # Create the model problem
-V = TrussModel(jobid='Truss1')
+V = FiniteElementModel(jobid='Truss1')
 
 # Create the mesh from tables of nodes and elements
 nodtab = [[1,0,0], [2,10,5], [3,10,0], [4,20,8], [5,20,0],
@@ -39,8 +37,9 @@ V.PrescribedBC(1, (X,Y))
 V.PrescribedBC(12, Y)
 
 # Apply concentrated loads
-V.ConcentratedLoad((3,5,9,11), Y, -10)
-V.ConcentratedLoad(7, Y, -16)
+step = V.StaticStep()
+step.ConcentratedLoad((3,5,9,11), Y, -10)
+step.ConcentratedLoad(7, Y, -16)
 
-V.Solve()
+step.run()
 V.WriteResults()

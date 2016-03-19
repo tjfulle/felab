@@ -72,11 +72,12 @@ class HeatTransferStep(Step):
                                      HEAT_TRANSFER, DIRECT)
         Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, self.dofvals)
         self.dofs[:] = linsolve(Kbc, Fbc)
-        Q = dot(K, self.dofs) - rhs
+        react = dot(K, self.dofs) - rhs
+        self.advance(self.period, self.dofs, react)
 
         # CREATE NEW FRAME TO HOLD UPDATED STATE
-        frame = self.Frame(self.period)
-        frame.field_outputs['T'].add_data(self.dofs)
-        frame.field_outputs['Q'].add_data(Q)
-        frame.converged = True
-        self.T = self.dofs
+        #frame = self.Frame(self.period)
+        #frame.field_outputs['T'].add_data(self.dofs)
+        #frame.field_outputs['Q'].add_data(Q)
+        #frame.converged = True
+        #self.T = self.dofs

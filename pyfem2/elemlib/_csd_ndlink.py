@@ -62,12 +62,16 @@ class ND2NodeLinkElement(Element):
         else:
             nn = outer(n, n)
 
-        # ASSEMBLE ELEMENT STIFFNESS
-        i, j = ndof, 2*ndof
-        Ke = zeros((2*ndof, 2*ndof))
-        Ke[0:i, 0:i] = Ke[i:j, i:j] =  nn # UPPER LEFT AND LOWER RIGHT 2X2
-        Ke[0:i, i:j] = Ke[i:j, 0:i] = -nn # LOWER LEFT AND UPPER RIGHT 2X2
-        Ke *= self.A * self.material.E / h
+        svars[1,0] = self.internal_force(u+du)
+        svars[1,1] = svars[1,0] / self.A
+
+        if compute_stiff:
+            # ASSEMBLE ELEMENT STIFFNESS
+            i, j = ndof, 2*ndof
+            Ke = zeros((2*ndof, 2*ndof))
+            Ke[0:i, 0:i] = Ke[i:j, i:j] =  nn # UPPER LEFT AND LOWER RIGHT 2X2
+            Ke[0:i, i:j] = Ke[i:j, 0:i] = -nn # LOWER LEFT AND UPPER RIGHT 2X2
+            Ke *= self.A * self.material.E / h
 
         if cflag == STIFF_AND_FORCE:
             return Ke, Fe
@@ -100,6 +104,7 @@ class ND2NodeLinkElement(Element):
 
         """
         x = self.xc[1] - self.xc[0]
+        uc = uc.reshape(self.xc.shape)
         u = uc[1] - uc[0]
         Xu = dot(x, u)
         L = sqrt(dot(x, x))
