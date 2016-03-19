@@ -437,7 +437,7 @@ def test_fem2_4():
               [11, 4, 5],[12, 3, 4],[13, 5, 6],[14, 3,10],[15, 6, 7],
               [16, 4, 9],[17, 5, 8],[18, 4, 7],[19, 3, 8],[20, 5,10],
               [21, 6, 9],[22, 6,10],[23, 3, 7],[24, 5, 9],[25, 4, 8]]
-    V = TrussModel()
+    V = FiniteElementModel()
     V.Mesh(nodtab=nodtab, eletab=eletab)
 
     # Define element blocks

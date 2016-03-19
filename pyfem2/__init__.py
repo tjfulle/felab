@@ -3,13 +3,12 @@ import sys
 import argparse
 import logging
 from numpy import *
+
 from .constants import *
 from .elemlib import *
 from .mesh.exodusii import File, PutNodalSolution
 from .first_fe_program import UniformBar
 from .finite_element_model import FiniteElementModel
-from .fem2 import TrussModel
-from .fem5 import PlaneBeamColumnTrussModel
 from .mat import Material
 from .mesh.mesh import Mesh
 
