@@ -1,8 +1,10 @@
 import logging
 from numpy import *
-from numpy.linalg import inv
+from ..utilities import UserInputError, is_listlike
 from .elas import elas
-from .utilities import UserInputError, is_listlike
+from .elastic import Elastic
+from .neohooke import NeoHooke
+from .thermal import ThermallyConductive
 
 __all__ = ['Material']
 
@@ -40,7 +42,9 @@ class Material(object):
 
     """
     def __init__(self, name, **kwds):
+
         self.name = name
+        self.model = None
 
         # YOUNG'S MODULUS AND POISSON'S RATIO
         self.E, self.Nu = None, None
@@ -50,18 +54,30 @@ class Material(object):
 
         # DENSITY
         self.density = None
+
+        # CHECK KEYWORDS
         for (kwd, v) in kwds.items():
             k = kwd.lower()
             if k in ('density', 'rho'):
                 self.density = v
+
             elif k == 'elastic':
                 try:
                     self.Elastic(**v)
                 except TypeError:
                     raise UserInputError('ELASTIC PROPERTIES MUST BE A '
                                          'DICT, NOT {0}'.format(type(v)))
+
+            elif k in ('neohooke', 'hyperelastic'):
+                try:
+                    self.NeoHooke(**v)
+                except TypeError:
+                    raise UserInputError('NEOHOOKE PROPERTIES MUST BE A '
+                                         'DICT, NOT {0}'.format(type(v)))
+
             elif 'thermal_conductivity' in k:
                 self.ThermalConductivity(v)
+
             else:
                 logging.warn('SETTING UNKNOWN MATERIAL PROPERTY {0!r}'.format(kwd))
                 setattr(self, kwd, v)
@@ -107,6 +123,42 @@ class Material(object):
              self.Elastic(K=10, G=6)
 
         """
+        self.set_elastic_properties(**kwds)
+        self.model = Elastic(self.Lambda, self.Mu)
+
+    def NeoHooke(self, **kwds):
+        """Assign elastic properties
+
+        Parameters
+        ----------
+        kwds : dict
+            name=value pairs of elastic constants
+
+        Notes
+        -----
+        Any two elastic constants can be passed to this method from which all
+        other elastic constants are calculated (isotropy of the tangent
+        elastic stiffness assumed).
+
+        Examples
+        --------
+        - Young's modulus :math:`E=10` and Poisson's ratio :math:`\\nu=.29`:
+
+          .. code:: python
+
+             self.NeoHooke(E=10, Nu=.29)
+
+        - Bulk modulus :math:`K=10` and shear modulus :math:`G=6`:
+
+          .. code:: python
+
+             self.NeoHooke(K=10, G=6)
+
+        """
+        self.set_elastic_properties(**kwds)
+        self.model = NeoHooke(self.E, self.Nu)
+
+    def set_elastic_properties(self, **kwds):
         if 'rho' in [s.lower() for s in kwds.keys()]:
             if len(kwds) != 3:
                 raise UserInputError('EXACTLY 2 ELASTIC CONSTANTS REQUIRED')
@@ -130,74 +182,12 @@ class Material(object):
             Coefficient of thermal conductivity
 
         """
-        if not is_listlike(k):
-            self.k_iso = k
-        else:
-            k = asarray(k)
-            self.k_aniso = eye(3)
-            if len(k) == 3:
-                fill_diagonal(self.k_aniso, k)
-            elif k.size == 9:
-                self.k_aniso[:] = k.reshape(3,3)
-            else:
-                raise UserInputError('K MUST BE A 3 VECTOR OR 3X3 ARRAY')
-            self.k_iso = trace(self.k_aniso) / 3.
+        self.model = ThermallyConductive(k)
     IsotropicThermalConductivity = ThermalConductivity
 
-    def isotropic_thermal_conductivity(self, ndim):
-        """The isotropic thermal conductivity matrix"""
-        return self.k_iso * eye(ndim)
-
     def response(self, stress, statev, strain, dstrain, time, dtime,
-                 temp, dtemp, ndir, nshr, F0, F):
-        D = self.stiffness(ndir, nshr)
-        stress += dot(D, dstrain)
-        return stress, statev, D
-
-    def stiffness(self, ndir, nshr, disp=None):
-        if self.E is None:
-            raise UserInputError('ELASTIC MODULUS NOT SET')
-        if self.Nu is None:
-            raise UserInputError("POISSON'S RATIO NOT SET")
-        D = self.isotropic_elastic_stiffness()
-
-        if nshr == 1:
-            # MODIFY THE STIFFNESS FOR 2D ACCORDING TO:
-            # 1) PLANE STRAIN: REMOVE ROWS AND COLUMNS OF THE STIFFNESS
-            #    CORRESPONDING TO THE PLANE OF ZERO STRAIN
-            # 2) PLANE STRESS: INVERT THE STIFFNESS AND REMOVE THE ROWS
-            #    AND COLUMNS OF THE COMPLIANCE CORRESPONDING THE PLANE OF
-            #    ZERO STRESS.
-            if ndir == 2:
-                # PLANE STRESS
-                # INVERT THE STIFFNESS TO GET THE COMPLIANCE
-                idx = [[[0], [1], [3]], [0, 1, 3]]
-                D = inv(inv(D)[idx])
-            elif ndir == 3:
-                # PLANE STRAIN
-                idx = [[[0], [1], [2], [3]], [0, 1, 2, 3]]
-                D = D[idx]
-
-        if disp is None:
-            return D
-
-        ntens = ndir + nshr
-        if disp == 2:
-            D1, D2 = zeros((ntens, ntens)), eye(ntens)
-            D1[:ndir,:ndir] = D[0,1]
-            return D1, D-D1
-
-        raise NotImplementedError
-
-    def isotropic_elastic_stiffness(self):
-        """Tangent elastic stiffness"""
-        c11 = self.Lambda + 2*self.Mu
-        c12 = self.Lambda
-        c44 = self.Mu
-        C = array([[c11, c12, c12, 0,   0,   0  ],
-                   [c12, c11, c12, 0,   0,   0  ],
-                   [c12, c12, c11, 0,   0,   0  ],
-                   [0,   0,   0,   c44, 0,   0  ],
-                   [0,   0,   0,   0,   c44, 0  ],
-                   [0,   0,   0,   0,   0,   c44]])
-        return C
+                 temp, dtemp, predef, dpred, ndir, nshr, ntens,
+                 coords, F0, F, noel, kstep, kinc):
+        return self.model.response(
+            stress, statev, strain, dstrain, time, dtime, temp, dtemp,
+            predef, dpred, ndir, nshr, ntens, coords, F0, F, noel, kstep, kinc)

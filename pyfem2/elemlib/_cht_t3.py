@@ -58,7 +58,7 @@ class PlaneDiffussiveHeatTransferTria3(CHTElement):
         Je = self.jacobian()
         B = self.shapegrad()
         N = [self.shape(self.isop_map(xi)) for xi in self.gaussp]
-        w, k = self.gaussw, self.material.isotropic_thermal_conductivity(2)
+        w, k = self.gaussw, self.material.model.isotropic_thermal_conductivity(2)
         return Je/2.*sum([w[i]*dot(dot(B.T,k),B) for (i, Ni) in enumerate(N)], 0)
 
     def convection_stiff_contrib(self, edge, h):

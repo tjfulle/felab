@@ -73,7 +73,7 @@ class CSDFElement(CSDElement):
             # VECTOR OR TENSOR DATA
             return average(data, axis=0, weights=weights)
 
-    def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
+    def response(self, u, du, time, dtime, kstep, kframe, svars, dltyp, dload,
                  predef, procedure, nlgeom, cflag, step_type, load_fac):
         """Assemble the element stiffness"""
 
@@ -135,8 +135,10 @@ class CSDFElement(CSDElement):
             xv = zeros(1)
             e = svars[0,ij+a1*ntens:ij+(a1+1)*ntens]
             s = svars[0,ij+a3*ntens:ij+(a3+1)*ntens]
-            s, xv, D = self.material.response(s, xv, e, de, time, dtime, temp,
-                                              dtemp, self.ndir, self.nshr, F0, F)
+            s, xv, D = self.material.response(
+                s, xv, e, de, time, dtime, temp, dtemp, None, None,
+                self.ndir, self.nshr, self.ndir+self.nshr, xc, F0, F,
+                self.label, kstep, kframe)
 
             # STORE THE UPDATED VARIABLES
             svars[1,ij+a1*ntens:ij+(a1+1)*ntens] += de  # STRAIN

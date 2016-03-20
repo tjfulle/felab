@@ -9,7 +9,7 @@ from .elemlib import *
 from .mesh.exodusii import File, PutNodalSolution
 from .first_fe_program import UniformBar
 from .finite_element_model import FiniteElementModel
-from .mat import Material
+from .material import Material
 from .mesh.mesh import Mesh
 
 set_printoptions(4, suppress=True)

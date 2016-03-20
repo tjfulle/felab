@@ -7,7 +7,7 @@ from .utilities import *
 from .constants import *
 from .step_repository import StepRepository
 from .mesh.mesh import Mesh
-from .mat import Material
+from .material import Material
 from .mesh.exodusii import File
 
 __all__ = ['FiniteElementModel']
@@ -532,6 +532,7 @@ class FiniteElementModel(object):
         if name in self.materials:
             raise UserInputError('DUPLICATE MATERIAL {0!r}'.format(name))
         self.materials[name] = Material(name, **kwargs)
+        return self.materials
 
     def PrescribedBC(self, nodes, dof):
         if self.steps is not None:
