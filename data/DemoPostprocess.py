@@ -6,9 +6,9 @@ from pyfem2 import *
 V = FiniteElementModel(jobid='PlateWithHoleQuad4')
 V.GenesisMesh('PlateWithHoleQuad4.g')
 
-V.Material('Material-1')
-V.materials['Material-1'].Elastic(E=100, Nu=.2)
-V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1', t=1)
+mat = V.Material('Material-1')
+mat.Elastic(E=100, Nu=.2)
+V.AssignProperties('ElementBlock1', PlaneStrainQuad4, mat.name, t=1)
 V.PrescribedBC('LeftHandSide', X)
 V.FixNodes('PinNode')
 

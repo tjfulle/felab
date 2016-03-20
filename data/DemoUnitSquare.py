@@ -4,8 +4,8 @@ from pyfem2 import *
 V = FiniteElementModel()
 V.UnitSquareMesh((1,1))
 V.ElementBlock('All', ALL)
-V.Material('Mat', elastic={'E': 1000, 'Nu': 0})
-V.AssignProperties('All', PlaneStressQuad4, 'Mat')
+mat = Material('Mat', elastic={'E': 1000, 'Nu': 0})
+V.AssignProperties('All', PlaneStressQuad4, mat)
 V.FixNodes(ILO)
 
 step = V.StaticStep()

@@ -11,11 +11,11 @@ V = FiniteElementModel(jobid='Heat1')
 V.GenesisMesh('PlateWithHoleTria3Fine.g')
 
 # Create a material and define the thermal conductivity
-V.Material('Material-1')
-V.materials['Material-1'].IsotropicThermalConductivity(12)
+mat = V.Material('Material-1')
+mat.IsotropicThermalConductivity(12)
 
 # Define an alement block of diffusive heat transfer elements with material mat
-V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
+V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, mat.name)
 
 # Fix temperatures on left and right edge
 step = V.HeatTransferStep()

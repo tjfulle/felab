@@ -2,9 +2,9 @@ import logging
 from pyfem2 import *
 V = FiniteElementModel(jobid='PlaneStrainQuad4Patch')
 V.AbaqusMesh(filename='EC4SFP1.inp')
-V.Material('Material-1')
-V.materials['Material-1'].Elastic(E=1e6, Nu=.25)
-V.AssignProperties('EALL', PlaneStrainQuad4, 'Material-1', t=.001)
+mat = V.Material('Material-1')
+mat.Elastic(E=1e6, Nu=.25)
+V.AssignProperties('EALL', PlaneStrainQuad4, mat.name, t=.001)
 
 step = V.StaticStep()
 step.PrescribedBC(10, (X,Y), 0.)

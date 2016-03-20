@@ -5,9 +5,9 @@ from pyfem2 import *
 
 V = FiniteElementModel(jobid='PlateWithHoleQuad4QuarterSym')
 V.GenesisMesh('PlateWithHoleQuad4QuarterSym.g')
-V.Material('Material-1')
-V.materials['Material-1'].Elastic(E=100, Nu=.2)
-V.AssignProperties('', PlaneStrainQuad4, 'Material-1', t=1)
+mat = V.Material('Material-1')
+mat.Elastic(E=100, Nu=.2)
+V.AssignProperties('', PlaneStrainQuad4, mat.name, t=1)
 V.PrescribedBC('SymYZ', X)
 V.PrescribedBC('SymXZ', Y)
 V.InitialTemperature(ALL, 60)

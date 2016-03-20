@@ -18,8 +18,8 @@ eletab = [[1,1,3], [2,3,5], [3,5,7], [4,7,9], [5,9,11], [6,11,12],
 V.Mesh(nodtab=nodtab, eletab=eletab)
 
 # Create a material and define the elastic properties
-V.Material('Material-1')
-V.materials['Material-1'].Elastic(E=1000, Nu=.29)
+mat = Material('Material-1')
+mat.Elastic(E=1000, Nu=.29)
 
 # Define an element block of 3D 2-node link elements
 V.ElementBlock('ElementBlock1', ALL)
@@ -30,7 +30,7 @@ A = [Abot, Abot, Abot, Abot, Abot, Abot,
      Atop, Atop, Atop, Atop, Atop, Atop,
      Abat, Abat, Abat, Abat, Abat,
      Adia, Adia, Adia, Adia]
-V.AssignProperties('ElementBlock1', ElasticLink2D2, 'Material-1', A=A)
+V.AssignProperties('ElementBlock1', ElasticLink2D2, mat, A=A)
 
 # Apply boundary conditions
 V.PrescribedBC(1, (X,Y))

@@ -10,9 +10,9 @@ E = 2. * mu * (1. + Nu)
 def LinearSolution(ax=None):
     V = FiniteElementModel(jobid='VolumeLocking.Linear')
     V.GenesisMesh('QuarterCylinderQuad4.g')
-    V.Material('Material-1')
-    V.materials['Material-1'].Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1', t=1)
+    mat = V.Material('Material-1')
+    mat.Elastic(E=E, Nu=Nu)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad4, mat.name, t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
@@ -27,9 +27,9 @@ def LinearSolution(ax=None):
 def ReducedIntegrationSolution(ax=None):
     V = FiniteElementModel(jobid='VolumeLocking.BBar')
     V.GenesisMesh('QuarterCylinderQuad4.g')
-    V.Material('Material-1')
-    V.materials['Material-1'].Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad4BBar, 'Material-1', t=1)
+    mat = V.Material('Material-1')
+    mat.Elastic(E=E, Nu=Nu)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad4BBar, mat.name, t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
@@ -43,10 +43,10 @@ def ReducedIntegrationSolution(ax=None):
 def SelReducedIntegrationSolution(ax=None):
     V = FiniteElementModel(jobid='VolumeLocking.SelReduced')
     V.GenesisMesh('QuarterCylinderQuad4.g')
-    V.Material('Material-1')
-    V.materials['Material-1'].Elastic(E=E, Nu=Nu)
+    mat = V.Material('Material-1')
+    mat.Elastic(E=E, Nu=Nu)
     V.AssignProperties('ElementBlock1', PlaneStrainQuad4SelectiveReduced,
-                       'Material-1', t=1)
+                       mat.name, t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
@@ -60,9 +60,9 @@ def SelReducedIntegrationSolution(ax=None):
 def QuadraticSolution(ax=None):
     V = FiniteElementModel(jobid='VolumeLocking.Quadratic')
     V.GenesisMesh('QuarterCylinderQuad8.g')
-    V.Material('Material-1')
-    V.materials['Material-1'].Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad8BBar, 'Material-1', t=1)
+    mat = V.Material('Material-1')
+    mat.Elastic(E=E, Nu=Nu)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad8BBar, mat.name, t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face

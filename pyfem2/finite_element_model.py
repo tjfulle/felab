@@ -532,7 +532,7 @@ class FiniteElementModel(object):
         if name in self.materials:
             raise UserInputError('DUPLICATE MATERIAL {0!r}'.format(name))
         self.materials[name] = Material(name, **kwargs)
-        return self.materials
+        return self.materials[name]
 
     def PrescribedBC(self, nodes, dof):
         if self.steps is not None:
@@ -646,8 +646,8 @@ class FiniteElementModel(object):
             The name of the element block
         eletyp : object
             The element type (uninstantiated class)
-        elemat : str
-            The name of the material model
+        elemat : str or Material
+            The name of the material model, or a material model
         elefab : dict
             Element fabrication properties
 
@@ -665,9 +665,13 @@ class FiniteElementModel(object):
         """
         if self.mesh is None:
             raise UserInputError('MESH MUST FIRST BE CREATED')
-        if elemat not in self.materials:
+        if elemat in self.materials:
+            elemat = self.materials[elemat]
+        elif isinstance(elemat, Material):
+            if elemat.name not in self.materials:
+                self.materials[elemat.name] = elemat
+        else:
             raise UserInputError('NO SUCH MATERIAL {0!r}'.format(elemat))
-        elemat = self.materials[elemat]
         if blknam.upper() not in self.mesh.element_blocks:
             raise UserInputError('NO SUCH ELEMENT BLOCK {0!r}'.format(blknam))
         blk = self.mesh.element_blocks[blknam.upper()]

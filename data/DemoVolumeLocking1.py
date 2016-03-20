@@ -31,9 +31,9 @@ def Runall(ax=None):
         # Linear finite element solution
         V = FiniteElementModel()
         V.GenesisMesh('QuarterCylinderQuad4.g')
-        V.Material('Material-1')
-        V.materials['Material-1'].Elastic(E=E, Nu=Nu)
-        V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1')
+        mat = V.Material('Material-1')
+        mat.Elastic(E=E, Nu=Nu)
+        V.AssignProperties('ElementBlock1', PlaneStrainQuad4, mat.name)
         V.PrescribedBC('Nodeset-200', X)
         V.PrescribedBC('Nodeset-201', Y)
 

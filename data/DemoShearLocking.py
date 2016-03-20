@@ -13,12 +13,12 @@ def PlaneStressBeam(ratio):
     P = 2.22 / length ** 3 * E * a ** 3
     q = P / a
     V.RectilinearMesh((10, 3), (length, 2*a))
-    V.Material('Material-1')
-    V.materials['Material-1'].Elastic(E=E, Nu=nu)
+    mat = V.Material('Material-1')
+    mat.Elastic(E=E, Nu=nu)
     V.ElementBlock('ElementBlock1', ALL)
     El = PlaneStressQuad4Incompat
     El = PlaneStressQuad4
-    V.AssignProperties('ElementBlock1', PlaneStressQuad4, 'Material-1', t=1)
+    V.AssignProperties('ElementBlock1', PlaneStressQuad4, mat.name, t=1)
     V.PrescribedBC(IHI, (X,Y))
 
     step = V.StaticStep()

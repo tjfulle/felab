@@ -10,10 +10,10 @@ V = FiniteElementModel(jobid='Plane2')
 # Read mesh from file
 V.GenesisMesh('PlateWithHoleTria3.g')
 
-V.Material('Material-1')
-V.materials['Material-1'].Elastic(E=10e6, Nu=.29)
+mat = V.Material('Material-1')
+mat.Elastic(E=10e6, Nu=.29)
 
-V.AssignProperties('ElementBlock1', PlaneStrainTria3, 'Material-1', t=1)
+V.AssignProperties('ElementBlock1', PlaneStrainTria3, mat.name, t=1)
 
 step = V.StaticStep()
 step.PrescribedBC('LeftHandSide', X, 0.)

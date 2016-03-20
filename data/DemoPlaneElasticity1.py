@@ -7,10 +7,10 @@ from pyfem2 import *
 V = FiniteElementModel(jobid='Plane1')
 V.GenesisMesh('PlateWithHoleQuad4.g')
 
-V.Material('Material-1')
-V.materials['Material-1'].Elastic(E=10e6, Nu=.29)
+mat = V.Material('Material-1')
+mat.Elastic(E=10e6, Nu=.29)
 
-V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1', t=1)
+V.AssignProperties('ElementBlock1', PlaneStrainQuad4, mat.name, t=1)
 
 step = V.StaticStep()
 step.PrescribedBC('LeftHandSide', X, 0.)
