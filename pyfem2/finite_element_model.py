@@ -116,7 +116,7 @@ class FiniteElementModel(object):
         self.mesh = Mesh(filename=filename)
         self._initialize()
 
-    def RectilinearMesh(self, shape, lengths):
+    def RectilinearMesh(self, nx=1, ny=1, lx=1, ly=1):
         """
         Generates a rectilinear 2D finite element mesh.
 
@@ -139,10 +139,10 @@ class FiniteElementModel(object):
         pyfem2.mesh.Mesh.RectilinearMesh2D
 
         """
-        self.mesh = Mesh.RectilinearMesh2D(shape, lengths)
+        self.mesh = Mesh.RectilinearMesh2D((nx, ny), (lx, ly))
         self._initialize()
 
-    def UnitSquareMesh(self, shape):
+    def UnitSquareMesh(self, nx=1, ny=1):
         """
         Generates a rectilinear 2D finite element mesh.
 
@@ -162,7 +162,7 @@ class FiniteElementModel(object):
         pyfem2.mesh.Mesh.RectilinearMesh2D
 
         """
-        self.mesh = Mesh.RectilinearMesh2D(shape, (1, 1))
+        self.mesh = Mesh.RectilinearMesh2D((nx, ny), (1, 1))
         self._initialize()
 
     def Mesh(self, **kwds):

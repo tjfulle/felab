@@ -4,7 +4,7 @@ sys.path.insert(0, '../')
 from pyfem2 import *
 
 V = FiniteElementModel(jobid='QuadBeam')
-V.RectilinearMesh((10, 2), (10, 2))
+V.RectilinearMesh(nx=10, ny=2, lx=10, ly=2)
 mat = V.Material('Material-1')
 mat.Elastic(E=20000, Nu=0.)
 V.ElementBlock('ElementBlock1', ALL)

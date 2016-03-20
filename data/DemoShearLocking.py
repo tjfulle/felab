@@ -12,7 +12,7 @@ def PlaneStressBeam(ratio):
     a = ratio * length
     P = 2.22 / length ** 3 * E * a ** 3
     q = P / a
-    V.RectilinearMesh((10, 3), (length, 2*a))
+    V.RectilinearMesh(nx=10, ny=3, lx=length, ly=2*a)
     mat = V.Material('Material-1')
     mat.Elastic(E=E, Nu=nu)
     V.ElementBlock('ElementBlock1', ALL)
