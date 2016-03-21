@@ -44,44 +44,48 @@
 <span id="planeelasticity1"></span><h1>2.4. Plane Elasticity, 1<a class="headerlink" href="#plane-elasticity-1" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="objective">
 <h2>2.4.1. Objective<a class="headerlink" href="#objective" title="Permalink to this headline">¶</a></h2>
-<p>This example demonstrates the use of the <code class="docutils literal"><span class="pre">Plane2DModel</span></code> to solve a plane strain problem.</p>
+<p>This example demonstrates the use of the <code class="docutils literal"><span class="pre">StaticStep</span></code> method of the <code class="docutils literal"><span class="pre">FiniteElementModel</span></code> class to solve a plane strain problem.</p>
 </div>
 <div class="section" id="problem-description">
 <h2>2.4.2. Problem Description<a class="headerlink" href="#problem-description" title="Permalink to this headline">¶</a></h2>
-<p>A beam is approximated by plane strain elements with a thickness of 1 and the
-material is linear elastic with constant Young&#8217;s modulus <span class="math">\(E\)</span> and
-Poisson&#8217;s ratio <span class="math">\(\nu\)</span>. The beam is fixed at its left end and concentrated forces applied to the right.</p>
+<p>A beam is approximated by plane strain elements with a thickness of <span class="math">\(1\)</span>
+and the material is linear elastic with constant Young&#8217;s modulus <span class="math">\(E\)</span> and
+Poisson&#8217;s ratio <span class="math">\(\nu\)</span>. The beam is fixed at its left end and
+concentrated forces applied to the right.</p>
 <a class="reference internal image-reference" href="../_images/QuadBeam0.png"><img alt="../_images/QuadBeam0.png" class="align-center" src="../_images/QuadBeam0.png" style="width: 477.6px; height: 116.0px;" /></a>
 </div>
 <div class="section" id="model-script">
 <h2>2.4.3. Model Script<a class="headerlink" href="#model-script" title="Permalink to this headline">¶</a></h2>
 <p>The problem is defined and solved in <code class="docutils literal"><span class="pre">pyfem2</span></code> as follows:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">pyfem2 tutorial demo program: Plane strain elasticity</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span>&quot;&quot;&quot;
+pyfem2 tutorial demo program: Plane strain elasticity
 
-<span class="sd">&quot;&quot;&quot;</span>
+&quot;&quot;&quot;
 
-<span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
+from pyfem2 import *
 
-<span class="c1"># Create the finite element model and rectilinear mesh</span>
-<span class="n">V</span> <span class="o">=</span> <span class="n">Plane2DModel</span><span class="p">()</span>
-<span class="n">V</span><span class="o">.</span><span class="n">RectilinearMesh</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+# Create the finite element model and rectilinear mesh
+V = FiniteElementModel(jobid=&#39;QuadBeam&#39;))
+V.RectilinearMesh(nx=10, ny=2, lx=10, ly=2)
 
-<span class="c1"># Assign element to element block</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
+# Assign element to element block
+V.ElementBlock(&#39;ElementBlock1&#39;, ALL)
 
-<span class="c1"># Create a material and define the elastic properties</span>
-<span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">20000</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+# Create a material and define the elastic properties
+mat = V.Material(&#39;Material-1&#39;)
+mat.Elastic(E=20000, Nu=0.)
+V.AssignProperties(&#39;ElementBlock1&#39;, PlaneStrainQuad4, mat, t=1)
 
-<span class="c1"># Fix the left end apply loads to right</span>
-<span class="n">V</span><span class="o">.</span><span class="n">FixDOF</span><span class="p">(</span><span class="n">ILO</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="n">IHI</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">)</span>
+# Create step and fix the left end apply loads to right
+step = V.StaticStep()
+step.FixDOF(ILO)
+step.ConcentratedLoad(IHI, Y, -10)
 
-<span class="c1"># Solve the model and write results to the ExodusII database</span>
-<span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
-<span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;QuadBeam.exo&#39;</span><span class="p">)</span>
+# Run the step
+step.run()
+
+# Write results to the ExodusII database
+V.WriteResults()
 </pre></div>
 </div>
 </div>
@@ -94,14 +98,14 @@ Poisson&#8217;s ratio <span class="math">\(\nu\)</span>. The beam is fixed at it
 </div>
 <dl class="docutils">
 <dt>import objects from the <code class="docutils literal"><span class="pre">pyfem2</span></code> namespace in to the program. The key import</dt>
-<dd>from the <code class="docutils literal"><span class="pre">pyfem2</span></code> library is <code class="docutils literal"><span class="pre">Plane2DModel</span></code>.</dd>
+<dd>from the <code class="docutils literal"><span class="pre">pyfem2</span></code> library is <code class="docutils literal"><span class="pre">FiniteElementModel</span></code>.</dd>
 </dl>
 <p>The statement</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span> <span class="o">=</span> <span class="n">Plane2DModel</span><span class="p">()</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span> <span class="o">=</span> <span class="n">FiniteElementModel</span><span class="p">(</span><span class="n">jobid</span><span class="o">=</span><span class="s1">&#39;QuadBeam&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>creates the finite element model.  A rectilinear mesh with 10 elements in the <span class="math">\(x\)</span> direction and 2 elements in the <span class="math">\(y\)</span> with lengths <span class="math">\(L_x=10\)</span> and <span class="math">\(L_y=10\)</span> is created by</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">RectilinearMesh</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<p>creates the finite element model with identifier <code class="docutils literal"><span class="pre">QuadBeam</span></code>.  A rectilinear mesh with 10 elements in the <span class="math">\(x\)</span> direction and 2 elements in the <span class="math">\(y\)</span> with lengths <span class="math">\(L_x=10\)</span> and <span class="math">\(L_y=10\)</span> is created by</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">RectilinearMesh</span><span class="p">(</span><span class="n">nx</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">ny</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">lx</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">ly</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/QuadBeam1.png"><img alt="../_images/QuadBeam1.png" class="align-center" src="../_images/QuadBeam1.png" style="width: 528.0px; height: 125.60000000000001px;" /></a>
@@ -120,26 +124,27 @@ elements in the mesh is created by:</p>
 in the mesh to the block <code class="docutils literal"><span class="pre">ElementBlock1</span></code>. Material properties are defined by
 the <code class="docutils literal"><span class="pre">Material</span></code> method and elements in a block are assigned material and
 fabrication properties by the <code class="docutils literal"><span class="pre">AssignProperties</span></code> method:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">20000</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<span class="n">mat</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">20000</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The method <code class="docutils literal"><span class="pre">AssignProperties</span></code> takes as input the name of the element block
 to which properties are being assigned, the element type for elements in the
-block, the material model name, and any element fabrication properties. For
+block, the material model, and any element fabrication properties. For
 <code class="docutils literal"><span class="pre">PlaneStrainQuad4</span></code> elements, the thickness <code class="docutils literal"><span class="pre">t</span></code> is the only fabrication
 property.</p>
-<p>The next step is to specify the boundary conditions at <span class="math">\(x=0\)</span> and the concentrated nodal forces at <span class="math">\(x=10\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">FixDOF</span><span class="p">(</span><span class="n">ILO</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="n">IHI</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">)</span>
+<p>The next step is to create a static load step and to it specify the boundary conditions at <span class="math">\(x=0\)</span> and the concentrated nodal forces at <span class="math">\(x=10\)</span>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">StaticStep</span><span class="p">()</span>
+<span class="n">step</span><span class="o">.</span><span class="n">FixDOF</span><span class="p">(</span><span class="n">ILO</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="n">IHI</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The symbols <code class="docutils literal"><span class="pre">ILO</span></code> and <code class="docutils literal"><span class="pre">IHI</span></code> correspond to the <span class="math">\(x\)</span> coordinate
 direction (<code class="docutils literal"><span class="pre">I</span></code>) and the identifiers <code class="docutils literal"><span class="pre">LO</span></code> and <code class="docutils literal"><span class="pre">HI</span></code> to the corresponding
 low and high boundaries.</p>
 <p>Finally, the unknown displacements are determined by solving the model and the model results are written to an ExodusII output file</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">step</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Perhaps the easiest way to view results is by:</p>
@@ -149,8 +154,8 @@ low and high boundaries.</p>
 <p>With the <code class="docutils literal"><span class="pre">deformed</span></code> keyword, the deformed coordinates are plotted.</p>
 <a class="reference internal image-reference" href="../_images/QuadBeam2.png"><img alt="../_images/QuadBeam2.png" class="align-center" src="../_images/QuadBeam2.png" style="width: 537.6px; height: 151.20000000000002px;" /></a>
 <p>The results can also be written to an ExodusII file and viewed in
-<a class="reference external" href="http://www.paraview.org">ParaView</a></p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;QuadBeam.exo&#39;</span><span class="p">)</span>
+<a class="reference external" href="http://www.paraview.org">ParaView</a>.   The ExodusII output will be give the name <code class="docutils literal"><span class="pre">jobid.exo</span></code>, where <code class="docutils literal"><span class="pre">jobid</span></code> is the identifier sent to the <code class="docutils literal"><span class="pre">FiniteElementModel</span></code> (<code class="docutils literal"><span class="pre">QuadBeam</span></code> in this case).</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">()</span>
 </pre></div>
 </div>
 <img alt="../_images/QuadBeam3.png" class="align-center" src="../_images/QuadBeam3.png" />

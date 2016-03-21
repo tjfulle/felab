@@ -51,21 +51,26 @@
 <p>Determine the maximum principal stress in the plate with hole and compare with the analytic solution.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
 
-<span class="n">V</span> <span class="o">=</span> <span class="n">Plane2DModel</span><span class="p">()</span>
-<span class="n">V</span><span class="o">.</span><span class="n">GenesisMesh</span><span class="p">(</span><span class="s1">&#39;../meshes/PlateWithHoleQuad4QuarterSym.g&#39;</span><span class="p">)</span>
+<span class="n">V</span> <span class="o">=</span> <span class="n">FiniteElementModel</span><span class="p">(</span><span class="n">jobid</span><span class="o">=</span><span class="s1">&#39;PlateQuad&#39;</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">GenesisMesh</span><span class="p">(</span><span class="s1">&#39;PlateWithHoleQuad4QuarterSym.g&#39;</span><span class="p">)</span>
 
-<span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;LeftHandSide&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span>
+<span class="n">mat</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">elastic</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;E&#39;</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;Nu&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">2</span><span class="p">})</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">PlaneStrainQuad4</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;LeftHandSide&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
 <span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">(</span><span class="s1">&#39;PinNode&#39;</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">SurfaceLoad</span><span class="p">(</span><span class="n">IHI</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
-<span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;PlateQuad.exo&#39;</span><span class="p">)</span>
 
+<span class="c1"># Create a load step, apply a traction to the right hand side, and run it</span>
+<span class="n">step</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">StaticStep</span><span class="p">()</span>
+<span class="n">step</span><span class="o">.</span><span class="n">SurfaceLoad</span><span class="p">(</span><span class="n">IHI</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">step</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">()</span>
+
+<span class="c1"># Open the output file</span>
 <span class="n">F</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="s1">&#39;PlateQuad.exo&#39;</span><span class="p">)</span>
-<span class="n">max_p</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
+
+<span class="c1"># Loop through each load step, determining the maximum principal stress</span>
 <span class="n">max_u</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
+<span class="n">max_p</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
 <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">F</span><span class="o">.</span><span class="n">steps</span><span class="p">:</span>
     <span class="n">u</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">field_outputs</span><span class="p">[</span><span class="s1">&#39;U&#39;</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">u</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
@@ -81,6 +86,41 @@
 
 <span class="c1"># External and internal element numbers</span>
 <span class="n">xel</span> <span class="o">=</span> <span class="n">max_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">label</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">get_elem_coord</span><span class="p">(</span><span class="n">xel</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-does-it-work">
+<h2>2.6.3. How does it work?<a class="headerlink" href="#how-does-it-work" title="Permalink to this headline">¶</a></h2>
+<p>The complete code can be found in <code class="docutils literal"><span class="pre">pyfem2/data/Postprocessing.py</span></code>. We now examine the preceding program in detail, beginning with the <code class="docutils literal"><span class="pre">F</span> <span class="pre">=</span> <span class="pre">File(...)</span></code> line.</p>
+<p>The line</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Open the output file</span>
+<span class="n">F</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="s1">&#39;PlateQuad.exo&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>opens and loads the previously written ExodusII file and instantiates a <code class="docutils literal"><span class="pre">ExodusII</span></code> file object.</p>
+<p>The statements</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">max_u</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
+<span class="n">max_p</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>create containers to hold the maximum displacement magnitude and maximum principal stress.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">F</span><span class="o">.</span><span class="n">steps</span><span class="p">:</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">field_outputs</span><span class="p">[</span><span class="s1">&#39;U&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">u</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+        <span class="n">u1</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">magnitude</span>
+        <span class="k">if</span> <span class="n">max_u</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">u1</span><span class="p">:</span>
+            <span class="n">max_u</span> <span class="o">=</span> <span class="p">[</span><span class="n">u1</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">field_outputs</span><span class="p">[</span><span class="s1">&#39;S&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">max_principal</span>
+        <span class="k">if</span> <span class="n">max_p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">s1</span><span class="p">:</span>
+            <span class="n">max_p</span> <span class="o">=</span> <span class="p">[</span><span class="n">s1</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Get the element label and coordinates of the element having the maximum principal stress.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">xel</span> <span class="o">=</span> <span class="n">max_p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">label</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">get_elem_coord</span><span class="p">(</span><span class="n">xel</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -119,6 +159,7 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="">2.6. Post processing</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#objective">2.6.1. Objective</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#problem-description">2.6.2. Problem description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-does-it-work">2.6.3. How does it work?</a></li>
 </ul>
 </li>
 </ul>

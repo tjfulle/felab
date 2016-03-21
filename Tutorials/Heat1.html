@@ -44,7 +44,7 @@
 <span id="heat1"></span><h1>2.3. Diffusive Heat Transfer<a class="headerlink" href="#diffusive-heat-transfer" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="objectives">
 <h2>2.3.1. Objectives<a class="headerlink" href="#objectives" title="Permalink to this headline">¶</a></h2>
-<p>This example demonstrates the use of the <code class="docutils literal"><span class="pre">HeatTransfer2DModel</span></code> to solve a diffusive heat transfer problem.</p>
+<p>This example demonstrates the use of the <code class="docutils literal"><span class="pre">HeatTransferStep</span></code> method of <code class="docutils literal"><span class="pre">FiniteElementModel</span></code> to solve a diffusive heat transfer problem.</p>
 </div>
 <div class="section" id="problem-description">
 <h2>2.3.2. Problem description<a class="headerlink" href="#problem-description" title="Permalink to this headline">¶</a></h2>
@@ -69,7 +69,7 @@ top face.</p>
 <span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="c1"># Create the model problem and read the mesh from a file</span>
-<span class="n">V</span> <span class="o">=</span> <span class="n">HeatTransfer2DModel</span><span class="p">()</span>
+<span class="n">V</span> <span class="o">=</span> <span class="n">FiniteElementModel</span><span class="p">(</span><span class="n">jobid</span><span class="o">=</span><span class="s1">&#39;Heat1&#39;</span><span class="p">)</span>
 <span class="n">V</span><span class="o">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;PlateWithHoleTria3Fine.g&#39;</span><span class="p">)</span>
 
 <span class="c1"># Define an element block of diffusive heat transfer elements</span>
@@ -77,37 +77,40 @@ top face.</p>
 <span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;Block1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
 
 <span class="c1"># Create a material and define the thermal conductivity</span>
-<span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">DiffussiveHeatTransfer2D3</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<span class="n">mat</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<span class="n">mat</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElementBlock1&#39;</span><span class="p">,</span> <span class="n">PlaneDiffussiveHeatTransferTria2</span><span class="p">,</span> <span class="n">mat</span><span class="p">)</span>
+
+<span class="c1"># Create the load step</span>
+<span class="n">step</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">HeatTransferStep</span><span class="p">()</span>
 
 <span class="c1"># Fix temperatures on left and right edge</span>
-<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">IHI</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">IHI</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
 
 <span class="c1"># Define surface flux on bottom edge of domain</span>
-<span class="n">V</span><span class="o">.</span><span class="n">SurfaceFlux</span><span class="p">(</span><span class="n">JLO</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">SurfaceFlux</span><span class="p">(</span><span class="n">JLO</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
 
 <span class="c1"># Define surface convection on top edge of domain</span>
 <span class="n">Too</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">250</span>
-<span class="n">V</span><span class="o">.</span><span class="n">SurfaceConvection</span><span class="p">(</span><span class="n">JHI</span><span class="p">,</span> <span class="n">Too</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">SurfaceConvection</span><span class="p">(</span><span class="n">JHI</span><span class="p">,</span> <span class="n">Too</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
 
 <span class="c1"># Define a function specifying the heat generation</span>
 <span class="k">def</span> <span class="nf">fun</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="mf">1000.</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">HeatGeneration</span><span class="p">(</span><span class="n">ALL</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">HeatGeneration</span><span class="p">(</span><span class="n">ALL</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
 
 <span class="c1"># Solve for the unknown degrees of freedom</span>
-<span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
+<span class="n">step</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 
 <span class="c1"># Write the results to the ExodusII output database</span>
-<span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;heat1.exo&#39;</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="how-does-it-work">
 <h2>2.3.4. How does it work?<a class="headerlink" href="#how-does-it-work" title="Permalink to this headline">¶</a></h2>
-<p>The complete code can be found in the files <code class="docutils literal"><span class="pre">pyfem2/tutorials/Heat1.py</span></code>. We now examine the preceding program in detail.</p>
+<p>The complete code can be found in the files <code class="docutils literal"><span class="pre">pyfem2/data/Heat1.py</span></code>. We now examine the preceding program in detail.</p>
 <p>The first lines of the program,</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
@@ -115,13 +118,13 @@ top face.</p>
 </div>
 <p>import objects from the <code class="docutils literal"><span class="pre">numpy</span></code> and <code class="docutils literal"><span class="pre">pyfem2</span></code> namespaces in to the program.
 <a class="reference external" href="http://www.numpy.org">numpy</a> is a python package providing numerical data
-types and procedures. The key imports from the <code class="docutils literal"><span class="pre">pyfem2</span></code> library is
-the <code class="docutils literal"><span class="pre">HeatTransfer2DModel</span></code>.</p>
+types and procedures. The key import from the <code class="docutils literal"><span class="pre">pyfem2</span></code> library is
+the <code class="docutils literal"><span class="pre">FiniteElementModel</span></code> object.</p>
 <p>The statement</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span> <span class="o">=</span> <span class="n">HeatTransfer2DModel</span><span class="p">()</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span> <span class="o">=</span> <span class="n">FiniteElementModel</span><span class="p">(</span><span class="n">jobid</span><span class="o">=</span><span class="s1">&#39;Heat1&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>creates the finite element model.  The finite element mesh is assigned to the problem by</p>
+<p>creates the finite element model with identifier <code class="docutils literal"><span class="pre">Heat1</span></code>.  The finite element mesh is assigned to the problem by</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;PlateWithHoleTria3Fine.g&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -142,52 +145,53 @@ two-dimensional diffusive heat transfer element. The element block, named
 in the mesh to the block <code class="docutils literal"><span class="pre">ElementBlock1</span></code>. Material properties are defined by
 the <code class="docutils literal"><span class="pre">Material</span></code> method and elements in a block are assigned material and
 fabrication properties by the <code class="docutils literal"><span class="pre">AssignProperties</span></code> method:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;Block1&#39;</span><span class="p">,</span> <span class="n">DiffussiveHeatTransfer2D3</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
+<span class="n">mat</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;Block1&#39;</span><span class="p">,</span> <span class="n">PlaneDiffussiveHeatTransferTria3</span><span class="p">,</span> <span class="n">mat</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The method <code class="docutils literal"><span class="pre">AssignProperties</span></code> takes as input the name of the element block
 to which properties are being assigned, the element type for elements in the
 block, the material model name, and any element fabrication properties. For
-<code class="docutils literal"><span class="pre">DiffussiveHeatTransfer2D3</span></code> elements, no fabrication properties are required.</p>
-<p>The next step is to specify the boundary conditions <span class="math">\(T(x=-1,y)=200\)</span> and
+<code class="docutils literal"><span class="pre">PlaneDiffussiveHeatTransferTria3</span></code> elements, no fabrication properties are required.</p>
+<p>The next step is to define a load step and to it specify the boundary conditions <span class="math">\(T(x=-1,y)=200\)</span> and
 <span class="math">\(T(x=1,y)=50\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">IHI</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">HeatTransferStep</span><span class="p">()</span>
+<span class="n">step</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">ILO</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">IHI</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The symbols <code class="docutils literal"><span class="pre">ILO</span></code> and <code class="docutils literal"><span class="pre">IHI</span></code> correspond to the <span class="math">\(x\)</span> coordinate
 direction (<code class="docutils literal"><span class="pre">I</span></code>) and the identifiers <code class="docutils literal"><span class="pre">LO</span></code> and <code class="docutils literal"><span class="pre">HI</span></code> to the corresponding
 low and high boundaries.</p>
 <p>The surface flux on the bottom of the domain is defined by</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">SurfaceFlux</span><span class="p">(</span><span class="n">JLO</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">step</span><span class="o">.</span><span class="n">SurfaceFlux</span><span class="p">(</span><span class="n">JLO</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>and the surface convection on top edge by</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">Too</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">250</span>
-<span class="n">V</span><span class="o">.</span><span class="n">SurfaceConvection</span><span class="p">(</span><span class="n">JHI</span><span class="p">,</span> <span class="n">Too</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">SurfaceConvection</span><span class="p">(</span><span class="n">JHI</span><span class="p">,</span> <span class="n">Too</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The heat generation in the body of the domain is given by <span class="math">\(1000/\sqrt{x^2+y^2}\)</span> and is assigned to the model by defining a corresponding function and passing it to the <code class="docutils literal"><span class="pre">HeatGeneration</span></code> method:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fun</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="mf">1000.</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">HeatGeneration</span><span class="p">(</span><span class="n">ALL</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">HeatGeneration</span><span class="p">(</span><span class="n">ALL</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Finally, the unknown temperatures are determined by solving the model and the model results are written to an ExodusII output file</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">step</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Perhaps the easiest way to view results is by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Plot2D</span><span class="p">(</span><span class="n">colorby</span><span class="o">=</span><span class="n">V</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Plot2D</span><span class="p">(</span><span class="n">colorby</span><span class="o">=</span><span class="n">V</span><span class="o">.</span><span class="n">dofs</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>where <code class="docutils literal"><span class="pre">V.T</span></code> is the temperature determined from the call to <code class="docutils literal"><span class="pre">V.Solve()</span></code>. The result is</p>
+<p>where <code class="docutils literal"><span class="pre">V.dofs</span></code> is the temperature determined from the call to <code class="docutils literal"><span class="pre">step.run()</span></code>. The result is</p>
 <a class="reference internal image-reference" href="../_images/heat1_4.png"><img alt="../_images/heat1_4.png" class="align-center" src="../_images/heat1_4.png" style="width: 480.0px; height: 360.0px;" /></a>
 <p>The results can also be written to an ExodusII file and viewed in
 <a class="reference external" href="http://www.paraview.org">ParaView</a></p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;heat1.exo&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">()</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/heat1_3.png"><img alt="../_images/heat1_3.png" class="align-center" src="../_images/heat1_3.png" style="width: 361.8px; height: 306.0px;" /></a>

@@ -1,5 +1,5 @@
 Material
 --------
 
-.. automodule:: pyfem2.mat
+.. automodule:: pyfem2.material._material
     :members:

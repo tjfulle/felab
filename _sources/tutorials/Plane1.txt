@@ -7,14 +7,15 @@ Plane Elasticity, 1
 Objective
 ---------
 
-This example demonstrates the use of the ``Plane2DModel`` to solve a plane strain problem.
+This example demonstrates the use of the ``StaticStep`` method of the ``FiniteElementModel`` class to solve a plane strain problem.
 
 Problem Description
 -------------------
 
-A beam is approximated by plane strain elements with a thickness of 1 and the
-material is linear elastic with constant Young's modulus :math:`E` and
-Poisson's ratio :math:`\nu`. The beam is fixed at its left end and concentrated forces applied to the right.
+A beam is approximated by plane strain elements with a thickness of :math:`1`
+and the material is linear elastic with constant Young's modulus :math:`E` and
+Poisson's ratio :math:`\nu`. The beam is fixed at its left end and
+concentrated forces applied to the right.
 
 .. image:: QuadBeam0.png
    :align: center
@@ -35,24 +36,27 @@ The problem is defined and solved in ``pyfem2`` as follows:
    from pyfem2 import *
 
    # Create the finite element model and rectilinear mesh
-   V = Plane2DModel()
-   V.RectilinearMesh((10, 2), (10, 2))
+   V = FiniteElementModel(jobid='QuadBeam'))
+   V.RectilinearMesh(nx=10, ny=2, lx=10, ly=2)
 
    # Assign element to element block
    V.ElementBlock('ElementBlock1', ALL)
 
    # Create a material and define the elastic properties
-   V.Material('Material-1')
-   V.materials['Material-1'].Elastic(E=20000, Nu=0.)
-   V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1', t=1)
+   mat = V.Material('Material-1')
+   mat.Elastic(E=20000, Nu=0.)
+   V.AssignProperties('ElementBlock1', PlaneStrainQuad4, mat, t=1)
 
-   # Fix the left end apply loads to right
-   V.FixDOF(ILO)
-   V.ConcentratedLoad(IHI, Y, -10)
+   # Create step and fix the left end apply loads to right
+   step = V.StaticStep()
+   step.FixDOF(ILO)
+   step.ConcentratedLoad(IHI, Y, -10)
 
-   # Solve the model and write results to the ExodusII database
-   V.Solve()
-   V.WriteResults('QuadBeam.exo')
+   # Run the step
+   step.run()
+
+   # Write results to the ExodusII database
+   V.WriteResults()
 
 How does it work?
 -----------------
@@ -66,19 +70,19 @@ The first lines of the program,
    from pyfem2 import *
 
 import objects from the ``pyfem2`` namespace in to the program. The key import
- from the ``pyfem2`` library is ``Plane2DModel``.
+ from the ``pyfem2`` library is ``FiniteElementModel``.
 
 The statement
 
 .. code:: python
 
-   V = Plane2DModel()
+   V = FiniteElementModel(jobid='QuadBeam')
 
-creates the finite element model.  A rectilinear mesh with 10 elements in the :math:`x` direction and 2 elements in the :math:`y` with lengths :math:`L_x=10` and :math:`L_y=10` is created by
+creates the finite element model with identifier ``QuadBeam``.  A rectilinear mesh with 10 elements in the :math:`x` direction and 2 elements in the :math:`y` with lengths :math:`L_x=10` and :math:`L_y=10` is created by
 
 .. code:: python
 
-   V.RectilinearMesh((10, 2), (10, 2))
+   V.RectilinearMesh(nx=10, ny=2, lx=10, ly=2)
 
 .. image:: QuadBeam1.png
    :align: center
@@ -104,22 +108,23 @@ fabrication properties by the ``AssignProperties`` method:
 
 .. code:: python
 
-   V.Material('Material-1')
-   V.materials['Material-1'].Elastic(E=20000, Nu=0.)
-   V.AssignProperties('ElementBlock1', PlaneStrainQuad4, 'Material-1', t=1)
+   mat = V.Material('Material-1')
+   mat.Elastic(E=20000, Nu=0.)
+   V.AssignProperties('ElementBlock1', PlaneStrainQuad4, mat, t=1)
 
 The method ``AssignProperties`` takes as input the name of the element block
 to which properties are being assigned, the element type for elements in the
-block, the material model name, and any element fabrication properties. For
+block, the material model, and any element fabrication properties. For
 ``PlaneStrainQuad4`` elements, the thickness ``t`` is the only fabrication
 property.
 
-The next step is to specify the boundary conditions at :math:`x=0` and the concentrated nodal forces at :math:`x=10`:
+The next step is to create a static load step and to it specify the boundary conditions at :math:`x=0` and the concentrated nodal forces at :math:`x=10`:
 
 .. code:: python
 
-   V.FixDOF(ILO)
-   V.ConcentratedLoad(IHI, Y, -10)
+   step = V.StaticStep()
+   step.FixDOF(ILO)
+   step.ConcentratedLoad(IHI, Y, -10)
 
 The symbols ``ILO`` and ``IHI`` correspond to the :math:`x` coordinate
 direction (``I``) and the identifiers ``LO`` and ``HI`` to the corresponding
@@ -129,7 +134,7 @@ Finally, the unknown displacements are determined by solving the model and the m
 
 .. code:: python
 
-   V.Solve()
+   step.run()
 
 Perhaps the easiest way to view results is by:
 
@@ -144,11 +149,12 @@ With the ``deformed`` keyword, the deformed coordinates are plotted.
    :scale: 80
 
 The results can also be written to an ExodusII file and viewed in
-`ParaView <http://www.paraview.org>`__
+`ParaView <http://www.paraview.org>`__.   The ExodusII output will be give the name ``jobid.exo``, where ``jobid`` is the identifier sent to the ``FiniteElementModel`` (``QuadBeam`` in this case).
+
 
 .. code:: python
 
-   V.WriteResults('QuadBeam.exo')
+   V.WriteResults()
 
 .. image:: QuadBeam3.png
    :align: center

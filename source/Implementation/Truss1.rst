@@ -117,7 +117,7 @@ Postprocessing
 With nodal determined by the ``Solve`` method, postprocessing can begin. In
 this program, postprocessing consists of determining the element internal
 forces and stresses. The method ``TrussModel.internal_forces`` method computes
-the axial internal forces of truss members.  ``TrussModel.internal_forces`` relies on the subordinate method ``internal_force`` of the ``Link`` type elements to compute the internal force (described in :ref:`apiElementLib1`).
+the axial internal forces of truss members.  ``TrussModel.internal_forces`` relies on the subordinate method ``internal_force`` of the ``Link`` type elements to compute the internal force.
 
 Writing FE results
 ~~~~~~~~~~~~~~~~~~

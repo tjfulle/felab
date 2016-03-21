@@ -3,5 +3,5 @@
 FiniteElementModel
 ------------------
 
-.. automodule:: pyfem2.fem1
+.. automodule:: pyfem2.finite_element_model
     :members:

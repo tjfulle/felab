@@ -7,7 +7,7 @@ Space truss
 Objective
 ---------
 
-This example demonstrates the use of the ``TrussModel``  to solve for the deflections in a space truss.  ``TrussModel`` is described in more detail in :ref:`TrussModel`.
+This example demonstrates the use of the ``StaticStep`` method of ``FiniteElementModel``  to solve for the deflections in a space truss.
 
 Problem description
 -------------------
@@ -34,7 +34,7 @@ The problem is defined and solved in ``pyfem2`` as follows:
    from numpy import *
    from pyfem2 import *
 
-   V = TrussModel()
+   V = FiniteElementModel(jobid='Truss2')
 
    # Create mesh and define function space
    nodtab = [[1,-37.5,0,200],[2,37.5,0,200],[3,-37.5,37.5,100],
@@ -51,28 +51,30 @@ The problem is defined and solved in ``pyfem2`` as follows:
    V.ElementBlock('ElemenbBlock1', ALL)
 
    # Assign properties
-   V.Material('Material-1')
-   V.materials['Material-1'].Elastic(E=10e6, Nu=.333)
+   mat = V.Material('Material-1', elastic={'E':10e6, 'Nu':.333})
    A = [0.033, 2.015, 2.015, 2.015, 2.015, 2.823, 2.823, 2.823, 2.823, 0.01,
         0.01, 0.014, 0.014, 0.98, 0.98, 0.98, 0.98, 1.76, 1.76, 1.76, 1.76,
         2.44, 2.44, 2.44, 2.44]
-   V.AssignProperties('ElemenbBlock1', ElasticLink3D2, 'Material-1', A=A)
+   V.AssignProperties('ElemenbBlock1', ElasticLink3D2, mat, A=A)
+
+   # Define a load step
+   step = V.StaticStep()
 
    # Define boundary conditons
-   V.FixNodes((7, 8, 9, 10))
+   step.FixNodes((7, 8, 9, 10))
 
    # Define concentrated loads
    P1, P2, P3, P4 = 1000, 10000, -5000, 500
-   V.ConcentratedLoad(1, X, P1)
-   V.ConcentratedLoad(1, Y, P2)
-   V.ConcentratedLoad(1, Z, P3)
-   V.ConcentratedLoad(2, Y, P2)
-   V.ConcentratedLoad(2, Z, P3)
-   V.ConcentratedLoad((3, 6), X, P4)
+   step.ConcentratedLoad(1, X, P1)
+   step.ConcentratedLoad(1, Y, P2)
+   step.ConcentratedLoad(1, Z, P3)
+   step.ConcentratedLoad(2, Y, P2)
+   step.ConcentratedLoad(2, Z, P3)
+   step.ConcentratedLoad((3, 6), X, P4)
 
    # Solve and write results
-   V.Solve()
-   V.WriteResults('Truss2.exo')
+   step.run()
+   V.WriteResults()
 
 How does it work?
 -----------------
@@ -89,13 +91,13 @@ The first lines of the program,
 import objects from the ``numpy`` and ``pyfem2`` namespaces in to the program.
 `numpy <http://www.numpy.org>`__ is a python package providing numerical data
 types and procedures. The key imports from the ``pyfem2`` library is
-the ``TrussModel``.
+the ``FiniteElementModel``.
 
 The statement
 
 .. code:: python
 
-   V = TrussModel()
+   V = FiniteElementModel(jobid='Truss2')
 
 creates the finite element model.  The finite element mesh is created by defining tables of nodes and elements (see :ref:`NodeDefinition` and :ref:`ElementDefinition`) and passing them to the ``Mesh`` method:
 
@@ -131,40 +133,40 @@ fabrication properties by the ``AssignProperties`` method:
 
 .. code:: python
 
-   V.Material('Material-1')
-   V.materials['Material-1'].Elastic(E=10e6, Nu=.333)
+   mat = V.Material('Material-1', elastic={'E':10e6, 'Nu':.333})
    A = [0.033, 2.015, 2.015, 2.015, 2.015, 2.823, 2.823, 2.823, 2.823, 0.01,
         0.01, 0.014, 0.014, 0.98, 0.98, 0.98, 0.98, 1.76, 1.76, 1.76, 1.76,
         2.44, 2.44, 2.44, 2.44]
-   V.AssignProperties('ElemenbBlock1', ElasticLink3D2, 'Material-1', A=A)
+   V.AssignProperties('ElemenbBlock1', ElasticLink3D2, mat, A=A)
 
 The method ``AssignProperties`` takes as input the name of the element block
 to which properties are being assigned, the element type for elements in the
 block, the material model name, and any element fabrication properties. For
 ``ElasticLink2D2`` elements, the area ``A`` is the only fabrication property.
 
-The next step is to specify the boundary conditions :math:`u_{7}=u_{8}=u_9=u_{10}=0`:
+The next step is to create a load step and to it specify the boundary conditions :math:`u_{7}=u_{8}=u_9=u_{10}=0`:
 
 .. code:: python
 
-   V.FixNodes((7, 8, 9, 10))
+   step = V.StaticStep()
+   step.FixNodes((7, 8, 9, 10))
 
 The point forces at nodes 1, 2, 3, and 6
 
 .. code:: python
 
    P1, P2, P3, P4 = 1000, 10000, -5000, 500
-   V.ConcentratedLoad(1, X, P1)
-   V.ConcentratedLoad(1, Y, P2)
-   V.ConcentratedLoad(1, Z, P3)
-   V.ConcentratedLoad(2, Y, P2)
-   V.ConcentratedLoad(2, Z, P3)
-   V.ConcentratedLoad((3, 6), X, P4)
+   step.ConcentratedLoad(1, X, P1)
+   step.ConcentratedLoad(1, Y, P2)
+   step.ConcentratedLoad(1, Z, P3)
+   step.ConcentratedLoad(2, Y, P2)
+   step.ConcentratedLoad(2, Z, P3)
+   step.ConcentratedLoad((3, 6), X, P4)
 
 Finally, the unknown displacements are determined by solving the model and the model results are written to an ExodusII output file
 
-   V.Solve()
-   V.WriteResults('Truss2.exo')
+   step.run()
+   V.WriteResults()
 
 The deformed geometry, viewed in `ParaView <http://www.paraview.org>`__, is shown below
 

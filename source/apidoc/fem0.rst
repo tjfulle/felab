@@ -1,5 +1,5 @@
 UniformBar
 -----------
 
-.. automodule:: pyfem2.fem0
+.. automodule:: pyfem2.first_fe_program
     :members:

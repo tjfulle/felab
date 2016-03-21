@@ -10,10 +10,8 @@ for setting up and solving finite element models.
 
    fem0
    fem1
-   fem2
    mesh
    material
-   elemlib1
 
 .. [1]
    Python is an open source programming environment that comes standard

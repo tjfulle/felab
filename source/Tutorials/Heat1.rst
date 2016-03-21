@@ -7,7 +7,7 @@ Diffusive Heat Transfer
 Objectives
 ----------
 
-This example demonstrates the use of the ``HeatTransfer2DModel`` to solve a diffusive heat transfer problem.
+This example demonstrates the use of the ``HeatTransferStep`` method of ``FiniteElementModel`` to solve a diffusive heat transfer problem.
 
 Problem description
 -------------------
@@ -40,7 +40,7 @@ The problem is defined and solved in ``pyfem2`` as follows:
    from pyfem2 import *
 
    # Create the model problem and read the mesh from a file
-   V = HeatTransfer2DModel()
+   V = FiniteElementModel(jobid='Heat1')
    V.Mesh(filename='PlateWithHoleTria3Fine.g')
 
    # Define an element block of diffusive heat transfer elements
@@ -48,36 +48,39 @@ The problem is defined and solved in ``pyfem2`` as follows:
    V.ElementBlock('Block1', ALL)
 
    # Create a material and define the thermal conductivity
-   V.Material('Material-1')
-   V.materials['Material-1'].IsotropicThermalConductivity(12)
-   V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, 'Material-1')
+   mat = V.Material('Material-1')
+   mat.IsotropicThermalConductivity(12)
+   V.AssignProperties('ElementBlock1', PlaneDiffussiveHeatTransferTria2, mat)
+
+   # Create the load step
+   step = V.HeatTransferStep()
 
    # Fix temperatures on left and right edge
-   V.PrescribedBC(ILO, T, 200)
-   V.PrescribedBC(IHI, T, 50)
+   step.PrescribedBC(ILO, T, 200)
+   step.PrescribedBC(IHI, T, 50)
 
    # Define surface flux on bottom edge of domain
-   V.SurfaceFlux(JLO, 2000)
+   step.SurfaceFlux(JLO, 2000)
 
    # Define surface convection on top edge of domain
    Too, h = 25, 250
-   V.SurfaceConvection(JHI, Too, h)
+   step.SurfaceConvection(JHI, Too, h)
 
    # Define a function specifying the heat generation
    def fun(x):
        return 1000. / sqrt(x[:,0] ** 2 + x[:,1] ** 2)
-   V.HeatGeneration(ALL, fun)
+   step.HeatGeneration(ALL, fun)
 
    # Solve for the unknown degrees of freedom
-   V.Solve()
+   step.run()
 
    # Write the results to the ExodusII output database
-   V.WriteResults('heat1.exo')
+   V.WriteResults()
 
 How does it work?
 -----------------
 
-The complete code can be found in the files ``pyfem2/tutorials/Heat1.py``. We now examine the preceding program in detail.
+The complete code can be found in the files ``pyfem2/data/Heat1.py``. We now examine the preceding program in detail.
 
 The first lines of the program,
 
@@ -88,16 +91,16 @@ The first lines of the program,
 
 import objects from the ``numpy`` and ``pyfem2`` namespaces in to the program.
 `numpy <http://www.numpy.org>`__ is a python package providing numerical data
-types and procedures. The key imports from the ``pyfem2`` library is
-the ``HeatTransfer2DModel``.
+types and procedures. The key import from the ``pyfem2`` library is
+the ``FiniteElementModel`` object.
 
 The statement
 
 .. code:: python
 
-   V = HeatTransfer2DModel()
+   V = FiniteElementModel(jobid='Heat1')
 
-creates the finite element model.  The finite element mesh is assigned to the problem by
+creates the finite element model with identifier ``Heat1``.  The finite element mesh is assigned to the problem by
 
 .. code:: python
 
@@ -129,22 +132,23 @@ fabrication properties by the ``AssignProperties`` method:
 
 .. code:: python
 
-   V.Material('Material-1')
-   V.materials['Material-1'].IsotropicThermalConductivity(12)
-   V.AssignProperties('Block1', DiffussiveHeatTransfer2D3, 'Material-1')
+   mat = V.Material('Material-1')
+   mat.IsotropicThermalConductivity(12)
+   V.AssignProperties('Block1', PlaneDiffussiveHeatTransferTria3, mat)
 
 The method ``AssignProperties`` takes as input the name of the element block
 to which properties are being assigned, the element type for elements in the
 block, the material model name, and any element fabrication properties. For
-``DiffussiveHeatTransfer2D3`` elements, no fabrication properties are required.
+``PlaneDiffussiveHeatTransferTria3`` elements, no fabrication properties are required.
 
-The next step is to specify the boundary conditions :math:`T(x=-1,y)=200` and
+The next step is to define a load step and to it specify the boundary conditions :math:`T(x=-1,y)=200` and
 :math:`T(x=1,y)=50`:
 
 .. code:: python
 
-   V.PrescribedBC(ILO, T, 200)
-   V.PrescribedBC(IHI, T, 50)
+   step = V.HeatTransferStep()
+   step.PrescribedBC(ILO, T, 200)
+   step.PrescribedBC(IHI, T, 50)
 
 The symbols ``ILO`` and ``IHI`` correspond to the :math:`x` coordinate
 direction (``I``) and the identifiers ``LO`` and ``HI`` to the corresponding
@@ -154,14 +158,14 @@ The surface flux on the bottom of the domain is defined by
 
 .. code:: python
 
-   V.SurfaceFlux(JLO, 2000)
+   step.SurfaceFlux(JLO, 2000)
 
 and the surface convection on top edge by
 
 .. code:: python
 
    Too, h = 25, 250
-   V.SurfaceConvection(JHI, Too, h)
+   step.SurfaceConvection(JHI, Too, h)
 
 The heat generation in the body of the domain is given by :math:`1000/\sqrt{x^2+y^2}` and is assigned to the model by defining a corresponding function and passing it to the ``HeatGeneration`` method:
 
@@ -169,21 +173,21 @@ The heat generation in the body of the domain is given by :math:`1000/\sqrt{x^2+
 
    def fun(x):
        return 1000. / sqrt(x[:,0] ** 2 + x[:,1] ** 2)
-   V.HeatGeneration(ALL, fun)
+   step.HeatGeneration(ALL, fun)
 
 Finally, the unknown temperatures are determined by solving the model and the model results are written to an ExodusII output file
 
 .. code:: python
 
-   V.Solve()
+   step.run()
 
 Perhaps the easiest way to view results is by:
 
 .. code:: python
 
-   V.Plot2D(colorby=V.T)
+   V.Plot2D(colorby=V.dofs)
 
-where ``V.T`` is the temperature determined from the call to ``V.Solve()``. The result is
+where ``V.dofs`` is the temperature determined from the call to ``step.run()``. The result is
 
 .. image:: heat1_4.png
    :align: center
@@ -194,7 +198,7 @@ The results can also be written to an ExodusII file and viewed in
 
 .. code:: python
 
-   V.WriteResults('heat1.exo')
+   V.WriteResults()
 
 .. image:: heat1_3.png
    :align: center

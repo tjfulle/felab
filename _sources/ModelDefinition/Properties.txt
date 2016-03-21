@@ -11,23 +11,23 @@ Elements in an element block must be assigned material and (optionally) element 
 Assigning element properties
 ----------------------------
 
-Assignment of material and element fabrication properties requires the specification of an element block name, element type, material model name, and element fabrication properties:
+Assignment of material and element fabrication properties requires the specification of an element block name, element type, material model, and element fabrication properties:
 
 .. code:: python
 
-   V.AssignProperties(block_name, elem_type, material_name, **elem_fab)
+   V.AssignProperties(block_name, elem_type, material, **elem_fab)
 
-For example, to assign elements in element block ``ElementBlock-1`` to have element type ``PlaneStrainQuad4``, material ``Material-1``, and thickness ``t=1`` use:
-
-.. code:: python
-
-   V.AssignProperties('ElementBlock-1', PlaneStrainQuad4, 'Material-1', t=1)
-
-Or, to assign elements in element block ``HeatElements`` to have element type ``DiffusiveHeatTransfer2D3`` and material ``Material-1`` use:
+For example, to assign elements in element block ``ElementBlock-1`` to have element type ``PlaneStrainQuad4``, material ``mat``, and thickness ``t=1`` use:
 
 .. code:: python
 
-   V.AssignProperties('HeatElements', DiffusiveHeatTransfer2D3, 'Material-1')
+   V.AssignProperties('ElementBlock-1', PlaneStrainQuad4, mat, t=1)
+
+Or, to assign elements in element block ``HeatElements`` to have element type ``DiffusiveHeatTransfer2D3`` and material ``mat`` use:
+
+.. code:: python
+
+   V.AssignProperties('HeatElements', PlaneDiffusiveHeatTransferTria3, mat)
 
 A note on fabrication properties
 --------------------------------

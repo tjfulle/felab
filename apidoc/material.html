@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>7.5. Material &mdash; pyfem2 3.0 documentation</title>
+    <title>7.4. Material &mdash; pyfem2 3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -26,8 +26,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
     <link rel="up" title="7. pyfem2 Source" href="index.html" />
-    <link rel="next" title="7.6. Element Library, 1" href="elemlib1.html" />
-    <link rel="prev" title="7.4. Mesh" href="mesh.html" />
+    <link rel="prev" title="7.3. Mesh" href="mesh.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -40,11 +39,11 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-pyfem2.mat">
-<span id="material"></span><h1>7.5. Material<a class="headerlink" href="#module-pyfem2.mat" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pyfem2.material._material">
+<span id="material"></span><h1>7.4. Material<a class="headerlink" href="#module-pyfem2.material._material" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="pyfem2.mat.Material">
-<em class="property">class </em><code class="descclassname">pyfem2.mat.</code><code class="descname">Material</code><span class="sig-paren">(</span><em>name</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mat.Material" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfem2.material._material.Material">
+<em class="property">class </em><code class="descclassname">pyfem2.material._material.</code><code class="descname">Material</code><span class="sig-paren">(</span><em>name</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.material._material.Material" title="Permalink to this definition">¶</a></dt>
 <dd><p>The base material object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -82,8 +81,8 @@ assigned to the material by different methods.</p>
 </li>
 </ul>
 <dl class="method">
-<dt id="pyfem2.mat.Material.Density">
-<code class="descname">Density</code><span class="sig-paren">(</span><em>rho</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mat.Material.Density" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfem2.material._material.Material.Density">
+<code class="descname">Density</code><span class="sig-paren">(</span><em>rho</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.material._material.Material.Density" title="Permalink to this definition">¶</a></dt>
 <dd><p>Assign mass density</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -100,8 +99,8 @@ assigned to the material by different methods.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfem2.mat.Material.Elastic">
-<code class="descname">Elastic</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mat.Material.Elastic" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfem2.material._material.Material.Elastic">
+<code class="descname">Elastic</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.material._material.Material.Elastic" title="Permalink to this definition">¶</a></dt>
 <dd><p>Assign elastic properties</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -135,14 +134,14 @@ elastic stiffness assumed).</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfem2.mat.Material.IsotropicThermalConductivity">
-<code class="descname">IsotropicThermalConductivity</code><span class="sig-paren">(</span><em>k</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mat.Material.IsotropicThermalConductivity" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfem2.material._material.Material.IsotropicThermalConductivity">
+<code class="descname">IsotropicThermalConductivity</code><span class="sig-paren">(</span><em>k</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.material._material.Material.IsotropicThermalConductivity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Assign the coefficient of thermal conductivity</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>k</strong> : float</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>k</strong> : ndarray or float</p>
 <blockquote class="last">
 <div><p>Coefficient of thermal conductivity</p>
 </div></blockquote>
@@ -153,15 +152,56 @@ elastic stiffness assumed).</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfem2.mat.Material.isotropic_elastic_stiffness">
-<code class="descname">isotropic_elastic_stiffness</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mat.Material.isotropic_elastic_stiffness" title="Permalink to this definition">¶</a></dt>
-<dd><p>Tangent elastic stiffness</p>
+<dt id="pyfem2.material._material.Material.NeoHooke">
+<code class="descname">NeoHooke</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.material._material.Material.NeoHooke" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign elastic properties</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>kwds</strong> : dict</p>
+<blockquote class="last">
+<div><p>name=value pairs of elastic constants</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Any two elastic constants can be passed to this method from which all
+other elastic constants are calculated (isotropy of the tangent
+elastic stiffness assumed).</p>
+<p class="rubric">Examples</p>
+<ul>
+<li><p class="first">Young&#8217;s modulus <span class="math">\(E=10\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu=.29\)</span>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">NeoHooke</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Bulk modulus <span class="math">\(K=10\)</span> and shear modulus <span class="math">\(G=6\)</span>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">NeoHooke</span><span class="p">(</span><span class="n">K</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">G</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyfem2.mat.Material.isotropic_thermal_conductivity">
-<code class="descname">isotropic_thermal_conductivity</code><span class="sig-paren">(</span><em>ndim</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mat.Material.isotropic_thermal_conductivity" title="Permalink to this definition">¶</a></dt>
-<dd><p>The isotropic thermal conductivity matrix</p>
+<dt id="pyfem2.material._material.Material.ThermalConductivity">
+<code class="descname">ThermalConductivity</code><span class="sig-paren">(</span><em>k</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.material._material.Material.ThermalConductivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign the coefficient of thermal conductivity</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>k</strong> : ndarray or float</p>
+<blockquote class="last">
+<div><p>Coefficient of thermal conductivity</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -199,10 +239,8 @@ elastic stiffness assumed).</p>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="fem0.html">7.1. UniformBar</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fem1.html">7.2. FiniteElementModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fem2.html">7.3. TrussModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mesh.html">7.4. Mesh</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">7.5. Material</a></li>
-<li class="toctree-l2"><a class="reference internal" href="elemlib1.html">7.6. Element Library, 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">7.3. Mesh</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">7.4. Material</a></li>
 </ul>
 </li>
 </ul>
@@ -212,8 +250,7 @@ elastic stiffness assumed).</p>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
-      <li>Previous: <a href="mesh.html" title="previous chapter">7.4. Mesh</a></li>
-      <li>Next: <a href="elemlib1.html" title="next chapter">7.6. Element Library, 1</a></li>
+      <li>Previous: <a href="mesh.html" title="previous chapter">7.3. Mesh</a></li>
   </ul></li>
   </ul></li>
 </ul>

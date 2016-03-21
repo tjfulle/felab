@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>7.4. Mesh &mdash; pyfem2 3.0 documentation</title>
+    <title>7.3. Mesh &mdash; pyfem2 3.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -26,8 +26,8 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="pyfem2 3.0 documentation" href="../index.html" />
     <link rel="up" title="7. pyfem2 Source" href="index.html" />
-    <link rel="next" title="7.5. Material" href="material.html" />
-    <link rel="prev" title="7.3. TrussModel" href="fem2.html" />
+    <link rel="next" title="7.4. Material" href="material.html" />
+    <link rel="prev" title="7.2. FiniteElementModel" href="fem1.html" />
    
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -40,11 +40,11 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-pyfem2.mesh">
-<span id="mesh"></span><h1>7.4. Mesh<a class="headerlink" href="#module-pyfem2.mesh" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pyfem2.mesh._mesh">
+<span id="mesh"></span><h1>7.3. Mesh<a class="headerlink" href="#module-pyfem2.mesh._mesh" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="pyfem2.mesh.Mesh">
-<em class="property">class </em><code class="descclassname">pyfem2.mesh.</code><code class="descname">Mesh</code><span class="sig-paren">(</span><em>nodtab=None</em>, <em>eletab=None</em>, <em>filename=None</em>, <em>p=None</em>, <em>t=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh.Mesh" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfem2.mesh._mesh.Mesh">
+<em class="property">class </em><code class="descclassname">pyfem2.mesh._mesh.</code><code class="descname">Mesh</code><span class="sig-paren">(</span><em>nodtab=None</em>, <em>eletab=None</em>, <em>filename=None</em>, <em>p=None</em>, <em>t=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh._mesh.Mesh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class for creating a finite element mesh.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -107,39 +107,9 @@ centered at the origin with node and element numbers as follows:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">Mesh</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="classmethod">
-<dt id="pyfem2.mesh.Mesh.RectilinearMesh2D">
-<em class="property">classmethod </em><code class="descname">RectilinearMesh2D</code><span class="sig-paren">(</span><em>shape</em>, <em>lengths</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh.Mesh.RectilinearMesh2D" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a two-dimensional rectilinear Mesh object</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>shape</strong> : tuple</p>
-<blockquote>
-<div><p>(nx, ny) where nx is the number elements in <span class="math">\(x\)</span> and ny
-number of element in <span class="math">\(y\)</span>.</p>
-</div></blockquote>
-<p><strong>lengths</strong> : tuple</p>
-<blockquote>
-<div><p>(lx, ly) where lx is the length of the mesh in <span class="math">\(x\)</span> and ny
-is the length of the mesh in <span class="math">\(y\)</span>.</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Mesh</strong> : object</p>
-<blockquote class="last">
-<div><p>An instantiated <code class="docutils literal"><span class="pre">Mesh</span></code> object.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 <dl class="staticmethod">
-<dt id="pyfem2.mesh.Mesh.parse_nod_and_elem_tables">
-<em class="property">static </em><code class="descname">parse_nod_and_elem_tables</code><span class="sig-paren">(</span><em>nodtab</em>, <em>eletab</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh.Mesh.parse_nod_and_elem_tables" title="Permalink to this definition">¶</a></dt>
+<dt id="pyfem2.mesh._mesh.Mesh.parse_nod_and_elem_tables">
+<em class="property">static </em><code class="descname">parse_nod_and_elem_tables</code><span class="sig-paren">(</span><em>nodtab</em>, <em>eletab</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh._mesh.Mesh.parse_nod_and_elem_tables" title="Permalink to this definition">¶</a></dt>
 <dd><p id="parse-nodes-and-elements">Format the node map, coordinates array, element map, types, and
 connectivity table</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -181,6 +151,130 @@ nodal labels must correpond to the node labels in <code class="docutils literal"
 
 </dd></dl>
 
+<dl class="function">
+<dt id="pyfem2.mesh._mesh.UnitSquareMesh">
+<code class="descclassname">pyfem2.mesh._mesh.</code><code class="descname">UnitSquareMesh</code><span class="sig-paren">(</span><em>nx=1</em>, <em>ny=1</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh._mesh.UnitSquareMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a rectilinear 2D finite element mesh.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>shape</strong> : tuple</p>
+<blockquote>
+<div><p>(nx, ny) where nx is the number elements in <span class="math">\(x\)</span> and ny
+number of element in <span class="math">\(y\)</span>.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Mesh object</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This method calls the <code class="docutils literal"><span class="pre">Mesh.RectilinearMesh2D</span></code> class method and
+stores the returned mesh as the <code class="docutils literal"><span class="pre">FiniteElementModel.mesh</span></code> attribute.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyfem2.mesh._mesh.RectilinearMesh2D">
+<code class="descclassname">pyfem2.mesh._mesh.</code><code class="descname">RectilinearMesh2D</code><span class="sig-paren">(</span><em>nx=1</em>, <em>ny=1</em>, <em>lx=1</em>, <em>ly=1</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh._mesh.RectilinearMesh2D" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a rectilinear 2D finite element mesh.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>shape</strong> : tuple</p>
+<blockquote>
+<div><p>(nx, ny) where nx is the number elements in <span class="math">\(x\)</span> and ny
+number of element in <span class="math">\(y\)</span>.</p>
+</div></blockquote>
+<p><strong>lengths</strong> : tuple</p>
+<blockquote>
+<div><p>(lx, ly) where lx is the length of the mesh in <span class="math">\(x\)</span> and ny
+is the length of the mesh in <span class="math">\(y\)</span>.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Mesh object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyfem2.mesh._mesh.VTKMesh">
+<code class="descclassname">pyfem2.mesh._mesh.</code><code class="descname">VTKMesh</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh._mesh.VTKMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a finite element mesh from a vtk .vtu file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : str</p>
+<blockquote>
+<div><p>The path to a valid .vtu file</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Mesh object</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This method calls <code class="docutils literal"><span class="pre">mesh.Mesh</span></code> with the <code class="docutils literal"><span class="pre">filename</span></code> keyword and
+stores the returned mesh as the <code class="docutils literal"><span class="pre">FiniteElementModel.mesh</span></code> attribute.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyfem2.mesh._mesh.AbaqusMesh">
+<code class="descclassname">pyfem2.mesh._mesh.</code><code class="descname">AbaqusMesh</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh._mesh.AbaqusMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a finite element mesh from a Abaqus input file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : str</p>
+<blockquote>
+<div><p>The path to a valid Genesis file</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Mesh object</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This method calls <code class="docutils literal"><span class="pre">mesh.Mesh</span></code> with the <code class="docutils literal"><span class="pre">filename</span></code> keyword and
+stores the returned mesh as the <code class="docutils literal"><span class="pre">FiniteElementModel.mesh</span></code> attribute.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyfem2.mesh._mesh.GenesisMesh">
+<code class="descclassname">pyfem2.mesh._mesh.</code><code class="descname">GenesisMesh</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#pyfem2.mesh._mesh.GenesisMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a finite element mesh from a Genesis file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : str</p>
+<blockquote>
+<div><p>The path to a valid Genesis file</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Mesh object</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This method calls <code class="docutils literal"><span class="pre">mesh.Mesh</span></code> with the <code class="docutils literal"><span class="pre">filename</span></code> keyword and
+stores the returned mesh as the <code class="docutils literal"><span class="pre">FiniteElementModel.mesh</span></code> attribute.</p>
+</dd></dl>
+
 </div>
 
 
@@ -214,10 +308,8 @@ nodal labels must correpond to the node labels in <code class="docutils literal"
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="fem0.html">7.1. UniformBar</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fem1.html">7.2. FiniteElementModel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fem2.html">7.3. TrussModel</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">7.4. Mesh</a></li>
-<li class="toctree-l2"><a class="reference internal" href="material.html">7.5. Material</a></li>
-<li class="toctree-l2"><a class="reference internal" href="elemlib1.html">7.6. Element Library, 1</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">7.3. Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="material.html">7.4. Material</a></li>
 </ul>
 </li>
 </ul>
@@ -227,8 +319,8 @@ nodal labels must correpond to the node labels in <code class="docutils literal"
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">7. <code class="docutils literal"><span class="pre">pyfem2</span></code> Source</a><ul>
-      <li>Previous: <a href="fem2.html" title="previous chapter">7.3. TrussModel</a></li>
-      <li>Next: <a href="material.html" title="next chapter">7.5. Material</a></li>
+      <li>Previous: <a href="fem1.html" title="previous chapter">7.2. FiniteElementModel</a></li>
+      <li>Next: <a href="material.html" title="next chapter">7.4. Material</a></li>
   </ul></li>
   </ul></li>
 </ul>

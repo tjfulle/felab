@@ -10,7 +10,7 @@ Boundary conditions:
 
 - are used to specify the values of basic solution variables (displacements, rotations, temperature) at nodes;
 
-- are defined *after* elements have been assigned to element blocks.
+- can be applied directly to the ``FiniteElementModel`` for fixed boundary conditions or directly to a load step.
 
 .. _PrescribedBC:
 
@@ -21,7 +21,7 @@ Degrees of freedom can be prescribed by:
 
 .. code:: python
 
-   V.PrescribedBC(region, dof[, amplitude=0])
+   step.PrescribedBC(region, dof[, amplitude=0])
 
 - ``region`` is a node label, list of node labels, node set, or one of the symbolic constants:
 
@@ -45,6 +45,10 @@ Degrees of freedom can be prescribed by:
 
 - the optional ``amplitude`` is the magnitude of the prescribed boundary condition.  ``amplitude`` is either a scalar constant or function of the coordinates.
 
+.. note::
+
+   If prescribing boundary conditions directly to the ``FiniteElementModel`` by ``V.PrescribedBC``, the ``amplitude`` must be :math:`0`.
+
 For example, to fix the :math:`x` displacement of the node set ``Nodeset-1`` do:
 
 .. code:: python
@@ -58,7 +62,7 @@ Or, to prescribe a temperature in the :math:`x` and :math:`y` given by :math:`2\
      def fun(x):
          return 2. * (1. + x[:,1]) / ((3. + x[:,0])**2 + (1 + x[:,1])**2)
      fun = lambda x: sqrt(x[:,0]**2 + x[:,1]**2)
-     V.PrescribedBC(BOUNDARY, T, fun)
+     step.PrescribedBC(BOUNDARY, T, fun)
 
 .. _PinNodes:
 
@@ -70,6 +74,12 @@ Displacement degrees of freedom can be fixed by:
 .. code:: python
 
    V.PinNodes(region)
+
+or
+
+.. code:: python
+
+   step.PinNodes(region)
 
 where ``region`` is a node label, list of node labels, node set, or symbolic constant (see :ref:`PrescribedBC`.)
 
@@ -83,6 +93,12 @@ Displacement and rotation degrees of freedom can be fixed by:
 .. code:: python
 
    V.FixNodes(region)
+
+or
+
+.. code:: python
+
+   step.FixNodes(region)
 
 where ``region`` is a node label, list of node labels, node set, or symbolic constant (see :ref:`PrescribedBC`.)
 

@@ -49,18 +49,21 @@ the relevant property data.</p>
 </div>
 <div class="section" id="defining-the-material-behavior">
 <h2>3.4.2. Defining the material behavior<a class="headerlink" href="#defining-the-material-behavior" title="Permalink to this headline">¶</a></h2>
-<p>Material properties are assigned the <code class="docutils literal"><span class="pre">FiniteElementModel</span></code> object by the <code class="docutils literal"><span class="pre">Material</span></code> method as:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<p>Material properties and responses are defined the <code class="docutils literal"><span class="pre">Material</span></code> object:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where the string <code class="docutils literal"><span class="pre">name</span></code> is a name unique to the material. This command
-creates an entry in the finite element space <code class="docutils literal"><span class="pre">V</span></code>&#8216;s <code class="docutils literal"><span class="pre">materials</span></code> entry for
-material <code class="docutils literal"><span class="pre">name</span></code>. Further assignments of material properties to <code class="docutils literal"><span class="pre">name</span></code> are
-done directly on <code class="docutils literal"><span class="pre">V.materials[name]</span></code></p>
+creates a material <code class="docutils literal"><span class="pre">name</span></code>. Further assignments of material properties to
+<code class="docutils literal"><span class="pre">mat</span></code> are done directly on <code class="docutils literal"><span class="pre">mat</span></code>.</p>
 <div class="section" id="isotropic-elastic-properties">
 <h3>3.4.2.1. Isotropic elastic properties<a class="headerlink" href="#isotropic-elastic-properties" title="Permalink to this headline">¶</a></h3>
-<p>Isotropic elastic properties are assigned to the material object by the <code class="docutils literal"><span class="pre">Elastic</span></code> method.  <code class="docutils literal"><span class="pre">Elastic</span></code> takes as input any two independent elastic constants.  For example, for a material having a Young&#8217;s modulus <span class="math">\(E=1\times10^6\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu=.29\)</span>, the elastic properties are assigned</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
+<p>Isotropic elastic properties are assigned to the material object by the <code class="docutils literal"><span class="pre">Elastic</span></code> method.  <code class="docutils literal"><span class="pre">Elastic</span></code> takes as input any two independent elastic constants.  For example, for a material having a Young&#8217;s modulus <span class="math">\(E=1\times10^6\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu=.29\)</span>, the elastic properties are assigned as</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Alternatively, the elastic material could have also been created directly as:</p>
+<div class="code highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">elastic</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;E&#39;</span><span class="p">:</span><span class="mf">10e6</span><span class="p">,</span> <span class="s1">&#39;Nu&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">29</span><span class="p">})</span>
 </pre></div>
 </div>
 <p>The following elastic constants are recognized by <code class="docutils literal"><span class="pre">Elastic</span></code>:</p>
@@ -94,17 +97,36 @@ done directly on <code class="docutils literal"><span class="pre">V.materials[na
 </tbody>
 </table>
 </div>
+<div class="section" id="hyperelastic-properties">
+<h3>3.4.2.2. Hyperelastic properties<a class="headerlink" href="#hyperelastic-properties" title="Permalink to this headline">¶</a></h3>
+<p>Hyperelastic Neo Hookean properties are assigned to the material object by the <code class="docutils literal"><span class="pre">NeoHooke</span></code> method.  <code class="docutils literal"><span class="pre">NeoHooke</span></code> takes as input any two independent elastic constants.  For example, for a material having a Young&#8217;s modulus <span class="math">\(E=1\times10^6\)</span> and Poisson&#8217;s ratio <span class="math">\(\nu=.29\)</span>, the elastic properties are assigned as</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span><span class="o">.</span><span class="n">NeoHooke</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">29</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Alternatively, the elastic material could have also been created directly as:</p>
+<div class="code highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">neo_hooke</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;E&#39;</span><span class="p">:</span><span class="mf">10e6</span><span class="p">,</span> <span class="s1">&#39;Nu&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">29</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="thermal-conductivity">
-<h3>3.4.2.2. Thermal conductivity<a class="headerlink" href="#thermal-conductivity" title="Permalink to this headline">¶</a></h3>
+<h3>3.4.2.3. Thermal conductivity<a class="headerlink" href="#thermal-conductivity" title="Permalink to this headline">¶</a></h3>
 <p>For thermally conductive materials, the coefficient of isotropic thermal conductivity <span class="math">\(k\)</span> is assigned by the <code class="docutils literal"><span class="pre">IsotropicThermalConductivity</span></code> method as:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span><span class="o">.</span><span class="n">IsotropicThermalConductivity</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">thermal_conductivity</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="density">
-<h3>3.4.2.3. Density<a class="headerlink" href="#density" title="Permalink to this headline">¶</a></h3>
+<h3>3.4.2.4. Density<a class="headerlink" href="#density" title="Permalink to this headline">¶</a></h3>
 <p>The mass density <span class="math">\(\rho\)</span> of any material is assigned as</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">Density</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span><span class="o">.</span><span class="n">Density</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">rho</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

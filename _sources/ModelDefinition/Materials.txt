@@ -12,25 +12,30 @@ the relevant property data.
 Defining the material behavior
 ------------------------------
 
-Material properties are assigned the ``FiniteElementModel`` object by the ``Material`` method as:
+Material properties and responses are defined the ``Material`` object:
 
 .. code:: python
 
-   V.Material(name)
+   mat = Material(name)
 
 where the string ``name`` is a name unique to the material. This command
-creates an entry in the finite element space ``V``\'s ``materials`` entry for
-material ``name``. Further assignments of material properties to ``name`` are
-done directly on ``V.materials[name]``
+creates a material ``name``. Further assignments of material properties to
+``mat`` are done directly on ``mat``.
 
 Isotropic elastic properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Isotropic elastic properties are assigned to the material object by the ``Elastic`` method.  ``Elastic`` takes as input any two independent elastic constants.  For example, for a material having a Young's modulus :math:`E=1\times10^6` and Poisson's ratio :math:`\nu=.29`, the elastic properties are assigned
+Isotropic elastic properties are assigned to the material object by the ``Elastic`` method.  ``Elastic`` takes as input any two independent elastic constants.  For example, for a material having a Young's modulus :math:`E=1\times10^6` and Poisson's ratio :math:`\nu=.29`, the elastic properties are assigned as
 
 .. code:: python
 
-   V.materials[name].Elastic(E=10e6, Nu=.29)
+   mat.Elastic(E=10e6, Nu=.29)
+
+Alternatively, the elastic material could have also been created directly as:
+
+.. code::
+
+   mat = Material(name, elastic={'E':10e6, 'Nu':.29})
 
 The following elastic constants are recognized by ``Elastic``:
 
@@ -50,6 +55,21 @@ The following elastic constants are recognized by ``Elastic``:
 | Second Lame parameter | ``Mu``    |
 +-----------------------+-----------+
 
+Hyperelastic properties
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Hyperelastic Neo Hookean properties are assigned to the material object by the ``NeoHooke`` method.  ``NeoHooke`` takes as input any two independent elastic constants.  For example, for a material having a Young's modulus :math:`E=1\times10^6` and Poisson's ratio :math:`\nu=.29`, the elastic properties are assigned as
+
+.. code:: python
+
+   mat.NeoHooke(E=10e6, Nu=.29)
+
+Alternatively, the elastic material could have also been created directly as:
+
+.. code::
+
+   mat = Material(name, neo_hooke={'E':10e6, 'Nu':.29})
+
 Thermal conductivity
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -57,7 +77,13 @@ For thermally conductive materials, the coefficient of isotropic thermal conduct
 
 .. code:: python
 
-   V.materials[name].IsotropicThermalConductivity(k)
+   mat.IsotropicThermalConductivity(k)
+
+or
+
+.. code:: python
+
+   mat = Material(name, thermal_conductivity=k)
 
 Density
 ~~~~~~~
@@ -66,4 +92,10 @@ The mass density :math:`\rho` of any material is assigned as
 
 .. code:: python
 
-   V.materials[name].Density(rho)
+   mat.Density(rho)
+
+or
+
+.. code:: python
+
+   mat = Material(name, density=rho)

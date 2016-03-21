@@ -47,13 +47,13 @@
 <p>Boundary conditions:</p>
 <ul class="simple">
 <li>are used to specify the values of basic solution variables (displacements, rotations, temperature) at nodes;</li>
-<li>are defined <em>after</em> elements have been assigned to element blocks.</li>
+<li>can be applied directly to the <code class="docutils literal"><span class="pre">FiniteElementModel</span></code> for fixed boundary conditions or directly to a load step.</li>
 </ul>
 </div>
 <div class="section" id="prescribing-degrees-of-freedom">
 <span id="prescribedbc"></span><h2>3.7.2. Prescribing degrees of freedom<a class="headerlink" href="#prescribing-degrees-of-freedom" title="Permalink to this headline">¶</a></h2>
 <p>Degrees of freedom can be prescribed by:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span>V.PrescribedBC(region, dof[, amplitude=0])
+<div class="code python highlight-python"><div class="highlight"><pre><span></span>step.PrescribedBC(region, dof[, amplitude=0])
 </pre></div>
 </div>
 <ul>
@@ -93,6 +93,10 @@
 <li><p class="first">the optional <code class="docutils literal"><span class="pre">amplitude</span></code> is the magnitude of the prescribed boundary condition.  <code class="docutils literal"><span class="pre">amplitude</span></code> is either a scalar constant or function of the coordinates.</p>
 </li>
 </ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If prescribing boundary conditions directly to the <code class="docutils literal"><span class="pre">FiniteElementModel</span></code> by <code class="docutils literal"><span class="pre">V.PrescribedBC</span></code>, the <code class="docutils literal"><span class="pre">amplitude</span></code> must be <span class="math">\(0\)</span>.</p>
+</div>
 <p>For example, to fix the <span class="math">\(x\)</span> displacement of the node set <code class="docutils literal"><span class="pre">Nodeset-1</span></code> do:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="s1">&#39;Nodeset-1&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
 </pre></div>
@@ -101,7 +105,7 @@
 <div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fun</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="mf">2.</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">((</span><span class="mf">3.</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">BOUNDARY</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">PrescribedBC</span><span class="p">(</span><span class="n">BOUNDARY</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="section" id="pinning-displacement-degrees-of-freedom">
@@ -110,12 +114,20 @@
 <div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">PinNodes</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>or</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">step</span><span class="o">.</span><span class="n">PinNodes</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+</pre></div>
+</div>
 <p>where <code class="docutils literal"><span class="pre">region</span></code> is a node label, list of node labels, node set, or symbolic constant (see <a class="reference internal" href="#prescribedbc"><span>Prescribing degrees of freedom</span></a>.)</p>
 </div>
 <div class="section" id="fixing-displacement-degrees-of-freedom">
 <span id="fixnodes"></span><h3>3.7.2.2. Fixing displacement degrees of freedom<a class="headerlink" href="#fixing-displacement-degrees-of-freedom" title="Permalink to this headline">¶</a></h3>
 <p>Displacement and rotation degrees of freedom can be fixed by:</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">step</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal"><span class="pre">region</span></code> is a node label, list of node labels, node set, or symbolic constant (see <a class="reference internal" href="#prescribedbc"><span>Prescribing degrees of freedom</span></a>.)</p>

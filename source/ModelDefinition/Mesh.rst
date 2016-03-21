@@ -122,7 +122,7 @@ Create the mesh by specifying ``nodtab`` and ``eletab``:
 
    nodtab = [[10, -.5, -.5], [20, .5, -.5], [30, .5, .5], [40, -.5, .5]]
    eletab = [[100, 10, 20, 30, 40]]
-   V.Mesh(nodtab=nodtab, eletab=eletab)
+   mesh = Mesh(nodtab=nodtab, eletab=eletab)
 
 Method 2
 ~~~~~~~~
@@ -131,9 +131,9 @@ Defining a mesh manually with the ``nodtab`` and ``eletab`` is impractical for a
 
 .. code:: python
 
-   V.Mesh(filename='unitsquare.g')
+   mesh = Mesh(filename='unitsquare.g')
 
-``Mesh`` recognizes ExodusII and `vtk <www.vtk.org>`__ mesh files.  The convenience methods ``V.GenesisMesh`` and ``V.VTKMesh`` is equivalent to ``V.Mesh(filename=...)``.
+``Mesh`` recognizes ExodusII and `vtk <www.vtk.org>`__ mesh files.  The convenience methods ``mesh = GenesisMesh`` and ``mesh = VTKMesh`` is equivalent to ``mesh = Mesh(filename=...)``.
 
 Method 3
 ~~~~~~~~
@@ -144,7 +144,7 @@ Directly specify the nodal coordinates ``p`` and element connectivity array ``t`
 
    p = array([[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5]])
    t = array([[0, 1, 2, 3]])
-   V.Mesh(p=p, t=t)
+   mesh = Mesh(p=p, t=t)
 
 If ``p`` and ``t`` are specified, node labels are assigned to nodes in the
 order they appear in the nodal coordinates array ``p`` and take values of
@@ -162,9 +162,9 @@ Regular rectilinear meshes with linear quadratic elements can be created by
 
     nx, ny = 100, 10
     lx, ly = 10, 1
-    V.Mesh.RectlinearMesh((nx, ny), (lx, ly))
+    mesh = RectlinearMesh2D(nx=nx, ny=ny, lx=lx, ly=ly)
 
-where ``nx`` and ``ny`` are the numer of nodes in the :math:`x` and :math:`y` coordinate directions and ``lx`` and ``ly`` are the respective lengths.
+where ``nx`` and ``ny`` are the numer of elements in the :math:`x` and :math:`y` coordinate directions and ``lx`` and ``ly`` are the respective lengths.
 
 Mutual exclusivity of creation methods 1-3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

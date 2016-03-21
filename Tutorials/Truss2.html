@@ -44,7 +44,7 @@
 <span id="truss2"></span><h1>2.2. Space truss<a class="headerlink" href="#space-truss" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="objective">
 <h2>2.2.1. Objective<a class="headerlink" href="#objective" title="Permalink to this headline">¶</a></h2>
-<p>This example demonstrates the use of the <code class="docutils literal"><span class="pre">TrussModel</span></code>  to solve for the deflections in a space truss.  <code class="docutils literal"><span class="pre">TrussModel</span></code> is described in more detail in <a class="reference internal" href="../Implementation/Truss1.html#trussmodel"><span>TrussModel: A Complete Truss Program</span></a>.</p>
+<p>This example demonstrates the use of the <code class="docutils literal"><span class="pre">StaticStep</span></code> method of <code class="docutils literal"><span class="pre">FiniteElementModel</span></code>  to solve for the deflections in a space truss.</p>
 </div>
 <div class="section" id="problem-description">
 <h2>2.2.2. Problem description<a class="headerlink" href="#problem-description" title="Permalink to this headline">¶</a></h2>
@@ -65,7 +65,7 @@
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pyfem2</span> <span class="kn">import</span> <span class="o">*</span>
 
-<span class="n">V</span> <span class="o">=</span> <span class="n">TrussModel</span><span class="p">()</span>
+<span class="n">V</span> <span class="o">=</span> <span class="n">FiniteElementModel</span><span class="p">(</span><span class="n">jobid</span><span class="o">=</span><span class="s1">&#39;Truss2&#39;</span><span class="p">)</span>
 
 <span class="c1"># Create mesh and define function space</span>
 <span class="n">nodtab</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">200</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">200</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span><span class="o">-</span><span class="mf">37.5</span><span class="p">,</span><span class="mf">37.5</span><span class="p">,</span><span class="mi">100</span><span class="p">],</span>
@@ -82,28 +82,30 @@
 <span class="n">V</span><span class="o">.</span><span class="n">ElementBlock</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">ALL</span><span class="p">)</span>
 
 <span class="c1"># Assign properties</span>
-<span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">333</span><span class="p">)</span>
+<span class="n">mat</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">elastic</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;E&#39;</span><span class="p">:</span><span class="mf">10e6</span><span class="p">,</span> <span class="s1">&#39;Nu&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">333</span><span class="p">})</span>
 <span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.033</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span>
      <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span>
      <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">]</span>
-<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">ElasticLink3D2</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">ElasticLink3D2</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">)</span>
+
+<span class="c1"># Define a load step</span>
+<span class="n">step</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">StaticStep</span><span class="p">()</span>
 
 <span class="c1"># Define boundary conditons</span>
-<span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">step</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 
 <span class="c1"># Define concentrated loads</span>
 <span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span> <span class="o">-</span><span class="mi">5000</span><span class="p">,</span> <span class="mi">500</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">P1</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">X</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">P1</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">X</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span>
 
 <span class="c1"># Solve and write results</span>
-<span class="n">V</span><span class="o">.</span><span class="n">Solve</span><span class="p">()</span>
-<span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">(</span><span class="s1">&#39;Truss2.exo&#39;</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">V</span><span class="o">.</span><span class="n">WriteResults</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -118,9 +120,9 @@
 <p>import objects from the <code class="docutils literal"><span class="pre">numpy</span></code> and <code class="docutils literal"><span class="pre">pyfem2</span></code> namespaces in to the program.
 <a class="reference external" href="http://www.numpy.org">numpy</a> is a python package providing numerical data
 types and procedures. The key imports from the <code class="docutils literal"><span class="pre">pyfem2</span></code> library is
-the <code class="docutils literal"><span class="pre">TrussModel</span></code>.</p>
+the <code class="docutils literal"><span class="pre">FiniteElementModel</span></code>.</p>
 <p>The statement</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span> <span class="o">=</span> <span class="n">TrussModel</span><span class="p">()</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span> <span class="o">=</span> <span class="n">FiniteElementModel</span><span class="p">(</span><span class="n">jobid</span><span class="o">=</span><span class="s1">&#39;Truss2&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>creates the finite element model.  The finite element mesh is created by defining tables of nodes and elements (see <a class="reference internal" href="../ModelDefinition/Mesh.html#nodedefinition"><span>Nodes</span></a> and <a class="reference internal" href="../ModelDefinition/Mesh.html#elementdefinition"><span>Elements</span></a>) and passing them to the <code class="docutils literal"><span class="pre">Mesh</span></code> method:</p>
@@ -150,36 +152,36 @@ elements in the mesh is created by:</p>
 in the mesh to the block <code class="docutils literal"><span class="pre">ElementBlock1</span></code>. Material properties are defined by
 the <code class="docutils literal"><span class="pre">Material</span></code> method and elements in a block are assigned material and
 fabrication properties by the <code class="docutils literal"><span class="pre">AssignProperties</span></code> method:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="s1">&#39;Material-1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">Elastic</span><span class="p">(</span><span class="n">E</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span> <span class="n">Nu</span><span class="o">=.</span><span class="mi">333</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">elastic</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;E&#39;</span><span class="p">:</span><span class="mf">10e6</span><span class="p">,</span> <span class="s1">&#39;Nu&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">333</span><span class="p">})</span>
 <span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.033</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.015</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">2.823</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span>
      <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span> <span class="mf">1.76</span><span class="p">,</span>
      <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">,</span> <span class="mf">2.44</span><span class="p">]</span>
-<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">ElasticLink3D2</span><span class="p">,</span> <span class="s1">&#39;Material-1&#39;</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">)</span>
+<span class="n">V</span><span class="o">.</span><span class="n">AssignProperties</span><span class="p">(</span><span class="s1">&#39;ElemenbBlock1&#39;</span><span class="p">,</span> <span class="n">ElasticLink3D2</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The method <code class="docutils literal"><span class="pre">AssignProperties</span></code> takes as input the name of the element block
 to which properties are being assigned, the element type for elements in the
 block, the material model name, and any element fabrication properties. For
 <code class="docutils literal"><span class="pre">ElasticLink2D2</span></code> elements, the area <code class="docutils literal"><span class="pre">A</span></code> is the only fabrication property.</p>
-<p>The next step is to specify the boundary conditions <span class="math">\(u_{7}=u_{8}=u_9=u_{10}=0\)</span>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">V</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<p>The next step is to create a load step and to it specify the boundary conditions <span class="math">\(u_{7}=u_{8}=u_9=u_{10}=0\)</span>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">StaticStep</span><span class="p">()</span>
+<span class="n">step</span><span class="o">.</span><span class="n">FixNodes</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>The point forces at nodes 1, 2, 3, and 6</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span> <span class="o">-</span><span class="mi">5000</span><span class="p">,</span> <span class="mi">500</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">P1</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
-<span class="n">V</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">X</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">P1</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
+<span class="n">step</span><span class="o">.</span><span class="n">ConcentratedLoad</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">X</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Finally, the unknown displacements are determined by solving the model and the model results are written to an ExodusII output file</p>
 <blockquote>
-<div>V.Solve()
-V.WriteResults(&#8216;Truss2.exo&#8217;)</div></blockquote>
+<div>step.run()
+V.WriteResults()</div></blockquote>
 <p>The deformed geometry, viewed in <a class="reference external" href="http://www.paraview.org">ParaView</a>, is shown below</p>
 <div class="figure align-center">
 <img alt="../_images/SpaceTrussEx2.png" src="../_images/SpaceTrussEx2.png" />
