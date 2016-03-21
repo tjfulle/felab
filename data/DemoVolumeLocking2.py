@@ -12,7 +12,7 @@ def LinearSolution(ax=None):
     V.GenesisMesh('QuarterCylinderQuad4.g')
     mat = V.Material('Material-1')
     mat.Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad4, mat.name, t=1)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad4, mat, t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
@@ -29,7 +29,7 @@ def ReducedIntegrationSolution(ax=None):
     V.GenesisMesh('QuarterCylinderQuad4.g')
     mat = V.Material('Material-1')
     mat.Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad4BBar, mat.name, t=1)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad4BBar, mat, t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
@@ -46,7 +46,7 @@ def SelReducedIntegrationSolution(ax=None):
     mat = V.Material('Material-1')
     mat.Elastic(E=E, Nu=Nu)
     V.AssignProperties('ElementBlock1', PlaneStrainQuad4SelectiveReduced,
-                       mat.name, t=1)
+                       mat, t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
@@ -62,7 +62,7 @@ def QuadraticSolution(ax=None):
     V.GenesisMesh('QuarterCylinderQuad8.g')
     mat = V.Material('Material-1')
     mat.Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad8BBar, mat.name, t=1)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad8BBar, mat, t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face

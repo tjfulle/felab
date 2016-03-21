@@ -13,7 +13,7 @@ V.GenesisMesh('PlateWithHoleTria3.g')
 mat = V.Material('Material-1')
 mat.Elastic(E=10e6, Nu=.29)
 
-V.AssignProperties('ElementBlock1', PlaneStrainTria3, mat.name, t=1)
+V.AssignProperties('ElementBlock1', PlaneStrainTria3, mat, t=1)
 
 step = V.StaticStep()
 step.PrescribedBC('LeftHandSide', X, 0.)

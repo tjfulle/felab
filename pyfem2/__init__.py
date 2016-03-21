@@ -6,11 +6,10 @@ from numpy import *
 
 from .constants import *
 from .elemlib import *
-from .mesh.exodusii import File, PutNodalSolution
 from .first_fe_program import UniformBar
 from .finite_element_model import FiniteElementModel
 from .material import Material
-from .mesh.mesh import Mesh
+from .mesh import *
 
 set_printoptions(4, suppress=True)
 def printprecision(a):

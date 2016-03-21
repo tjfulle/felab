@@ -70,7 +70,7 @@ def test_fem5_2():
 
 @pytest.mark.plane
 def test_gravity_load1():
-    V = FiniteElementModel('Gravity')
+    V = FiniteElementModel(jobid='Gravity')
     V.RectilinearMesh(nx=101, ny=11, lx=100, ly=10)
     V.Material('Material-1')
     V.materials['Material-1'].Density(1.)
@@ -232,7 +232,7 @@ def test_heat_transfer_5():
 @pytest.mark.heat
 def test_heat_transfer_plate_with_hole2():
     k, h, Too = 12, 250, 25
-    V = FiniteElementModel('HeatPlateWithHole')
+    V = FiniteElementModel(jobid='HeatPlateWithHole')
     V.GenesisMesh(join(D, 'data/PlateWithHoleTria3.g'))
     V.Material('Material-1')
     V.materials['Material-1'].IsotropicThermalConductivity(k)

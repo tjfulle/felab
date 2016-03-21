@@ -6,7 +6,7 @@ import datetime
 from numpy import *
 from os.path import basename, join, splitext, isfile
 
-from .mesh import ElementBlock
+from ._mesh import ElementBlock
 from ..constants import *
 from ..post import StepRepository1
 from ..elemlib import ElementFamily

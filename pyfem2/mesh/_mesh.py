@@ -6,7 +6,8 @@ from ..constants import *
 from ..utilities import is_listlike, UserInputError
 from ..elemlib import ElementFamily
 
-__all__ = ['Mesh']
+__all__ = ['Mesh', 'UnitSquareMesh', 'RectilinearMesh2D', 'VTKMesh',
+           'AbaqusMesh', 'GenesisMesh']
 
 def is_listlike(a):
     return (not hasattr(a, 'strip') and
@@ -454,28 +455,6 @@ class Mesh(object):
         self.maxedge = max(self.maxedge, len(elefam.edges))
         return blk
 
-    @classmethod
-    def RectilinearMesh2D(cls, shape, lengths):
-        """Create a two-dimensional rectilinear Mesh object
-
-        Parameters
-        ----------
-        shape : tuple
-            (nx, ny) where nx is the number elements in :math:`x` and ny
-            number of element in :math:`y`.
-        lengths : tuple
-            (lx, ly) where lx is the length of the mesh in :math:`x` and ny
-            is the length of the mesh in :math:`y`.
-
-        Returns
-        -------
-        Mesh : object
-            An instantiated ``Mesh`` object.
-
-        """
-        nodtab, eletab = GenRectilinearMesh2D(shape, lengths)
-        return cls(nodtab, eletab)
-
     def to_genesis(self, filename):
         exof = File(filename, mode='w')
         if not self.eleblx:
@@ -587,6 +566,119 @@ class Mesh(object):
             filename += '.exo'
         exodusii.PutNodalSolution(filename, self.nodmap, self.elemap, self.coord,
                                   self.eleblx, u)
+
+def GenesisMesh(filename):
+    """
+    Generates a finite element mesh from a Genesis file.
+
+    Parameters
+    ----------
+    filename : str
+        The path to a valid Genesis file
+
+    Returns
+    -------
+    Mesh object
+
+    Notes
+    -----
+    This method calls ``mesh.Mesh`` with the ``filename`` keyword and
+    stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
+
+    """
+    if not os.path.isfile(filename):
+        raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
+    return Mesh(filename=filename)
+
+def AbaqusMesh(filename):
+    """
+    Generates a finite element mesh from a Abaqus input file.
+
+    Parameters
+    ----------
+    filename : str
+        The path to a valid Genesis file
+
+    Returns
+    -------
+    Mesh object
+
+    Notes
+    -----
+    This method calls ``mesh.Mesh`` with the ``filename`` keyword and
+    stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
+
+    """
+    if not os.path.isfile(filename):
+        raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
+    return Mesh(filename=filename)
+
+def VTKMesh(filename):
+    """
+    Generates a finite element mesh from a vtk .vtu file.
+
+    Parameters
+    ----------
+    filename : str
+        The path to a valid .vtu file
+
+    Returns
+    -------
+    Mesh object
+
+    Notes
+    -----
+    This method calls ``mesh.Mesh`` with the ``filename`` keyword and
+    stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
+
+    """
+    if not os.path.isfile(filename):
+        raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
+    return Mesh(filename=filename)
+
+def RectilinearMesh2D(nx=1, ny=1, lx=1, ly=1):
+    """
+    Generates a rectilinear 2D finite element mesh.
+
+    Parameters
+    ----------
+    shape : tuple
+        (nx, ny) where nx is the number elements in :math:`x` and ny
+        number of element in :math:`y`.
+    lengths : tuple
+        (lx, ly) where lx is the length of the mesh in :math:`x` and ny
+        is the length of the mesh in :math:`y`.
+
+    Returns
+    -------
+    Mesh object
+
+    """
+    nodtab, eletab = GenRectilinearMesh2D((nx, ny), (lx, ly))
+    return Mesh(nodtab=nodtab, eletab=eletab)
+
+def UnitSquareMesh(nx=1, ny=1):
+    """
+    Generates a rectilinear 2D finite element mesh.
+
+    Parameters
+    ----------
+    shape : tuple
+        (nx, ny) where nx is the number elements in :math:`x` and ny
+        number of element in :math:`y`.
+
+    Returns
+    -------
+    Mesh object
+
+    Notes
+    -----
+    This method calls the ``Mesh.RectilinearMesh2D`` class method and
+    stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
+
+    """
+    nodtab, eletab = GenRectilinearMesh2D((nx, ny), (1, 1))
+    return Mesh(nodtab=nodtab, eletab=eletab)
 
 def GenRectilinearMesh2D(shape, lengths):
     nx, ny = shape

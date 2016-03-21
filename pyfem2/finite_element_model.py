@@ -5,10 +5,9 @@ import numpy.linalg as la
 
 from .utilities import *
 from .constants import *
+from .mesh import *
 from .step_repository import StepRepository
-from .mesh.mesh import Mesh
 from .material import Material
-from .mesh.exodusii import File
 
 __all__ = ['FiniteElementModel']
 
@@ -23,16 +22,21 @@ class FiniteElementModel(object):
     implemented in class' derived from this one.
 
     """
-    def __init__(self, jobid=None):
+    def __init__(self, mesh=None, jobid=None):
         self.jobid = jobid or 'Job-1'
         self.dimensions = None
-        self.mesh = None
         self.materials = {}
         self.initial_temp = []
         self.pr_bc = []
         self.fh = None
         self.steps = None
         self._setup = False
+
+        self._mesh = None
+        if mesh is not None:
+            if not isinstance(mesh, Mesh):
+                raise UserInputError('mesh must be a Mesh object')
+            self.mesh = mesh
 
     @property
     def exofile(self):
@@ -44,157 +48,95 @@ class FiniteElementModel(object):
                         elemsets=self.mesh.elemsets, sidesets=self.mesh.surfaces)
         return self.fh
 
-    def GenesisMesh(self, filename):
-        """
-        Generates a finite element mesh from a Genesis file.
-
-        Parameters
-        ----------
-        filename : str
-            The path to a valid Genesis file
-
-        Notes
-        -----
-        This method calls ``mesh.Mesh`` with the ``filename`` keyword and
-        stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
-
-        See Also
-        --------
-        pyfem2.mesh.Mesh
-
-        """
-        if not os.path.isfile(filename):
-            raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
-        self.mesh = Mesh(filename=filename)
-        self._initialize()
-
-    def AbaqusMesh(self, filename):
-        """
-        Generates a finite element mesh from a Abaqus input file.
-
-        Parameters
-        ----------
-        filename : str
-            The path to a valid Genesis file
-
-        Notes
-        -----
-        This method calls ``mesh.Mesh`` with the ``filename`` keyword and
-        stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
-
-        See Also
-        --------
-        pyfem2.mesh.Mesh
-
-        """
-        if not os.path.isfile(filename):
-            raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
-        self.mesh = Mesh(filename=filename)
-        self._initialize()
-
-    def VTKMesh(self, filename):
-        """
-        Generates a finite element mesh from a vtk .vtu file.
-
-        Parameters
-        ----------
-        filename : str
-            The path to a valid .vtu file
-
-        Notes
-        -----
-        This method calls ``mesh.Mesh`` with the ``filename`` keyword and
-        stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
-
-        See Also
-        --------
-        pyfem2.mesh.Mesh
-
-        """
-        if not os.path.isfile(filename):
-            raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
-        self.mesh = Mesh(filename=filename)
-        self._initialize()
-
-    def RectilinearMesh(self, nx=1, ny=1, lx=1, ly=1):
-        """
-        Generates a rectilinear 2D finite element mesh.
-
-        Parameters
-        ----------
-        shape : tuple
-            (nx, ny) where nx is the number elements in :math:`x` and ny
-            number of element in :math:`y`.
-        lengths : tuple
-            (lx, ly) where lx is the length of the mesh in :math:`x` and ny
-            is the length of the mesh in :math:`y`.
-
-        Notes
-        -----
-        This method calls the ``Mesh.RectilinearMesh2D`` class method and
-        stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
-
-        See Also
-        --------
-        pyfem2.mesh.Mesh.RectilinearMesh2D
-
-        """
-        self.mesh = Mesh.RectilinearMesh2D((nx, ny), (lx, ly))
-        self._initialize()
-
-    def UnitSquareMesh(self, nx=1, ny=1):
-        """
-        Generates a rectilinear 2D finite element mesh.
-
-        Parameters
-        ----------
-        shape : tuple
-            (nx, ny) where nx is the number elements in :math:`x` and ny
-            number of element in :math:`y`.
-
-        Notes
-        -----
-        This method calls the ``Mesh.RectilinearMesh2D`` class method and
-        stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
-
-        See Also
-        --------
-        pyfem2.mesh.Mesh.RectilinearMesh2D
-
-        """
-        self.mesh = Mesh.RectilinearMesh2D((nx, ny), (1, 1))
-        self._initialize()
-
-    def Mesh(self, **kwds):
-        """
-        Generates the finite element mesh.
-
-        Notes
-        -----
-        This method calls the ``mesh.Mesh`` and
-        stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
-
-        See Also
-        --------
-        pyfem2.mesh.Mesh
-
-        """
-        self.mesh = Mesh(**kwds)
-        self._initialize()
-
     @property
-    def dofs(self):
-        return self.steps.last.dofs
+    def mesh(self):
+        return self._mesh
 
-    def _initialize(self):
+    @mesh.setter
+    def mesh(self, mesh):
 
-        if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
+        if self._mesh is not None:
+            logging.warn('MESH ALREADY ASSIGNED, OVERWRITING')
+
+        if not isinstance(mesh, Mesh):
+            raise UserInputError('MESH MUST BE A MESH OBJECT')
+
+        self._mesh = mesh
         self.dimensions = self.mesh.dimensions
         self.numele = self.mesh.numele
         self.elements = empty(self.numele, dtype=object)
         self.numnod = self.mesh.numnod
         self._setup = False
+
+    def GenesisMesh(self, filename):
+        """
+        Generates a finite element mesh from a Genesis file.
+
+        See Also
+        --------
+        pyfem2.mesh._mesh.GenesisMesh
+
+        """
+        self.mesh = GenesisMesh(filename=filename)
+
+    def AbaqusMesh(self, filename):
+        """
+        Generates a finite element mesh from a Abaqus input file.
+
+        See Also
+        --------
+        pyfem2.mesh._mesh.AbaqusMesh
+
+        """
+        self.mesh = AbaqusMesh(filename=filename)
+
+    def VTKMesh(self, filename):
+        """
+        Generates a finite element mesh from a vtk .vtu file.
+
+        See Also
+        --------
+        pyfem2.mesh._mesh.VTKMesh
+
+        """
+        self.mesh = VTKMesh(filename=filename)
+
+    def RectilinearMesh(self, nx=1, ny=1, lx=1, ly=1):
+        """
+        Generates a rectilinear 2D finite element mesh.
+
+        See Also
+        --------
+        pyfem2.mesh._mesh.RectilinearMesh2D
+
+        """
+        self.mesh = RectilinearMesh2D(nx=nx, ny=ny, lx=lx, ly=ly)
+
+    def UnitSquareMesh(self, nx=1, ny=1):
+        """
+        Generates a rectilinear 2D finite element mesh.
+
+        See Also
+        --------
+        pyfem2.mesh._mesh.UnitSquareMesh
+
+        """
+        self.mesh = UnitSquareMesh(nx=nx, ny=ny)
+
+    def Mesh(self, **kwds):
+        """
+        Generates the finite element mesh.
+
+        See Also
+        --------
+        pyfem2.mesh._mesh.Mesh
+
+        """
+        self.mesh = Mesh(**kwds)
+
+    @property
+    def dofs(self):
+        return self.steps.last.dofs
 
     @property
     def orphaned_elements(self):
@@ -380,6 +322,39 @@ class FiniteElementModel(object):
 
         Parameters
         ----------
+        u, du : ndarray
+            Value of DOFs at beginning of step and increment, respectively.
+        Q : ndarray
+            Force array due to Neumann boundary condtions
+        svtab : ndarray of int
+            svtab[iel] are the indices for state variables for element iel
+        svars : ndarray
+            svtab[:,svtab[iel]] are the state variables for element iel
+        dltyp : ndarray
+            Distributed load type specifier
+        dload : ndarray
+            Distributed loads
+        predef : ndarray
+            Predefined fields
+        procedure : symbolic constant
+            The procedure specifier
+        step_type : symbolic constant
+            The step type
+        time : ndarray, optional {array([0.,0.])}
+            time[0] is the step time, time[1] the total time
+        dtime : float {1.}
+            Time increment
+        period : float {1.}
+            Step period
+        istep, iframe : int, optional {1, 1}
+            Step and frame numbers
+        nlgeom : bool, optional {False}
+            Nonlinear geometry
+        ninc : int, opitional {None}
+            Current increment
+        cflag : symbolic constant, optional {STIFF_AND_FORCE}
+        load_fac : float, optional {1.}
+
         Returns
         -------
         K : ndarray
@@ -526,7 +501,7 @@ class FiniteElementModel(object):
 
         See Also
         --------
-        pyfem.mat.Material
+        pyfem.material._material.Material
 
         """
         if name in self.materials:
@@ -629,7 +604,7 @@ class FiniteElementModel(object):
 
         See Also
         --------
-        pyfem2.mesh.Mesh.ElementBlock
+        pyfem2.mesh._mesh.Mesh.ElementBlock
 
         """
         if self.mesh is None:
@@ -708,7 +683,7 @@ class FiniteElementModel(object):
 
         See Also
         --------
-        pyfem2.mesh.Mesh.NodeSet
+        pyfem2.mesh._mesh.Mesh.NodeSet
 
         """
         if self.mesh is None:
@@ -727,7 +702,7 @@ class FiniteElementModel(object):
 
         See Also
         --------
-        pyfem2.mesh.Mesh.Surface
+        pyfem2.mesh._mesh.Mesh.Surface
 
         """
         if self.mesh is None:
@@ -746,7 +721,7 @@ class FiniteElementModel(object):
 
         See Also
         --------
-        pyfem2.mesh.Mesh.ElementSet
+        pyfem2.mesh._mesh.Mesh.ElementSet
 
         """
         if self.mesh is None:
@@ -782,7 +757,7 @@ class FiniteElementModel(object):
             Plot the deformed mesh if True
         color : matplotlib color
         kwds : dict
-            kwds passed to pyfem2.mesh.Plot2D
+            kwds passed to pyfem2.mesh._mesh.Plot2D
 
         Returns
         -------
@@ -791,7 +766,7 @@ class FiniteElementModel(object):
 
         See Also
         --------
-        pyfem2.mesh.Mesh.Plot2D
+        pyfem2.mesh._mesh.Mesh.Plot2D
 
         """
         assert self.dimensions == 2

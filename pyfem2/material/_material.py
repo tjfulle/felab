@@ -68,7 +68,7 @@ class Material(object):
                     raise UserInputError('ELASTIC PROPERTIES MUST BE A '
                                          'DICT, NOT {0}'.format(type(v)))
 
-            elif k in ('neohooke', 'hyperelastic'):
+            elif k == 'neo_hooke':
                 try:
                     self.NeoHooke(**v)
                 except TypeError:

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 from pyfem2 import *
 
-V = FiniteElementModel(jobid='Truss2')
-
-# Create mesh and define function space
+# Create mesh and define the finite element model
 nodtab = [[1,-37.5,0,200],[2,37.5,0,200],[3,-37.5,37.5,100],
           [4,37.5,37.5,100],[5,37.5,-37.5,100],[6,-37.5,-37.5,100],
           [7,-100,100,0],[8,100,100,0],[9,100,-100,0],[10,-100,-100,0]]
@@ -12,7 +10,8 @@ eletab = [[ 1, 1, 2],[ 2, 1, 4],[ 3, 2, 3],[ 4, 1, 5],[ 5, 2, 6],
           [11, 4, 5],[12, 3, 4],[13, 5, 6],[14, 3,10],[15, 6, 7],
           [16, 4, 9],[17, 5, 8],[18, 4, 7],[19, 3, 8],[20, 5,10],
           [21, 6, 9],[22, 6,10],[23, 3, 7],[24, 5, 9],[25, 4, 8]]
-V.Mesh(nodtab=nodtab, eletab=eletab)
+mesh = Mesh(nodtab=nodtab, eletab=eletab)
+V = FiniteElementModel(mesh=mesh, jobid='Truss2')
 
 # Define element blocks
 mat = Material('Material-1')

@@ -89,6 +89,7 @@ import sys
 import os
 import re
 import argparse
+import readline
 from math import sqrt
 
 LAME, G, E, NU, K, H = 'Lame', 'G', 'E', 'Nu', 'K', 'H'

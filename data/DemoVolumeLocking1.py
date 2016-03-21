@@ -33,7 +33,7 @@ def Runall(ax=None):
         V.GenesisMesh('QuarterCylinderQuad4.g')
         mat = V.Material('Material-1')
         mat.Elastic(E=E, Nu=Nu)
-        V.AssignProperties('ElementBlock1', PlaneStrainQuad4, mat.name)
+        V.AssignProperties('ElementBlock1', PlaneStrainQuad4, mat)
         V.PrescribedBC('Nodeset-200', X)
         V.PrescribedBC('Nodeset-201', Y)
 

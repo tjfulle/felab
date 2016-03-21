@@ -1,10 +1,11 @@
 import os
 from pyfem2 import *
 
-V = FiniteElementModel()
-V.UnitSquareMesh()
-V.ElementBlock('All', ALL)
+mesh = UnitSquareMesh()
 mat = Material('Mat', elastic={'E': 1000, 'Nu': 0})
+
+V = FiniteElementModel(mesh=mesh)
+V.ElementBlock('All', ALL)
 V.AssignProperties('All', PlaneStressQuad4, mat)
 V.FixNodes(ILO)
 

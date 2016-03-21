@@ -3,7 +3,7 @@ V = FiniteElementModel(jobid='PlaneStressTria3Patch')
 V.AbaqusMesh(filename='EC3SFP1.inp')
 mat = V.Material('Material-1')
 mat.Elastic(E=1e6, Nu=.25)
-V.AssignProperties('EALL', PlaneStressTria3, mat.name, t=.001)
+V.AssignProperties('EALL', PlaneStressTria3, mat, t=.001)
 
 step = V.StaticStep()
 step.PrescribedBC(10, (X,Y), 0.)

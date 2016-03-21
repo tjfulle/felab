@@ -15,7 +15,7 @@ mat = V.Material('Material-1')
 mat.IsotropicThermalConductivity(12)
 
 # Define an alement block of diffusive heat transfer elements with material mat
-V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, mat.name)
+V.AssignProperties('ElementBlock1', DiffussiveHeatTransfer2D3, mat)
 
 # Fix temperatures on left and right edge
 step = V.HeatTransferStep()

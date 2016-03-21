@@ -13,7 +13,7 @@ def LinearSolution(ax=None):
     V.GenesisMesh('ThickCylinder_Linear.inp')
     mat = V.Material('Material-1')
     mat.Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ALL', PlaneStrainQuad4Reduced, mat.name, t=1)
+    V.AssignProperties('ALL', PlaneStrainQuad4Reduced, mat, t=1)
     V.PrescribedBC('SymYZ', X)
     V.PrescribedBC('SymXZ', Y)
     step = V.StaticStep()
@@ -30,7 +30,7 @@ def QuadraticSolution(ax=None):
     V.GenesisMesh('ThickCylinder_Quadratic.inp')
     mat = V.Material('Material-1')
     mat.Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ALL', PlaneStrainQuad8BBar, mat.name, t=1)
+    V.AssignProperties('ALL', PlaneStrainQuad8BBar, mat, t=1)
     V.PrescribedBC('SymYZ', X)
     V.PrescribedBC('SymXZ', Y)
     # Pressure on inside face

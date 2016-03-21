@@ -18,7 +18,7 @@ def PlaneStressBeam(ratio):
     V.ElementBlock('ElementBlock1', ALL)
     El = PlaneStressQuad4Incompat
     El = PlaneStressQuad4
-    V.AssignProperties('ElementBlock1', PlaneStressQuad4, mat.name, t=1)
+    V.AssignProperties('ElementBlock1', PlaneStressQuad4, mat, t=1)
     V.PrescribedBC(IHI, (X,Y))
 
     step = V.StaticStep()
