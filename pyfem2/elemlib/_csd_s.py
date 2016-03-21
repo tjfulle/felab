@@ -147,8 +147,8 @@ class CSDSElement(CSDElement):
 
             if compute_stiff:
                 # SELECTIVELY REDUCED INTEGRATION
-                Diso, Ddev = iso_dev_split(self.ndir, self.nshr, D)
-                D = Diso if p >= self.integration1 else Ddev
+                D1, D2 = iso_dev_split(self.ndir, self.nshr, self.dimensions, D)
+                D = D1 if p >= self.integration1 else D2
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
                 Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
 

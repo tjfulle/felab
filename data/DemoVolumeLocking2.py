@@ -54,7 +54,7 @@ def SelReducedIntegrationSolution(ax=None):
     step.Pressure('Surface-1', 1.)
     step.run()
     V.WriteResults()
-    ax = V.Plot2D(deformed=1, ax=ax, color='b', label='Sel. reduced integration')
+    ax = V.Plot2D(deformed=1, ax=ax, color='g', label='Sel. reduced integration')
     return ax
 
 def QuadraticSolution(ax=None):

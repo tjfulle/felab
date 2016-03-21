@@ -71,7 +71,7 @@ def test_fem5_2():
 @pytest.mark.plane
 def test_gravity_load1():
     V = FiniteElementModel('Gravity')
-    V.RectilinearMesh((101, 11), (100, 10))
+    V.RectilinearMesh(nx=101, ny=11, lx=100, ly=10)
     V.Material('Material-1')
     V.materials['Material-1'].Density(1.)
     V.materials['Material-1'].Elastic(E=10e6, Nu=.333)
