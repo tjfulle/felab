@@ -4,28 +4,30 @@ sys.path.insert(0, '../')
 from numpy import *
 from pyfem2 import *
 
-# Create the model
-V = FiniteElementModel(jobid='Plane2')
+# READ MESH FROM FILE
+mesh = GenesisMesh('PlateWithHoleTria3.g')
 
-# Read mesh from file
-V.GenesisMesh('PlateWithHoleTria3.g')
+# ELASTIC MATERIAL MODEL
+mat = Material('Material-1', elastic={'E':10e6, 'Nu':.29})
 
-mat = V.Material('Material-1')
-mat.Elastic(E=10e6, Nu=.29)
-
+# CREATE THE MODEL AND ASSIGN PROPERTIES
+V = FiniteElementModel(mesh=mesh, jobid='Plane2')
 V.AssignProperties('ElementBlock1', PlaneStrainTria3, mat, t=1)
 
+# PRESCRIBE FIXED BCS TO MODEL
+V.PrescribedBC('LeftHandSide', X)
+V.PrescribedBC('BottomLeft', Y)
+
+# CREATE LOAD STEP AND PRESCRIBED NONHOMOGENEOUS BCS TO IT
 step = V.StaticStep()
-step.PrescribedBC('LeftHandSide', X, 0.)
-step.PrescribedBC('BottomLeft', Y, 0)
 step.PrescribedBC('RightHandSide', X, .1)
 
-# Solve for the unknown degrees of freedom
+# RUN THE STEP TO SOLVE FOR THE UNKNOWN DEGREES OF FREEDOM
 step.run()
 
+# WRITE RESULTS
 V.WriteResults()
 
 if not os.getenv('NOGRAPHICS'):
+    # VISUALIZE RESULTS
     V.Plot2D(show=1, deformed=1)
-
-#PlotScalar2D(V.mesh.coord, V.mesh.elecon, V.dofs.flatten())

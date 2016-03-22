@@ -2,6 +2,8 @@
 from numpy import *
 
 class NeoHooke(object):
+    requires = ('nlgeom',)
+    name = 'Neo Hooke'
     def __init__(self, E, Nu):
         self.E, self.Nu = E, Nu
     def response(self, stress, statev, strain, dstrain, time, dtime,

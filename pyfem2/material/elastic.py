@@ -3,6 +3,7 @@ from numpy.linalg import inv
 
 class Elastic(object):
     """Linear elastic material """
+    name = 'Elastic'
     def __init__(self, Lambda, Mu):
         self.Lambda, self.Mu = Lambda, Mu
     def response(self, stress, statev, strain, dstrain, time, dtime,

@@ -2,6 +2,7 @@ from numpy import *
 from ..utilities import *
 
 class ThermallyConductive(object):
+    name = 'Thermally Conductive'
     def __init__(self, k):
         if not is_listlike(k):
             self.k_iso = k

@@ -149,6 +149,9 @@ class FiniteElementModel(object):
             raise UserInputError('ALL ELEMENTS MUST BE ASSIGNED '
                                  'TO AN ELEMENT BLOCK')
 
+        # CHECK VALIDITY OF ELEMENTS
+        self._check_element_validity()
+
         # NODE FREEDOM ASSOCIATION TABLE
         active_dof = [None] * MDOF
         self.nodfat = zeros((self.numnod, MDOF), dtype=int)
@@ -185,6 +188,9 @@ class FiniteElementModel(object):
 
     def dofmap(self, inode, dof):
         return self._dofmap.get((inode,dof))
+
+    def _check_element_validity(self):
+        pass
 
     def initialize_steps(self):
 
@@ -570,6 +576,16 @@ class FiniteElementModel(object):
         if self.steps is None:
             self.setup()
             self.initialize_steps()
+        for eb in self.mesh.eleblx:
+            iel = self.mesh.elemap[eb.labels[0]]
+            el = self.elements[iel]
+
+            if el.material.model.requires:
+                if 'nlgeom' in el.material.model.requires and not nlgeom:
+                    name = el.material.model.name
+                    raise ValueError('Material {0!r} requires '
+                                     'nlgeom=True'.format(name))
+
         if name is None:
             name = self.unique_step_name()
         if name in self.steps:
@@ -662,6 +678,7 @@ class FiniteElementModel(object):
                     elefab[key] = [val] * len(blk.labels)
                 else:
                     elefab[key] = val
+
         for (i, xel) in enumerate(blk.labels):
             iel = self.mesh.elemap[xel]
             elenod = blk.elecon[i]

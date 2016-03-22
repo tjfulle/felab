@@ -44,7 +44,7 @@ class Material(object):
     def __init__(self, name, **kwds):
 
         self.name = name
-        self.model = None
+        self._model = None
 
         # YOUNG'S MODULUS AND POISSON'S RATIO
         self.E, self.Nu = None, None
@@ -68,7 +68,7 @@ class Material(object):
                     raise UserInputError('ELASTIC PROPERTIES MUST BE A '
                                          'DICT, NOT {0}'.format(type(v)))
 
-            elif k == 'neo_hooke':
+            elif 'neo' in k and 'hooke' in k:
                 try:
                     self.NeoHooke(**v)
                 except TypeError:
@@ -81,6 +81,16 @@ class Material(object):
             else:
                 logging.warn('SETTING UNKNOWN MATERIAL PROPERTY {0!r}'.format(kwd))
                 setattr(self, kwd, v)
+
+    @property
+    def model(self):
+        return self._model
+
+    @model.setter
+    def model(self, m):
+        self._model = m
+        if not hasattr(self._model, 'requires'):
+            self._model.requires = None
 
     def Density(self, rho):
         """Assign mass density
@@ -124,10 +134,10 @@ class Material(object):
 
         """
         self.set_elastic_properties(**kwds)
-        self.model = Elastic(self.Lambda, self.Mu)
+        self.model = Elastic(self.Lame, self.G)
 
     def NeoHooke(self, **kwds):
-        """Assign elastic properties
+        """Assign Neo Hooke properties
 
         Parameters
         ----------
@@ -168,10 +178,8 @@ class Material(object):
         elif len(kwds) != 2:
             raise UserInputError('EXACTLY 2 ELASTIC CONSTANTS REQUIRED')
         props = elas(**kwds)
-        self.E, self.Nu = props['E'], props['Nu']
-        self.G, self.K = props['G'], props['K']
-        self.Mu = self.G
-        self.Lambda = props['Lame']
+        # ADD PROPERTIES TO SELF
+        self.__dict__.update(props)
 
     def ThermalConductivity(self, k):
         """Assign the coefficient of thermal conductivity
