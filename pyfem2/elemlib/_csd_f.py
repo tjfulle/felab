@@ -81,16 +81,20 @@ class CSDFElement(CSDElement):
 
         n = sum([count_digits(nfs) for nfs in self.signature])
         compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
+        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY, MASS_AND_RHS)
+        compute_mass = cflag in (MASS_AND_RHS,)
 
         if compute_stiff:
             Ke = zeros((n, n))
 
-        if compute_force:
-            rhs = zeros(n)
+        if compute_mass:
+            Me = zeros((n, n))
 
-        if step_type == GENERAL:
-            resid = zeros(n)
+        if compute_force:
+            xforce = zeros(n)
+
+        if step_type in (GENERAL, DYNAMIC):
+            iforce = zeros(n)
 
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
@@ -149,21 +153,28 @@ class CSDFElement(CSDElement):
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
                 Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
 
+            if compute_mass:
+                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
+                Me += J * self.gaussw[p] * self.material.density * outer(N, N)
+
             if compute_force:
                 P = self.pmatrix(N)
                 for dloadx in bload:
                     # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                    rhs += J * self.gaussw[p] * dot(P.T, dloadx)
+                    xforce += J * self.gaussw[p] * dot(P.T, dloadx)
 
             if step_type == GENERAL:
                 # UPDATE THE RESIDUAL
-                resid +=  J * self.gaussw[p] * dot(s, B)
+                iforce +=  J * self.gaussw[p] * dot(s, B)
 
         if cflag == LP_OUTPUT:
             return
 
         if cflag == STIFF_ONLY:
             return Ke
+
+        if cflag == MASS_ONLY:
+            return Me
 
         if compute_force:
             for (i, typ) in enumerate(dltyp):
@@ -172,16 +183,19 @@ class CSDFElement(CSDElement):
                 dloadx = dload[i]
                 if typ == SLOAD:
                     # SURFACE LOAD
-                    rhs += self.surface_force(dloadx[0], dloadx[1:])
+                    xforce += self.surface_force(dloadx[0], dloadx[1:])
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')
 
         if compute_force:
-            rhs *= load_fac
+            xforce *= load_fac
 
-        if step_type == GENERAL:
+        if step_type in (GENERAL, DYNAMIC) and compute_force:
             # SUBTRACT RESIDUAL FROM INTERNAL FORCE
-            rhs -= resid
+            rhs = xforce - iforce
+
+        else:
+            rhs = xforce
 
         if cflag == STIFF_AND_FORCE:
             return Ke, rhs

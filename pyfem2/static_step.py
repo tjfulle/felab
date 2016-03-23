@@ -118,7 +118,7 @@ class StaticStep(Step):
 
         # CONCENTRATED FORCES
         Qf = zeros_like(self.dofs)
-        Qf[self.cltags] = self.clvals
+        Qf[self.cltags] = self.cload
 
         # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
         du = zeros_like(self.dofs)
@@ -157,8 +157,8 @@ class StaticStep(Step):
 
         # CONCENTRATED FORCES AT END OF LAST STEP AND END OF THIS STEP
         Q0, Qf = zeros_like(self.dofs), zeros_like(self.dofs)
-        Q0[self.previous.cltags] = self.previous.clvals
-        Qf[self.cltags] = self.clvals
+        Q0[self.previous.cltags] = self.previous.cload
+        Qf[self.cltags] = self.cload
 
         # DISPLACEMENT BOUNDARY CONDITIONS AT END OF LAST STEP AND END OF THIS
         # STEP

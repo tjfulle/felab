@@ -394,13 +394,18 @@ class FiniteElementModel(object):
         elif ninc == 1 and iframe == 1:
             logging.debug(msg)
 
-        if cflag not in (STIFF_AND_FORCE, STIFF_ONLY, FORCE_ONLY, LP_OUTPUT):
+        if cflag not in CFLAGS:
             raise ValueError('UNKNOWN COMPUTE QUANTITY')
 
         compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
+        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY, MASS_AND_RHS)
+        compute_mass = cflag in (MASS_AND_RHS,)
+
         if compute_stiff:
             K = zeros((self.numdof, self.numdof))
+
+        if compute_mass:
+            M = zeros((self.numdof, self.numdof))
 
         if compute_force:
             rhs = zeros(self.numdof)
@@ -429,6 +434,13 @@ class FiniteElementModel(object):
                     K[IX(eft, eft)] += response[0]
                     rhs[eft] += response[1]
 
+                elif cflag == MASS_AND_RHS:
+                    M[IX(eft, eft)] += response[0]
+                    rhs[eft] += response[1]
+
+                elif cflag == MASS_ONLY:
+                    M[IX(eft, eft)] += response
+
                 elif cflag == STIFF_ONLY:
                     K[IX(eft, eft)] += response
 
@@ -443,6 +455,13 @@ class FiniteElementModel(object):
 
         elif cflag == FORCE_ONLY:
             return rhs + Q
+
+        elif cflag == MASS_ONLY:
+            return M
+
+        elif cflag == MASS_AND_RHS:
+            # RETURN LUMPED MASS MATRIX
+            return array([sum(row) for row in M]), rhs + Q
 
     def apply_bc(self, K, F, doftags, dofvals, u=None, du=None):
         """
@@ -592,6 +611,27 @@ class FiniteElementModel(object):
             raise UserInputError('Duplicate step name {0!r}'.format(name))
         step = self.steps.StaticStep(name, period, increments,
                                      maxiters, nlgeom, solver)
+        return step
+
+    def DynamicStep(self, name=None, period=1., increments=None, nlgeom=False):
+        if self.steps is None:
+            self.setup()
+            self.initialize_steps()
+        for eb in self.mesh.eleblx:
+            iel = self.mesh.elemap[eb.labels[0]]
+            el = self.elements[iel]
+
+            if el.material.model.requires:
+                if 'nlgeom' in el.material.model.requires and not nlgeom:
+                    name = el.material.model.name
+                    raise ValueError('Material {0!r} requires '
+                                     'nlgeom=True'.format(name))
+
+        if name is None:
+            name = self.unique_step_name()
+        if name in self.steps:
+            raise UserInputError('Duplicate step name {0!r}'.format(name))
+        step = self.steps.DynamicStep(name, period, increments, nlgeom)
         return step
 
     def HeatTransferStep(self, name=None, period=1.):

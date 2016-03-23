@@ -5,6 +5,7 @@ from .constants import *
 from .step import Step
 from .heat_transfer_step import HeatTransferStep
 from .static_step import StaticStep
+from .dynamic_step import DynamicStep
 
 __all__ = ['StepRepository']
 
@@ -57,6 +58,18 @@ class StepRepository(object):
             raise RuntimeError('PREVIOUS STEP HAS UNCONVERGED FRAMES')
         step = StaticStep(self.model, len(self), name, self.last, period,
                           increments, maxiters, nlgeom, solver)
+        if copy:
+            step.copy_from(self.last)
+        step.frames[0].converged = True
+        self[name] = step
+        return self.last
+
+    def DynamicStep(self, name, period, increments, nlgeom):
+        last = self._values[-1].frames[-1]
+        if not last.converged:
+            raise RuntimeError('PREVIOUS STEP HAS UNCONVERGED FRAMES')
+        step = DynamicStep(self.model, len(self), name, self.last, period,
+                           increments, nlgeom)
         if copy:
             step.copy_from(self.last)
         step.frames[0].converged = True

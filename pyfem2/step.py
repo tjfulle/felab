@@ -71,7 +71,7 @@ class Step(object):
         return array(sorted(self.cloadx), dtype=int)
 
     @property
-    def clvals(self):
+    def cload(self):
         return array([self.cloadx[key] for key in self.cltags])
 
     def Frame(self, dtime, copy=1):
