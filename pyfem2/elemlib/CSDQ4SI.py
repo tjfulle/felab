@@ -1,7 +1,7 @@
 from numpy import *
 from numpy.linalg import inv, det
 
-from ._csd_q4_i import CSDQ4IElement
+from .continuum_stress_disp_quad4_incompat import CSDQ4IElement
 
 class PlaneStressQuad4Incompat(CSDQ4IElement):
     ndir = 2

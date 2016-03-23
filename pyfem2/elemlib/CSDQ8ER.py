@@ -1,5 +1,5 @@
 from numpy import *
-from ._csd_q8_r import CSDQ8RElement
+from .continuum_stress_disp_quad8_red import CSDQ8RElement
 
 TOOR3 = 1. / sqrt(3.)
 

@@ -34,7 +34,7 @@ class CHTElement(Element):
         raise NotImplementedError
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type):
 
         # --- ELEMENT STIFFNESS AND FORCE
 

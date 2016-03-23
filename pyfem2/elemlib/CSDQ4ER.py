@@ -1,5 +1,5 @@
 from numpy import *
-from ._csd_q4_r import CSDQ4RElement
+from .continuum_stress_disp_quad4_red import CSDQ4RElement
 
 class PlaneStrainQuad4Reduced(CSDQ4RElement):
     ndir = 3

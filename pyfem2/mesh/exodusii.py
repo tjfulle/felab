@@ -8,7 +8,7 @@ from os.path import basename, join, splitext, isfile
 
 from ._mesh import ElementBlock
 from ..constants import *
-from ..post import StepRepository1
+from .post import StepRepository1
 from ..elemlib import ElementFamily
 
 # True if we are running on Python 3.

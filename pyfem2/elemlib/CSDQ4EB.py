@@ -1,7 +1,7 @@
 from numpy import *
 from numpy.linalg import det, inv
 
-from ._csd_q4_f import CSDQ4FElement
+from .continuum_stress_disp_quad4_full import CSDQ4FElement
 
 # --------------------------------------------------------------------------- #
 # --------------------- BILINEAR PLANE STRAIN ELEMENT ----------------------- #

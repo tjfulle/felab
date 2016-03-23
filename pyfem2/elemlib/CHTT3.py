@@ -1,1 +1,1 @@
-from ._cht_t3 import PlaneDiffussiveHeatTransferTria3
+from .continuum_heat_trans_tria3 import PlaneDiffussiveHeatTransferTria3

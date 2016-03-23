@@ -1,9 +1,9 @@
 from numpy import *
 from copy import deepcopy
 
-from .utilities import *
-from .constants import *
-from .data import *
+from ..utilities import *
+from ..constants import *
+from ..data import *
 
 class Step(object):
     def __init__(self, model, number, name, previous, period):
@@ -11,25 +11,33 @@ class Step(object):
         self.written = 0
         self.name = name
         if previous is None:
-            self.time = 0.
+            self.start = 0.
+            self.value = 0.
         else:
-            self.time = previous.frames[-1].value
+            self.start = previous.frames[-1].value
+            self.value = previous.frames[-1].value
         self.frames = []
         self.Frame(0.)
         self.period = period
         self.number = number
         self.previous = previous
 
-        # DOF CONTAINERS
         self.dofs = zeros(self.model.numdof)
+
+        # DOFX[I] IS THE PRESCRIBED DOF FOR DOF I
         self.dofx = {}
 
-        # CONCENTRATED LOAD CONTAINERS
+        # CLOADX[I] IS THE PRESCRIBED CONCENTRATED LOAD FOR DOF I
         self.cloadx = {}
 
-        # CONTAINERS TO HOLD LOADS
-        self.dload = emptywithlists(self.model.numele)
-        self.dltyp = emptywithlists(self.model.numele)
+        # CONTAINERS TO HOLD DISTRIBUTED LOADS
+        self.dloadx = {}
+        self.sloadx = {}
+
+        # CONTAINERS TO HOLD HEAT TRANSFER LOADS
+        self.sfluxx = {}
+        self.sfilmx = {}
+        self.hsrcx = {}
 
         # PREDEFINED FIELDS
         self.predef = zeros((3, 1, self.model.numnod))
@@ -62,21 +70,111 @@ class Step(object):
     def doftags(self):
         return array(sorted(self.dofx), dtype=int)
 
-    @property
-    def dofvals(self):
-        return array([self.dofx[key] for key in self.doftags])
+    def dofvals(self, step_time):
+
+        ix = self.doftags
+
+        # DOFS AT END OF LAST STEP
+        X0 = array([self.previous.dofx.get(I, 0) for I in ix])
+
+        # DOFS AT END OF THIS STEP
+        Xf = array([self.dofx[I] for I in ix])
+
+        # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
+        fac = max(1., step_time / self.period)
+        return (1. - fac) * X0 + fac * Xf
 
     @property
     def cltags(self):
         return array(sorted(self.cloadx), dtype=int)
 
-    @property
-    def cload(self):
-        return array([self.cloadx[key] for key in self.cltags])
+    def cload(self, step_time):
+        # CONCENTRATED LOAD AT END OF LAST STEP
+        ix = self.previous.cltags
+        Q0 = zeros_like(self.dofs)
+        Q0[ix] = [self.previous.cloadx[key] for key in ix]
+
+        # CONCENTRATED LOAD AT END OF THIS STEP
+        ix = self.cltags
+        Qf = zeros_like(self.dofs)
+        Qf[ix] = [self.cloadx[key] for key in ix]
+
+        # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
+        fac = max(1., step_time / self.period)
+        return (1. - fac) * Q0 + fac * Qf
+
+    def dload(self, step_time):
+
+        # interpolates all distributed loads (body and surface) to step_time
+
+        # CONTAINER FOR ALL DLOADS
+        dltyp = emptywithlists(self.model.numele)
+        dload = emptywithlists(self.model.numele)
+
+        # INTERPOLATION FACTOR
+        fac = min(1., step_time / self.period)
+
+        # INTERPOLATE SURFACE LOADS
+        for (key, Ff) in self.sloadx.items():
+            iel, iedge = key
+            F0 = self.previous.sloadx.get(key, zeros_like(Ff))
+            Fx = (1. - fac) * F0 + fac * Ff
+            dltyp[iel].append(SLOAD)
+            dload[iel].append([iedge] + [x for x in Fx])
+
+        # INTERPOLATE DISTRIBUTED LOADS
+        for (key, Ff) in self.dloadx.items():
+            iel = key
+            F0 = self.previous.dloadx.get(key, zeros_like(Ff))
+            Fx = (1. - fac) * F0 + fac * Ff
+            dltyp[iel].append(DLOAD)
+            dload[iel].append(Fx)
+
+        # INTERPOLATE SURFACE FLUXES
+        for (key, qf) in self.sfluxx.items():
+            iel, iedge = key
+            q0 = self.previous.sfluxx.get(key, 0.)
+            qn = (1. - fac) * q0 + fac * qf
+            dltyp[iel].append(SFLUX)
+            dload[iel].append([iedge, qn])
+
+        # INTERPOLATE SURFACE FILMS
+        for (key, (Tf, hf)) in self.sfilmx.items():
+            iel, iedge = key
+            T0, h0 = self.previous.sfilmx.get(key, [0., 0.])
+            Too = (1. - fac) * T0 + fac * Tf
+            h = (1. - fac) * h0 + fac * hf
+            dltyp[iel].append(SFILM)
+            dload[iel].append([iedge, Too, h])
+
+        # INTERPOLATE HEAT SOURCES
+        for (key, sf) in self.hsrcx.items():
+            iel = key
+            s0 = self.previous.hsrcx.get(key, zeros_like(sf))
+            sx = (1. - fac) * s0 + fac * sf
+            dltyp[iel].append(HSRC)
+            dload[iel].append(sx)
+
+        return dltyp, dload
+
+    def assign_sload(self, iel, iedge, a):
+        self.sloadx[(iel, iedge)] = asarray(a)
+
+    def assign_dload(self, iel, a):
+        self.dloadx[iel] = asarray(a)
+
+    def assign_sflux(self, iel, iedge, a):
+        self.sfluxx[(iel, iedge)] = asarray(a)
+
+    def assign_sfilm(self, iel, iedge, Too, h):
+        self.sfilmx[(iel, iedge)] = [Too, h]
+
+    def assign_hsrc(self, iel, s):
+        self.hsrcx[iel] = asarray(s)
 
     def Frame(self, dtime, copy=1):
-        frame = Frame(self.time, dtime)
-        self.time += dtime
+        frame = Frame(self.value, dtime)
+        self.value += dtime
         if self.frames and copy:
             frame_n = self.frames[-1]
             frame.field_outputs = deepcopy(frame_n.field_outputs)
@@ -87,10 +185,13 @@ class Step(object):
     def copy_from(self, step):
         self.frames[0].field_outputs = deepcopy(step.frames[-1].field_outputs)
         self.dofs[:] = step.dofs
-        self.dofx = dict(step.dofx)
-        self.cloadx = dict(step.cloadx)
-        self.dload[:] = step.dload
-        self.dltyp[:] = step.dltyp
+        self.dofx = deepcopy(step.dofx)
+        self.cloadx = deepcopy(step.cloadx)
+        self.dloadx = deepcopy(step.dloadx)
+        self.sloadx = deepcopy(step.sloadx)
+        self.sfluxx = deepcopy(step.sfluxx)
+        self.sfilmx = deepcopy(step.sfilmx)
+        self.hsrcx = deepcopy(step.hsrcx)
         self.predef[:] = step.predef
         self.svars[:] = step.svars
 
@@ -115,6 +216,12 @@ class Step(object):
         """
         self.assign_dof(DIRICHLET, nodes, ALL, 0.)
     FixDOF = FixNodes
+
+    def RemoveBC(self, nodes, dof):
+        self.assign_dof(DIRICHLET, nodes, dof, None)
+
+    def RemoveConcentratedLoad(self, nodes, dof):
+        self.assign_dof(NEUMANN, nodes, dof, None)
 
     def PrescribedBC(self, nodes, dof, amplitude=0.):
         """Prescribe nodal degrees of freedom
@@ -174,6 +281,21 @@ class Step(object):
             dofs = dof
 
         inodes = self.model.mesh.get_internal_node_ids(nodes)
+
+        if amplitude is None:
+            # REMOVE THIS BC
+            for (i,inode) in enumerate(inodes):
+                for j in dofs:
+                    I = self.model.dofmap(inode, j)
+                    if I is None:
+                        raise UserInputError('INVALID DOF FOR NODE '
+                                             '{0}'.format(inode))
+                    if doftype == DIRICHLET and I in self.dofx:
+                        self.dofx.pop(I)
+                    elif I in self.cloadx:
+                        self.cloadx.pop(I)
+            return
+
         if hasattr(amplitude, '__call__'):
             # AMPLITUDE IS A FUNCTION
             a = amplitude(self.model.mesh.coord[inodes])
@@ -340,3 +462,90 @@ class Frame(object):
                 else:
                     raise ValueError('Unknown add_data option for {0}'.format(key))
             self.field_outputs[key].add_data(value, **d)
+
+class SDStep(Step):
+    """Base class for stress/displacement steps"""
+
+    def PinNodes(self, nodes):
+        """Pin nodal degrees of freedom
+
+        Parameters
+        ----------
+        nodes : int, list of int, or symbolic constant
+            Nodes to fix
+
+        Notes
+        -----
+        ``nodes`` can be a single external node label, a list of external node
+        labels, or one of the region symbolic constants.
+
+        All active displacement degrees of freedom are set to 0.
+
+        """
+        self.assign_dof(DIRICHLET, nodes, PIN, 0.)
+
+    # ----------------------------------------------------------------------- #
+    # --- LOADING CONDITIONS ------------------------------------------------ #
+    # ----------------------------------------------------------------------- #
+    def GravityLoad(self, region, components):
+        if region == ALL:
+            ielems = range(self.model.numele)
+        else:
+            ielems = [self.model.mesh.elemap[el] for el in region]
+        if not is_listlike(components):
+            raise UserInputError('EXPECTED GRAVITY LOAD VECTOR')
+        if len(components) != self.model.dimensions:
+            raise UserInputError('EXPECTED {0} GRAVITY LOAD '
+                                 'COMPONENTS'.format(len(self.model.active_dof)))
+        a = asarray(components)
+        for iel in ielems:
+            el = self.model.elements[iel]
+            rho = el.material.density
+            if rho is None:
+                raise UserInputError('ELEMENT MATERIAL DENSITY MUST BE ASSIGNED '
+                                     'BEFORE GRAVITY LOADS')
+            self.assign_dload(iel, rho*a)
+
+    def DistributedLoad(self, region, components):
+        if not is_listlike(components):
+            raise UserInputError('EXPECTED DISTRIBUTED LOAD VECTOR')
+        if len(components) != self.model.dimensions:
+            raise UserInputError('EXPECTED {0} DISTRIBUTED LOAD '
+                                 'COMPONENTS'.format(len(self.model.active_dof)))
+        if region == ALL:
+            ielems = range(self.model.numele)
+        elif not is_listlike(region):
+            ielems = [self.model.mesh.elemap[region]]
+        else:
+            ielems = [self.model.mesh.elemap[el] for el in region]
+        a = asarray(components)
+        for iel in ielems:
+            self.assign_dload(iel, a)
+
+    def SurfaceLoad(self, surface, components):
+        if not is_listlike(components):
+            raise UserInputError('EXPECTED SURFACE LOAD VECTOR')
+        if len(components) != self.model.dimensions:
+            raise UserInputError('EXPECTED {0} SURFACE LOAD '
+                                 'COMPONENTS'.format(len(self.model.active_dof)))
+        surface = self.model.mesh.find_surface(surface)
+        components = [x for x in components]
+        for (iel, iedge) in surface:
+            self.assign_sload(iel, iedge, components)
+
+    def SurfaceLoadN(self, surface, amplitude):
+        surface = self.model.mesh.find_surface(surface)
+        for (iel, iedge) in surface:
+            # DETERMINE THE NORMAL TO THE EDGE
+            el = self.model.elements[iel]
+            edgenod = el.edges[iedge]
+            xb = el.xc[edgenod]
+            if self.model.dimensions == 2:
+                n = normal2d(xb)
+            else:
+                raise NotImplementedError('3D SURFACE NORMAL')
+            components = [x for x in amplitude*n]
+            self.assign_sload(iel, iedge, components)
+
+    def Pressure(self, surface, amplitude):
+        self.SurfaceLoadN(surface, -amplitude)

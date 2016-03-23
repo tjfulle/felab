@@ -1,6 +1,6 @@
 from numpy import *
 from numpy.linalg import det, inv
-from ._csd_q8_f import CSDQ8FElement
+from .continuum_stress_disp_quad8_full import CSDQ8FElement
 class PlaneStrainQuad8BBar(CSDQ8FElement):
     ndir = 3
     nshr = 1

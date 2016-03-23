@@ -1,5 +1,5 @@
 from numpy import *
-from ._csd_q8_f import CSDQ8FElement
+from .continuum_stress_disp_quad8_full import CSDQ8FElement
 class PlaneStressQuad8(CSDQ8FElement):
     ndir = 2
     nshr = 1

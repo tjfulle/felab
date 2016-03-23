@@ -1,7 +1,7 @@
 from numpy import *
 from numpy.linalg import inv, det
 
-from ._csd_f import CSDFElement
+from .continuum_stress_disp_full import CSDFElement
 
 # --------------------------------------------------------------------------- #
 # --------------------- QUADRATIC ISOPARAMETRIC ELEMENTS -------------------- #

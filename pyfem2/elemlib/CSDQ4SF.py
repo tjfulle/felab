@@ -1,6 +1,6 @@
 from numpy import *
 
-from ._csd_q4_f import CSDQ4FElement
+from .continuum_stress_disp_quad4_full import CSDQ4FElement
 
 # --------------------------------------------------------------------------- #
 # --------------------- BILINEAR PLANE STRESS ELEMENT ----------------------- #

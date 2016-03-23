@@ -2,14 +2,14 @@ import logging
 from numpy import *
 from numpy.linalg import det, inv
 
-from ._csd import CSDElement
+from .continuum_stress_disp import CSDElement
 from ..utilities import *
 
 # --------------------------------------------------------------------------- #
-# ---------------- INCOMPATIBLE MODES ISOPARAMETRIC ELEMENTS ---------------- #
+# ----------------FULLY INTEGRATED ISOPARAMETRIC ELEMENTS ------------------- #
 # --------------------------------------------------------------------------- #
-class CSDIElement(CSDElement):
-    """Continuum isoparametric stress displacement element, incompatible modes"""
+class CSDFElement(CSDElement):
+    """Continuum Isoparametric Stress Displacement Element"""
     gaussp = None
     gaussw = None
     variables = ('E', 'DE', 'S')
@@ -21,7 +21,7 @@ class CSDIElement(CSDElement):
     def shape(self, *args):
         raise NotImplementedError
 
-    def gmatrix(self, xi):
+    def shapegrad(self, *args):
         raise NotImplementedError
 
     def pmatrix(self, N):
@@ -74,32 +74,32 @@ class CSDIElement(CSDElement):
             return average(data, axis=0, weights=weights)
 
     def response(self, u, du, time, dtime, kstep, kframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type):
         """Assemble the element stiffness"""
 
         xc = self.xc  # + u.reshape(self.xc.shape)
 
         n = sum([count_digits(nfs) for nfs in self.signature])
         compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
+        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY, MASS_AND_RHS)
+        compute_mass = cflag in (MASS_AND_RHS,)
 
         if compute_stiff:
-            Kcc = zeros((n, n))
-            # INCOMPATIBLE MODES STIFFNESSES
-            m = count_digits(self.signature[0])
-            Kci = zeros((n, self.dimensions*m))
-            Kii = zeros((self.dimensions*m, self.dimensions*m))
+            Ke = zeros((n, n))
+
+        if compute_mass:
+            Me = zeros((n, n))
 
         if compute_force:
-            rhs = zeros(n)
+            xforce = zeros(n)
 
-        if step_type == GENERAL:
-            resid = zeros(n)
+        if step_type in (GENERAL, DYNAMIC):
+            iforce = zeros(n)
 
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
         m = len(self.variables) * ntens
-        a1, a2, a3 = 0, 1, 2
+        a1, a2, a3 = [self.variables.index(x) for x in ('E', 'DE', 'S')]
 
         # COMPUTE INTEGRATION POINT DATA
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
@@ -151,47 +151,48 @@ class CSDIElement(CSDElement):
 
             if compute_stiff:
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                G = self.gmatrix(xi)
-                Kcc += J * self.gaussw[p] * dot(dot(B.T, D), B)
-                Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]
-                Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
+                Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
+
+            if compute_mass:
+                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
+                Me += J * self.gaussw[p] * self.material.density * outer(N, N)
 
             if compute_force:
                 P = self.pmatrix(N)
                 for dloadx in bload:
                     # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                    rhs += J * self.gaussw[p] * dot(P.T, dloadx)
+                    xforce += J * self.gaussw[p] * dot(P.T, dloadx)
 
             if step_type == GENERAL:
                 # UPDATE THE RESIDUAL
-                resid +=  J * self.gaussw[p] * dot(s, B)
+                iforce +=  J * self.gaussw[p] * dot(s, B)
 
         if cflag == LP_OUTPUT:
             return
 
-        if compute_stiff:
-            Ke = Kcc  - dot(dot(Kci, inv(Kii)), Kci.T)
-
         if cflag == STIFF_ONLY:
             return Ke
+
+        if cflag == MASS_ONLY:
+            return Me
 
         if compute_force:
             for (i, typ) in enumerate(dltyp):
                 if typ == DLOAD:
                     continue
-                dloadx = dload[i]
                 if typ == SLOAD:
                     # SURFACE LOAD
-                    rhs += self.surface_force(dloadx[0], dloadx[1:])
+                    iedge, components = dload[i][0], dload[i][1:]
+                    xforce += self.surface_force(iedge, components)
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')
 
-        if compute_force:
-            rhs *= load_fac
-
-        if step_type == GENERAL:
+        if step_type in (GENERAL, DYNAMIC) and compute_force:
             # SUBTRACT RESIDUAL FROM INTERNAL FORCE
-            rhs -= resid
+            rhs = xforce - iforce
+
+        else:
+            rhs = xforce
 
         if cflag == STIFF_AND_FORCE:
             return Ke, rhs

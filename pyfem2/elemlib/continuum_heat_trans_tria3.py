@@ -1,7 +1,7 @@
 from numpy import *
 
 from ..utilities import *
-from ._cht import CHTElement
+from .continuum_heat_trans import CHTElement
 
 # --------------------------------------------------------------------------- #
 # ------------------------ HEAT TRANSFER ELEMENT ---------------------------- #

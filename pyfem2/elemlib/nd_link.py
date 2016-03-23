@@ -27,7 +27,7 @@ class ND2NodeLinkElement(Element):
     variables = ('P', 'S')
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type):
         """Computes the response of a n-dimensional elastic link
 
         Parameters

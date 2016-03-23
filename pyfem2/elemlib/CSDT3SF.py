@@ -1,5 +1,5 @@
 from numpy import *
-from ._csd_t3_f import CSDT3FElement
+from .continuum_stress_disp_tria3_full import CSDT3FElement
 class PlaneStressTria3(CSDT3FElement):
     ndir = 2
     nshr = 1

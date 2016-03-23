@@ -1,7 +1,7 @@
 from numpy import *
 from numpy.linalg import inv, det
 
-from ._csd_r import CSDRElement
+from .continuum_stress_disp_red import CSDRElement
 
 TOOR3 = 1. / sqrt(3.)
 c = -sqrt(3./5.)

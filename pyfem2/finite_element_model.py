@@ -6,7 +6,7 @@ import numpy.linalg as la
 from .utilities import *
 from .constants import *
 from .mesh import *
-from .step_repository import StepRepository
+from .step import StepRepository
 from .material import Material
 
 __all__ = ['FiniteElementModel']
@@ -322,7 +322,7 @@ class FiniteElementModel(object):
     def assemble(self, u, du, Q, svtab, svars, dltyp, dload, predef,
                  procedure, step_type, time=array([0.,0.]), dtime=1., period=1.,
                  istep=1, iframe=1, nlgeom=False, ninc=None,
-                 cflag=STIFF_AND_FORCE, load_fac=1.):
+                 cflag=STIFF_AND_FORCE):
         """
         Assembles the global system of equations
 
@@ -359,7 +359,6 @@ class FiniteElementModel(object):
         ninc : int, opitional {None}
             Current increment
         cflag : symbolic constant, optional {STIFF_AND_FORCE}
-        load_fac : float, optional {1.}
 
         Returns
         -------
@@ -420,6 +419,7 @@ class FiniteElementModel(object):
         # COMPUTE THE ELEMENT STIFFNESS AND SCATTER TO GLOBAL ARRAY
         for (ieb, eb) in enumerate(self.mesh.eleblx):
             for (e, xel) in enumerate(eb.labels):
+
                 # ELEMENT STIFFNESS
                 iel = self.mesh.elemap[xel]
                 el = self.elements[iel]
@@ -428,7 +428,7 @@ class FiniteElementModel(object):
                                        iframe, svars[:,svtab[iel]],
                                        dltyp[iel], dload[iel],
                                        predef_i[:,:,el.inodes], procedure, nlgeom,
-                                       cflag, step_type, load_fac)
+                                       cflag, step_type)
 
                 if cflag == STIFF_AND_FORCE:
                     K[IX(eft, eft)] += response[0]

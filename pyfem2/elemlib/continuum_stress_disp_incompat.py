@@ -2,27 +2,26 @@ import logging
 from numpy import *
 from numpy.linalg import det, inv
 
-from ._csd import CSDElement
+from .continuum_stress_disp import CSDElement
 from ..utilities import *
 
 # --------------------------------------------------------------------------- #
-# -------------- REDUCED INTEGRATION ISOPARAMETRIC ELEMENTS ----------------- #
+# ---------------- INCOMPATIBLE MODES ISOPARAMETRIC ELEMENTS ---------------- #
 # --------------------------------------------------------------------------- #
-class CSDRElement(CSDElement):
-    """Continue isoparametric stress displacement element, reduced integration"""
+class CSDIElement(CSDElement):
+    """Continuum isoparametric stress displacement element, incompatible modes"""
     gaussp = None
     gaussw = None
     variables = ('E', 'DE', 'S')
     integration = None
-    hourglass_control = False
+
+    def surface_force(self, *args):
+        raise NotImplementedError
 
     def shape(self, *args):
         raise NotImplementedError
 
-    def shapegrad(self, *args):
-        raise NotImplementedError
-
-    def surface_force(self, *args):
+    def gmatrix(self, xi):
         raise NotImplementedError
 
     def pmatrix(self, N):
@@ -39,23 +38,32 @@ class CSDRElement(CSDElement):
         return cls.average(cls.cp, data)
 
     @classmethod
+    def project_to_nodes(cls, data, v):
+        """Inverse distance weighted average of integration point data at each
+        element node"""
+        nx = len(v)
+        a = zeros((cls.nodes, nx))
+        for i in range(cls.nodes):
+            a[i,:] = cls.average(cls.xp[i], data, v)
+        return a
+
+    @classmethod
     def average(cls, point, data, v=None):
         """Inverse distance weighted average of integration point data at point"""
 
         if data.ndim == 1:
             # SCALAR DATA
             assert len(data) == cls.integration
+
         elif len(data.shape) == 2:
             # VECTOR OR TENSOR DATA
             assert data.shape[0] == cls.integration
+
         else:
             raise TypeError('Unknown data type')
 
-        if cls.integration == 1:
-            weights = [1.]
-        else:
-            dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
-            weights = [1./dist(point, cls.gaussp[i]) for i in range(cls.integration)]
+        dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
+        weights = [1./dist(point, cls.gaussp[i]) for i in range(cls.integration)]
 
         if data.ndim == 1:
             # SCALAR DATA
@@ -66,7 +74,7 @@ class CSDRElement(CSDElement):
             return average(data, axis=0, weights=weights)
 
     def response(self, u, du, time, dtime, kstep, kframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type):
         """Assemble the element stiffness"""
 
         xc = self.xc  # + u.reshape(self.xc.shape)
@@ -76,7 +84,11 @@ class CSDRElement(CSDElement):
         compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
 
         if compute_stiff:
-            Ke = zeros((n, n))
+            Kcc = zeros((n, n))
+            # INCOMPATIBLE MODES STIFFNESSES
+            m = count_digits(self.signature[0])
+            Kci = zeros((n, self.dimensions*m))
+            Kii = zeros((self.dimensions*m, self.dimensions*m))
 
         if compute_force:
             rhs = zeros(n)
@@ -87,7 +99,7 @@ class CSDRElement(CSDElement):
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
         m = len(self.variables) * ntens
-        a1, a2, a3 = [self.variables.index(x) for x in ('E', 'DE', 'S')]
+        a1, a2, a3 = 0, 1, 2
 
         # COMPUTE INTEGRATION POINT DATA
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
@@ -138,10 +150,11 @@ class CSDRElement(CSDElement):
             svars[1,ij+a3*ntens:ij+(a3+1)*ntens] = s  # STRESS
 
             if compute_stiff:
-                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL ONLY FOR
-                # REDUCED INTEGRATION PORTION
-                Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
-                continue
+                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
+                G = self.gmatrix(xi)
+                Kcc += J * self.gaussw[p] * dot(dot(B.T, D), B)
+                Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]
+                Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
 
             if compute_force:
                 P = self.pmatrix(N)
@@ -156,45 +169,8 @@ class CSDRElement(CSDElement):
         if cflag == LP_OUTPUT:
             return
 
-        if compute_stiff and self.hourglass_control:
-            # PERFORM HOURGLASS CORRECTION
-            Khg = zeros(Ke.shape)
-            for p in range(len(self.hglassp)):
-
-                # SHAPE FUNCTION DERIVATIVE AT HOURGLASS GAUSS POINTS
-                xi = array(self.hglassp[p])
-                dNdxi = self.shapegrad(xi)
-
-                # JACOBIAN TO NATURAL COORDINATES
-                dxdxi = dot(dNdxi, xc)
-                dxidx = inv(dxdxi)
-                dNdx = dot(dxidx, dNdxi)
-                B = self.bmatrix(dNdx)
-                J = det(dxdxi)
-
-                # HOURGLASS BASE VECTORS
-                g = array(self.hglassv[p])
-                for i in range(len(xi)):
-                    xi[i] = dot(g, xc[:,i])
-
-                # CORRECT THE BASE VECTORS TO ENSURE ORTHOGONALITY
-                scale = 0.
-                for a in range(self.nodes):
-                    for i in range(self.dimensions):
-                        g[a] -= xi[i] * dNdx[i,a]
-                        scale += dNdx[i,a] * dNdx[i,a]
-                scale *= .01 * self.material.G
-
-                for a in range(self.nodes):
-                    n1 = count_digits(self.signature[a])
-                    for i in range(n1):
-                        for b in range(self.nodes):
-                            n2 = count_digits(self.signature[b])
-                            for j in range(n2):
-                                K = n1 * a + i
-                                L = n2 * b + j
-                                Khg[K,L] += scale * g[a] * g[b] * J * 4.
-            Ke += Khg
+        if compute_stiff:
+            Ke = Kcc  - dot(dot(Kci, inv(Kii)), Kci.T)
 
         if cflag == STIFF_ONLY:
             return Ke
@@ -209,9 +185,6 @@ class CSDRElement(CSDElement):
                     rhs += self.surface_force(dloadx[0], dloadx[1:])
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')
-
-        if compute_force:
-            rhs *= load_fac
 
         if step_type == GENERAL:
             # SUBTRACT RESIDUAL FROM INTERNAL FORCE

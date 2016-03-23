@@ -2,26 +2,27 @@ import logging
 from numpy import *
 from numpy.linalg import det, inv
 
-from ._csd import CSDElement
+from .continuum_stress_disp import CSDElement
 from ..utilities import *
 
 # --------------------------------------------------------------------------- #
-# ----------------FULLY INTEGRATED ISOPARAMETRIC ELEMENTS ------------------- #
+# -------------- REDUCED INTEGRATION ISOPARAMETRIC ELEMENTS ----------------- #
 # --------------------------------------------------------------------------- #
-class CSDFElement(CSDElement):
-    """Continuum Isoparametric Stress Displacement Element"""
+class CSDRElement(CSDElement):
+    """Continue isoparametric stress displacement element, reduced integration"""
     gaussp = None
     gaussw = None
     variables = ('E', 'DE', 'S')
     integration = None
-
-    def surface_force(self, *args):
-        raise NotImplementedError
+    hourglass_control = False
 
     def shape(self, *args):
         raise NotImplementedError
 
     def shapegrad(self, *args):
+        raise NotImplementedError
+
+    def surface_force(self, *args):
         raise NotImplementedError
 
     def pmatrix(self, N):
@@ -38,32 +39,23 @@ class CSDFElement(CSDElement):
         return cls.average(cls.cp, data)
 
     @classmethod
-    def project_to_nodes(cls, data, v):
-        """Inverse distance weighted average of integration point data at each
-        element node"""
-        nx = len(v)
-        a = zeros((cls.nodes, nx))
-        for i in range(cls.nodes):
-            a[i,:] = cls.average(cls.xp[i], data, v)
-        return a
-
-    @classmethod
     def average(cls, point, data, v=None):
         """Inverse distance weighted average of integration point data at point"""
 
         if data.ndim == 1:
             # SCALAR DATA
             assert len(data) == cls.integration
-
         elif len(data.shape) == 2:
             # VECTOR OR TENSOR DATA
             assert data.shape[0] == cls.integration
-
         else:
             raise TypeError('Unknown data type')
 
-        dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
-        weights = [1./dist(point, cls.gaussp[i]) for i in range(cls.integration)]
+        if cls.integration == 1:
+            weights = [1.]
+        else:
+            dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
+            weights = [1./dist(point, cls.gaussp[i]) for i in range(cls.integration)]
 
         if data.ndim == 1:
             # SCALAR DATA
@@ -74,27 +66,23 @@ class CSDFElement(CSDElement):
             return average(data, axis=0, weights=weights)
 
     def response(self, u, du, time, dtime, kstep, kframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type):
         """Assemble the element stiffness"""
 
         xc = self.xc  # + u.reshape(self.xc.shape)
 
         n = sum([count_digits(nfs) for nfs in self.signature])
         compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY, MASS_AND_RHS)
-        compute_mass = cflag in (MASS_AND_RHS,)
+        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
 
         if compute_stiff:
             Ke = zeros((n, n))
 
-        if compute_mass:
-            Me = zeros((n, n))
-
         if compute_force:
-            xforce = zeros(n)
+            rhs = zeros(n)
 
-        if step_type in (GENERAL, DYNAMIC):
-            iforce = zeros(n)
+        if step_type == GENERAL:
+            resid = zeros(n)
 
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
@@ -150,31 +138,66 @@ class CSDFElement(CSDElement):
             svars[1,ij+a3*ntens:ij+(a3+1)*ntens] = s  # STRESS
 
             if compute_stiff:
-                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
+                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL ONLY FOR
+                # REDUCED INTEGRATION PORTION
                 Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
-
-            if compute_mass:
-                # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                Me += J * self.gaussw[p] * self.material.density * outer(N, N)
+                continue
 
             if compute_force:
                 P = self.pmatrix(N)
                 for dloadx in bload:
                     # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                    xforce += J * self.gaussw[p] * dot(P.T, dloadx)
+                    rhs += J * self.gaussw[p] * dot(P.T, dloadx)
 
             if step_type == GENERAL:
                 # UPDATE THE RESIDUAL
-                iforce +=  J * self.gaussw[p] * dot(s, B)
+                resid +=  J * self.gaussw[p] * dot(s, B)
 
         if cflag == LP_OUTPUT:
             return
 
+        if compute_stiff and self.hourglass_control:
+            # PERFORM HOURGLASS CORRECTION
+            Khg = zeros(Ke.shape)
+            for p in range(len(self.hglassp)):
+
+                # SHAPE FUNCTION DERIVATIVE AT HOURGLASS GAUSS POINTS
+                xi = array(self.hglassp[p])
+                dNdxi = self.shapegrad(xi)
+
+                # JACOBIAN TO NATURAL COORDINATES
+                dxdxi = dot(dNdxi, xc)
+                dxidx = inv(dxdxi)
+                dNdx = dot(dxidx, dNdxi)
+                B = self.bmatrix(dNdx)
+                J = det(dxdxi)
+
+                # HOURGLASS BASE VECTORS
+                g = array(self.hglassv[p])
+                for i in range(len(xi)):
+                    xi[i] = dot(g, xc[:,i])
+
+                # CORRECT THE BASE VECTORS TO ENSURE ORTHOGONALITY
+                scale = 0.
+                for a in range(self.nodes):
+                    for i in range(self.dimensions):
+                        g[a] -= xi[i] * dNdx[i,a]
+                        scale += dNdx[i,a] * dNdx[i,a]
+                scale *= .01 * self.material.G
+
+                for a in range(self.nodes):
+                    n1 = count_digits(self.signature[a])
+                    for i in range(n1):
+                        for b in range(self.nodes):
+                            n2 = count_digits(self.signature[b])
+                            for j in range(n2):
+                                K = n1 * a + i
+                                L = n2 * b + j
+                                Khg[K,L] += scale * g[a] * g[b] * J * 4.
+            Ke += Khg
+
         if cflag == STIFF_ONLY:
             return Ke
-
-        if cflag == MASS_ONLY:
-            return Me
 
         if compute_force:
             for (i, typ) in enumerate(dltyp):
@@ -183,19 +206,13 @@ class CSDFElement(CSDElement):
                 dloadx = dload[i]
                 if typ == SLOAD:
                     # SURFACE LOAD
-                    xforce += self.surface_force(dloadx[0], dloadx[1:])
+                    rhs += self.surface_force(dloadx[0], dloadx[1:])
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')
 
-        if compute_force:
-            xforce *= load_fac
-
-        if step_type in (GENERAL, DYNAMIC) and compute_force:
+        if step_type == GENERAL:
             # SUBTRACT RESIDUAL FROM INTERNAL FORCE
-            rhs = xforce - iforce
-
-        else:
-            rhs = xforce
+            rhs -= resid
 
         if cflag == STIFF_AND_FORCE:
             return Ke, rhs

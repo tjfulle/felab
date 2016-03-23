@@ -1,5 +1,5 @@
 from numpy import *
-from ._csd_f import CSDFElement
+from .continuum_stress_disp_full import CSDFElement
 
 c = -sqrt(3./5.)
 

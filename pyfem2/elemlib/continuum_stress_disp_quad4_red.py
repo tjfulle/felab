@@ -1,7 +1,7 @@
 from numpy import *
 from numpy.linalg import inv, det
 
-from ._csd_r import CSDRElement
+from .continuum_stress_disp_red import CSDRElement
 
 class CSDQ4RElement(CSDRElement):
     """4-node isoparametric element, reduced integration

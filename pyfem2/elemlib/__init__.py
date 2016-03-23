@@ -1,13 +1,13 @@
-from ._csd import CSDElement
+from .continuum_stress_disp import CSDElement
 IsoPElement = CSDElement
 
 from .CHTT3 import PlaneDiffussiveHeatTransferTria3
 DiffussiveHeatTransfer2D3 = PlaneDiffussiveHeatTransferTria3
 
-from .CSDB2D2 import PlaneBeamColumn
-from .CSDL1D2 import ElasticLink1D2
-from .CSDL2D2 import ElasticLink2D2
-from .CSDL3D2 import ElasticLink3D2
+from .PBC2 import PlaneBeamColumn
+from .LINK1D2 import ElasticLink1D2
+from .LINK2D2 import ElasticLink2D2
+from .LINK3D2 import ElasticLink3D2
 
 from .CSDT3EF import PlaneStrainTria3
 from .CSDT3SF import PlaneStressTria3

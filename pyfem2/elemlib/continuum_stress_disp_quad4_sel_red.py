@@ -1,13 +1,10 @@
 from numpy import *
 from numpy.linalg import inv, det
 
-from ._csd_i import CSDIElement
+from .continuum_stress_disp_sel_red import CSDSElement
 
-# --------------------------------------------------------------------------- #
-# --------------------- QUADRATIC ISOPARAMETRIC ELEMENTS -------------------- #
-# --------------------------------------------------------------------------- #
-class CSDQ4IElement(CSDIElement):
-    """4-node isoparametric element, incompatible modes
+class CSDQ4SElement(CSDSElement):
+    """4-node isoparametric element, selective reduced integration
 
     Notes
     -----
@@ -29,9 +26,14 @@ class CSDQ4IElement(CSDIElement):
                  (1,1,0,0,0,0,0),
                  (1,1,0,0,0,0,0)]
     dimensions = 2
-    integration = 4
-    gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
-    gaussw = ones(4)
+    integration = 5
+    integration1 = 4
+    gaussp = array([[-1., -1.],
+                    [ 1., -1.],
+                    [-1.,  1.],
+                    [ 1.,  1.],
+                    [ 0.,  0.]]) / sqrt(3.)
+    gaussw = array([1., 1., 1., 1., 4.])
     cp = array([0, 0], dtype=float64)
     xp = array([[-1, -1], [1, -1], [1, 1], [-1, 1],
                 [0, -1], [1, 0], [0, 1], [-1, 0]], dtype=float64),

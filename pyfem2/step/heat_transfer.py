@@ -1,11 +1,12 @@
 from numpy import *
 
-from .constants import *
-from .utilities import *
-from .step import Step
-from .elemlib import PlaneDiffussiveHeatTransferTria3
+from ..constants import *
+from ..utilities import *
+from ..elemlib import PlaneDiffussiveHeatTransferTria3
+from ._step import Step
 
 class HeatTransferStep(Step):
+    procedure = HEAT_TRANSFER
     def __init__(self, model, number, name, previous, period):
         super(HeatTransferStep, self).__init__(model, number, name, previous,
                                                period)
@@ -21,16 +22,14 @@ class HeatTransferStep(Step):
     def SurfaceFlux(self, surface, qn):
         surf = self.model.mesh.find_surface(surface)
         for (iel, iedge) in surf:
-            self.dltyp[iel].append(SFLUX)
-            self.dload[iel].append([iedge, qn])
+            self.assign_sflux(iel, iedge, qn)
 
     def SurfaceConvection(self, surface, Too, h):
         if self.model.mesh is None:
             raise UserInputError('MESH MUST FIRST BE CREATED')
         surf = self.model.mesh.find_surface(surface)
         for (iel, iedge) in surf:
-            self.dltyp[iel].append(SFILM)
-            self.dload[iel].append([iedge, Too, h])
+            self.assign_sfilm(iel, iedge, Too, h)
 
     def HeatGeneration(self, region, amplitude):
         if region == ALL:
@@ -58,26 +57,21 @@ class HeatTransferStep(Step):
         for xelem in xelems:
             ielem = self.model.mesh.elemap[xelem]
             ix = [nodmap[n] for n in self.model.elements[ielem].inodes]
-            self.dltyp[ielem].append(HSRC)
-            self.dload[ielem].append(a[ix])
+            self.assign_hsrc(ielem, a[ix])
 
     # ----------------------------------------------------------------------- #
     # --- RUN --------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
     def run(self):
+        time = array([0., self.start])
         du = zeros(self.model.numdof)
         qe = zeros_like(self.dofs)
+        dltyp, dload = self.dload(self.period)
+        X = self.dofvals(self.period)
         K, rhs = self.model.assemble(self.dofs, du, qe, self.svtab, self.svars,
-                                     self.dltyp, self.dload, self.predef,
-                                     HEAT_TRANSFER, DIRECT)
-        Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, self.dofvals)
+                                     dltyp, dload, self.predef,
+                                     self.procedure, DIRECT, time=time)
+        Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, X)
         self.dofs[:] = linsolve(Kbc, Fbc)
         react = dot(K, self.dofs) - rhs
         self.advance(self.period, self.dofs, react)
-
-        # CREATE NEW FRAME TO HOLD UPDATED STATE
-        #frame = self.Frame(self.period)
-        #frame.field_outputs['T'].add_data(self.dofs)
-        #frame.field_outputs['Q'].add_data(Q)
-        #frame.converged = True
-        #self.T = self.dofs

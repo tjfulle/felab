@@ -31,7 +31,7 @@ class PlaneBeamColumn(Element):
     elefab = {'A': None, 'Izz': None}
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type):
 
         # INTERNAL FORCE
         Fe = zeros(6)

@@ -1,9 +1,9 @@
 from numpy import *
 from copy import deepcopy
 
-from .utilities import *
-from .constants import *
-from .data import *
+from ..utilities import *
+from ..constants import *
+from ..data import *
 
 __all__ = ['StepRepository1']
 

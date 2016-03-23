@@ -2,7 +2,7 @@ import logging
 from numpy import *
 from numpy.linalg import det, inv
 
-from ._csd import CSDElement
+from .continuum_stress_disp import CSDElement
 from ..utilities import *
 
 # --------------------------------------------------------------------------- #
@@ -75,7 +75,7 @@ class CSDSElement(CSDElement):
             return average(data, axis=0, weights=weights)
 
     def response(self, u, du, time, dtime, kstep, kframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type, load_fac):
+                 predef, procedure, nlgeom, cflag, step_type):
         """Assemble the element stiffness"""
 
         xc = self.xc  # + u.reshape(self.xc.shape)
@@ -181,9 +181,6 @@ class CSDSElement(CSDElement):
                     rhs += self.surface_force(dloadx[0], dloadx[1:])
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')
-
-        if compute_force:
-            rhs *= load_fac
 
         if step_type == GENERAL:
             # SUBTRACT RESIDUAL FROM INTERNAL FORCE

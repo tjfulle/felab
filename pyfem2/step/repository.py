@@ -1,11 +1,11 @@
 from numpy import *
 
-from .utilities import *
-from .constants import *
-from .step import Step
-from .heat_transfer_step import HeatTransferStep
-from .static_step import StaticStep
-from .dynamic_step import DynamicStep
+from ..utilities import *
+from ..constants import *
+from ._step import Step
+from .heat_transfer import HeatTransferStep
+from .static import StaticStep
+from .dynamic import DynamicStep
 
 __all__ = ['StepRepository']
 
