@@ -24,7 +24,7 @@ def LinearSolution(ax=None):
                   xlim=(-.2,5), ylim=(-.2, 5))
     return ax
 
-def ReducedIntegrationSolution(ax=None):
+def BBarSolution(ax=None):
     V = FiniteElementModel(jobid='VolumeLocking.BBar')
     V.GenesisMesh('QuarterCylinderQuad4.g')
     mat = V.Material('Material-1')
@@ -38,6 +38,22 @@ def ReducedIntegrationSolution(ax=None):
     step.run()
     V.WriteResults()
     ax = V.Plot2D(deformed=1, ax=ax, color='b', label='bbar')
+    return ax
+
+def ReducedIntegrationSolution(ax=None):
+    V = FiniteElementModel(jobid='VolumeLocking.Reduced')
+    V.GenesisMesh('QuarterCylinderQuad4.g')
+    mat = V.Material('Material-1')
+    mat.Elastic(E=E, Nu=Nu)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad4BBar, mat, t=1)
+    V.PrescribedBC('Nodeset-200', X)
+    V.PrescribedBC('Nodeset-201', Y)
+    # Pressure on inside face
+    step = V.StaticStep()
+    step.Pressure('Surface-1', 1.)
+    step.run()
+    V.WriteResults()
+    ax = V.Plot2D(deformed=1, ax=ax, color='b', label='reduced')
     return ax
 
 def SelReducedIntegrationSolution(ax=None):
@@ -95,7 +111,7 @@ def WriteAnalyticSolution(ax=None):
 ax = None
 ax = WriteAnalyticSolution(ax)
 ax = ReducedIntegrationSolution(ax)
-ax = SelReducedIntegrationSolution(ax)
+#ax = SelReducedIntegrationSolution(ax)
 ax = LinearSolution(ax)
 #QuadraticSolution()
 

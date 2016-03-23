@@ -288,8 +288,9 @@ class Step(object):
                 for j in dofs:
                     I = self.model.dofmap(inode, j)
                     if I is None:
-                        raise UserInputError('INVALID DOF FOR NODE '
-                                             '{0}'.format(inode))
+                        logging.warn('INVALID DOF FOR NODE '
+                                     '{0}'.format(inode))
+                        continue
                     if doftype == DIRICHLET and I in self.dofx:
                         self.dofx.pop(I)
                     elif I in self.cloadx:
