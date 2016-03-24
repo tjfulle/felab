@@ -105,7 +105,7 @@ class Step(object):
 
     def dload(self, step_time):
 
-        # interpolates all distributed loads (body and surface) to step_time
+        # INTERPOLATES ALL DISTRIBUTED LOADS (BODY AND SURFACE) TO STEP_TIME
 
         # CONTAINER FOR ALL DLOADS
         dltyp = emptywithlists(self.model.numele)

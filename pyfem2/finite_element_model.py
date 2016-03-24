@@ -144,6 +144,9 @@ class FiniteElementModel(object):
 
     def setup(self):
 
+        if self._setup:
+            raise RuntimeError('SETUP MUST BE PERFORMED ONLY ONCE')
+
         # VALIDATE USER INPUT
         if self.orphaned_elements:
             raise UserInputError('ALL ELEMENTS MUST BE ASSIGNED '
@@ -596,25 +599,47 @@ class FiniteElementModel(object):
             continue
         return name
 
-    def StaticStep(self, name=None, period=1., increments=None, maxiters=10,
-                   nlgeom=False, solver=None):
-        if self.steps is None:
-            self.setup()
-            self.initialize_steps()
+    def _validate_step1(self, nlgeom=False):
+        # VALIDATE INPUT
         for eb in self.mesh.eleblx:
             iel = self.mesh.elemap[eb.labels[0]]
             el = self.elements[iel]
-
             if el.material.model.requires:
                 if 'nlgeom' in el.material.model.requires and not nlgeom:
                     name = el.material.model.name
-                    raise ValueError('Material {0!r} requires '
-                                     'nlgeom=True'.format(name))
+                    raise UserInputError('MATERIAL {0!r} REQUIRES '
+                                         'nlgeom=True'.format(name.upper()))
+            if not any(el.signature[0][:3]):
+                raise UserInputError('STEP REQUIRES ELEMENTS WITH '
+                                     'DISPLACEMENT DEGREES OF FREEDOM')
+
+    def _validate_step2(self):
+        # VALIDATE INPUT
+        for eb in self.mesh.eleblx:
+            iel = self.mesh.elemap[eb.labels[0]]
+            el = self.elements[iel]
+            if not el.signature[0][T]:
+                raise UserInputError('STEP REQUIRES ELEMENTS WITH '
+                                     'TEMPERATURE DEGREE OF FREEDOM')
+            if any(el.signature[0][:3]):
+                logging.warn('STEP WILL IGNORE DISPLACEMENT DEGREES OF FREEDOM')
+
+    def StaticStep(self, name=None, period=1., increments=None, maxiters=10,
+                   nlgeom=False, solver=None):
+
+        if self.steps is None:
+            self.setup()
+            self.initialize_steps()
+
+        # VALIDATE INPUT
+        self._validate_step1(nlgeom=nlgeom)
 
         if name is None:
             name = self.unique_step_name()
+
         if name in self.steps:
             raise UserInputError('Duplicate step name {0!r}'.format(name))
+
         step = self.steps.StaticStep(name, period, increments,
                                      maxiters, nlgeom, solver)
         return step
@@ -623,20 +648,16 @@ class FiniteElementModel(object):
         if self.steps is None:
             self.setup()
             self.initialize_steps()
-        for eb in self.mesh.eleblx:
-            iel = self.mesh.elemap[eb.labels[0]]
-            el = self.elements[iel]
 
-            if el.material.model.requires:
-                if 'nlgeom' in el.material.model.requires and not nlgeom:
-                    name = el.material.model.name
-                    raise ValueError('Material {0!r} requires '
-                                     'nlgeom=True'.format(name))
+        # VALIDATE INPUT
+        self._validate_step1(nlgeom=nlgeom)
 
         if name is None:
             name = self.unique_step_name()
+
         if name in self.steps:
             raise UserInputError('Duplicate step name {0!r}'.format(name))
+
         step = self.steps.DynamicStep(name, period, increments, nlgeom)
         return step
 
@@ -644,10 +665,16 @@ class FiniteElementModel(object):
         if self.steps is None:
             self.setup()
             self.initialize_steps()
+
+        # VALIDATE INPUT
+        self._validate_step2()
+
         if name is None:
             name = self.unique_step_name()
+
         if name in self.steps:
             raise UserInputError('Duplicate step name {0!r}'.format(name))
+
         step = self.steps.HeatTransferStep(name, period=period)
         return step
 
