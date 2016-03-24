@@ -42,9 +42,9 @@ class StaticStep(SDStep):
 
         # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
         u = zeros_like(self.dofs)
-        K, rhs = self.model.assemble(self.dofs, u, Qf, self.svtab, self.svars,
-                                     dltyp, dload, self.predef,
-                                     self.procedure, DIRECT, time=time)
+        K, rhs = self.model.assemble(
+            self.dofs, u, Qf, self.svtab, self.svars, dltyp, dload,
+            self.predef, self.procedure, DIRECT, cflag=STIFF_AND_RHS, time=time)
 
         # ENFORCE BOUNDARY CONDITIONS
         Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, X)
@@ -61,9 +61,9 @@ class StaticStep(SDStep):
 
         # ASSEMBLE AGAIN - ONLY TO UPDATE STRESS IN ELEMENTS TO COMPUTED
         # DISPLACEMENT
-        self.model.assemble(self.dofs, u, Qf, self.svtab, self.svars,
-                            dltyp, dload, self.predef,
-                            self.procedure, DIRECT, cflag=LP_OUTPUT)
+        self.model.assemble(
+            self.dofs, u, Qf, self.svtab, self.svars, dltyp, dload,
+            self.predef, self.procedure, DIRECT, cflag=LP_OUTPUT)
 
         self.dofs = u
         self.advance(self.period, self.dofs, react=react)
@@ -93,12 +93,10 @@ class StaticStep(SDStep):
             u = zeros(self.model.numdof)
             for nit in range(maxit2):
 
-                K, rhs = self.model.assemble(self.dofs, u, Q,
-                                             self.svtab, self.svars,
-                                             dltyp, dload, self.predef,
-                                             self.procedure, GENERAL, time=time,
-                                             istep=self.number, iframe=iframe+1,
-                                             ninc=nit+1)
+                K, rhs = self.model.assemble(
+                    self.dofs, u, Q, self.svtab, self.svars, dltyp, dload,
+                    self.predef, self.procedure, GENERAL, cflag=STIFF_AND_RHS,
+                    time=time, istep=self.number, iframe=iframe+1, ninc=nit+1)
 
                 # ENFORCE BOUNDARY CONDITIONS
                 Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, X, self.dofs, u)

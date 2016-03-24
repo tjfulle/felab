@@ -1,13 +1,11 @@
 from numpy import *
-from numpy.linalg import inv, det
-
-from .continuum_stress_disp_full import CSDFElement
+from .isoplib import CSDIsoParametricElement as BaseElement
 
 # --------------------------------------------------------------------------- #
 # --------------------- TRIANGLE ISOPARAMETRIC ELEMENTS --------------------- #
 # --------------------------------------------------------------------------- #
-class CSDT3FElement(CSDFElement):
-    """3-node isoparametric element
+class CSDIsoParametricTria3(BaseElement):
+    """3-node isoparametric stress-displacement element
 
     Notes
     -----
@@ -23,17 +21,12 @@ class CSDT3FElement(CSDFElement):
 
     """
     nodes = 3
-    elefab = {'t':1.}
-    signature = [(1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0)]
     dimensions = 2
-    integration = 3
-    gaussp = array([[.6, .2], [.2, .6], [.2, .2]])
-    gaussw = ones(3) / 6.
+    elefab = {'t':1.}
     cp = array([1., 1.]) / 3.
-    xp = array([[1., 0.], [0., 1.], [0., 0.]])
     edges = array([[0, 1], [1, 2], [2, 0]])
+    xp = array([[1., 0.], [0., 1.], [0., 0.]])
+    signature = [(1,1,0,0,0,0,0), (1,1,0,0,0,0,0), (1,1,0,0,0,0,0)]
 
     @property
     def area(self):
@@ -58,18 +51,3 @@ class CSDT3FElement(CSDFElement):
 
     def shapegrad(self, xi):
         return array([[1., 0., -1.], [0., 1., -1.]])
-
-    def surface_force(self, edge, qe):
-        edgenod = self.edges[edge]
-        xb = self.xc[edgenod]
-        gw = ones(2)
-        gp = array([-1./sqrt(3.), 1./sqrt(3.)])
-        he = sqrt((xb[1,1]-xb[0,1])**2+(xb[1,0]-xb[0,0])**2)
-        Fe = zeros(6)
-        for (p, xi) in enumerate(gp):
-            # EVALUATE SHAPE FUNCTION ON EDGE. SINCE EDGES ARE NOT DEFINED ON
-            # [-1, 1], THE GAUSS POINT MUST BE TRANSFORMED.
-            Ne = self.shape(he/2.+xi*he/2., edge=edge)
-            Pe = self.pmatrix(Ne)
-            Fe += he / 2. * gw[p] * dot(Pe.T, qe)
-        return Fe

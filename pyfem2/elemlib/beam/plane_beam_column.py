@@ -1,7 +1,7 @@
 from numpy import *
 
-from ..constants import *
-from .element import Element
+from ...constants import *
+from ..element import Element
 
 # --------------------------------------------------------------------------- #
 # ---------------------- EULER BERNOULI BEAM ELEMENT ------------------------ #
@@ -40,7 +40,7 @@ class PlaneBeamColumn(Element):
             return
             raise NotImplementError
 
-        if cflag == FORCE_ONLY:
+        if cflag == RHS_ONLY:
             return Fe
 
         # COMPUTE ELEMENT NORMAL
@@ -70,7 +70,7 @@ class PlaneBeamColumn(Element):
 
         Ke = dot(dot(Te.T, K1+K2), Te)
 
-        if cflag == STIFF_AND_FORCE:
+        if cflag == STIFF_AND_RHS:
             return Ke, Fe
 
         elif cflag == STIFF_ONLY:

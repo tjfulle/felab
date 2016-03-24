@@ -1,13 +1,11 @@
 from numpy import *
-from .continuum_stress_disp_full import CSDFElement
-
-c = -sqrt(3./5.)
+from .isoplib import CSDIsoParametricElement
 
 # --------------------------------------------------------------------------- #
 # --------------------- QUADRATIC ISOPARAMETRIC ELEMENTS -------------------- #
 # --------------------------------------------------------------------------- #
-class CSDQ8FElement(CSDFElement):
-    """8-node isoparametric element, fully integrated
+class CSDIsoParametricQuad8(CSDIsoParametricElement):
+    """8-node isoparametric element
 
     Notes
     -----
@@ -23,28 +21,16 @@ class CSDQ8FElement(CSDFElement):
 
     """
     nodes = 8
-    elefab = {'t':1.}
-    signature = [(1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0)]
     dimensions = 2
-    integration = 9
-
-    gaussp = array([[c,  c], [0,  c], [-c,  c],
-                    [c,  0], [0,  0], [-c,  0],
-                    [c, -c], [0, -c], [-c, -c]])
-    gaussw = array([0.30864197, 0.49382716, 0.30864197,
-                    0.49382716, 0.79012346, 0.49382716,
-                    0.30864197, 0.49382716, 0.30864198])
+    elefab = {'t':1.}
     cp = array([0, 0], dtype=float64)
     xp = array([[-1, -1], [1, -1], [1, 1], [-1, 1],
                 [0, -1], [1, 0], [0, 1], [-1, 0]], dtype=float64),
     edges = array([[0, 1, 4], [1, 2, 5], [2, 3, 6], [3, 0, 7]])
+    signature = [(1,1,0,0,0,0,0), (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0), (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0), (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0), (1,1,0,0,0,0,0)]
 
     @property
     def area(self):
@@ -96,18 +82,3 @@ class CSDQ8FElement(CSDFElement):
         dN[1,6] =  0.5 * (1. - x * x)
         dN[1,7] = -(1. - x) * y
         return dN
-
-    def surface_force(self, edge, qe):
-        edgenod = self.edges[edge]
-        xb = self.xc[edgenod]
-        gp = array([c, 0, -c])
-        gw = array([0.5555555556, 0.8888888889, 0.5555555556])
-        Fe = zeros(16)
-        for (p, xi) in enumerate(gp):
-            # EVALUATE SHAPE FUNCTION ON EDGE
-            dxdxi = dot([[-.5 + xi, .5 + xi, -2. * xi]], xb)
-            Jac = sqrt(dxdxi[0, 0] ** 2 + dxdxi[0, 1] ** 2)
-            Ne = self.shape(xi, edge=edge)
-            Pe = self.pmatrix(Ne)
-            Fe += Jac * gw[p] * dot(Pe.T, qe)
-        return Fe

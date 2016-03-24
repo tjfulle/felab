@@ -1,30 +1,7 @@
-from .continuum_stress_disp import CSDElement
-IsoPElement = CSDElement
-
-from .CHTT3 import PlaneDiffussiveHeatTransferTria3
-DiffussiveHeatTransfer2D3 = PlaneDiffussiveHeatTransferTria3
-
-from .PBC2 import PlaneBeamColumn
-from .LINK1D2 import ElasticLink1D2
-from .LINK2D2 import ElasticLink2D2
-from .LINK3D2 import ElasticLink3D2
-
-from .CSDT3EF import PlaneStrainTria3
-from .CSDT3SF import PlaneStressTria3
-
-from .CSDQ4EB import PlaneStrainQuad4BBar
-from .CSDQ4EF import PlaneStrainQuad4
-from .CSDQ4ER import PlaneStrainQuad4Reduced
-from .CSDQ4ES import PlaneStrainQuad4SelectiveReduced
-
-from .CSDQ4SF import PlaneStressQuad4
-from .CSDQ4SI import PlaneStressQuad4Incompat
-
-from .CSDQ8EB import PlaneStrainQuad8BBar
-from .CSDQ8EF import PlaneStrainQuad8
-from .CSDQ8ER import PlaneStrainQuad8Reduced
-
-from .CSDQ8SF import PlaneStressQuad8
+from .heat_transfer import *
+from .stress_displacement import *
+from .link import *
+from .beam import *
 
 # --------------------------------------------------------------------------- #
 # -------------------------- ELEMENT FAMILIES ------------------------------- #

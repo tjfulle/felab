@@ -2,17 +2,18 @@ import logging
 from numpy import *
 from numpy.linalg import det, inv
 
-from ..utilities import *
-from .element import Element
+from ...utilities import *
+from ..element import Element
 
-class CSDElement(Element):
-
+class CSDIsoParametricElement(Element):
+    """Base class for isoparametric stress-displacement elements"""
     gaussp = None
     gaussw = None
     variables = ('E', 'DE', 'S')
     integration = None
-
     incompatible_modes = None
+    hourglass_control = None
+    selective_reduced = None
 
     def shape(self, *args):
         raise NotImplementedError
@@ -20,8 +21,15 @@ class CSDElement(Element):
     def shapegrad(self, *args):
         raise NotImplementedError
 
-    def surface_force(self, *args):
-        raise NotImplementedError
+    def gmatrix(self, *args):
+        return NotImplementedError
+
+    def bmatrix(self, *args):
+        return NotImplementedError
+
+    @property
+    def numdof(self):
+        return sum([count_digits(nfs) for nfs in self.signature])
 
     def pmatrix(self, N):
         n = count_digits(self.signature[0])
@@ -29,9 +37,6 @@ class CSDElement(Element):
         for i in range(self.dimensions):
             S[i, i::self.dimensions] = N
         return S
-
-    def gmatrix(self, *args):
-        return None
 
     @classmethod
     def interpolate_to_centroid(cls, data):
@@ -64,8 +69,11 @@ class CSDElement(Element):
         else:
             raise TypeError('Unknown data type')
 
-        dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
-        weights = [1./dist(point, cls.gaussp[i]) for i in range(cls.integration)]
+        if cls.integration == 1:
+            weights = [1.]
+        else:
+            dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
+            weights = [1./dist(point,cls.gaussp[i]) for i in range(cls.integration)]
 
         if data.ndim == 1:
             # SCALAR DATA
@@ -75,15 +83,15 @@ class CSDElement(Element):
             # VECTOR OR TENSOR DATA
             return average(data, axis=0, weights=weights)
 
-    def _response(self, u, du, time, dtime, kstep, kframe, svars, dltyp, dload,
-                  predef, procedure, nlgeom, cflag, step_type):
+    def response(self, u, du, time, dtime, kstep, kframe, svars, dltyp, dload,
+                 predef, procedure, nlgeom, cflag, step_type):
         """Assemble the element stiffness and rhs"""
 
         xc = self.xc  # + u.reshape(self.xc.shape)
 
         n = sum([count_digits(nfs) for nfs in self.signature])
-        compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY, MASS_AND_RHS)
+        compute_stiff = cflag in (STIFF_AND_RHS, STIFF_ONLY)
+        compute_force = cflag in (STIFF_AND_RHS, RHS_ONLY, MASS_AND_RHS)
         compute_mass = cflag in (MASS_AND_RHS,)
 
         if compute_stiff:
@@ -158,11 +166,16 @@ class CSDElement(Element):
 
             if compute_stiff:
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
                 if self.incompatible_modes:
+                    # INCOMPATIBLE MODES
                     G = self.gmatrix(xi)
                     Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]
                     Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
+                elif self.selective_reduced:
+                    raise NotImplementedError
+                else:
+                    # STANDARD STIFFNESS
+                    Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
 
             if compute_mass:
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
@@ -183,6 +196,51 @@ class CSDElement(Element):
 
         if compute_stiff and self.incompatible_modes:
             Ke -= dot(dot(Kci, inv(Kii)), Kci.T)
+
+        if compute_stiff and self.selective_reduced:
+            raise NotImplementedError
+
+        if compute_stiff and self.hourglass_control:
+
+            # PERFORM HOURGLASS CORRECTION
+            Khg = zeros(Ke.shape)
+            for p in range(len(self.hglassp)):
+
+                # SHAPE FUNCTION DERIVATIVE AT HOURGLASS GAUSS POINTS
+                xi = array(self.hglassp[p])
+                dNdxi = self.shapegrad(xi)
+
+                # JACOBIAN TO NATURAL COORDINATES
+                dxdxi = dot(dNdxi, xc)
+                dxidx = inv(dxdxi)
+                dNdx = dot(dxidx, dNdxi)
+                B = self.bmatrix(dNdx)
+                J = det(dxdxi)
+
+                # HOURGLASS BASE VECTORS
+                g = array(self.hglassv[p])
+                for i in range(len(xi)):
+                    xi[i] = dot(g, xc[:,i])
+
+                # CORRECT THE BASE VECTORS TO ENSURE ORTHOGONALITY
+                scale = 0.
+                for a in range(self.nodes):
+                    for i in range(self.dimensions):
+                        g[a] -= xi[i] * dNdx[i,a]
+                        scale += dNdx[i,a] * dNdx[i,a]
+                scale *= .01 * self.material.G
+
+                for a in range(self.nodes):
+                    n1 = count_digits(self.signature[a])
+                    for i in range(n1):
+                        for b in range(self.nodes):
+                            n2 = count_digits(self.signature[b])
+                            for j in range(n2):
+                                K = n1 * a + i
+                                L = n2 * b + j
+                                Khg[K,L] += scale * g[a] * g[b] * J * 4.
+
+            Ke += Khg
 
         if cflag == STIFF_ONLY:
             return Ke
@@ -208,8 +266,36 @@ class CSDElement(Element):
         else:
             rhs = xforce
 
-        if cflag == STIFF_AND_FORCE:
+        if cflag == STIFF_AND_RHS:
             return Ke, rhs
 
-        elif cflag == FORCE_ONLY:
+        elif cflag == RHS_ONLY:
             return rhs
+
+    def surface_force(self, edge, qe):
+
+        edgenod = self.edges[edge]
+        xb = self.xc[edgenod]
+
+        if len(xb) == 2:
+            # LINEAR SIDE
+            gw = ones(2)
+            gp = array([-1./sqrt(3.), 1./sqrt(3.)])
+            Jac = lambda xi: sqrt((xb[1,1]-xb[0,1])**2+(xb[1,0]-xb[0,0])**2)/2.
+
+        elif len(xb) == 3:
+            # QUADRATIC SIDE
+            gp = array([-sqrt(3./5.), 0, sqrt(3./5.)])
+            gw = array([0.5555555556, 0.8888888889, 0.5555555556])
+            def Jac(xi):
+                dxdxi = dot([[-.5 + xi, .5 + xi, -2. * xi]], xb)
+                return sqrt(dxdxi[0, 0] ** 2 + dxdxi[0, 1] ** 2)
+
+        Fe = zeros(self.numdof)
+        for (p, xi) in enumerate(gp):
+            # FORM GAUSS POINT ON SPECIFIC EDGE
+            Ne = self.shape(xi, edge=edge)
+            Pe = self.pmatrix(Ne)
+            Fe += Jac(xi) * gw[p] * dot(Pe.T, qe)
+
+        return Fe

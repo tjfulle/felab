@@ -1,12 +1,12 @@
 from numpy import *
 
-from ..utilities import *
-from .continuum_heat_trans import CHTElement
+from ...utilities import *
+from .isoplib import CHTIsoParametricElement as BaseElement
 
 # --------------------------------------------------------------------------- #
 # ------------------------ HEAT TRANSFER ELEMENT ---------------------------- #
 # --------------------------------------------------------------------------- #
-class PlaneDiffussiveHeatTransferTria3(CHTElement):
+class PlaneDiffussiveHeatTransferTria3(BaseElement):
     nodes = 3
     signature = [(0,0,0,0,0,0,1),  # 3 NODE 2D HEAT TRANSFER
                  (0,0,0,0,0,0,1),

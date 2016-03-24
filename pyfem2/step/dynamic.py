@@ -36,11 +36,10 @@ class DynamicStep(SDStep):
         for n in range(increments):
 
             dltyp, dload = self.dload(time[1])
-            mass, rhs = self.model.assemble(self.dofs, u, Q,
-                                            self.svtab, self.svars,
-                                            dltyp, dload, self.predef,
-                                            self.procedure, MASS_AND_RHS, time=time,
-                                            istep=self.number, iframe=iframe+1)
+            mass, rhs = self.model.assemble(
+                self.dofs, u, Q, self.svtab, self.svars, dltyp, dload,
+                self.predef, self.procedure, cflag=STIFF_AND_RHS,
+                time=time, istep=self.number, iframe=iframe+1)
 
             an[:,1] = rhs / mass
             vn[:,1] = vn[:,0] + ((1. - a) * an[:,0] + a * an[:,1]) * dtime

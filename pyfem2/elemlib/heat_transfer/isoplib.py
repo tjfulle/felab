@@ -1,12 +1,12 @@
 from numpy import *
 
-from ..utilities import *
-from .element import Element
+from ...utilities import *
+from ..element import Element
 
 # --------------------------------------------------------------------------- #
 # ------------------------ HEAT TRANSFER ELEMENT ---------------------------- #
 # --------------------------------------------------------------------------- #
-class CHTElement(Element):
+class CHTIsoParametricElement(Element):
     edges = []
     nodes = None
     gaussp = None
@@ -38,8 +38,8 @@ class CHTElement(Element):
 
         # --- ELEMENT STIFFNESS AND FORCE
 
-        compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
+        compute_stiff = cflag in (STIFF_AND_RHS, STIFF_ONLY)
+        compute_force = cflag in (STIFF_AND_RHS, RHS_ONLY)
 
         if compute_stiff:
             Ke = self.conduction_stiff_contrib()
@@ -69,11 +69,11 @@ class CHTElement(Element):
                     iedge, qn = dload[i]
                     Fe += self.conduction_flux_array(iedge, qn)
 
-        if cflag == STIFF_AND_FORCE:
+        if cflag == STIFF_AND_RHS:
             return Ke, Fe
 
         elif cflag == STIFF_ONLY:
             return Ke
 
-        elif cflag == FORCE_ONLY:
+        elif cflag == RHS_ONLY:
             return Fe

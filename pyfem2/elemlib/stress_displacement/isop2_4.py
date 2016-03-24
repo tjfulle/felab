@@ -1,13 +1,11 @@
 from numpy import *
-from numpy.linalg import inv, det
-
-from .continuum_stress_disp_incompat import CSDIElement
+from .isoplib import CSDIsoParametricElement as BaseElement
 
 # --------------------------------------------------------------------------- #
 # --------------------- QUADRATIC ISOPARAMETRIC ELEMENTS -------------------- #
 # --------------------------------------------------------------------------- #
-class CSDQ4IElement(CSDIElement):
-    """4-node isoparametric element, incompatible modes
+class CSDIsoParametricQuad4(BaseElement):
+    """4-node isoparametric element
 
     Notes
     -----
@@ -23,15 +21,10 @@ class CSDQ4IElement(CSDIElement):
 
     """
     nodes = 4
-    elefab = {'t':1.}
-    signature = [(1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0)]
     dimensions = 2
-    integration = 4
-    gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
-    gaussw = ones(4)
+    elefab = {'t':1.}
+    signature = [(1,1,0,0,0,0,0), (1,1,0,0,0,0,0),
+                 (1,1,0,0,0,0,0), (1,1,0,0,0,0,0)]
     cp = array([0, 0], dtype=float64)
     xp = array([[-1, -1], [1, -1], [1, 1], [-1, 1],
                 [0, -1], [1, 0], [0, 1], [-1, 0]], dtype=float64),
@@ -62,17 +55,3 @@ class CSDQ4IElement(CSDIElement):
         dN = array([[-1. + xi[1],  1. - xi[1], 1. + xi[1], -1. - xi[1]],
                     [-1. + xi[0], -1. - xi[0], 1. + xi[0],  1. - xi[0]]]) / 4.
         return dN
-
-    def surface_force(self, edge, qe):
-        edgenod = self.edges[edge]
-        xb = self.xc[edgenod]
-        gw = ones(2)
-        gp = array([-1./sqrt(3.), 1./sqrt(3.)])
-        he = sqrt((xb[1,1]-xb[0,1])**2+(xb[1,0]-xb[0,0])**2)
-        Fe = zeros(8)
-        for (p, xi) in enumerate(gp):
-            # FORM GAUSS POINT ON SPECIFIC EDGE
-            Ne = self.shape(xi, edge=edge)
-            Pe = self.pmatrix(Ne)
-            Fe += he / 2. * gw[p] * dot(Pe.T, qe)
-        return Fe

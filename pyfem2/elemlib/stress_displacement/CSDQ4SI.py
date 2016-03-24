@@ -1,12 +1,17 @@
 from numpy import *
 from numpy.linalg import inv, det
-
-from .continuum_stress_disp_quad4_incompat import CSDQ4IElement
-
-class PlaneStressQuad4Incompat(CSDQ4IElement):
+from .isop2_4 import CSDIsoParametricQuad4 as BaseElement
+# --------------------------------------------------------------------------- #
+# --------------------- BILINEAR PLANE STRESS ELEMENT ----------------------- #
+# -------------------------- INCOMPATIBLE MODES ----------------------------- #
+# --------------------------------------------------------------------------- #
+class PlaneStressQuad4Incompat(BaseElement):
     ndir = 2
     nshr = 1
-
+    incompatible_modes = True
+    integration = 4
+    gaussw = ones(4)
+    gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
     def bmatrix(self, dN):
         """Assemble and return the B matrix"""
         B = zeros((3, 8))

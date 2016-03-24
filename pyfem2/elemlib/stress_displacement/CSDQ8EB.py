@@ -1,9 +1,21 @@
 from numpy import *
 from numpy.linalg import det, inv
-from .continuum_stress_disp_quad8_full import CSDQ8FElement
-class PlaneStrainQuad8BBar(CSDQ8FElement):
+from .isop2_8 import CSDIsoParametricQuad8 as BaseElement
+# --------------------------------------------------------------------------- #
+# --------------------- BILINEAR PLANE STRAIN ELEMENT ----------------------- #
+# ---------------------- MEAN DILATATION FORMULATION ------------------------ #
+# --------------------------------------------------------------------------- #
+c = -sqrt(3./5.)
+class PlaneStrainQuad8BBar(BaseElement):
     ndir = 3
     nshr = 1
+    integration = 9
+    gaussp = array([[c,  c], [0,  c], [-c,  c],
+                    [c,  0], [0,  0], [-c,  0],
+                    [c, -c], [0, -c], [-c, -c]])
+    gaussw = array([0.30864197, 0.49382716, 0.30864197,
+                    0.49382716, 0.79012346, 0.49382716,
+                    0.30864197, 0.49382716, 0.30864198])
     def bmatrix(self, dN):
         """Assemble and return the B matrix"""
         B = zeros((4, 16))

@@ -322,7 +322,7 @@ class FiniteElementModel(object):
     def assemble(self, u, du, Q, svtab, svars, dltyp, dload, predef,
                  procedure, step_type, time=array([0.,0.]), dtime=1., period=1.,
                  istep=1, iframe=1, nlgeom=False, ninc=None,
-                 cflag=STIFF_AND_FORCE):
+                 cflag=STIFF_AND_RHS):
         """
         Assembles the global system of equations
 
@@ -358,7 +358,7 @@ class FiniteElementModel(object):
             Nonlinear geometry
         ninc : int, opitional {None}
             Current increment
-        cflag : symbolic constant, optional {STIFF_AND_FORCE}
+        cflag : symbolic constant, optional {STIFF_AND_RHS}
 
         Returns
         -------
@@ -396,9 +396,9 @@ class FiniteElementModel(object):
         if cflag not in CFLAGS:
             raise ValueError('UNKNOWN COMPUTE QUANTITY')
 
-        compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY, MASS_AND_RHS)
-        compute_mass = cflag in (MASS_AND_RHS,)
+        compute_stiff = cflag in (STIFF_AND_RHS, STIFF_ONLY)
+        compute_rhs = cflag in (STIFF_AND_RHS, RHS_ONLY, MASS_AND_RHS)
+        compute_mass = cflag in (MASS_AND_RHS, MASS_ONLY)
 
         if compute_stiff:
             K = zeros((self.numdof, self.numdof))
@@ -406,7 +406,7 @@ class FiniteElementModel(object):
         if compute_mass:
             M = zeros((self.numdof, self.numdof))
 
-        if compute_force:
+        if compute_rhs:
             rhs = zeros(self.numdof)
 
         # INTERPOLATE FIELD VARIABLES
@@ -430,7 +430,7 @@ class FiniteElementModel(object):
                                        predef_i[:,:,el.inodes], procedure, nlgeom,
                                        cflag, step_type)
 
-                if cflag == STIFF_AND_FORCE:
+                if cflag == STIFF_AND_RHS:
                     K[IX(eft, eft)] += response[0]
                     rhs[eft] += response[1]
 
@@ -444,24 +444,30 @@ class FiniteElementModel(object):
                 elif cflag == STIFF_ONLY:
                     K[IX(eft, eft)] += response
 
-                elif cflag == FORCE_ONLY:
+                elif cflag == RHS_ONLY:
                     rhs[eft] += response
 
-        if cflag == STIFF_AND_FORCE:
-            return K, rhs + Q
+        if compute_rhs:
+            rhs += Q
+
+        if compute_mass:
+            # LUMPED MASS MATRIX
+            M = array([sum(row) for row in M])
+
+        if cflag == STIFF_AND_RHS:
+            return K, rhs
 
         elif cflag == STIFF_ONLY:
             return K
 
-        elif cflag == FORCE_ONLY:
-            return rhs + Q
+        elif cflag == RHS_ONLY:
+            return rhs
 
         elif cflag == MASS_ONLY:
             return M
 
         elif cflag == MASS_AND_RHS:
-            # RETURN LUMPED MASS MATRIX
-            return array([sum(row) for row in M]), rhs + Q
+            return M, rhs
 
     def apply_bc(self, K, F, doftags, dofvals, u=None, du=None):
         """

@@ -1,6 +1,6 @@
 from numpy import *
-from ..utilities import *
-from .element import Element
+from ...utilities import *
+from ..element import Element
 
 # --------------------------------------------------------------------------- #
 # ------------------------------ TRUSS ELEMENT ------------------------------ #
@@ -44,13 +44,13 @@ class ND2NodeLinkElement(Element):
         # INTERNAL FORCE
         ndof = count_digits(self.signature[0])
 
-        compute_stiff = cflag in (STIFF_AND_FORCE, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_FORCE, FORCE_ONLY)
+        compute_stiff = cflag in (STIFF_AND_RHS, STIFF_ONLY)
+        compute_force = cflag in (STIFF_AND_RHS, RHS_ONLY)
 
         if compute_force:
             Fe = zeros(2*ndof)
 
-        if cflag == FORCE_ONLY:
+        if cflag == RHS_ONLY:
             return Fe
 
         # ELEMENT NORMAL
@@ -73,7 +73,7 @@ class ND2NodeLinkElement(Element):
             Ke[0:i, i:j] = Ke[i:j, 0:i] = -nn # LOWER LEFT AND UPPER RIGHT 2X2
             Ke *= self.A * self.material.E / h
 
-        if cflag == STIFF_AND_FORCE:
+        if cflag == STIFF_AND_RHS:
             return Ke, Fe
 
         elif cflag == STIFF_ONLY:
