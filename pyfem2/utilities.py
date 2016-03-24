@@ -131,19 +131,19 @@ def linsolve(A, b, symmetric=True):
 
     return x
 
-def iso_dev_split1(ndir, nshr, D):
+def iso_dev_split1(ndir, nshr, numdim, D):
     ntens = ndir + nshr
     D1, D2 = zeros((ntens, ntens)), eye(ntens)
     D1[:ndir,:ndir] = D[0,1]
     return D1, D-D1
 
-def iso_dev_split(ndir, nshr, numdim, D):
-    # modify base function to have zeros in rows/columns associated with
-    # plane strain
+def iso_dev_split2(ndir, nshr, numdim, D):
     I = array([1. for i in range(2)] + [0. for i in range(2)])
     a = dot(I, D) / numdim
     Diso = outer(a, I)
     return Diso, D-Diso
+
+iso_dev_split = iso_dev_split1
 
 def get_procname(proc):
     return {STATIC: 'STATIC', HEAT_TRANSFER: 'HEAT TRANSFER'}[proc]

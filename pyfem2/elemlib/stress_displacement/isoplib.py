@@ -30,6 +30,9 @@ class CSDIsoParametricElement(Element):
     @property
     def numdof(self):
         return sum([count_digits(nfs) for nfs in self.signature])
+    @property
+    def numdofpernod(self):
+        return count_digits(self.signature[0])
 
     def pmatrix(self, N):
         n = count_digits(self.signature[0])
@@ -39,9 +42,14 @@ class CSDIsoParametricElement(Element):
         return S
 
     @classmethod
-    def interpolate_to_centroid(cls, data):
+    def interpolate_to_centroid(cls, data, index=None):
         """Inverse distance weighted average of integration point data at the
         element centroid"""
+        if index is not None:
+            ntens = cls.ndir + cls.nshr
+            m = len(cls.variables) * ntens
+            data = row_stack([data[(m*p)+index*ntens:(m*p)+(index+1)*ntens]
+                              for p in range(cls.integration)])
         return cls.average(cls.cp, data)
 
     @classmethod
@@ -89,18 +97,18 @@ class CSDIsoParametricElement(Element):
 
         xc = self.xc  # + u.reshape(self.xc.shape)
 
-        n = sum([count_digits(nfs) for nfs in self.signature])
         compute_stiff = cflag in (STIFF_AND_RHS, STIFF_ONLY)
         compute_force = cflag in (STIFF_AND_RHS, RHS_ONLY, MASS_AND_RHS)
         compute_mass = cflag in (MASS_AND_RHS,)
 
+        n = self.numdof
         if compute_stiff:
             Ke = zeros((n, n))
             if self.incompatible_modes:
                 # INCOMPATIBLE MODES STIFFNESSES
-                m = count_digits(self.signature[0])
-                Kci = zeros((n, self.dimensions*m))
-                Kii = zeros((self.dimensions*m, self.dimensions*m))
+                m1 = self.numdofpernod
+                Kci = zeros((n, self.dimensions*m1))
+                Kii = zeros((self.dimensions*m1, self.dimensions*m1))
 
         if compute_mass:
             Me = zeros((n, n))
@@ -172,7 +180,8 @@ class CSDIsoParametricElement(Element):
                     Kci += dot(dot(B.T, D), G) * J * self.gaussw[p]
                     Kii += dot(dot(G.T, D), G) * J * self.gaussw[p]
                 elif self.selective_reduced:
-                    raise NotImplementedError
+                    D1, D2 = iso_dev_split(self.ndir, self.nshr, self.dimensions, D)
+                    Ke += J * self.gaussw[p] * dot(dot(B.T, D2), B)
                 else:
                     # STANDARD STIFFNESS
                     Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
@@ -198,49 +207,11 @@ class CSDIsoParametricElement(Element):
             Ke -= dot(dot(Kci, inv(Kii)), Kci.T)
 
         if compute_stiff and self.selective_reduced:
-            raise NotImplementedError
+            Ke += self.sri_correction(u, du, time, dtime, kstep, kframe,
+                                      svars, predef, nlgeom)
 
         if compute_stiff and self.hourglass_control:
-
-            # PERFORM HOURGLASS CORRECTION
-            Khg = zeros(Ke.shape)
-            for p in range(len(self.hglassp)):
-
-                # SHAPE FUNCTION DERIVATIVE AT HOURGLASS GAUSS POINTS
-                xi = array(self.hglassp[p])
-                dNdxi = self.shapegrad(xi)
-
-                # JACOBIAN TO NATURAL COORDINATES
-                dxdxi = dot(dNdxi, xc)
-                dxidx = inv(dxdxi)
-                dNdx = dot(dxidx, dNdxi)
-                B = self.bmatrix(dNdx)
-                J = det(dxdxi)
-
-                # HOURGLASS BASE VECTORS
-                g = array(self.hglassv[p])
-                for i in range(len(xi)):
-                    xi[i] = dot(g, xc[:,i])
-
-                # CORRECT THE BASE VECTORS TO ENSURE ORTHOGONALITY
-                scale = 0.
-                for a in range(self.nodes):
-                    for i in range(self.dimensions):
-                        g[a] -= xi[i] * dNdx[i,a]
-                        scale += dNdx[i,a] * dNdx[i,a]
-                scale *= .01 * self.material.G
-
-                for a in range(self.nodes):
-                    n1 = count_digits(self.signature[a])
-                    for i in range(n1):
-                        for b in range(self.nodes):
-                            n2 = count_digits(self.signature[b])
-                            for j in range(n2):
-                                K = n1 * a + i
-                                L = n2 * b + j
-                                Khg[K,L] += scale * g[a] * g[b] * J * 4.
-
-            Ke += Khg
+            Ke += self.hourglass_correction(u, du, nlgeom)
 
         if cflag == STIFF_ONLY:
             return Ke
@@ -291,6 +262,9 @@ class CSDIsoParametricElement(Element):
                 dxdxi = dot([[-.5 + xi, .5 + xi, -2. * xi]], xb)
                 return sqrt(dxdxi[0, 0] ** 2 + dxdxi[0, 1] ** 2)
 
+        else:
+            raise ValueError('UNKNOWN ELEMENT EDGE ORDER')
+
         Fe = zeros(self.numdof)
         for (p, xi) in enumerate(gp):
             # FORM GAUSS POINT ON SPECIFIC EDGE
@@ -299,3 +273,109 @@ class CSDIsoParametricElement(Element):
             Fe += Jac(xi) * gw[p] * dot(Pe.T, qe)
 
         return Fe
+
+    def hourglass_correction(self, u, du, nlgeom):
+
+        # PERFORM HOURGLASS CORRECTION
+        xc = self.xc
+        n = self.numdof
+        Khg = zeros((n, n))
+        for p in range(len(self.hglassp)):
+
+            # SHAPE FUNCTION DERIVATIVE AT HOURGLASS GAUSS POINTS
+            xi = array(self.hglassp[p])
+            dNdxi = self.shapegrad(xi)
+
+            # JACOBIAN TO NATURAL COORDINATES
+            dxdxi = dot(dNdxi, xc)
+            dxidx = inv(dxdxi)
+            dNdx = dot(dxidx, dNdxi)
+            B = self.bmatrix(dNdx)
+            J = det(dxdxi)
+
+            # HOURGLASS BASE VECTORS
+            g = array(self.hglassv[p])
+            for i in range(len(xi)):
+                xi[i] = dot(g, xc[:,i])
+
+            # CORRECT THE BASE VECTORS TO ENSURE ORTHOGONALITY
+            scale = 0.
+            for a in range(self.nodes):
+                for i in range(self.dimensions):
+                    g[a] -= xi[i] * dNdx[i,a]
+                    scale += dNdx[i,a] * dNdx[i,a]
+            scale *= .01 * self.material.G
+
+            for a in range(self.nodes):
+                n1 = count_digits(self.signature[a])
+                for i in range(n1):
+                    for b in range(self.nodes):
+                        n2 = count_digits(self.signature[b])
+                        for j in range(n2):
+                            K = n1 * a + i
+                            L = n2 * b + j
+                            Khg[K,L] += scale * g[a] * g[b] * J * 4.
+
+        return Khg
+
+    def sri_correction(self, u, du, time, dtime, kstep, kframe, svars, predef,
+                       nlgeom):
+        # SELECTIVE REDUCED INTEGRATION CORRECTION
+
+        n = self.numdof
+        Ksri = zeros((n, n))
+
+        # EVALUATE MATERIAL MODEL AT ELEMENT CENTROID
+        xi = self.cp
+        xc = self.xc
+
+        # SHAPE FUNCTION AND GRADIENT
+        N = self.shape(xi)
+
+        # SHAPE FUNCTION DERIVATIVE AT GAUSS POINTS
+        dNdxi = self.shapegrad(xi)
+
+        # JACOBIAN TO NATURAL COORDINATES
+        dxdxi = dot(dNdxi, xc)
+        dxidx = inv(dxdxi)
+        J = det(dxdxi)
+
+        # CONVERT SHAPE FUNCTION DERIVATIVES TO DERIVATIVES WRT GLOBAL X
+        dNdx = dot(dxidx, dNdxi)
+        B = self.bmatrix(dNdx)
+
+        # STRAIN INCREMENT
+        de = dot(B, du)
+
+        # SET DEFORMATION GRADIENT TO THE IDENTITY
+        F0 = eye(self.ndir+self.nshr)
+        F = eye(self.ndir+self.nshr)
+
+        # PREDEF AND INCREMENT
+        temp = dot(N, predef[0,0])
+        dtemp = dot(N, predef[1,0])
+
+        # MATERIAL RESPONSE AT CENTROID
+        a1, a2, a3 = [self.variables.index(x) for x in ('E', 'DE', 'S')]
+        e = self.interpolate_to_centroid(svars[0], index=a1)
+        s = self.interpolate_to_centroid(svars[0], index=a3)
+        xv = zeros(1)
+        s, xv, D = self.material.response(
+            s, xv, e, de, time, dtime, temp, dtemp, None, None,
+            self.ndir, self.nshr, self.ndir+self.nshr, xc, F0, F,
+            self.label, kstep, kframe)
+        D1, D2 = iso_dev_split(self.ndir, self.nshr, self.dimensions, D)
+
+        # GAUSS INTEGRATION
+        for p in range(len(self.srip)):
+            xi = self.srip[p]
+            w = self.sriw[p]
+            dNdxi = self.shapegrad(xi)
+            dxdxi = dot(dNdxi, xc)
+            dxidx = inv(dxdxi)
+            J = det(dxdxi)
+            dNdx = dot(dxidx, dNdxi)
+            B = self.bmatrix(dNdx)
+            Ksri += J * w * dot(dot(B.T, D1), B)
+
+        return Ksri

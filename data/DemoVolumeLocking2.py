@@ -45,7 +45,7 @@ def ReducedIntegrationSolution(ax=None):
     V.GenesisMesh('QuarterCylinderQuad4.g')
     mat = V.Material('Material-1')
     mat.Elastic(E=E, Nu=Nu)
-    V.AssignProperties('ElementBlock1', PlaneStrainQuad4BBar, mat, t=1)
+    V.AssignProperties('ElementBlock1', PlaneStrainQuad4Reduced, mat, t=1)
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
@@ -82,7 +82,7 @@ def QuadraticSolution(ax=None):
     V.PrescribedBC('Nodeset-200', X)
     V.PrescribedBC('Nodeset-201', Y)
     # Pressure on inside face
-    step = V.StaticStep()
+    step = V.StaticStep(solver=NEWTON)
     step.Pressure('Surface-1', 1.)
     #V.SurfaceLoad("Surface-300", [0.195090322, 0.98078528])
     #V.SurfaceLoad("Surface-301", [0.555570233, 0.831469612])
@@ -111,9 +111,9 @@ def WriteAnalyticSolution(ax=None):
 ax = None
 ax = WriteAnalyticSolution(ax)
 ax = ReducedIntegrationSolution(ax)
-#ax = SelReducedIntegrationSolution(ax)
+ax = SelReducedIntegrationSolution(ax)
 ax = LinearSolution(ax)
-#QuadraticSolution()
+QuadraticSolution()
 
 if not os.environ.get('NOGRAPHICS'):
     plt.legend()
