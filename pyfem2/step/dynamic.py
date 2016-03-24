@@ -14,7 +14,7 @@ class DynamicStep(SDStep):
     # ----------------------------------------------------------------------- #
     # --- RUN --------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def run(self):
+    def run(self, alpha=.5, beta=0.):
 
         period, increments = self.period, self.increments
 
@@ -26,34 +26,51 @@ class DynamicStep(SDStep):
         vn = zeros(shape)
         an = zeros(shape)
 
-        count = 0
+        # GET MASS AND RHS AT TIME 0
+        Q = self.cload(time[0])
+        dltyp, dload = self.dload(time[0])
 
-        m = mass_matrix
-        F = external_force_array_at_time_equal_0
-        an[:,0] = F / m
+        mass, rhs = self.model.assemble(
+            self.dofs, un[:,0], Q, self.svtab, self.svars, dltyp, dload,
+            self.predef, self.procedure, GENERAL, cflag=MASS_AND_RHS, time=time)
 
-        a, b = self.alpha, self.beta
+        an[:,0] = rhs / mass
+
         for n in range(increments):
 
-            dltyp, dload = self.dload(time[1])
+            # GET LOADS AND PRESCRIBED DISPLACEMENTS
+            Q = self.cload(time[0]+dtime)
+            X = self.dofvals(time[0]+dtime)
+            dltyp, dload = self.dload(time[0]+dtime)
+
             mass, rhs = self.model.assemble(
-                self.dofs, u, Q, self.svtab, self.svars, dltyp, dload,
-                self.predef, self.procedure, cflag=STIFF_AND_RHS,
-                time=time, istep=self.number, iframe=iframe+1)
+                self.dofs, un[:,0], Q, self.svtab, self.svars, dltyp, dload,
+                self.predef, self.procedure, GENERAL, cflag=MASS_AND_RHS,
+                time=time, istep=self.number, iframe=n+1)
 
+            # UPDATE ACCELERATION
             an[:,1] = rhs / mass
-            vn[:,1] = vn[:,0] + ((1. - a) * an[:,0] + a * an[:,1]) * dtime
-            un[:,1] = un[:,0] + (vn[:,0]+.5*((1.-b)*an[:,0]+b*an[:,1])*dtime)*dtime
 
+            # UPDATE VELOCITY
+            dv = ((1. - alpha) * an[:,0] + alpha * an[:,1]) * dtime
+            vn[:,1] = vn[:,0] + dv
+
+            # UPDATE DISPLACEMENT
+            du = (vn[:,0] + .5*((1.-beta)*an[:,0] + beta*an[:,1])*dtime)*dtime
+            un[:,1] = un[:,0]  + du
+            un[self.doftags,1] = X
+
+            # ADVANCE KINEMATICS
             un[:,0] = un[:,1]
             vn[:,0] = vn[:,1]
             an[:,0] = an[:,1]
 
-            time[1] += dtime
+            time += dtime
 
             self.dofs[:] = un[:,0]
-            self.vel[:] = vn[:,0]
-            self.accel[:] = an[:,0]
+            #self.vel[:] = vn[:,0]
+            #self.accel[:] = an[:,0]
+
             self.advance(dtime, self.dofs)
 
         return

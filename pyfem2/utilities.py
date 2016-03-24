@@ -146,7 +146,9 @@ def iso_dev_split2(ndir, nshr, numdim, D):
 iso_dev_split = iso_dev_split1
 
 def get_procname(proc):
-    return {STATIC: 'STATIC', HEAT_TRANSFER: 'HEAT TRANSFER'}[proc]
+    return {STATIC: 'STATIC',
+            DYNAMIC: 'DYNAMIC',
+            HEAT_TRANSFER: 'HEAT TRANSFER'}[proc]
 
 def get_steptypname(step_type):
     return step_type.upper()

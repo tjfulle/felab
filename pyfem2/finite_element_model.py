@@ -599,7 +599,7 @@ class FiniteElementModel(object):
             continue
         return name
 
-    def _validate_step1(self, nlgeom=False):
+    def _validate_step1(self, nlgeom=False, density=None):
         # VALIDATE INPUT
         for eb in self.mesh.eleblx:
             iel = self.mesh.elemap[eb.labels[0]]
@@ -609,6 +609,9 @@ class FiniteElementModel(object):
                     name = el.material.model.name
                     raise UserInputError('MATERIAL {0!r} REQUIRES '
                                          'nlgeom=True'.format(name.upper()))
+            if density and not el.material.density:
+                raise UserInputError('STEP REQUIRES MATERIAL DENSITY')
+
             if not any(el.signature[0][:3]):
                 raise UserInputError('STEP REQUIRES ELEMENTS WITH '
                                      'DISPLACEMENT DEGREES OF FREEDOM')
@@ -644,13 +647,20 @@ class FiniteElementModel(object):
                                      maxiters, nlgeom, solver)
         return step
 
-    def DynamicStep(self, name=None, period=1., increments=None, nlgeom=False):
+    def DynamicStep(self, name=None, period=None, increments=None, nlgeom=False):
+
+        if period is None:
+            raise UserInputError('DYNAMIC STEP REQUIRES PERIOD')
+
+        if increments is None:
+            raise UserInputError('DYNAMIC STEP REQUIRES INCREMENTS')
+
         if self.steps is None:
             self.setup()
             self.initialize_steps()
 
         # VALIDATE INPUT
-        self._validate_step1(nlgeom=nlgeom)
+        self._validate_step1(nlgeom=nlgeom, density=True)
 
         if name is None:
             name = self.unique_step_name()

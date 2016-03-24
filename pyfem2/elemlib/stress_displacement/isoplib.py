@@ -188,7 +188,8 @@ class CSDIsoParametricElement(Element):
 
             if compute_mass:
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                Me += J * self.gaussw[p] * self.material.density * outer(N, N)
+                P = self.pmatrix(N)
+                Me += J * self.gaussw[p] * self.material.density * dot(P.T, P)
 
             if compute_force:
                 P = self.pmatrix(N)
@@ -243,27 +244,34 @@ class CSDIsoParametricElement(Element):
         elif cflag == RHS_ONLY:
             return rhs
 
+        elif cflag == MASS_AND_RHS:
+            return Me, rhs
+
     def surface_force(self, edge, qe):
 
         edgenod = self.edges[edge]
         xb = self.xc[edgenod]
 
-        if len(xb) == 2:
-            # LINEAR SIDE
-            gw = ones(2)
-            gp = array([-1./sqrt(3.), 1./sqrt(3.)])
-            Jac = lambda xi: sqrt((xb[1,1]-xb[0,1])**2+(xb[1,0]-xb[0,0])**2)/2.
+        if self.dimensions == 2:
+            if len(xb) == 2:
+                # LINEAR SIDE
+                gw = ones(2)
+                gp = array([-1./sqrt(3.), 1./sqrt(3.)])
+                Jac = lambda xi: sqrt((xb[1,1]-xb[0,1])**2+(xb[1,0]-xb[0,0])**2)/2.
 
-        elif len(xb) == 3:
-            # QUADRATIC SIDE
-            gp = array([-sqrt(3./5.), 0, sqrt(3./5.)])
-            gw = array([0.5555555556, 0.8888888889, 0.5555555556])
-            def Jac(xi):
-                dxdxi = dot([[-.5 + xi, .5 + xi, -2. * xi]], xb)
-                return sqrt(dxdxi[0, 0] ** 2 + dxdxi[0, 1] ** 2)
+            elif len(xb) == 3:
+                # QUADRATIC SIDE
+                gp = array([-sqrt(3./5.), 0, sqrt(3./5.)])
+                gw = array([0.5555555556, 0.8888888889, 0.5555555556])
+                def Jac(xi):
+                    dxdxi = dot([[-.5 + xi, .5 + xi, -2. * xi]], xb)
+                    return sqrt(dxdxi[0, 0] ** 2 + dxdxi[0, 1] ** 2)
+
+            else:
+                raise ValueError('UNKNOWN ELEMENT EDGE ORDER')
 
         else:
-            raise ValueError('UNKNOWN ELEMENT EDGE ORDER')
+            raise ValueError('3D SURFACE FORCE NOT IMPLEMENTED')
 
         Fe = zeros(self.numdof)
         for (p, xi) in enumerate(gp):
