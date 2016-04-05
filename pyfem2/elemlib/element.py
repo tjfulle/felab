@@ -9,7 +9,6 @@ class Element(object):
     nshr = None
     nodes = None
     elefab = None
-    variables = None
     signature = None
     dimensions = None
     integration = None
@@ -44,3 +43,7 @@ class Element(object):
     @classmethod
     def interpolate_to_centroid(cls, *args):
         raise NotImplementedError
+
+    @classmethod
+    def variables(cls):
+        return None

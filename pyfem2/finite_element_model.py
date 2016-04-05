@@ -209,16 +209,16 @@ class FiniteElementModel(object):
         # NODE DATA
         nd = self.dimensions
         if T in self.active_dof:
-            frame.ScalarField('Q', NODE, node_labels)
-        frame.ScalarField('T', NODE, node_labels)
-        frame.VectorField('U', NODE, node_labels, self.dimensions)
-        frame.VectorField('RF', NODE, node_labels, self.dimensions)
+            frame.FieldOutput(SCALAR, 'Q', NODE, node_labels)
+        frame.FieldOutput(SCALAR, 'T', NODE, node_labels)
+        frame.FieldOutput(VECTOR, 'U', NODE, node_labels, ncomp=self.dimensions)
+        frame.FieldOutput(VECTOR, 'RF', NODE, node_labels, ncomp=self.dimensions)
 
         a = in1d((TX,TY,TZ), self.active_dof)
         if any(a):
             n = len([x for x in a if x])
-            frame.VectorField('R', NODE, node_labels, n)
-            frame.VectorField('M', NODE, node_labels, n)
+            frame.FieldOutput(VECTOR, 'R', NODE, node_labels, ncomp=n)
+            frame.FieldOutput(VECTOR, 'M', NODE, node_labels, ncomp=n)
 
         if self.initial_temp:
             itemp = self.get_initial_temperature()
@@ -226,7 +226,8 @@ class FiniteElementModel(object):
 
         # ELEMENT DATA
         for eb in self.mesh.eleblx:
-            if not eb.eletyp.variables:
+
+            if not eb.eletyp.variables():
                 continue
 
             ielems = [self.mesh.elemap[xel] for xel in eb.labels]
@@ -237,18 +238,11 @@ class FiniteElementModel(object):
             else:
                 position = ELEMENT_CENTROID
 
-            for variable in eb.eletyp.variables:
-                if elems[0].ndir is None:
-                    # SCALAR DATA
-                    frame.ScalarField(variable, position, eb.labels,
-                                      eleblk=eb.name, ngauss=elems[0].integration,
-                                      elements=elems)
-                else:
-                    # TENSOR DATA
-                    frame.SymmetricTensorField(variable, position, eb.labels,
-                                               elems[0].ndir, elems[0].nshr,
-                                               ngauss=elems[0].integration,
-                                               eleblk=eb.name, elements=elems)
+            for (name, vtype) in eb.eletyp.variables():
+                frame.FieldOutput(vtype, name, position, eb.labels,
+                                  ndir=elems[0].ndir, nshr=elems[0].nshr,
+                                  eleblk=eb.name, ngauss=elems[0].integration,
+                                  elements=elems, ncomp=self.dimensions)
 
         frame.converged = True
         return

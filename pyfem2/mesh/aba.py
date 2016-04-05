@@ -237,7 +237,7 @@ class AbaqusLexer(object):
     t_keywordstate_ignore = ' \t'
 
     def t_keywordstate_error(self, t):
-        msg = 'invalid keyword'
+        msg = 'INVALID KEYWORD'
         self._error(msg, t)
 
     def t_datalinestate_LASTTOKENONLINE(self, t):
@@ -309,12 +309,12 @@ class AbaqusLexer(object):
 
     @TOKEN(unmatched_quote)
     def t_UNMATCHED_QUOTE(self, t):
-        msg = "Unmatched '"
+        msg = "UNMATCHED '"
         self._error(msg, t)
 
     @TOKEN(bad_char_const)
     def t_BAD_CHAR_CONST(self, t):
-        msg = "Invalid char constant %s" % t.value
+        msg = "INVALID CHAR CONSTANT %s" % t.value
         self._error(msg, t)
 
     @TOKEN(wstring_literal)
@@ -325,7 +325,7 @@ class AbaqusLexer(object):
 
     @TOKEN(bad_string_literal)
     def t_BAD_STRING_LITERAL(self, t):
-        msg = "String contains invalid escape code"
+        msg = "STRING CONTAINS INVALID ESCAPE CODE"
         self._error(msg, t)
 
     @TOKEN(identifier)
@@ -334,7 +334,7 @@ class AbaqusLexer(object):
         return t
 
     def t_error(self, t):
-        msg = 'Illegal character %s' % repr(t.value[0])
+        msg = 'ILLEGAL CHARACTER %s' % repr(t.value[0])
         self._error(msg, t)
 
 
@@ -531,7 +531,6 @@ class AbaqusParser(PLYParser):
         elif len(p) == 4:
             p[0] = Parameter(p[1], value = p[3])
 
-
     def p_data_lines_list(self, p):
         '''
         data_lines : data_lines data_line
@@ -578,10 +577,10 @@ class AbaqusParser(PLYParser):
     def p_error(self, p):
         if p:
             self._parse_error(
-                'before: %s' % p.value,
+                'BEFORE: %s' % p.value,
                 self._coord(p.lineno))
         else:
-            self._parse_error('At end of input', '')
+            self._parse_error('AT END OF INPUT', '')
 
 def ElementType(name):
     import pyfem2.elemlib as elemlib
@@ -602,7 +601,7 @@ def ElementType(name):
 
 def ReadInput(filename):
     f = os.path.basename(filename)
-    parser = AbaqusParser(lex_optimize=False, yacc_optimize=False)
+    parser = AbaqusParser(lex_optimize=True, yacc_optimize=True)
     buf = open(filename).read()
     t = parser.parse(buf, f, debuglevel=0)
 

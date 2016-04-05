@@ -25,10 +25,13 @@ class PlaneBeamColumn(Element):
     """
     nodes = 2
     dimensions = 2
-    variables = ('P', 'S')
     signature = [(1,1,0,0,0,1,0),
                  (1,1,0,0,0,1,0)]
     elefab = {'A': None, 'Izz': None}
+
+    @classmethod
+    def variables(cls):
+        return (('P', SCALAR), ('S', SCALAR))
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                  predef, procedure, nlgeom, cflag, step_type):

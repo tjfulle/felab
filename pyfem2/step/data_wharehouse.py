@@ -2,7 +2,7 @@ from numpy import *
 from numpy.linalg import eigvalsh
 from collections import OrderedDict
 
-from .utilities import *
+from ..utilities import *
 
 __all__ = ['FieldOutputs', 'ScalarField', 'VectorField', 'SymmetricTensorField']
 
@@ -116,6 +116,37 @@ class SymmetricTensorField(FieldOutput):
 
         super(SymmetricTensorField, self).__init__(
             name, position, labels, SYMTENSOR, components, shape, eleblk,
+            elements=elements, data=data)
+
+class TensorField(FieldOutput):
+    def __init__(self, name, position, labels, ndir, nshr, eleblk=None,
+                 ngauss=None, elements=None, data=None):
+
+        if position == INTEGRATION_POINT and not ngauss:
+            raise TypeError('Expected ngauss')
+
+        components = array([['xx', 'xy', 'xz'],
+                            ['yx', 'yy', 'yz'],
+                            ['zx', 'zy', 'zz']])
+        if ndir < 3:
+            components[2,2] = ''
+            if ndir < 2:
+                components[1,1] = ''
+        if nshr < 3:
+            components[0,2] = components[2,0] = ''
+            if nshr < 2:
+                components[1,2] = components[2,1] = ''
+        components = [x for x in components.flatten() if x.split()]
+
+        num = len(labels)
+        ntens = ndir + 2*nshr
+        if ngauss:
+            shape = (num, ngauss, ntens)
+        else:
+            shape = (num, ntens)
+
+        super(TensorField, self).__init__(
+            name, position, labels, TENSOR, components, shape, eleblk,
             elements=elements, data=data)
 
 class VectorField(FieldOutput):

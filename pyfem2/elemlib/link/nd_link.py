@@ -24,7 +24,10 @@ class ND2NodeLinkElement(Element):
     """
     nodes = 2
     elefab = {'A': 1.}
-    variables = ('P', 'S')
+
+    @classmethod
+    def variables(cls):
+        return (('P', SCALAR), ('S', SCALAR))
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                  predef, procedure, nlgeom, cflag, step_type):

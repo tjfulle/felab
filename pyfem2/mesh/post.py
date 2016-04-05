@@ -3,7 +3,7 @@ from copy import deepcopy
 
 from ..utilities import *
 from ..constants import *
-from ..data import *
+from ..step.data_wharehouse import *
 
 __all__ = ['StepRepository1']
 

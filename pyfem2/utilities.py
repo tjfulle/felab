@@ -157,3 +157,58 @@ def emptywithlists(n):
     a = zeros(n, dtype=object)
     a[:] = [[] for _ in range(n)]
     return a
+
+def axialv(a):
+    """Construct the axial vector associated with a
+
+    w_i = -1/2 e_ijk a_jk
+    Parameters
+    ----------
+    a : ndarray (3, 3)
+        Second-order tensors
+
+    Returns
+    -------
+    w : ndarray (3,)
+        Axial vector associated with a
+    """
+    return .5 * array([a[2, 1] - a[1, 2],
+                       a[0, 2] - a[2, 0],
+                       a[1, 0] - a[0, 1]])
+
+def axialt(a):
+    """Construct the axial tensor associated with a
+    W_ij = e_ijk a_k
+
+    Parameters
+    ----------
+    a : ndarray (3,)
+        Vector
+
+    Returns
+    -------
+    W : ndarray (3,)
+        Axial tensor associated with a
+    """
+    return array([[   0, -a[2], a[1]],
+                  [a[2],   0, -a[0]],
+                  [-a[1], a[0],   0]])
+
+def asvec(t, ndir=3, nshr=3):
+    """Cast the symmetric tensor as an array
+
+    Parameters
+    ----------
+    t : ndarray (3,3)
+        Tensor
+
+    Returns
+    -------
+    W : ndarray (ndir+nshr,)
+        Array
+
+    """
+    a = zeros(ndir+nshr)
+    a[:ndir] = diag(t)[:ndir]
+    a[ndir:ndir+nshr] = [t[0,1], t[1,2], t[0,2]][:nshr]
+    return a

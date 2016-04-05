@@ -9,11 +9,17 @@ class CSDIsoParametricElement(Element):
     """Base class for isoparametric stress-displacement elements"""
     gaussp = None
     gaussw = None
-    variables = ('E', 'DE', 'S')
     integration = None
     incompatible_modes = None
     hourglass_control = None
     selective_reduced = None
+
+    @classmethod
+    def variables(self):
+        variables = (('V', SYMTENSOR), ('R', TENSOR), ('E', SYMTENSOR),
+                     ('S', SYMTENSOR), ('D', SYMTENSOR))
+        variables = (('E', SYMTENSOR), ('DE', SYMTENSOR), ('S', SYMTENSOR))
+        return variables
 
     def shape(self, *args):
         raise NotImplementedError
@@ -47,7 +53,7 @@ class CSDIsoParametricElement(Element):
         element centroid"""
         if index is not None:
             ntens = cls.ndir + cls.nshr
-            m = len(cls.variables) * ntens
+            m = len(cls.variables()) * ntens
             data = row_stack([data[(m*p)+index*ntens:(m*p)+(index+1)*ntens]
                               for p in range(cls.integration)])
         return cls.average(cls.cp, data)
@@ -121,8 +127,9 @@ class CSDIsoParametricElement(Element):
 
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
-        m = len(self.variables) * ntens
-        a1, a2, a3 = [self.variables.index(x) for x in ('E', 'DE', 'S')]
+        v = [x[0] for x in self.variables()]
+        m = len(v) * ntens
+        a1, a2, a3 = [v.index(x) for x in ('E', 'DE', 'S')]
 
         # COMPUTE INTEGRATION POINT DATA
         bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
@@ -150,6 +157,49 @@ class CSDIsoParametricElement(Element):
             # STRAIN INCREMENT
             de = dot(B, du)
 
+            # VELOCITY GRADIENT
+            # L_ij = dv_i / dx_j = d(du_i/dtime) / dx_j
+            #      = du_iI dN_I / dx_j * 1 / dtime
+            L = zeros((3, 3))
+            L1 = dot(dNdx, du.reshape(-1,self.dimensions))
+            L[:self.dimensions,:self.dimensions] = L1 / dtime
+
+            # SYMMETRIC AND DEVIATORIC PARTS -> NEEDED FOR FINITE ROTATIONS
+            D = .5 * (L + L.T)
+            W = L - D
+
+            V = eye(3)
+            I3x3 = eye(3)
+            R = eye(3)
+
+            z = -2 * axialv(dot(V, D))
+            w = -2. * axialv(W)
+            _w_ = w - 2. * dot(inv(V - trace(V) * I3x3), z)
+            _W_ = -.5 * axialt(_w_)
+
+            # UPDATE THE ROTATION
+            A = I3x3 - _W_ * dtime / 2.
+            RHS = dot(I3x3 + _W_ * dtime / 2., R)
+
+            # UPDATED ROTATION
+            R = dot(inv(A), RHS)
+
+            # RATE OF STRETCH
+            Vdot = dot((D + W), V) - dot(V, _W_)
+            V += Vdot * dtime
+
+            # UNROTATE DEFORMATION RATE
+            d = dot(R.T, dot(D, R))
+
+            # UNROTATE CAUCHY STRESS
+            #T = asmatrix(self.data[0, intpt, STRESS:STRESS+NSYMM])
+            #sig = dot(R.T, dot(T, R))
+
+            # CONVERT QUANTITIES TO ARRAYS THAT WILL BE PASSED TO MATERIAL MODEL
+            d = asvec(d, self.ndir, self.nshr)
+            #de = d*dtime*array([1.,1.,1.,2.])
+            #sig = asvec(sig)
+
             # SET DEFORMATION GRADIENT TO THE IDENTITY
             F0 = eye(self.ndir+self.nshr)
             F = eye(self.ndir+self.nshr)
@@ -166,6 +216,13 @@ class CSDIsoParametricElement(Element):
                 s, xv, e, de, time, dtime, temp, dtemp, None, None,
                 self.ndir, self.nshr, self.ndir+self.nshr, xc, F0, F,
                 self.label, kstep, kframe)
+
+            # Rotate stress to material frame
+            #T = dot(R, dot(asmatrix(sig), R.T))
+
+            # Calculate strain
+            #F = dot(V, R)
+            #E = .5 * (dot(F.T, F) - I3x3)
 
             # STORE THE UPDATED VARIABLES
             svars[1,ij+a1*ntens:ij+(a1+1)*ntens] += de  # STRAIN
@@ -364,7 +421,8 @@ class CSDIsoParametricElement(Element):
         dtemp = dot(N, predef[1,0])
 
         # MATERIAL RESPONSE AT CENTROID
-        a1, a2, a3 = [self.variables.index(x) for x in ('E', 'DE', 'S')]
+        v = [x[0] for x in self.variables()]
+        a1, a2, a3 = [v.index(x) for x in ('E', 'DE', 'S')]
         e = self.interpolate_to_centroid(svars[0], index=a1)
         s = self.interpolate_to_centroid(svars[0], index=a3)
         xv = zeros(1)

@@ -3,7 +3,7 @@ from copy import deepcopy
 
 from ..utilities import *
 from ..constants import *
-from ..data import *
+from .data_wharehouse import *
 
 class Step(object):
     def __init__(self, model, number, name, previous, period):
@@ -47,14 +47,14 @@ class Step(object):
         svtab = []
         nstatev = 0
         for el in self.model.elements:
-            if not el.variables:
+            if not el.variables():
                 svtab.append([])
                 continue
             if not el.ndir:
                 m = 1
             else:
                 m = el.ndir + el.nshr
-            m *= len(el.variables)
+            m *= len(el.variables())
             if el.integration:
                 m *= el.integration
             a = [nstatev, nstatev+m]
@@ -382,7 +382,7 @@ class Step(object):
             frame.field_outputs[kwd].add_data(val)
 
         for (ieb, eb) in enumerate(self.model.mesh.eleblx):
-            if not eb.eletyp.variables:
+            if not eb.eletyp.variables():
                 continue
 
             # PASS VALUES FROM SVARS TO THE FRAME OUTPUT
@@ -391,7 +391,7 @@ class Step(object):
             else:
                 ntens = None
             m = 1 if not eb.eletyp.integration else eb.eletyp.integration
-            n = len(eb.eletyp.variables)
+            n = len(eb.eletyp.variables())
             for (e, xel) in enumerate(eb.labels):
                 iel = self.model.mesh.elemap[xel]
                 el = self.model.elements[iel]
@@ -400,7 +400,8 @@ class Step(object):
                     svars = self.svars[0,self.svtab[iel]].reshape(m,n,ntens)
                 else:
                     svars = self.svars[0,self.svtab[iel]].reshape(m,n)
-                for (j, name) in enumerate(el.variables):
+                for (j, variable) in enumerate(el.variables()):
+                    name, ftype = variable
                     frame.field_outputs[eb.name,name].add_data(svars[:,j], e)
 
         frame.converged = True
@@ -416,6 +417,29 @@ class Frame(object):
     def adjust_dt(self, dtime):
         self.increment = dtime
         self.value = self.start + dtime
+
+    def FieldOutput(self, ftype, name, position, labels, eleblk=None,
+                    ndir=None, nshr=None, ngauss=None,
+                    ncomp=None, elements=None, data=None):
+        if ftype == SYMTENSOR:
+            field = SymmetricTensorField(name, position, labels, ndir, nshr,
+                                         eleblk=eleblk, ngauss=ngauss,
+                                         elements=elements, data=data)
+
+        elif ftype == VECTOR:
+            field = VectorField(name, position, labels, ncomp, eleblk=eleblk,
+                                ngauss=ngauss, elements=elements, data=data)
+
+        elif ftype == SCALAR:
+            field = ScalarField(name, position, labels, eleblk=eleblk,
+                                ngauss=ngauss, elements=elements, data=data)
+
+        if field.eleblk is not None:
+            name = (field.eleblk, name)
+
+        self.field_outputs[name] = field
+
+        return field
 
     def SymmetricTensorField(self, name, position, labels, ndir, nshr,
                              eleblk=None, ngauss=None,  elements=None, data=None):

@@ -26,7 +26,8 @@ TOL1 = 1e-12
 # FIELD TYPES
 SCALAR = 'Scalar'
 VECTOR = 'Vector'
-SYMTENSOR = 'Tensor'
+SYMTENSOR = 'Symmetric Tensor'
+TENSOR = 'Tensor'
 
 # SOLVERS
 NEWTON = 'Newton'
