@@ -2,6 +2,7 @@ import logging
 from numpy import *
 from numpy.linalg import det, inv
 
+from ...constants import *
 from ...utilities import *
 from ..element import Element
 
@@ -18,7 +19,8 @@ class CSDIsoParametricElement(Element):
     def variables(self):
         variables = (('V', SYMTENSOR), ('R', TENSOR), ('E', SYMTENSOR),
                      ('S', SYMTENSOR), ('D', SYMTENSOR))
-        variables = (('E', SYMTENSOR), ('DE', SYMTENSOR), ('S', SYMTENSOR))
+        variables = (('E', SYMTENSOR), ('DE', SYMTENSOR), ('S', SYMTENSOR),
+                     ('V', SYMTENSOR, 1))
         return variables
 
     def shape(self, *args):

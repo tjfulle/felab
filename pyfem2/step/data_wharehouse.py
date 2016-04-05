@@ -44,7 +44,11 @@ class FieldOutput(object):
         self.data = zeros(self.shape)
 
         if data is not None:
-            self.add_data(data)
+            idata = asarray(data)
+            if len(idata) == shape[-1]:
+                idata = zeros(shape)
+                idata[:] = data
+            self.add_data(idata)
 
         self._elements = elements
         reqels = position in (ELEMENT_CENTROID,INTEGRATION_POINT)
@@ -182,6 +186,7 @@ class ScalarField(FieldOutput):
             shape = (num, ngauss)
         else:
             shape = (num, 1)
+
         super(ScalarField, self).__init__(
             name, position, labels, SCALAR, components, shape, eleblk,
             elements=elements, data=data)

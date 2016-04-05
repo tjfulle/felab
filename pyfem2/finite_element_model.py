@@ -238,11 +238,24 @@ class FiniteElementModel(object):
             else:
                 position = ELEMENT_CENTROID
 
-            for (name, vtype) in eb.eletyp.variables():
+            for variable in eb.eletyp.variables():
+                if len(variable) == 2:
+                    name, vtype = variable
+                    idata = None
+                elif len(variable) == 3:
+                    name, vtype, idata = variable
+
+                if idata is not None:
+                    if idata == 1 and vtype == SYMTENSOR:
+                        # IDENTITY
+                        idata = array([1.]*elems[0].ndir+[0.]*elems[0].nshr)
+                    elif idata == 1 and vtype == TENSOR:
+                        idata = eye(elems[0].ndir)
+
                 frame.FieldOutput(vtype, name, position, eb.labels,
                                   ndir=elems[0].ndir, nshr=elems[0].nshr,
                                   eleblk=eb.name, ngauss=elems[0].integration,
-                                  elements=elems, ncomp=self.dimensions)
+                                  elements=elems, ncomp=self.dimensions, data=idata)
 
         frame.converged = True
         return

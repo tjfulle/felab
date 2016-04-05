@@ -401,7 +401,7 @@ class Step(object):
                 else:
                     svars = self.svars[0,self.svtab[iel]].reshape(m,n)
                 for (j, variable) in enumerate(el.variables()):
-                    name, ftype = variable
+                    name, ftype = variable[:2]
                     frame.field_outputs[eb.name,name].add_data(svars[:,j], e)
 
         frame.converged = True
@@ -421,6 +421,7 @@ class Frame(object):
     def FieldOutput(self, ftype, name, position, labels, eleblk=None,
                     ndir=None, nshr=None, ngauss=None,
                     ncomp=None, elements=None, data=None):
+
         if ftype == SYMTENSOR:
             field = SymmetricTensorField(name, position, labels, ndir, nshr,
                                          eleblk=eleblk, ngauss=ngauss,
@@ -437,42 +438,6 @@ class Frame(object):
         if field.eleblk is not None:
             name = (field.eleblk, name)
 
-        self.field_outputs[name] = field
-
-        return field
-
-    def SymmetricTensorField(self, name, position, labels, ndir, nshr,
-                             eleblk=None, ngauss=None,  elements=None, data=None):
-        field = SymmetricTensorField(name, position, labels, ndir, nshr,
-                                     eleblk=eleblk, ngauss=ngauss,
-                                     elements=elements, data=data)
-
-        if field.eleblk is not None:
-            name = (field.eleblk, name)
-        self.field_outputs[name] = field
-
-        return field
-
-    def VectorField(self, name, position, labels, ncomp, eleblk=None,
-                    ngauss=None, elements=None, data=None):
-
-        field = VectorField(name, position, labels, ncomp, eleblk=eleblk,
-                            ngauss=ngauss, elements=elements, data=data)
-
-        if field.eleblk is not None:
-            name = (field.eleblk, name)
-        self.field_outputs[name] = field
-
-        return field
-
-    def ScalarField(self, name, position, labels, eleblk=None, ngauss=None,
-                    elements=None, data=None):
-
-        field = ScalarField(name, position, labels, eleblk=eleblk,
-                            ngauss=ngauss, elements=elements, data=data)
-
-        if field.eleblk is not None:
-            name = (field.eleblk, name)
         self.field_outputs[name] = field
 
         return field
