@@ -1,7 +1,9 @@
 import logging
+import pickle
 from numpy import *
+from numpy.ma import masked, masked_array
 from collections import OrderedDict
-from os.path import basename, isfile
+from os.path import basename, isfile, splitext
 
 from .parse import AbaqusParser
 
@@ -53,17 +55,38 @@ class Element:
     def coord(self):
         return array([node.coord for node in self.nodes])
     def normal(self, face):
+        """Find the normal to the plane defined by points"""
         et = self.type.upper()
-        if et in ('C3D20',):
-            assert len(face) == 8
-        elif et in ('CAX4',):
+        xc = array([node.coord for node in self.nodes if node.label in face])
+        if et[:5] == 'C3D20':
+            assert len(xc) == 8
+            x1 = xc[1] - xc[0]
+            for x in xc[2:]:
+                x2 = x - xc[0]
+                if abs(dot(x1, x2)) < 1e-4:
+                    continue
+                n = cross(x2, x1)
+                return n / mag(n)
+        elif et[:4] == 'C3D8':
+            assert len(face) == 4
+            x1 = xc[1] - xc[0]
+            for x in xc[1:]:
+                x2 = x - xc[0]
+                if abs(dot(x1, x2)) < 1e-4:
+                    continue
+                n = cross(x2, x1)
+                return n / mag(n)
+        elif et in ('CAX4', 'PE4', 'PS4'):
             assert len(face) == 2
-            xc = array([node.coord for node in self.nodes if node.label in face])
             dx, dy = xc[1,[0,1]] - xc[0,[0,1]]
             n = array([dy, -dx], dtype=float)
             return n / mag(n)
         else:
             raise TypeError('ELEMENT TYPE {0} DOES NOT DEFINE NORMAL'.format(et))
+        raise ValueError('UNABLE TO FIND NORMAL')
+    def radius(self, axis):
+        ij = [x for x in range(3) if x != axis]
+        return mag(self.centroid[ij])
 
 class Elements(Container):
     def __init__(self):
@@ -72,7 +95,7 @@ class Elements(Container):
     def put(self, item, nodes):
         labels = []
         i = len(self)
-        et = item.params.get('type').value
+        et = item.params.get('type')
         for row in item.data:
             label = int(row[0])
             e_nodes = array([nodes[int(x)] for x in row[1:]])
@@ -125,8 +148,7 @@ class Surfaces(Container):
                 labels = [int(x)]
             for label in labels:
                 surf.append((label, face))
-        p = item.params.get('name')
-        name = p.value.strip().upper()
+        name = item.params.get('name').upper()
         surface = self.get(name, Surface(name))
         surface.put(surf)
         self[name] = surface
@@ -137,35 +159,81 @@ class Surfaces(Container):
         return surfaces
 
 class Material:
-    def __init__(self, **kwds):
-        self.__dict__.update(**kwds)
-        self.defn = {}
+    def __init__(self, item):
+        self.card = item
+        self.name = item.params.get('name').upper()
+        self.subcards = []
     def update(self, item):
-        self.defn[item.key.upper()] = item
+        self.subcards.append(item)
+    def toinp(self):
+        o = self.card.toinp()
+        for card in self.subcards:
+            o += '\n' + card.toinp()
+        return o.strip()
 
 class Materials(OrderedDict):
     def put(self, item):
-        m = Material(**item.params.todict())
-        self[m.name.upper()] = m
+        m = Material(item)
+        self[m.name] = m
 
-class NodeSets(Container):
+class Orientations(OrderedDict):
+    def put(self, item):
+        pass
+
+class SetContainer(Container):
+    def put(self, item, labels=None):
+        if labels is not None:
+            self.setdefault(item.upper(), []).extend(labels)
+            return
+
+        generate = 'generate' in item.params
+        if not generate:
+            try:
+                labels = [int(e) for row in item.data for e in row]
+            except ValueError:
+                xsets1 = [str(e).upper() for row in item.data for e in row]
+                labels = [label for xset in xsets1 for label in self[xset]]
+        else:
+            labels = []
+            for row in item.data:
+                start, stop, step = [int(n) for n in row]
+                labels.extend(range(start, stop+1, step))
+        labels = sorted(list(set(labels)))
+        name = item.params.get(item.key).upper()
+        self.setdefault(name, []).extend(labels)
+
+class NodeSets(SetContainer):
     pass
 
-class ElementSets(Container):
+class ElementSets(SetContainer):
     pass
+
+def AbaqusModelFactory(filename):
+    root, ext = splitext(filename)
+    pkl = root + '.p'
+    if isfile(pkl):
+        with open(pkl, 'rb') as fh:
+            model = pickle.load(fh)
+    else:
+        model = AbaqusModel(filename)
+        with open(pkl, 'wb') as fh:
+            pickle.dump(model, fh)
+    return model
 
 class AbaqusModel(object):
 
     def __init__(self, filename):
-        self.p = AbaqusParser(lex_optimize=True, yacc_optimize=True)
+
         self.nodes = Nodes()
         self.elements = Elements()
         self.nodesets = NodeSets()
         self.elsets = ElementSets()
         self.surfaces = Surfaces()
+        self.orientations = Orientations()
         self.solid_sections = SolidSections()
         self.materials = Materials()
         self._c = None
+        self._x = None
 
         self.parse(filename)
 
@@ -176,6 +244,16 @@ class AbaqusModel(object):
     @property
     def nodmap(self):
         return self.nodes._map
+
+    @property
+    def dimension(self):
+        return self.get_coord().shape[1]
+
+    def get_min_on_axis(self, axis):
+        return amin(self.get_coord()[:,axis])
+
+    def get_max_on_axis(self, axis):
+        return amax(self.get_coord()[:,axis])
 
     def get_nodes_in_set(self, nset, disp=0):
         labels = self.nodesets.get(nset.upper())
@@ -189,14 +267,97 @@ class AbaqusModel(object):
             return [self.elements[label] for label in labels]
         return labels
 
-    def elem_centroids(self, labels=None):
+    def get_elem_centroids(self, labels=None, subset=None):
         if self._c is None:
             self._c = array([self.elements[label].centroid
                              for label in self.elements.labels])
+        if labels is not None:
+            ix = [self.elemap[label] for label in labels]
+            return self._c[ix]
+        if subset is not None:
+            ix = [self.elemap[e.label] for e in subset]
+            return self._c[ix]
+        return self._c
+
+    def get_coord(self, labels=None):
+        if self._x is None:
+            self._x = array([self.nodes[label].coord
+                             for label in self.nodes.labels])
         if labels is None:
-            return self._c
-        ix = [self.elemap[label] for label in labels]
-        return self._c[ix]
+            return self._x
+        ix = [self.nodmap[label] for label in labels]
+        return self._x[ix]
+
+    def get_length(self, axis):
+        xc = self.get_elem_centroids()[:,axis]
+        return abs(amax(xc) - amin(xc))
+
+    def get_radius(self, axis, pos=None, subset=None, at_min=0, at_max=0):
+        xc = self.get_elem_centroids()
+        if subset is not None:
+            ix = [self.elemap[e.label] for e in subset]
+            xc = xc[ix]
+            if at_min:
+                i = argmin(xc[:,axis])
+            elif at_max:
+                i = argmax(xc[:,axis])
+            else:
+                raise TypeError('Requires at_min or at_max keyword')
+        else:
+            if pos is None:
+                raise TypeError('pos keyword required')
+            i = argmin(abs(xc[:,axis]-pos))
+
+        r = sqrt(sum([xc[i, j] ** 2 for j in range(xc.shape[1]) if j!=axis]))
+        return r
+
+    def get_closest_element(self, pos, disp=0, axis=0, radial=0,
+                            skip_sets=None, skip_labels=None):
+
+        skip_labels = skip_labels or []
+        skip_sets = skip_sets or []
+        for xset in enumerate(skip_sets):
+            skip_labels.extend(self.elsets[xset.upper()])
+
+        xc = self.get_elem_centroids()
+        clen = abs(average(diff(sorted(xc[:,axis]))))
+
+        if radial:
+            # RADIAL COORDINATES
+            if len(pos) == 1:
+                raise ValueError('POS MUST BE AT LEAST 2 DIMENSIONS')
+
+            z = pos[axis]
+            if len(pos) == 2:
+                r = pos[{0:1, 1:0}[axis]]
+            else:
+                r = sqrt(sum(pos[i]**2 for i in range(3) if i!=axis))
+            pos = array([r, z])
+
+            # ALL ELEMENTS CENTROIDS
+            z = xc[:,axis]
+            if xc.shape[1] == 2:
+                r = xc[:, {0:1, 1:0}[axis]]
+            else:
+                r = sqrt(sum(xc[:,i]**2 for i in range(3) if i!=axis))
+            xc = column_stack((r, z))
+
+        dx = mag2(abs(xc - pos))
+
+        if skip_labels:
+            skip_labels = sorted(list(set(skip_labels)))
+            ix = [self.elemap[label] for label in skip_labels]
+            dx_m = masked_array(dx)
+            dx_m[ix] = masked
+            index = dx_m.argmin()
+
+        else:
+            index = dx.argmin()
+
+        label = self.elements.labels[index]
+        if disp:
+            return self.elements[label]
+        return label
 
     def element_table(self):
         return [[el.label]+el.connect for el in self.elements]
@@ -220,24 +381,18 @@ class AbaqusModel(object):
             eleblx[ss.elset] = (et, labels)
         return eleblx
 
-    def get_closest_element(self, pos, disp=0):
-        xc = self.elem_centroids()
-        i = argmin(mag2(abs(xc - pos)))
-        label = self.elements.labels[i]
-        if disp:
-            return self.elements[label]
-        return label
-
     def shift(self, offset):
         for (label, node) in self.nodes.items():
             node.coord += offset
         self._c = None
+        self._x = None
 
     def parse(self, filename):
         assert isfile(filename)
         self.f = basename(filename)
+        p = AbaqusParser(lex_optimize=False, yacc_optimize=False)
         buf = open(filename).read()
-        t = self.p.parse(buf, self.f, debuglevel=0)
+        t = p.parse(buf, self.f, debuglevel=0)
 
         notread = []
         for item in t:
@@ -246,13 +401,13 @@ class AbaqusModel(object):
                 labels = self.nodes.put(item)
                 p = item.params.get('nset')
                 if p is not None:
-                    self.nodesets.setdefault(p.value.upper(), []).extend(labels)
+                    self.nodesets.put(p.upper(), labels=labels)
 
             elif item.key == 'element':
                 labels = self.elements.put(item, self.nodes)
                 p = item.params.get('elset')
                 if p is not None:
-                    self.elsets.setdefault(p.value.upper(), []).extend(labels)
+                    self.elsets.put(p.upper(), labels=labels)
 
             elif item.key == 'solid_section':
                 ss = self.solid_sections.put(item)
@@ -260,12 +415,11 @@ class AbaqusModel(object):
                     self.elements[label].solid_section = ss
 
             elif item.key == 'elset':
-                name, labels = self.parse_set(item)
-                self.elsets.setdefault(name.upper(), []).extend(labels)
+                self.elsets.put(item)
 
             elif item.key == 'nset':
-                name, labels = self.parse_set(item)
-                self.nodesets.setdefault(name.upper(), []).extend(labels)
+                elset = item.params.get('elset')
+                self.nodesets.put(item)
 
             elif item.key == 'surface':
                 self.surfaces.put(item, self.elsets)
@@ -273,9 +427,15 @@ class AbaqusModel(object):
             elif item.key == 'material':
                 self.materials.put(item)
 
-            elif item.key in ('elastic', 'density', 'expansion'):
+            elif item.key in ('hyperelastic', 'elastic', 'density', 'expansion'):
                 mat = list(self.materials.values())[-1]
                 mat.update(item)
+
+            elif item.key == 'orientation':
+                self.orientations.put(item)
+
+            elif item.key == 'heading':
+                self.heading = item.data
 
             else:
                 notread.append(item.key)
@@ -284,25 +444,15 @@ class AbaqusModel(object):
             logging.debug('THE FOLLOWING KEYWORDS AND THEIR DATA WERE NOT READ:\n'
                           '{0}'.format(', '.join(notread)))
 
-    def parse_set(self, item):
-        generate = 'generate' in item.params
-        if not generate:
-            labels = [int(e) for row in item.data for e in row]
-        else:
-            labels = []
-            for row in item.data:
-                start, stop, step = [int(n) for n in row]
-                labels.extend(range(start, stop+1, step))
-        p = item.params.get(item.key)
-        return p.value, labels
-
-
-if __name__ == '__main__':
-    filename = 'mmxmn.inp'
+def test():
+    from os.path import dirname, realpath, join
+    D = dirname(realpath(__file__))
+    filename = join(D, 'mmxmn.inp')
     assert isfile(filename)
-    a = AbaqusInput(filename)
+    a = AbaqusModel(filename)
     a.shift([-1., 0., 0.])
     el = a.elements[1]
     xc = el.centroid
     el1 = a.get_closest_element(xc, disp=1)
     print(el1.label)
+    print(list(a.materials.values())[0].toinp())
