@@ -10,7 +10,7 @@ E = 2. * mu * (1. + Nu)
 
 def LinearSolution(ax=None):
     V = FiniteElementModel(jobid='VolumeLocking.Linear')
-    V.GenesisMesh('ThickCylinder_Linear.inp')
+    V.AbaqusMesh('ThickCylinder_Linear.inp')
     mat = V.Material('Material-1')
     mat.Elastic(E=E, Nu=Nu)
     V.AssignProperties('ALL', PlaneStrainQuad4Reduced, mat, t=1)
@@ -27,7 +27,7 @@ def LinearSolution(ax=None):
 
 def QuadraticSolution(ax=None):
     V = FiniteElementModel(jobid='VolumeLocking.Quadratic')
-    V.GenesisMesh('ThickCylinder_Quadratic.inp')
+    V.AbaqusMesh('ThickCylinder_Quadratic.inp')
     mat = V.Material('Material-1')
     mat.Elastic(E=E, Nu=Nu)
     V.AssignProperties('ALL', PlaneStrainQuad8BBar, mat, t=1)
