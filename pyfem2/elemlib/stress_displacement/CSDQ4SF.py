@@ -9,7 +9,7 @@ class PlaneStressQuad4(BaseElement):
     integration = 4
     gaussw = ones(4)
     gaussp = array([[-1., -1.], [ 1., -1.], [-1.,  1.], [ 1.,  1.]]) / sqrt(3.)
-    def bmatrix(self, dN):
+    def bmatrix(self, dN, *args):
         B = zeros((3, 8))
         B[0, 0::2] = B[2, 1::2] = dN[0, :]
         B[1, 1::2] = B[2, 0::2] = dN[1, :]

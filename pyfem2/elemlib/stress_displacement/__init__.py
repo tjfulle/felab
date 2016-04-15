@@ -16,6 +16,8 @@ from .CSDQ4EF import PlaneStrainQuad4
 from .CSDQ4ER import PlaneStrainQuad4Reduced
 from .CSDQ4ES import PlaneStrainQuad4SelectiveReduced
 
+from .CSDAX4F import AxiSymmetricQuad4
+
 from .CSDQ4SF import PlaneStressQuad4
 from .CSDQ4SI import PlaneStressQuad4Incompat
 

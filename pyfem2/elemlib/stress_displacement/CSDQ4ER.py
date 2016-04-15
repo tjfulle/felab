@@ -14,7 +14,7 @@ class PlaneStrainQuad4Reduced(BaseElement):
     # HOURGLASS CONTROL
     hglassp = array([[0., 0.]])
     hglassv = array([[1., -1., 1., -1.]])
-    def bmatrix(self, dN):
+    def bmatrix(self, dN, *args):
         B = zeros((4, 8))
         B[0, 0::2] = B[3, 1::2] = dN[0, :]
         B[1, 1::2] = B[3, 0::2] = dN[1, :]

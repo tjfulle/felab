@@ -13,7 +13,7 @@ class PlaneStrainQuad4SelectiveReduced(BaseElement):
     selective_reduced = True
     srip = array([[0., 0.]])
     sriw = array([4.])
-    def bmatrix(self, dN):
+    def bmatrix(self, dN, *args):
         B = zeros((4, 8))
         B[0, 0::2] = B[3, 1::2] = dN[0, :]
         B[1, 1::2] = B[3, 0::2] = dN[1, :]

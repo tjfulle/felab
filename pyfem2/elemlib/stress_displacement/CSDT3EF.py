@@ -9,7 +9,7 @@ class PlaneStrainTria3(BaseElement):
     integration = 3
     gaussp = array([[.6, .2], [.2, .6], [.2, .2]])
     gaussw = ones(3) / 6.
-    def bmatrix(self, dN):
+    def bmatrix(self, dN, *args):
         B = zeros((4, 6))
         B[0, 0::2] = B[3, 1::2] = dN[0, :]
         B[1, 1::2] = B[3, 0::2] = dN[1, :]

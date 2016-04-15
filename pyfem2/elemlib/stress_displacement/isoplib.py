@@ -154,7 +154,7 @@ class CSDIsoParametricElement(Element):
 
             # CONVERT SHAPE FUNCTION DERIVATIVES TO DERIVATIVES WRT GLOBAL X
             dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx)
+            B = self.bmatrix(dNdx, N, xi)
 
             # STRAIN INCREMENT
             de = dot(B, du)
@@ -354,10 +354,11 @@ class CSDIsoParametricElement(Element):
             dNdxi = self.shapegrad(xi)
 
             # JACOBIAN TO NATURAL COORDINATES
+            N = self.shape(xi)
             dxdxi = dot(dNdxi, xc)
             dxidx = inv(dxdxi)
             dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx)
+            B = self.bmatrix(dNdx, N, xi)
             J = det(dxdxi)
 
             # HOURGLASS BASE VECTORS
@@ -409,7 +410,7 @@ class CSDIsoParametricElement(Element):
 
         # CONVERT SHAPE FUNCTION DERIVATIVES TO DERIVATIVES WRT GLOBAL X
         dNdx = dot(dxidx, dNdxi)
-        B = self.bmatrix(dNdx)
+        B = self.bmatrix(dNdx, N, xi)
 
         # STRAIN INCREMENT
         de = dot(B, du)
@@ -442,8 +443,9 @@ class CSDIsoParametricElement(Element):
             dxdxi = dot(dNdxi, xc)
             dxidx = inv(dxdxi)
             J = det(dxdxi)
+            N = self.shape(xi)
             dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx)
+            B = self.bmatrix(dNdx, N, xi)
             Ksri += J * w * dot(dot(B.T, D1), B)
 
         return Ksri

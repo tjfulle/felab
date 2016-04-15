@@ -16,7 +16,7 @@ class PlaneStrainQuad8BBar(BaseElement):
     gaussw = array([0.30864197, 0.49382716, 0.30864197,
                     0.49382716, 0.79012346, 0.49382716,
                     0.30864197, 0.49382716, 0.30864198])
-    def bmatrix(self, dN):
+    def bmatrix(self, dN, *args):
         """Assemble and return the B matrix"""
         B = zeros((4, 16))
         B[0, 0::2] = B[3, 1::2] = dN[0, :]
