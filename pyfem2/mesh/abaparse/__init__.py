@@ -1,1 +1,1 @@
-from .read import AbaqusModel
+from .read import AbaqusModel, AbaqusModelFactory
