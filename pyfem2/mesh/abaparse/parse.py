@@ -166,8 +166,10 @@ class AbaqusLexer(object):
     ##
 
     # valid C identifiers (K&R2: A.2.3)
-    identifier = r'[a-zA-Z_][0-9a-zA-Z_. \-\:\/]*'
+    identifier = r'[a-zA-Z_][0-9a-zA-Z_. ]*'
     abaqus_keyword = r'\*[a-zA-Z][0-9a-zA-Z_ \t]*'
+    abaqus_identifier = r'[a-zA-Z_][0-9a-zA-Z_. \-\:\/]*'
+    identifier = r'[a-zA-Z_][0-9a-zA-Z_. \-\:\/]*'
 
     # integer constants (K&R2: A.2.5.1)
     integer_suffix_opt = r'(u?ll|U?LL|([uU][lL])|([lL][uU])|[uU]|[lL])?'
@@ -219,7 +221,7 @@ class AbaqusLexer(object):
         t.value = t.value[1:]
         return t
 
-    @TOKEN(identifier)
+    @TOKEN(abaqus_identifier)
     def t_keywordstate_PARAM(self, t):
         return t
 
@@ -338,10 +340,12 @@ class AbaqusLexer(object):
         msg = 'ILLEGAL CHARACTER %s' % repr(t.value[0])
         self._error(msg, t)
 
-
 def list_append(lst, item):
     lst.append(item)
     return lst
+
+def chunker(seq, size=8):
+    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
 def cat(key, sep):
     return sep.join([s.strip() for s in key.split(' ') if s.split()])
@@ -369,9 +373,11 @@ class Parameters(object):
         kw = key.lower()
         for p in self.data:
             if kw == p.key:
-                return p
+                return p.value
     def todict(self):
         return dict([(p.key, p.value) for p in self.data])
+    def toinp(self):
+        return ', '.join(['{0}={1}'.format(p.key, p.value) for p in self.data])
     def index(self, key):
         kw = key.lower()
         for (i, p) in enumerate(self.data):
@@ -401,6 +407,18 @@ class Keyword(object):
 
     def __repr__(self):
         return str(self)
+
+    def toinp(self):
+        o = ['*{0}'.format(self.keyword.title())]
+        if self.params:
+            o[0] += ', ' + self.params.toinp()
+        if self.data is not None:
+            for data in self.data:
+                chunks = chunker(data)
+                for chunk in chunker(data):
+                    o.append(' ' + ', '.join(chunk) + ',')
+                o[-1] = o[-1][:-1]
+        return '\n'.join(o)
 
 keywords = []
 
@@ -577,7 +595,7 @@ class AbaqusParser(PLYParser):
     def p_data_list(self, p):
         '''
         data_list : data_list COMMA data
-                  | data_list data COMMA LASTTOKENONLINE data
+                  | data_list COMMA LASTTOKENONLINE data
                   | data_list data
         '''
         if len(p) == 3:
