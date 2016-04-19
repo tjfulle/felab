@@ -11,6 +11,7 @@ class CSDIsoParametricElement(Element):
     gaussp = None
     gaussw = None
     integration = None
+    axisymmetric = None
     incompatible_modes = None
     hourglass_control = None
     selective_reduced = None
@@ -44,10 +45,10 @@ class CSDIsoParametricElement(Element):
 
     def pmatrix(self, N):
         n = count_digits(self.signature[0])
-        S = zeros((n, self.nodes*n))
+        P = zeros((n, self.nodes*n))
         for i in range(self.dimensions):
-            S[i, i::self.dimensions] = N
-        return S
+            P[i, i::self.dimensions] = N
+        return P
 
     @classmethod
     def interpolate_to_centroid(cls, data, index=None):
@@ -125,7 +126,7 @@ class CSDIsoParametricElement(Element):
             xforce = zeros(n)
 
         if step_type in (GENERAL, DYNAMIC):
-            iforce = zeros(n)
+            eresid = zeros(n)
 
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
@@ -142,7 +143,7 @@ class CSDIsoParametricElement(Element):
 
             # SHAPE FUNCTION AND GRADIENT
             xi = self.gaussp[p]
-            N = self.shape(xi)
+            Ne = self.shape(xi)
 
             # SHAPE FUNCTION DERIVATIVE AT GAUSS POINTS
             dNdxi = self.shapegrad(xi)
@@ -154,7 +155,7 @@ class CSDIsoParametricElement(Element):
 
             # CONVERT SHAPE FUNCTION DERIVATIVES TO DERIVATIVES WRT GLOBAL X
             dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx, N, xi)
+            B = self.bmatrix(dNdx, Ne, xi)
 
             # STRAIN INCREMENT
             de = dot(B, du)
@@ -207,8 +208,8 @@ class CSDIsoParametricElement(Element):
             F = eye(self.ndir+self.nshr)
 
             # PREDEF AND INCREMENT
-            temp = dot(N, predef[0,0])
-            dtemp = dot(N, predef[1,0])
+            temp = dot(Ne, predef[0,0])
+            dtemp = dot(Ne, predef[1,0])
 
             # MATERIAL RESPONSE
             xv = zeros(1)
@@ -242,23 +243,40 @@ class CSDIsoParametricElement(Element):
                     D1, D2 = iso_dev_split(self.ndir, self.nshr, self.dimensions, D)
                     Ke += J * self.gaussw[p] * dot(dot(B.T, D2), B)
                 else:
-                    # STANDARD STIFFNESS
-                    Ke += J * self.gaussw[p] * dot(dot(B.T, D), B)
+                    c = J * self.gaussw[p]
+                    if self.axisymmetric == 1:
+                        rp = dot(Ne, self.xc[:,0])
+                        c *= rp
+                    Ke += c * dot(dot(B.T, D), B)
+
+                    if self.axisymmetric == 2:
+                        c = J * self.gaussw[p]
+                        Pe = self.pmatrix(Ne)
+                        rp = dot(Ne, self.xc[:,0])
+                        Dh = zeros((2,4))
+                        Dh[0,:3] = D[2,:3]
+                        Db = zeros((2,4))
+                        Db[0,0], Db[1,0] = D[0,0], D[3,0]
+                        Ke += c / rp * dot(Pe.T, (dot(Dh, B) - dot(Db, B)))
 
             if compute_mass:
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                P = self.pmatrix(N)
-                Me += J * self.gaussw[p] * self.material.density * dot(P.T, P)
+                Pe = self.pmatrix(Ne)
+                Me += J * self.gaussw[p] * self.material.density * dot(Pe.T, Pe)
 
             if compute_force:
-                P = self.pmatrix(N)
+                Pe = self.pmatrix(Ne)
                 for dloadx in bload:
                     # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
-                    xforce += J * self.gaussw[p] * dot(P.T, dloadx)
+                    c = J * self.gaussw[p]
+                    if self.axisymmetric == 1:
+                        rp = dot(Ne, self.xc[:,0])
+                        c *= rp
+                    xforce += c * dot(Pe.T, dloadx)
 
             if step_type == GENERAL:
                 # UPDATE THE RESIDUAL
-                iforce +=  J * self.gaussw[p] * dot(s, B)
+                eresid +=  J * self.gaussw[p] * dot(s, B)
 
         if cflag == LP_OUTPUT:
             return
@@ -292,7 +310,7 @@ class CSDIsoParametricElement(Element):
 
         if step_type in (GENERAL, DYNAMIC) and compute_force:
             # SUBTRACT RESIDUAL FROM INTERNAL FORCE
-            rhs = xforce - iforce
+            rhs = xforce - eresid
 
         else:
             rhs = xforce
@@ -337,7 +355,11 @@ class CSDIsoParametricElement(Element):
             # FORM GAUSS POINT ON SPECIFIC EDGE
             Ne = self.shape(xi, edge=edge)
             Pe = self.pmatrix(Ne)
-            Fe += Jac(xi) * gw[p] * dot(Pe.T, qe)
+            c = Jac(xi) * gw[p]
+            if self.axisymmetric == 1:
+                rp = dot(Ne, self.xc[:,0])
+                c *= rp
+            Fe += c * dot(Pe.T, qe)
 
         return Fe
 
@@ -354,11 +376,11 @@ class CSDIsoParametricElement(Element):
             dNdxi = self.shapegrad(xi)
 
             # JACOBIAN TO NATURAL COORDINATES
-            N = self.shape(xi)
+            Ne = self.shape(xi)
             dxdxi = dot(dNdxi, xc)
             dxidx = inv(dxdxi)
             dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx, N, xi)
+            B = self.bmatrix(dNdx, Ne, xi)
             J = det(dxdxi)
 
             # HOURGLASS BASE VECTORS
@@ -398,7 +420,7 @@ class CSDIsoParametricElement(Element):
         xc = self.xc
 
         # SHAPE FUNCTION AND GRADIENT
-        N = self.shape(xi)
+        Ne = self.shape(xi)
 
         # SHAPE FUNCTION DERIVATIVE AT GAUSS POINTS
         dNdxi = self.shapegrad(xi)
@@ -410,7 +432,7 @@ class CSDIsoParametricElement(Element):
 
         # CONVERT SHAPE FUNCTION DERIVATIVES TO DERIVATIVES WRT GLOBAL X
         dNdx = dot(dxidx, dNdxi)
-        B = self.bmatrix(dNdx, N, xi)
+        B = self.bmatrix(dNdx, Ne, xi)
 
         # STRAIN INCREMENT
         de = dot(B, du)
@@ -420,8 +442,8 @@ class CSDIsoParametricElement(Element):
         F = eye(self.ndir+self.nshr)
 
         # PREDEF AND INCREMENT
-        temp = dot(N, predef[0,0])
-        dtemp = dot(N, predef[1,0])
+        temp = dot(Ne, predef[0,0])
+        dtemp = dot(Ne, predef[1,0])
 
         # MATERIAL RESPONSE AT CENTROID
         v = [x[0] for x in self.variables()]
@@ -443,9 +465,9 @@ class CSDIsoParametricElement(Element):
             dxdxi = dot(dNdxi, xc)
             dxidx = inv(dxdxi)
             J = det(dxdxi)
-            N = self.shape(xi)
+            Ne = self.shape(xi)
             dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx, N, xi)
+            B = self.bmatrix(dNdx, Ne, xi)
             Ksri += J * w * dot(dot(B.T, D1), B)
 
         return Ksri

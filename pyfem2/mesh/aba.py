@@ -5,7 +5,9 @@ def ElementType(name):
     name = name.upper()
     if name == 'CPE4':
         return elemlib.PlaneStrainQuad4
-    if name == 'CPE4R':
+    elif name == 'CAX4':
+        return elemlib.AxiSymmetricQuad4
+    elif name == 'CPE4R':
         return elemlib.PlaneStrainQuad4Reduced
     elif name in ('CPS4', 'CPS4R'):
         return elemlib.PlaneStressQuad4

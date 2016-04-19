@@ -8,6 +8,8 @@ X, Y, Z = 0, 1, 2  # DISPLACEMENTS
 TX, TY, TZ = 3, 4, 5  # ROTATIONS
 T = 6  # TEMPERATURE
 
+Rr, Zr = 0, 1  # DISPLACEMENTS
+
 # BOUNDARY LABELS
 ALL = '_All'
 PIN = '_Pin'
@@ -17,6 +19,10 @@ KLO, KHI = '_Klo', '_Khi'
 BOUNDARY = '_Boundary'
 NEUMANN = 'Neumann'
 DIRICHLET = 'Dirichlet'
+
+# RADIAL
+RLO, RHI = '_Ilo', '_Ihi'
+ZLO, ZHI = '_Jlo', '_Jhi'
 
 # EDGES
 S1, S2, S3, S4, S5, S6, S7, S8, S9, S10 = range(10)

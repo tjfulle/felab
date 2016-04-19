@@ -101,7 +101,7 @@ class FiniteElementModel(object):
         """
         self.mesh = VTKMesh(filename=filename)
 
-    def RectilinearMesh(self, nx=1, ny=1, lx=1, ly=1):
+    def RectilinearMesh(self, nx=1, ny=1, lx=1, ly=1, shift=None):
         """
         Generates a rectilinear 2D finite element mesh.
 
@@ -110,9 +110,9 @@ class FiniteElementModel(object):
         pyfem2.mesh._mesh.RectilinearMesh2D
 
         """
-        self.mesh = RectilinearMesh2D(nx=nx, ny=ny, lx=lx, ly=ly)
+        self.mesh = RectilinearMesh2D(nx=nx, ny=ny, lx=lx, ly=ly, shift=shift)
 
-    def UnitSquareMesh(self, nx=1, ny=1):
+    def UnitSquareMesh(self, nx=1, ny=1, shift=None):
         """
         Generates a rectilinear 2D finite element mesh.
 
@@ -121,7 +121,7 @@ class FiniteElementModel(object):
         pyfem2.mesh._mesh.UnitSquareMesh
 
         """
-        self.mesh = UnitSquareMesh(nx=nx, ny=ny)
+        self.mesh = UnitSquareMesh(nx=nx, ny=ny, shift=shift)
 
     def Mesh(self, **kwds):
         """

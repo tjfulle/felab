@@ -1,6 +1,7 @@
 __all__ = ['PlaneStrainTria3', 'PlaneStressTria3',
            'PlaneStrainQuad4BBar', 'PlaneStrainQuad4', 'PlaneStrainQuad4Reduced',
            'PlaneStrainQuad4SelectiveReduced', 'PlaneStressQuad4',
+           'AxiSymmetricQuad4',
            'PlaneStressQuad4Incompat', 'PlaneStrainQuad8BBar',
            'PlaneStrainQuad8', 'PlaneStrainQuad8Reduced', 'PlaneStressQuad8',
            'CSDIsoParametricElement', 'IsoPElement']

@@ -338,8 +338,11 @@ class Mesh(object):
         if not is_listlike(region):
             raise UserInputError('Unrecognized surface: {0}'.format(region))
         surface = []
+        region = asarray(region)
+        if region.ndim == 1:
+            region = region[newaxis,:]
         for item in region:
-            elem, edge = item
+            elem, edge = [int(x) for x in item]
             if is_listlike(elem):
                 surface.extend([(self.elemap[e], edge) for e in elem])
             else:
@@ -636,7 +639,7 @@ def VTKMesh(filename):
         raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
     return Mesh(filename=filename)
 
-def RectilinearMesh2D(nx=1, ny=1, lx=1, ly=1):
+def RectilinearMesh2D(nx=1, ny=1, lx=1, ly=1, shift=None):
     """
     Generates a rectilinear 2D finite element mesh.
 
@@ -654,10 +657,10 @@ def RectilinearMesh2D(nx=1, ny=1, lx=1, ly=1):
     Mesh object
 
     """
-    nodtab, eletab = GenRectilinearMesh2D((nx, ny), (lx, ly))
+    nodtab, eletab = GenRectilinearMesh2D((nx, ny), (lx, ly), shift=shift)
     return Mesh(nodtab=nodtab, eletab=eletab)
 
-def UnitSquareMesh(nx=1, ny=1):
+def UnitSquareMesh(nx=1, ny=1, shift=None):
     """
     Generates a rectilinear 2D finite element mesh.
 
@@ -677,20 +680,25 @@ def UnitSquareMesh(nx=1, ny=1):
     stores the returned mesh as the ``FiniteElementModel.mesh`` attribute.
 
     """
-    nodtab, eletab = GenRectilinearMesh2D((nx, ny), (1, 1))
+    nodtab, eletab = GenRectilinearMesh2D((nx, ny), (1, 1), shift=shift)
     return Mesh(nodtab=nodtab, eletab=eletab)
 
-def GenRectilinearMesh2D(shape, lengths):
+def GenRectilinearMesh2D(shape, lengths, shift=None):
     nx, ny = shape
     if nx < 1:
         raise UserInputError('Requres at least 1 element in x')
     if ny < 1:
         raise UserInputError('Requres at least 1 element in y')
 
+    if shift is None:
+        shift = zeros(2)
+    else:
+        shift = asarray(shift)
+
     shape = asarray([nx+1,ny+1])
     lx, ly = lengths
-    xpoints = linspace(0, lx, nx+1)
-    ypoints = linspace(0, ly, ny+1)
+    xpoints = linspace(0, lx, nx+1) + shift[0]
+    ypoints = linspace(0, ly, ny+1) + shift[1]
     coord = array([(x, y) for y in ypoints for x in xpoints])
     numnod = prod(shape)
     numele = prod(shape - 1)
