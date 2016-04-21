@@ -9,6 +9,7 @@ class Step(object):
     def __init__(self, model, number, name, previous, period):
         self.model = model
         self.written = 0
+        self.ran = False
         self.name = name
         if previous is None:
             self.start = 0.

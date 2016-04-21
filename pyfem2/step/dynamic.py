@@ -6,17 +6,18 @@ from ._step import SDStep
 
 class DynamicStep(SDStep):
     procedure = DYNAMIC
-    def __init__(self, model, number, name, previous, period, increments, nlgeom):
+    def __init__(self, model, number, name, previous, period, **kwds):
         super(DynamicStep, self).__init__(model, number, name, previous, period)
-        self.nlgeom = nlgeom
-        self.increments = increments
+        for (key, val) in kwds.items():
+            setattr(self, key, val)
 
     # ----------------------------------------------------------------------- #
     # --- RUN --------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def run(self, alpha=.5, beta=0.):
+    def run(self, period=1., increments=10, alpha=.5, beta=0.):
 
-        period, increments = self.period, self.increments
+        period = getattr(self, 'period', period)
+        increments = getattr(self, 'increments', increments)
 
         time = array([0., self.start])
         dtime = period / float(increments)

@@ -6,30 +6,35 @@ from ._step import SDStep
 
 class StaticStep(SDStep):
     procedure = STATIC
-    def __init__(self, model, number, name, previous, period, increments,
-                 maxiters, nlgeom, solver):
+    def __init__(self, model, number, name, previous, period=1., **kwds):
         super(StaticStep, self).__init__(model, number, name, previous, period)
-        self.nlgeom = nlgeom
-        self.solver = solver
-        self.increments = increments
-        self.maxiters = maxiters
+        for (key, val) in kwds.items():
+            setattr(self, key, val)
 
     # ----------------------------------------------------------------------- #
     # --- RUN --------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
     def run(self, **kwargs):
 
-        if self.solver in (NEWTON, ):
-            if self.increments is None:
-                self.increments = 5
+        if self.ran:
+            raise RuntimeError('STEP ALREADY RUN')
 
-        if self.increments is None:
-            return self.direct_solve()
+        solver = kwargs.pop('solver', getattr(self, 'solver', None))
+        increments = kwargs.get('increments', getattr(self, 'increments', None))
 
-        if self.solver in (NEWTON, None):
-            return self.newton_solve(**kwargs)
+        if solver is None and increments:
+            solver = NEWTON
 
-        raise NotImplementedError
+        if solver is None:
+            self.direct_solve()
+
+        elif solver == NEWTON:
+            self.newton_solve(**kwargs)
+
+        else:
+            raise NotImplementedError
+
+        self.ran = True
 
     def direct_solve(self):
 
@@ -68,9 +73,12 @@ class StaticStep(SDStep):
         self.dofs = u
         self.advance(self.period, self.dofs, react=react)
 
-    def newton_solve(self, tolerance=1e-4, relax=1., tolerance1=1e-6):
+    def newton_solve(self, period=1., increments=5, maxiters=20,
+                     tolerance=1e-4, relax=1., tolerance1=1e-6):
 
-        period, increments, maxiters = self.period, self.increments, self.maxiters
+        period = getattr(self, 'period', period)
+        increments = getattr(self, 'increments', increments)
+        maxiters = getattr(self, 'maxiters', maxiters)
 
         # TIME IS:
         # TIME[0]: VALUE OF STEP TIME AT BEGINNING OF INCREMENT

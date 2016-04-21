@@ -52,24 +52,22 @@ class StepRepository(object):
         self[name] = step
         return self.last
 
-    def StaticStep(self, name, period, increments, maxiters, nlgeom, solver):
+    def StaticStep(self, name, period=1., **kwds):
         last = self._values[-1].frames[-1]
         if not last.converged:
             raise RuntimeError('PREVIOUS STEP HAS UNCONVERGED FRAMES')
-        step = StaticStep(self.model, len(self), name, self.last, period,
-                          increments, maxiters, nlgeom, solver)
+        step = StaticStep(self.model, len(self), name, self.last, period, **kwds)
         if copy:
             step.copy_from(self.last)
         step.frames[0].converged = True
         self[name] = step
         return self.last
 
-    def DynamicStep(self, name, period, increments, nlgeom):
+    def DynamicStep(self, name, period=1., **kwds):
         last = self._values[-1].frames[-1]
         if not last.converged:
             raise RuntimeError('PREVIOUS STEP HAS UNCONVERGED FRAMES')
-        step = DynamicStep(self.model, len(self), name, self.last, period,
-                           increments, nlgeom)
+        step = DynamicStep(self.model, len(self), name, self.last, period, **kwds)
         if copy:
             step.copy_from(self.last)
         step.frames[0].converged = True

@@ -39,5 +39,5 @@ for step in F.steps.values():
 xel = max_p[1].label
 x = F.get_elem_coord(xel)
 if not os.getenv('NOGRAPHICS'):
-    print(max_p[0])
+    #print(max_p[0])
     V.Plot2D(deformed=1)

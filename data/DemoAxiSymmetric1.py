@@ -27,8 +27,8 @@ def AxisymmetricRing():
     step.run()
 
     s = step.frames[-1].field_outputs['S']
-    print(s.data[:,:,[0,1,2]])
-    print(s.data[:,:,3])
+    #print(s.data[:,:,[0,1,2]])
+    #print(s.data[:,:,3])
     assert allclose(s.data[:,:,[0,1,2]], -1000.)
     assert allclose(s.data[:,:,3], 0)
 

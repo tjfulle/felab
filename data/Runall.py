@@ -9,7 +9,7 @@ def run_all():
     env['NOGRAPHICS'] = '1'
     failed = []
     for filename in glob.glob(join(d, 'Demo*.py')):
-        proc = Popen(['python', filename], env=env)
+        proc = Popen(['python', filename, '-v', '0'], env=env)
         proc.wait()
         if proc.returncode != 0:
             failed.append(filename)

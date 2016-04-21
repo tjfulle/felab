@@ -634,15 +634,14 @@ class FiniteElementModel(object):
             if any(el.signature[0][:3]):
                 logging.warn('STEP WILL IGNORE DISPLACEMENT DEGREES OF FREEDOM')
 
-    def StaticStep(self, name=None, period=1., increments=None, maxiters=10,
-                   nlgeom=False, solver=None):
+    def StaticStep(self, name=None, period=1., **kwds):
 
         if self.steps is None:
             self.setup()
             self.initialize_steps()
 
         # VALIDATE INPUT
-        self._validate_step1(nlgeom=nlgeom)
+        self._validate_step1(nlgeom=kwds.get('nlgeom',False))
 
         if name is None:
             name = self.unique_step_name()
@@ -650,24 +649,20 @@ class FiniteElementModel(object):
         if name in self.steps:
             raise UserInputError('Duplicate step name {0!r}'.format(name))
 
-        step = self.steps.StaticStep(name, period, increments,
-                                     maxiters, nlgeom, solver)
+        step = self.steps.StaticStep(name, period, **kwds)
         return step
 
-    def DynamicStep(self, name=None, period=None, increments=None, nlgeom=False):
+    def DynamicStep(self, name=None, period=1., **kwds):
 
         if period is None:
             raise UserInputError('DYNAMIC STEP REQUIRES PERIOD')
 
-        if increments is None:
-            raise UserInputError('DYNAMIC STEP REQUIRES INCREMENTS')
-
         if self.steps is None:
             self.setup()
             self.initialize_steps()
 
         # VALIDATE INPUT
-        self._validate_step1(nlgeom=nlgeom, density=True)
+        self._validate_step1(nlgeom=kwds.get('nlgeom'), density=True)
 
         if name is None:
             name = self.unique_step_name()
@@ -675,7 +670,7 @@ class FiniteElementModel(object):
         if name in self.steps:
             raise UserInputError('Duplicate step name {0!r}'.format(name))
 
-        step = self.steps.DynamicStep(name, period, increments, nlgeom)
+        step = self.steps.DynamicStep(name, period, **kwds)
         return step
 
     def HeatTransferStep(self, name=None, period=1.):
