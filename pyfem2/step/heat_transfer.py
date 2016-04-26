@@ -63,15 +63,18 @@ class HeatTransferStep(Step):
     # --- RUN --------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
     def run(self):
+        frame = self.Frame()
         time = array([0., self.start])
         du = zeros(self.model.numdof)
         qe = zeros_like(self.dofs)
         dltyp, dload = self.dload(self.period)
         X = self.dofvals(self.period)
-        K, rhs = self.model.assemble(self.dofs, du, qe, self.svtab, self.svars,
+        K, rhs = self.model.assemble(self.dofs, du, qe, frame.field_outputs,
                                      dltyp, dload, self.predef,
                                      self.procedure, DIRECT, time=time)
         Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, X)
         self.dofs[:] = linsolve(Kbc, Fbc)
         react = dot(K, self.dofs) - rhs
-        self.advance(self.period, self.dofs, react)
+        u, R, temp = self.model.format_dof(self.dofs)
+        RF, M, Q = self.model.format_dof(react)
+        frame.snapshot(self.period, T=temp, Q=Q)

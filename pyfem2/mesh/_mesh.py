@@ -1,10 +1,13 @@
 import os
 from numpy import *
+import logging
 from argparse import ArgumentParser
+from collections import OrderedDict
 
 from ..constants import *
 from ..utilities import is_listlike, UserInputError
 from ..elemlib import ElementFamily
+from ..material import Material
 
 __all__ = ['Mesh', 'UnitSquareMesh', 'RectilinearMesh2D', 'VTKMesh',
            'AbaqusMesh', 'GenesisMesh']
@@ -16,6 +19,16 @@ def is_listlike(a):
 def is_stringlike(s):
     return hasattr(s, 'strip')
 
+class Container(OrderedDict):
+    def __contains__(self, key):
+        return key.lower() in [k.lower() for k in self.keys()]
+    def get(self, key, default=None):
+        K = key.lower()
+        for (k, v) in self.items():
+            if k.lower() == K:
+                return v
+        return default
+
 class ElementBlock:
     def __init__(self, name, id, labels, elefam, elecon):
         self.name = name.upper()
@@ -24,12 +37,21 @@ class ElementBlock:
         self.elefam = elefam
         self.numele = len(labels)
         self.elecon = elecon
+        self.material = None
     @property
     def eletyp(self):
         return self.elefam
     @eletyp.setter
     def eletyp(self, arg):
         self.elefam = arg
+    def set_material(self, material):
+        if self.material is not None:
+            if material == self.material:
+                return None
+            logging.warn('CHANGING MATERIAL MODEL')
+        if not isinstance(material, Material):
+            raise UserInputError('NOT A MATERIAL')
+        self.material = material
 
 class Mesh(object):
     """Class for creating a finite element mesh.
@@ -90,7 +112,12 @@ class Mesh(object):
     >>> mesh = Mesh(p=p, t=t)
 
     """
+    type = 'default'
     def __init__(self, nodtab=None, eletab=None, filename=None, p=None, t=None):
+        self._bndry_nod2 = None
+        self._free_edges = None
+        self.element_blocks = Container()
+
         o1 = nodtab is not None and eletab is not None
         o2 = filename is not None
         o3 = p is not None and t is not None
@@ -116,9 +143,6 @@ class Mesh(object):
         else:
             raise UserInputError('nodtab/eletab or filename required')
 
-        self._bndry_nod2 = None
-        self._free_edges = None
-
     @property
     def unassigned(self):
         return self.num_assigned != self.numele
@@ -139,7 +163,6 @@ class Mesh(object):
         self.surfaces = surfaces or {}
 
         self.eleblx = []
-        self.element_blocks = {}
 
         # maximum number of edges on any one element
         self.maxedge = max([len(ElementFamily(self.dimensions,len(nodes)).edges)
@@ -166,7 +189,8 @@ class Mesh(object):
             self.surfaces[name.upper()] = surf
 
         self.eleblx = eleblx
-        self.element_blocks = dict([(eb.name.upper(), eb) for eb in eleblx])
+        for eb in eleblx:
+            self.element_blocks[eb.name.upper()] = eb
         self.maxedge = max([len(eb.elefam.edges) for eb in eleblx])
         self.num_assigned = self.numele
 
@@ -184,12 +208,13 @@ class Mesh(object):
                        exo.nodesets, exo.elemsets, exo.sidesets)
 
         elif filename.endswith('.inp'):
+            self.type = 'abaqus'
             data = aba.ReadInput(filename)
             nodtab, eletab, nodesets, elemsets, surfaces, eleblx = data
             nodmap, coord, eletab1 = self.parse_nod_and_elem_tables(nodtab, eletab)
             self.init1(nodmap, coord, eletab1)
-            for (name, (et, elems)) in eleblx.items():
-                self.ElementBlock(name, elems)
+            for (name, (et, elems, ebmat)) in eleblx.items():
+                self.ElementBlock(name, elems, material=ebmat)
             for (name, nodes) in nodesets.items():
                 self.NodeSet(name, nodes)
             for (name, elems) in elemsets.items():
@@ -253,7 +278,7 @@ class Mesh(object):
         numnod, maxdim = len(nodtab), 0
         for (inode, noddef) in enumerate(nodtab):
             if noddef[0] in nodmap:
-                raise UserInputError('Duplicate node label: {0}'.format(noddef[0]))
+                raise UserInputError('DUPLICATE NODE LABEL: {0}'.format(noddef[0]))
             nodmap[noddef[0]] = inode
         maxdim = max(maxdim, len(noddef[1:]))
         coord = zeros((numnod, maxdim))
@@ -351,7 +376,7 @@ class Mesh(object):
 
     def find_surface1(self, region):
         if region not in (ILO, IHI):
-            raise UserInputError('Incorrect 1D region')
+            raise UserInputError('INCORRECT 1D REGION')
         if region == ILO:
             node = argmin(self.coord)
         else:
@@ -391,23 +416,23 @@ class Mesh(object):
 
     def NodeSet(self, name, region):
         if not is_stringlike(name):
-            raise UserInputError('Name must be a string')
+            raise UserInputError('NAME MUST BE A STRING')
         self.nodesets[name.upper()] = self.get_internal_node_ids(region)
 
     def Surface(self, name, surface):
         if self.unassigned:
-            raise UserInputError('Mesh element operations require all elements be '
-                                 'assigned to an element block')
+            raise UserInputError('MESH ELEMENT OPERATIONS REQUIRE ALL ELEMENTS BE '
+                                 'ASSIGNED TO AN ELEMENT BLOCK')
         if not is_stringlike(name):
-            raise UserInputError('Name must be a string')
+            raise UserInputError('NAME MUST BE A STRING')
         self.surfaces[name.upper()] = self.find_surface(surface)
 
     def ElementSet(self, name, region):
         if self.unassigned:
-            raise UserInputError('Mesh element operations require all elements be '
-                                 'assigned to an element block')
+            raise UserInputError('MESH ELEMENT OPERATIONS REQUIRE ALL ELEMENTS BE '
+                                 'ASSIGNED TO AN ELEMENT BLOCK')
         if not is_stringlike(name):
-            raise UserInputError('Name must be a string')
+            raise UserInputError('NAME MUST BE A STRING')
         if region == ALL:
             ielems = range(self.numele)
         else:
@@ -416,10 +441,10 @@ class Mesh(object):
             ielems = [self.elemap[el] for el in region]
         self.elemsets[name.upper()] = array(ielems, dtype=int)
 
-    def ElementBlock(self, name, elements):
+    def ElementBlock(self, name, elements, material=None):
 
-        if name.upper() in self.element_blocks:
-            raise UserInputError('{0!r} already an element block'.format(name))
+        if name in self.element_blocks:
+            raise UserInputError('{0!r} ALREADY AN ELEMENT BLOCK'.format(name))
         if elements == ALL:
             xelems = sorted(self.elemap.keys())
         else:
@@ -428,7 +453,7 @@ class Mesh(object):
             xelems = elements
 
         if not self.unassigned:
-            raise UserInputError('All elements have been assigned')
+            raise UserInputError('ALL ELEMENTS HAVE BEEN ASSIGNED')
 
         # Elements are numbered in the order the appear in element blocks,
         # we need to map from the temporary internal numbers
@@ -447,8 +472,8 @@ class Mesh(object):
             blkcon.append(elenod)
         if badel:
             badel = ',\n   '.join(str(e) for e in badel)
-            raise UserInputError('The following elements have inconsistent element '
-                                 'connectivity:\n   {0}'.format(badel))
+            raise UserInputError('THE FOLLOWING ELEMENTS HAVE INCONSISTENT ELEMENT '
+                                 'CONNECTIVITY:\n   {0}'.format(badel))
         blkcon = array(blkcon, dtype=int)
         elefam = ElementFamily(self.dimensions, blkcon.shape[1])
         blk = ElementBlock(name, len(self.eleblx)+1, xelems, elefam, blkcon)
@@ -456,6 +481,9 @@ class Mesh(object):
         self.element_blocks[blk.name] = blk
         self.num_assigned += len(ielems)
         self.maxedge = max(self.maxedge, len(elefam.edges))
+
+        if material is not None:
+            blk.set_material(material)
         return blk
 
     def to_genesis(self, filename):
@@ -686,9 +714,9 @@ def UnitSquareMesh(nx=1, ny=1, shift=None):
 def GenRectilinearMesh2D(shape, lengths, shift=None):
     nx, ny = shape
     if nx < 1:
-        raise UserInputError('Requres at least 1 element in x')
+        raise UserInputError('REQURES AT LEAST 1 ELEMENT IN X')
     if ny < 1:
-        raise UserInputError('Requres at least 1 element in y')
+        raise UserInputError('REQURES AT LEAST 1 ELEMENT IN Y')
 
     if shift is None:
         shift = zeros(2)
@@ -761,40 +789,40 @@ def INP2Genesis(filename):
         if line.startswith('*'):
             name = None
             line = line.split(',')
-            kw = line[0][1:].lower()
+            kw = line[0][1:].upper()
             opts = {}
             for opt in line[1:]:
                 k, v = opt.split('=')
-                opts[k.strip().lower()] = v.strip()
-            if kw != 'element':
+                opts[k.strip().upper()] = v.strip()
+            if kw != 'ELEMENT':
                 name = None
-            if kw == 'element':
-                name = opts.get('elset')
+            if kw == 'ELEMENT':
+                name = opts.get('ELSET')
                 if name is None:
-                    raise UserInputError('requires elements be put in elset')
+                    raise UserInputError('REQUIRES ELEMENTS BE PUT IN ELSET')
                 eleblx[name.upper()] = []
-            elif kw == 'nset':
-                name = opts['nset']
+            elif kw == 'NSET':
+                name = opts['NSET']
                 nodesets[name.upper()] = []
-            elif kw == 'elset':
+            elif kw == 'ELSET':
                 elemsets[name.upper()] = []
             continue
         if kw is None:
             continue
-        if kw == 'node':
+        if kw == 'NODE':
             line = line.split(',')
             nodtab.append([int(line[0])] + [float(x) for x in line[1:]])
             continue
-        elif kw == 'element':
+        elif kw == 'ELEMENT':
             eledef = [int(n) for n in line.split(',')]
             eletab.append(eledef)
             eleblx[name].append(eledef[0])
             continue
-        elif kw == 'nset':
+        elif kw == 'NSET':
             nodesets[name.upper()].extend([int(n) for n in line.split(',')
                                            if n.split()])
             continue
-        elif kw == 'elset':
+        elif kw == 'ELSET':
             elemsets[name.upper()].extend([int(n) for n in line.split(',')
                                            if n.split()])
             continue

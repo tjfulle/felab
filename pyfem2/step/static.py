@@ -7,29 +7,39 @@ from ._step import SDStep
 class StaticStep(SDStep):
     procedure = STATIC
     def __init__(self, model, number, name, previous, period=1., **kwds):
+
         super(StaticStep, self).__init__(model, number, name, previous, period)
-        for (key, val) in kwds.items():
-            setattr(self, key, val)
+
+        self.solver = kwds.pop('solver', DEFAULT)
+
+        if self.solver == NEWTON:
+            self.increments = kwds.pop('increments', 5)
+            self.maxiters = kwds.pop('maxiters', 20)
+            self.tolerance = kwds.pop('tolerance', 1e-4)
+            self.relax = kwds.pop('relax', 1.)
+            self.tolerance1 = kwds.pop('tolerance1', 1e-6)
+
+        if self.solver not in (DEFAULT, NEWTON):
+            raise TypeError('UNKNOWN STATIC SOLVER {0!r}'.format(self.solver))
+
+        if kwds:
+            keys = ', '.join([x for x in kwds.keys()])
+            raise TypeError('UNKNOWN KEYWORDS FOR STATIC SOLVER {0!r}: '
+                            '{1}'.format(self.solver, keys))
 
     # ----------------------------------------------------------------------- #
     # --- RUN --------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def run(self, **kwargs):
+    def run(self):
 
         if self.ran:
             raise RuntimeError('STEP ALREADY RUN')
 
-        solver = kwargs.pop('solver', getattr(self, 'solver', None))
-        increments = kwargs.get('increments', getattr(self, 'increments', None))
-
-        if solver is None and increments:
-            solver = NEWTON
-
-        if solver is None:
+        if self.solver == DEFAULT:
             self.direct_solve()
 
-        elif solver == NEWTON:
-            self.newton_solve(**kwargs)
+        elif self.solver == NEWTON:
+            self.newton_solve()
 
         else:
             raise NotImplementedError
@@ -38,6 +48,7 @@ class StaticStep(SDStep):
 
     def direct_solve(self):
 
+        frame = self.Frame()
         time = array([0., self.start])
 
         # CONCENTRATED FORCES
@@ -48,7 +59,7 @@ class StaticStep(SDStep):
         # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
         u = zeros_like(self.dofs)
         K, rhs = self.model.assemble(
-            self.dofs, u, Qf, self.svtab, self.svars, dltyp, dload,
+            self.dofs, u, Qf, frame.field_outputs, dltyp, dload,
             self.predef, self.procedure, DIRECT, cflag=STIFF_AND_RHS, time=time)
 
         # ENFORCE BOUNDARY CONDITIONS
@@ -67,18 +78,22 @@ class StaticStep(SDStep):
         # ASSEMBLE AGAIN - ONLY TO UPDATE STRESS IN ELEMENTS TO COMPUTED
         # DISPLACEMENT
         self.model.assemble(
-            self.dofs, u, Qf, self.svtab, self.svars, dltyp, dload,
+            self.dofs, u, Qf, frame.field_outputs, dltyp, dload,
             self.predef, self.procedure, DIRECT, cflag=LP_OUTPUT)
 
         self.dofs = u
-        self.advance(self.period, self.dofs, react=react)
+        u, R, temp = self.model.format_dof(self.dofs)
+        RF, M, Q = self.model.format_dof(react)
+        frame.snapshot(self.period, U=u, R=R, T=temp, RF=RF, Q=Q, M=M)
 
-    def newton_solve(self, period=1., increments=5, maxiters=20,
-                     tolerance=1e-4, relax=1., tolerance1=1e-6):
+    def newton_solve(self):
 
-        period = getattr(self, 'period', period)
-        increments = getattr(self, 'increments', increments)
-        maxiters = getattr(self, 'maxiters', maxiters)
+        period = self.period
+        increments = self.increments
+        maxiters = self.maxiters
+        tolerance = self.tolerance
+        relax = self.relax
+        tolerance1 = self.tolerance1
 
         # TIME IS:
         # TIME[0]: VALUE OF STEP TIME AT BEGINNING OF INCREMENT
@@ -91,6 +106,8 @@ class StaticStep(SDStep):
 
         for iframe in range(increments):
 
+            frame = self.Frame()
+
             # GET LOADS AND PRESCRIBED DISPLACEMENTS
             Q = self.cload(time[0]+dtime)
             X = self.dofvals(time[0]+dtime)
@@ -102,7 +119,7 @@ class StaticStep(SDStep):
             for nit in range(maxit2):
 
                 K, rhs = self.model.assemble(
-                    self.dofs, u, Q, self.svtab, self.svars, dltyp, dload,
+                    self.dofs, u, Q, frame.field_outputs, dltyp, dload,
                     self.predef, self.procedure, GENERAL, cflag=STIFF_AND_RHS,
                     time=time, istep=self.number, iframe=iframe+1, ninc=nit+1)
 
@@ -116,9 +133,10 @@ class StaticStep(SDStep):
                 u += relax * w
 
                 # --- CHECK CONVERGENCE
+                norm = lambda x_: sqrt(dot(x_, x_))
                 err1 = sqrt(dot(w, w))
                 dnom = sqrt(dot(u, u))
-                if dnom > 1e-8:
+                if dnom > 1e-12:
                     err1 /= dnom
                 err2 = sqrt(dot(rhs, rhs)) / float(self.model.numdof)
 
@@ -145,6 +163,7 @@ class StaticStep(SDStep):
                           'COMPLETE.'.format(self.number, iframe+1))
             time += dtime
             self.dofs += u
-            self.advance(dtime, self.dofs)
+            u, R, temp = self.model.format_dof(self.dofs)
+            frame.snapshot(dtime, U=u, T=temp)
 
         return

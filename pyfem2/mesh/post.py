@@ -104,6 +104,18 @@ class Frame(object):
 
         return field
 
+    def TensorField(self, name, position, labels, ndir, nshr,
+                    eleblk=None, ngauss=None,  elements=None, data=None):
+        field = TensorField(name, position, labels, ndir, nshr,
+                            eleblk=eleblk, ngauss=ngauss,
+                            elements=elements, data=data)
+
+        if field.eleblk is not None:
+            name = (field.eleblk, name)
+        self.field_outputs[name] = field
+
+        return field
+
     def VectorField(self, name, position, labels, ncomp, eleblk=None,
                     ngauss=None, elements=None, data=None):
 

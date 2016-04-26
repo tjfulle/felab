@@ -63,6 +63,12 @@ def sortexoname(key):
         return (key[:-2], 5)
     elif s.endswith('xz'):
         return (key[:-2], 6)
+    elif s.endswith('yx'):
+        return (key[:-2], 7)
+    elif s.endswith('zy'):
+        return (key[:-2], 8)
+    elif s.endswith('zx'):
+        return (key[:-2], 9)
     elif s.endswith('x'):
         return ord(key[0]), 0
     elif s.endswith('y'):
@@ -641,7 +647,7 @@ class EXOFileReader(EXOFile):
                 ss_sides = self.fh.variables[VAR_SIDE_SS(iss+1)][:] - 1
                 sidesets[name] = list(zip(ss_elems, ss_sides))
 
-        # Save information read to self
+        # SAVE INFORMATION READ TO SELF
         self.nodmap = nodmap
         self.coord = coord
         self.elemap = elemap
@@ -666,8 +672,9 @@ class EXOFileReader(EXOFile):
     def parse_names_and_components(self, names):
         scalars, tensors, vectors = [], {}, {}
         for (i, name) in enumerate(names):
-            if name.lower().endswith(('xx', 'yy', 'zz', 'xy', 'yz', 'xz')):
-                # Could be a tensor quantity
+            exts = ('xx', 'yy', 'zz', 'xy', 'yz', 'xz', 'yx', 'zy', 'zx')
+            if name.lower().endswith(exts):
+                # COULD BE A TENSOR QUANTITY
                 key, c = name[:-2], name[-2:]
                 tensors.setdefault(key.rstrip('_'), []).append((i, c))
             elif name.lower().endswith(('x', 'y', 'z')):
@@ -681,12 +688,18 @@ class EXOFileReader(EXOFile):
             return {'xx':0, 'yy':1, 'zz':2, 'xy':3, 'yz':4, 'xz':5}[a[1].lower()]
         def key2(a):
             return {'x':0, 'y':1, 'z':2}[a[1].lower()]
+        def key3(a):
+            return {'xx':0, 'xy':1, 'xz':2,
+                    'yx':3, 'yy':4, 'yz':5,
+                    'zx':6, 'zy':7, 'zz':8}[a[1].lower()]
         for (key, val) in tensors.items():
             if len(val) == 1:
                 i = val[0][0]
                 scalars.append((i, names[i]))
+            elif 'yx' in [x[1].lower() for x in val]:
+                tensors[key] = (1,sorted(val, key=key3))
             else:
-                tensors[key] = sorted(val, key=key1)
+                tensors[key] = (0,sorted(val, key=key1))
         for (key, val) in vectors.items():
             if len(val) == 1:
                 i = val[0][0]
@@ -732,23 +745,33 @@ class EXOFileReader(EXOFile):
         for (name, item) in vectors1.items():
             if name == 'displ': name = 'U'
             frame.VectorField(name, NODE, node_labels, self.numdim)
-        for (name, item) in tensors1.items():
-            ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
-            frame.SymmetricTensorField(name, NODE, node_labels, ndir, nshr)
+        for (name, (x,item)) in tensors1.items():
+            if not x:
+                ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
+                frame.SymmetricTensorField(name, NODE, node_labels, ndir, nshr)
+            else:
+                raise NotImplementedError
 
         # ELEMENT DATA
         for (ieb, eb) in enumerate(self.eleblx):
             elems = [eb.elefam] * len(eb.labels)
             for (i, name) in scalars2:
-                frame.ScalarField(name, ELEMENT_CENTROID, eb.labels, eb.name)
+                frame.ScalarField(name, ELEMENT_CENTROID, eb.labels, eb.name,
+                                  elements=elems)
             for (name, item) in vectors2.items():
-                frame.VectorField(name, ELEMENT_CENTROID,
-                                  eb.labels, self.numdim, eb.name)
-            for (name, item) in tensors2.items():
-                ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
-                frame.SymmetricTensorField(name, ELEMENT_CENTROID, eb.labels,
-                                           ndir, nshr, eleblk=eb.name,
-                                           elements=elems)
+                frame.VectorField(name, ELEMENT_CENTROID, eb.labels, self.numdim,
+                                  eb.name, elements=elems)
+            for (name, (x,item)) in tensors2.items():
+                if not x:
+                    ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
+                    frame.SymmetricTensorField(name, ELEMENT_CENTROID, eb.labels,
+                                               ndir, nshr, eleblk=eb.name,
+                                               elements=elems)
+                else:
+                    ndir, nshr = {4:(2,2), 5:(3,1), 9:(3,3)}[len(item)]
+                    frame.TensorField(name, ELEMENT_CENTROID, eb.labels,
+                                      ndir, nshr, eleblk=eb.name,
+                                               elements=elems)
 
         for (count, time) in enumerate(times):
             if count > 0:
@@ -783,13 +806,15 @@ class EXOFileReader(EXOFile):
                         d.append(self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count])
                     d = column_stack(d)
                     frame.field_outputs[eb.name,name].add_data(d)
-                for (name, item) in tensors2.items():
+                for (name, (x,item)) in tensors2.items():
                     d = []
                     for (i, comp) in item:
                         d.append(self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count])
                     d = column_stack(d)
-                    ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
+                    #ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
                     frame.field_outputs[eb.name,name].add_data(d)
+
+            frame.field_outputs.advance()
 
         return self.steps
 

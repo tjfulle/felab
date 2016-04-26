@@ -4,9 +4,11 @@ from collections import OrderedDict
 
 from ..utilities import *
 
-__all__ = ['FieldOutputs', 'ScalarField', 'VectorField', 'SymmetricTensorField']
+__all__ = ['FieldOutputs', 'ScalarField', 'VectorField',
+           'SymmetricTensorField', 'TensorField']
 
 class FieldOutputs(OrderedDict):
+
     def __getitem__(self, key):
         try:
             return super(FieldOutputs, self).__getitem__(key)
@@ -24,6 +26,21 @@ class FieldOutputs(OrderedDict):
             a = row_stack((a, self[k]))
         return a
 
+    def subset(self, eleblk, xel):
+        data = {}
+        for k in self.keys():
+            if is_listlike(k) and k[0].upper() == eleblk.upper():
+                # ELEMENT BLOCK PROPERTY
+                fo = self[k]
+                data[k[1], 0] = fo.data[fo.map[xel]]
+                data[k[1], 1] = fo.data2[fo.map[xel]]
+        return data
+
+    def advance(self):
+        for (key, fo) in self.items():
+            if isinstance(fo, FieldOutput):
+                fo.advance()
+
 class FieldOutput(object):
 
     def __init__(self, name, position, labels, type, components, shape, eleblk,
@@ -31,6 +48,7 @@ class FieldOutput(object):
         self.name = name
         self.position = position
         self.labels = labels
+        self.map = dict(zip(labels, range(len(labels))))
         self.type = type
         self.components = components
         self.key = 'displ' if name == 'U' else name
@@ -40,8 +58,11 @@ class FieldOutput(object):
             self.keys = [self.key+x for x in components]
         else:
             self.keys = [self.key]
+        assert shape[0] == len(labels)
         self.shape = shape
         self.data = zeros(self.shape)
+        self.data2 = zeros(self.shape)
+        self._x = None
 
         if data is not None:
             idata = asarray(data)
@@ -54,28 +75,34 @@ class FieldOutput(object):
         reqels = position in (ELEMENT_CENTROID,INTEGRATION_POINT)
         if reqels:
             if elements is None:
-                raise TypeError('Expected elements to be passed')
+                raise TypeError('EXPECTED ELEMENTS TO BE PASSED')
         else:
             if elements is not None:
-                raise TypeError('Field position not element based')
+                raise TypeError('FIELD POSITION NOT ELEMENT BASED')
 
     def __getitem__(self, i):
         return self.data[i]
 
+    def advance(self):
+        self.data[:] = self.data2.copy()
+
     def add_data(self, data, ix=None):
         if self.data is None:
-            self.data = zeros(self.shape)
+            self.data2 = zeros(self.shape)
         if not is_listlike(data):
-            data = ones_like(self.data) * data
+            data = ones_like(self.data2) * data
         else:
             data = asarray(data)
         if ix is not None:
-            self.data[ix] = data
+            self.data2[ix] = data
         else:
-            assert data.size == self.data.size
-            self.data[:] = reshape(data, self.data.shape)
+            assert data.size == self.data2.size
+            self.data2[:] = reshape(data, self.data2.shape)
 
-    def get_data(self, position=None):
+    def get_data(self, position=None, label=None):
+
+        if label is not None:
+            return self.data[self.map[label]]
 
         if position is None:
             return self.data

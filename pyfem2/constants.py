@@ -36,6 +36,7 @@ SYMTENSOR = 'Symmetric Tensor'
 TENSOR = 'Tensor'
 
 # SOLVERS
+DEFAULT = 'Default'
 NEWTON = 'Newton'
 RIKS = 'Riks'
 

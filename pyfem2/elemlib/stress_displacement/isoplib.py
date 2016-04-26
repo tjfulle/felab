@@ -21,7 +21,7 @@ class CSDIsoParametricElement(Element):
         variables = (('V', SYMTENSOR), ('R', TENSOR), ('E', SYMTENSOR),
                      ('S', SYMTENSOR), ('D', SYMTENSOR))
         variables = (('E', SYMTENSOR), ('DE', SYMTENSOR), ('S', SYMTENSOR),
-                     ('V', SYMTENSOR, 1))
+                     ('V', SYMTENSOR, 1), ('R', TENSOR))
         return variables
 
     def shape(self, *args):
@@ -51,14 +51,9 @@ class CSDIsoParametricElement(Element):
         return P
 
     @classmethod
-    def interpolate_to_centroid(cls, data, index=None):
+    def interpolate_to_centroid(cls, data):
         """Inverse distance weighted average of integration point data at the
         element centroid"""
-        if index is not None:
-            ntens = cls.ndir + cls.nshr
-            m = len(cls.variables()) * ntens
-            data = row_stack([data[(m*p)+index*ntens:(m*p)+(index+1)*ntens]
-                              for p in range(cls.integration)])
         return cls.average(cls.cp, data)
 
     @classmethod
@@ -155,66 +150,82 @@ class CSDIsoParametricElement(Element):
 
             # CONVERT SHAPE FUNCTION DERIVATIVES TO DERIVATIVES WRT GLOBAL X
             dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx, Ne, xi)
-
-            # STRAIN INCREMENT
-            de = dot(B, du)
-
-            # VELOCITY GRADIENT
-            # L_ij = dv_i / dx_j = d(du_i/dtime) / dx_j
-            #      = du_iI dN_I / dx_j * 1 / dtime
-            L = zeros((3, 3))
-            L1 = dot(dNdx, du.reshape(-1,self.dimensions))
-            L[:self.dimensions,:self.dimensions] = L1 / dtime
-
-            # SYMMETRIC AND DEVIATORIC PARTS -> NEEDED FOR FINITE ROTATIONS
-            D = .5 * (L + L.T)
-            W = L - D
-
-            V = eye(3)
-            I3x3 = eye(3)
-            R = eye(3)
-
-            z = -2 * axialv(dot(V, D))
-            w = -2. * axialv(W)
-            _w_ = w - 2. * dot(inv(V - trace(V) * I3x3), z)
-            _W_ = -.5 * axialt(_w_)
-
-            # UPDATE THE ROTATION
-            A = I3x3 - _W_ * dtime / 2.
-            RHS = dot(I3x3 + _W_ * dtime / 2., R)
-
-            # UPDATED ROTATION
-            R = dot(inv(A), RHS)
-
-            # RATE OF STRETCH
-            Vdot = dot((D + W), V) - dot(V, _W_)
-            V += Vdot * dtime
-
-            # UNROTATE DEFORMATION RATE
-            d = dot(R.T, dot(D, R))
-
-            # UNROTATE CAUCHY STRESS
-            #T = asmatrix(self.data[0, intpt, STRESS:STRESS+NSYMM])
-            #sig = dot(R.T, dot(T, R))
-
-            # CONVERT QUANTITIES TO ARRAYS THAT WILL BE PASSED TO MATERIAL MODEL
-            d = asvec(d, self.ndir, self.nshr)
-            #de = d*dtime*array([1.,1.,1.,2.])
-            #sig = asvec(sig)
-
-            # SET DEFORMATION GRADIENT TO THE IDENTITY
-            F0 = eye(self.ndir+self.nshr)
-            F = eye(self.ndir+self.nshr)
 
             # PREDEF AND INCREMENT
             temp = dot(Ne, predef[0,0])
             dtemp = dot(Ne, predef[1,0])
 
-            # MATERIAL RESPONSE
             xv = zeros(1)
-            e = svars[0,ij+a1*ntens:ij+(a1+1)*ntens]
-            s = svars[0,ij+a3*ntens:ij+(a3+1)*ntens]
+            if not nlgeom:
+                # SMALL STRAIN
+                B = self.bmatrix(dNdx, Ne, xi)
+
+                # STRAIN INCREMENT
+                de = dot(B, du)
+
+                # SET DEFORMATION GRADIENT TO THE IDENTITY
+                F0 = eye(self.ndir+self.nshr)
+                F = eye(self.ndir+self.nshr)
+
+                # MATERIAL RESPONSE
+                e = svars['E', 0][p]
+                s = svars['S', 0][p]
+
+            else:
+                # NONLINEAR GEOMETRY
+                # DETERMINE THE DEFORMATION GRADIENT
+
+                # VELOCITY GRADIENT
+                # L_ij = dv_i / dx_j = d(du_i/dtime) / dx_j
+                #      = du_iI dN_I / dx_j * 1 / dtime
+                L = zeros((3, 3))
+                L1 = dot(dNdx, du.reshape(-1,self.dimensions))
+                L[:self.dimensions,:self.dimensions] = L1 / dtime
+
+                # SYMMETRIC AND DEVIATORIC PARTS -> NEEDED FOR FINITE ROTATIONS
+                D = .5 * (L + L.T)
+                W = L - D
+
+                V = svars['V', 0][p]
+                V = eye(3)
+                I3x3 = eye(3)
+                R = eye(3)
+
+                z = -2 * axialv(dot(V, D))
+                w = -2. * axialv(W)
+                _w_ = w - 2. * dot(inv(V - trace(V) * I3x3), z)
+                _W_ = -.5 * axialt(_w_)
+
+                # UPDATE THE ROTATION
+                A = I3x3 - _W_ * dtime / 2.
+                RHS = dot(I3x3 + _W_ * dtime / 2., R)
+
+                # UPDATED ROTATION
+                R = dot(inv(A), RHS)
+
+                # RATE OF STRETCH
+                Vdot = dot((D + W), V) - dot(V, _W_)
+                V += Vdot * dtime
+
+                # DEFORMATION GRADIENT
+                F = dot(V, R)
+
+                # UNROTATE DEFORMATION RATE
+                d = dot(R.T, dot(D, R))
+
+                # MATERIAL RESPONSE
+                e = svars['E', 0][p]
+                s = svars['S', 0][p]
+
+                # UNROTATE CAUCHY STRESS
+                T = asmatrix(s)
+                s = dot(R.T, dot(T, R))
+
+                # CONVERT QUANTITIES TO ARRAYS THAT WILL BE PASSED TO MATERIAL MODEL
+                d = asvec(d, self.ndir, self.nshr)
+                de = d * dtime * voight(self.ndir, self.nshr)
+                sig = asvec(sig, self.ndir, self.nshr)
+
             s, xv, D = self.material.response(
                 s, xv, e, de, time, dtime, temp, dtemp, None, None,
                 self.ndir, self.nshr, self.ndir+self.nshr, xc, F0, F,
@@ -228,9 +239,9 @@ class CSDIsoParametricElement(Element):
             #E = .5 * (dot(F.T, F) - I3x3)
 
             # STORE THE UPDATED VARIABLES
-            svars[1,ij+a1*ntens:ij+(a1+1)*ntens] += de  # STRAIN
-            svars[1,ij+a2*ntens:ij+(a2+1)*ntens] = de  # STRAIN INCREMENT
-            svars[1,ij+a3*ntens:ij+(a3+1)*ntens] = s  # STRESS
+            svars['E', 1][p] = svars['E', 0][p] + de
+            svars['DE',1][p] = de
+            svars['S', 1][p] = s
 
             if compute_stiff:
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
@@ -448,8 +459,8 @@ class CSDIsoParametricElement(Element):
         # MATERIAL RESPONSE AT CENTROID
         v = [x[0] for x in self.variables()]
         a1, a2, a3 = [v.index(x) for x in ('E', 'DE', 'S')]
-        e = self.interpolate_to_centroid(svars[0], index=a1)
-        s = self.interpolate_to_centroid(svars[0], index=a3)
+        e = self.interpolate_to_centroid(svars['E', 0])
+        s = self.interpolate_to_centroid(svars['S', 0])
         xv = zeros(1)
         s, xv, D = self.material.response(
             s, xv, e, de, time, dtime, temp, dtemp, None, None,

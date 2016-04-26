@@ -212,3 +212,8 @@ def asvec(t, ndir=3, nshr=3):
     a[:ndir] = diag(t)[:ndir]
     a[ndir:ndir+nshr] = [t[0,1], t[1,2], t[0,2]][:nshr]
     return a
+
+def voight(ndir, nshr):
+    a = [1.] * ndir
+    b = [2.] * nshr
+    return array(a + b)

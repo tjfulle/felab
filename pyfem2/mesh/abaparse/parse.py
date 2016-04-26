@@ -420,6 +420,13 @@ class Keyword(object):
                 o[-1] = o[-1][:-1]
         return '\n'.join(o)
 
+    def todict(self):
+        d = {}
+        if self.params:
+            d.update(self.params.todict())
+        d.update({'data': self.data})
+        return {self.key: d}
+
 keywords = []
 
 class AbaqusParser(PLYParser):

@@ -1,4 +1,6 @@
-*Node
+*Heading
+Thick cylinder
+*Node, nset=NAll
       1,           0.,   1.88418496
       2,   1.33231997,   1.33231997
       3,   2.82842708,   2.82842708

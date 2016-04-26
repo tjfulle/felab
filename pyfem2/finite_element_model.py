@@ -209,6 +209,7 @@ class FiniteElementModel(object):
         # NODE DATA
         nd = self.dimensions
         if T in self.active_dof:
+            # HEAT FLUX
             frame.FieldOutput(SCALAR, 'Q', NODE, node_labels)
         frame.FieldOutput(SCALAR, 'T', NODE, node_labels)
         frame.FieldOutput(VECTOR, 'U', NODE, node_labels, ncomp=self.dimensions)
@@ -269,7 +270,7 @@ class FiniteElementModel(object):
         r = zeros((self.numnod, d2))
 
         if T in self.active_dof:
-            temp = zeros(self.numnod)
+            temp = zeros((self.numnod, 1))
         else:
             temp = None
 
@@ -285,7 +286,7 @@ class FiniteElementModel(object):
                         r[n,ri] = dofs[ii]
                         ri += 1
                     else:
-                        temp[n] = dofs[ii]
+                        temp[n,0] = dofs[ii]
                     ix += 1
         return u, r, temp
 
@@ -329,7 +330,7 @@ class FiniteElementModel(object):
         self.exofile.snapshot(step)
         step.written = 1
 
-    def assemble(self, u, du, Q, svtab, svars, dltyp, dload, predef,
+    def assemble(self, u, du, Q, statev, dltyp, dload, predef,
                  procedure, step_type, time=array([0.,0.]), dtime=1., period=1.,
                  istep=1, iframe=1, nlgeom=False, ninc=None,
                  cflag=STIFF_AND_RHS):
@@ -342,10 +343,8 @@ class FiniteElementModel(object):
             Value of DOFs at beginning of step and increment, respectively.
         Q : ndarray
             Force array due to Neumann boundary condtions
-        svtab : ndarray of int
-            svtab[iel] are the indices for state variables for element iel
-        svars : ndarray
-            svtab[:,svtab[iel]] are the state variables for element iel
+        statev : ndarray
+            state variables
         dltyp : ndarray
             Distributed load type specifier
         dload : ndarray
@@ -428,6 +427,7 @@ class FiniteElementModel(object):
 
         # COMPUTE THE ELEMENT STIFFNESS AND SCATTER TO GLOBAL ARRAY
         for (ieb, eb) in enumerate(self.mesh.eleblx):
+
             for (e, xel) in enumerate(eb.labels):
 
                 # ELEMENT STIFFNESS
@@ -435,7 +435,7 @@ class FiniteElementModel(object):
                 el = self.elements[iel]
                 eft = self.eftab[iel]
                 response = el.response(u[eft], du[eft], time, dtime, istep,
-                                       iframe, svars[:,svtab[iel]],
+                                       iframe, statev.subset(eb.name, xel),
                                        dltyp[iel], dload[iel],
                                        predef_i[:,:,el.inodes], procedure, nlgeom,
                                        cflag, step_type)
@@ -458,7 +458,7 @@ class FiniteElementModel(object):
                     rhs[eft] += response
 
         if compute_rhs:
-            rhs += Q
+            rhs[:] = Q + rhs[:]
 
         if compute_mass:
             # LUMPED MASS MATRIX
@@ -752,6 +752,7 @@ class FiniteElementModel(object):
             raise UserInputError('NO SUCH ELEMENT BLOCK {0!r}'.format(blknam))
         blk = self.mesh.element_blocks[blknam.upper()]
         blk.eletyp = eletyp
+        blk.set_material(elemat)
         if eletyp.nodes != blk.elecon.shape[1]:
             raise UserInputError('NODE TYPE NOT CONSISTENT WITH ELEMENT BLOCK')
 
@@ -763,11 +764,20 @@ class FiniteElementModel(object):
                     elefab[key] = [val] * len(blk.labels)
                 else:
                     elefab[key] = val
+        self._initialize_elems_in_block(blknam, **elefab)
 
+    def _initialize_elems_in_blocks(self):
+        for blknam in self.mesh.element_blocks.keys():
+            self._initialize_elems_in_block(blknam)
+
+    def _initialize_elems_in_block(self, blknam, **elefab):
+        blk = self.mesh.element_blocks[blknam.upper()]
         for (i, xel) in enumerate(blk.labels):
             iel = self.mesh.elemap[xel]
             elenod = blk.elecon[i]
             elecoord = self.mesh.coord[elenod]
+            elemat = blk.material
+            eletyp = blk.eletyp
             kwds = {}
             for (key, val) in elefab.items():
                 kwds[key] = val[i]

@@ -6,18 +6,22 @@ from ._step import SDStep
 
 class DynamicStep(SDStep):
     procedure = DYNAMIC
-    def __init__(self, model, number, name, previous, period, **kwds):
+    def __init__(self, model, number, name, previous, period,
+                 increments=10, alpha=.5, beta=0.):
         super(DynamicStep, self).__init__(model, number, name, previous, period)
-        for (key, val) in kwds.items():
-            setattr(self, key, val)
+        self.increments = increments
+        self.alpha = alpha
+        self.beta = beta
 
     # ----------------------------------------------------------------------- #
     # --- RUN --------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def run(self, period=1., increments=10, alpha=.5, beta=0.):
+    def run(self):
 
-        period = getattr(self, 'period', period)
-        increments = getattr(self, 'increments', increments)
+        period = self.period
+        increments = self.increments
+        alpha = self.alpha
+        beta = self.beta
 
         time = array([0., self.start])
         dtime = period / float(increments)
@@ -31,13 +35,16 @@ class DynamicStep(SDStep):
         Q = self.cload(time[0])
         dltyp, dload = self.dload(time[0])
 
+        frame = self.frames[0]
         mass, rhs = self.model.assemble(
-            self.dofs, un[:,0], Q, self.svtab, self.svars, dltyp, dload,
+            self.dofs, un[:,0], Q, frame.field_outputs, dltyp, dload,
             self.predef, self.procedure, GENERAL, cflag=MASS_AND_RHS, time=time)
 
         an[:,0] = rhs / mass
 
         for n in range(increments):
+
+            frame = self.Frame()
 
             # GET LOADS AND PRESCRIBED DISPLACEMENTS
             Q = self.cload(time[0]+dtime)
@@ -45,7 +52,7 @@ class DynamicStep(SDStep):
             dltyp, dload = self.dload(time[0]+dtime)
 
             mass, rhs = self.model.assemble(
-                self.dofs, un[:,0], Q, self.svtab, self.svars, dltyp, dload,
+                self.dofs, un[:,0], Q, frame.field_outputs, dltyp, dload,
                 self.predef, self.procedure, GENERAL, cflag=MASS_AND_RHS,
                 time=time, istep=self.number, iframe=n+1)
 
@@ -72,6 +79,7 @@ class DynamicStep(SDStep):
             #self.vel[:] = vn[:,0]
             #self.accel[:] = an[:,0]
 
-            self.advance(dtime, self.dofs)
+            u, R, temp = self.model.format_dof(self.dofs)
+            frame.snapshot(dtime, U=u)
 
         return

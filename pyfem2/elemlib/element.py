@@ -47,3 +47,24 @@ class Element(object):
     @classmethod
     def variables(cls):
         return None
+
+    def varidx(self, key):
+        return [x[0] for x in self.variables()].index(key)
+
+    def numalloc(self, disp=1):
+        m = 0
+        for v in self.variables():
+            name, vtype = v[:2]
+            if vtype == SCALAR:
+                m += 1
+            elif vtype == VECTOR:
+                m += model.dimensions
+            elif vtype == SYMTENSOR:
+                m += self.ndir + self.nshr
+            elif vtype == TENSOR:
+                m += self.ndir + 2*self.nshr
+            else:
+                raise Exception('UNKNOWN VARIABLE TYPE')
+        if disp and self.integration:
+            m *= self.integration
+        return m

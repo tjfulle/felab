@@ -14,12 +14,12 @@ def mag2(a):
     return array([mag(x) for x in a])
 
 class Container(OrderedDict):
-    def __iter__(self):
-        return iter(self.values())
+    def __init__(self):
+        super(OrderedDict, self).__init__()
     def get(self, key, default=None):
-        K = key.upper()
+        K = key.lower()
         for (k, v) in self.items():
-            if k.upper() == K:
+            if k.lower() == K:
                 return v
         return default
 
@@ -29,6 +29,7 @@ class Node:
 
 class Nodes(Container):
     def __init__(self):
+        super(Container, self).__init__()
         self._map = {}
         self.labels = []
     def put(self, item):
@@ -53,11 +54,12 @@ class Element:
         return average(self.coord, axis=0)
     @property
     def coord(self):
-        return array([node.coord for node in self.nodes])
+        return array([node.coord for node in self.nodes.values()])
     def normal(self, face):
         """Find the normal to the plane defined by points"""
-        et = self.type.upper()
-        xc = array([node.coord for node in self.nodes if node.label in face])
+        et = self.type.lower()
+        xc = array([node.coord for node in self.nodes.values()
+                    if node.label in face])
         if et[:5] == 'C3D20':
             assert len(xc) == 8
             x1 = xc[1] - xc[0]
@@ -90,6 +92,7 @@ class Element:
 
 class Elements(Container):
     def __init__(self):
+        super(Container, self).__init__()
         self._map = {}
         self.labels = []
     def put(self, item, nodes):
@@ -113,9 +116,11 @@ class SolidSection:
         self.__dict__.update(**kwds)
 
 class SolidSections(Container):
+    def __init__(self):
+        super(Container, self).__init__()
     def put(self, item):
         ss = SolidSection(data=item.data, **item.params.todict())
-        self[ss.elset.upper()] = ss
+        self[ss.elset.lower()] = ss
         return ss
 
 class Surface:
@@ -139,16 +144,18 @@ class Surface:
         return surface
 
 class Surfaces(Container):
+    def __init__(self):
+        super(Container, self).__init__()
     def put(self, item, elsets):
         surf = []
         for row in item.data:
             x, face = row
-            labels = elsets.get(x.upper())
+            labels = elsets.get(x.lower())
             if labels is None:
                 labels = [int(x)]
             for label in labels:
                 surf.append((label, face))
-        name = item.params.get('name').upper()
+        name = item.params.get('name').lower()
         surface = self.get(name, Surface(name))
         surface.put(surf)
         self[name] = surface
@@ -161,7 +168,7 @@ class Surfaces(Container):
 class Material:
     def __init__(self, item):
         self.card = item
-        self.name = item.params.get('name').upper()
+        self.name = item.params.get('name').lower()
         self.subcards = []
     def update(self, item):
         self.subcards.append(item)
@@ -170,6 +177,12 @@ class Material:
         for card in self.subcards:
             o += '\n' + card.toinp()
         return o.strip()
+    def todict(self):
+        d = {}
+        for card in self.subcards:
+            d.update(card.todict())
+        d.update(self.card.todict()['material'])
+        return d
 
 class Materials(OrderedDict):
     def put(self, item):
@@ -181,9 +194,11 @@ class Orientations(OrderedDict):
         pass
 
 class SetContainer(Container):
+    def __init__(self):
+        super(Container, self).__init__()
     def put(self, item, labels=None):
         if labels is not None:
-            self.setdefault(item.upper(), []).extend(labels)
+            self.setdefault(item.lower(), []).extend(labels)
             return
 
         generate = 'generate' in item.params
@@ -191,7 +206,7 @@ class SetContainer(Container):
             try:
                 labels = [int(e) for row in item.data for e in row]
             except ValueError:
-                xsets1 = [str(e).upper() for row in item.data for e in row]
+                xsets1 = [str(e).lower() for row in item.data for e in row]
                 labels = [label for xset in xsets1 for label in self[xset]]
         else:
             labels = []
@@ -199,7 +214,7 @@ class SetContainer(Container):
                 start, stop, step = [int(n) for n in row]
                 labels.extend(range(start, stop+1, step))
         labels = sorted(list(set(labels)))
-        name = item.params.get(item.key).upper()
+        name = item.params.get(item.key).lower()
         self.setdefault(name, []).extend(labels)
 
 class NodeSets(SetContainer):
@@ -256,13 +271,13 @@ class AbaqusModel(object):
         return amax(self.get_coord()[:,axis])
 
     def get_nodes_in_set(self, nset, disp=0):
-        labels = self.nodesets.get(nset.upper())
+        labels = self.nodesets.get(nset.lower())
         if disp:
             return [self.nodes[label] for label in labels]
         return labels
 
     def get_elements_in_set(self, elset, disp=0):
-        labels = self.elsets.get(elset.upper())
+        labels = self.elsets.get(elset.lower())
         if disp:
             return [self.elements[label] for label in labels]
         return labels
@@ -317,7 +332,7 @@ class AbaqusModel(object):
         skip_labels = skip_labels or []
         skip_sets = skip_sets or []
         for xset in enumerate(skip_sets):
-            skip_labels.extend(self.elsets[xset.upper()])
+            skip_labels.extend(self.elsets[xset.lower()])
 
         xc = self.get_elem_centroids()
         clen = abs(average(diff(sorted(xc[:,axis]))))
@@ -360,25 +375,30 @@ class AbaqusModel(object):
         return label
 
     def element_table(self):
-        return [[el.label]+el.connect for el in self.elements]
+        return [[el.label]+el.connect for el in self.elements.values()]
 
     def node_table(self):
-        return [[node.label]+node.coord.tolist() for node in self.nodes]
+        return [[node.label]+node.coord.tolist() for node in self.nodes.values()]
 
-    def element_blocks(self, fun=None):
+    def element_blocks(self, ele_fun=None, mat_fun=None):
         """Form ExodusII type element blocks"""
         # CHECK SOLID SECTIONS FOR CONSISTENCY WITH ELEMENT BLOCK REQUIREMENT
         # OF SINGLE ELEMENT TYPE
         eleblx = {}
-        for ss in self.solid_sections:
+        for ss in self.solid_sections.values():
             labels = self.elsets.get(ss.elset)
             elems = [self.elements[label] for label in labels]
             eletyp = set([e.type for e in elems])
             if len(eletyp) != 1:
                 raise ValueError('ELEMENT BLOCKS FORMED FROM SOLID SECTIONS '
                                  'MUST CONTAIN ONLY ONE ELEMENT TYPE')
-            et = elems[0].type if fun is None else fun(elems[0].type)
-            eleblx[ss.elset] = (et, labels)
+            et = elems[0].type
+            if ele_fun is not None:
+                et = ele_fun(et)
+            material = self.materials[ss.material.lower()].todict()
+            if mat_fun is not None:
+                material = mat_fun(material)
+            eleblx[ss.elset] = [et, labels, material]
         return eleblx
 
     def shift(self, offset):
@@ -401,17 +421,17 @@ class AbaqusModel(object):
                 labels = self.nodes.put(item)
                 p = item.params.get('nset')
                 if p is not None:
-                    self.nodesets.put(p.upper(), labels=labels)
+                    self.nodesets.put(p.lower(), labels=labels)
 
             elif item.key == 'element':
                 labels = self.elements.put(item, self.nodes)
                 p = item.params.get('elset')
                 if p is not None:
-                    self.elsets.put(p.upper(), labels=labels)
+                    self.elsets.put(p.lower(), labels=labels)
 
             elif item.key == 'solid_section':
                 ss = self.solid_sections.put(item)
-                for label in self.elsets[ss.elset.upper()]:
+                for label in self.elsets[ss.elset.lower()]:
                     self.elements[label].solid_section = ss
 
             elif item.key == 'elset':

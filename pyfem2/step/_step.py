@@ -13,12 +13,10 @@ class Step(object):
         self.name = name
         if previous is None:
             self.start = 0.
-            self.value = 0.
         else:
             self.start = previous.frames[-1].value
-            self.value = previous.frames[-1].value
         self.frames = []
-        self.Frame(0.)
+        self.Frame()
         self.period = period
         self.number = number
         self.previous = previous
@@ -43,27 +41,6 @@ class Step(object):
         # PREDEFINED FIELDS
         self.predef = zeros((3, 1, self.model.numnod))
 
-        # --- ALLOCATE STORAGE FOR SIMULATION DATA
-        # STATE VARIABLE TABLE
-        svtab = []
-        nstatev = 0
-        for el in self.model.elements:
-            if not el.variables():
-                svtab.append([])
-                continue
-            if not el.ndir:
-                m = 1
-            else:
-                m = el.ndir + el.nshr
-            m *= len(el.variables())
-            if el.integration:
-                m *= el.integration
-            a = [nstatev, nstatev+m]
-            svtab.append(slice(*a))
-            nstatev += m
-        self.svars = zeros((2, nstatev))
-        self.svtab = svtab
-
     def __len__(self):
         return len(self.frames)
 
@@ -82,7 +59,7 @@ class Step(object):
         Xf = array([self.dofx[I] for I in ix])
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
-        fac = max(1., step_time / self.period)
+        fac = min(1., step_time / self.period)
         return (1. - fac) * X0 + fac * Xf
 
     @property
@@ -101,7 +78,7 @@ class Step(object):
         Qf[ix] = [self.cloadx[key] for key in ix]
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
-        fac = max(1., step_time / self.period)
+        fac = min(1., step_time / self.period)
         return (1. - fac) * Q0 + fac * Qf
 
     def dload(self, step_time):
@@ -173,15 +150,22 @@ class Step(object):
     def assign_hsrc(self, iel, s):
         self.hsrcx[iel] = asarray(s)
 
-    def Frame(self, dtime, copy=1):
-        frame = Frame(self.value, dtime)
-        self.value += dtime
+    def Frame(self, copy=1):
+        if self.frames:
+            frame_n = self.frames[-1]
+            if not frame_n.converged:
+                raise RuntimeError('UNCONVERGED FRAME')
+        frame = Frame(self.value)
         if self.frames and copy:
             frame_n = self.frames[-1]
             frame.field_outputs = deepcopy(frame_n.field_outputs)
         frame.number = len(self.frames)
         self.frames.append(frame)
         return frame
+
+    @property
+    def value(self):
+        return self.start + sum([frame.increment for frame in self.frames])
 
     def copy_from(self, step):
         self.frames[0].field_outputs = deepcopy(step.frames[-1].field_outputs)
@@ -194,7 +178,6 @@ class Step(object):
         self.sfilmx = deepcopy(step.sfilmx)
         self.hsrcx = deepcopy(step.hsrcx)
         self.predef[:] = step.predef
-        self.svars[:] = step.svars
 
     # ----------------------------------------------------------------------- #
     # --- BOUNDARY CONDITIONS ----------------------------------------------- #
@@ -349,75 +332,24 @@ class Step(object):
             a = asarray(amplitude)
         self.final_temp = a
 
-    def advance(self, dtime, dofs, react=None, **kwds):
-        frame_n = self.frames[-1]
-        if not frame_n.converged:
-            raise RuntimeError('ATTEMPTING TO UPDATE AN UNCONVERGED FRAME')
-
-        # ADVANCE STATE VARIABLES
-        self.svars[0] = self.svars[1]
-
-        # CREATE FRAME TO HOLD RESULTS
-        frame = self.Frame(dtime)
-
-        # STORE DEGREES OF FREEDOM
-        u, R, temp = self.model.format_dof(dofs)
-        if react is not None:
-            RF, M, Q = self.model.format_dof(react)
-
-        if temp is not None:
-            frame.field_outputs['T'].add_data(temp)
-            if react is not None:
-                frame.field_outputs['Q'].add_data(Q)
-        if u.shape[1]:
-            frame.field_outputs['U'].add_data(u)
-            if react is not None:
-                frame.field_outputs['RF'].add_data(RF)
-        if R.shape[1]:
-            frame.field_outputs['R'].add_data(R)
-            if react is not None:
-                frame.field_outputs['M'].add_data(M)
-
-        # STORE KEYWORDS
-        for (kwd, val) in kwds.items():
-            frame.field_outputs[kwd].add_data(val)
-
-        for (ieb, eb) in enumerate(self.model.mesh.eleblx):
-            if not eb.eletyp.variables():
-                continue
-
-            # PASS VALUES FROM SVARS TO THE FRAME OUTPUT
-            if eb.eletyp.ndir is not None:
-                ntens = eb.eletyp.ndir + eb.eletyp.nshr
-            else:
-                ntens = None
-            m = 1 if not eb.eletyp.integration else eb.eletyp.integration
-            n = len(eb.eletyp.variables())
-            for (e, xel) in enumerate(eb.labels):
-                iel = self.model.mesh.elemap[xel]
-                el = self.model.elements[iel]
-                ue = u[el.inodes]
-                if ntens is not None:
-                    svars = self.svars[0,self.svtab[iel]].reshape(m,n,ntens)
-                else:
-                    svars = self.svars[0,self.svtab[iel]].reshape(m,n)
-                for (j, variable) in enumerate(el.variables()):
-                    name, ftype = variable[:2]
-                    frame.field_outputs[eb.name,name].add_data(svars[:,j], e)
-
-        frame.converged = True
-
 class Frame(object):
-    def __init__(self, start, dtime):
+    def __init__(self, start):
         self.start = start
-        self.increment = dtime
-        self.value = start + dtime
+        self._inc = 0.
         self.field_outputs = FieldOutputs()
         self.converged = False
 
-    def adjust_dt(self, dtime):
-        self.increment = dtime
-        self.value = self.start + dtime
+    @property
+    def increment(self):
+        return self._inc
+
+    @increment.setter
+    def increment(self, arg):
+        self._inc = arg
+
+    @property
+    def value(self):
+        return self.start + self.increment
 
     def FieldOutput(self, ftype, name, position, labels, eleblk=None,
                     ndir=None, nshr=None, ngauss=None,
@@ -436,6 +368,11 @@ class Frame(object):
             field = ScalarField(name, position, labels, eleblk=eleblk,
                                 ngauss=ngauss, elements=elements, data=data)
 
+        elif ftype == TENSOR:
+            field = TensorField(name, position, labels, ndir, nshr,
+                                eleblk=eleblk, ngauss=ngauss,
+                                elements=elements, data=data)
+
         if field.eleblk is not None:
             name = (field.eleblk, name)
 
@@ -453,6 +390,41 @@ class Frame(object):
                 else:
                     raise ValueError('Unknown add_data option for {0}'.format(key))
             self.field_outputs[key].add_data(value, **d)
+
+    def snapshot(self, dtime, **kwds):
+
+        self.increment = dtime
+
+        # STORE KEYWORDS
+        for (kwd, val) in kwds.items():
+            if val is None or not val.shape[1]:
+                continue
+            self.field_outputs[kwd].add_data(val)
+
+        # PASS VALUES FROM SVARS TO THE FRAME OUTPUT
+        self.field_outputs.advance()
+
+        self.converged = True
+
+    def foo_bar(self):
+        # STORE DEGREES OF FREEDOM
+        u, R, temp = self.model.format_dof(dofs)
+        if react is not None:
+            RF, M, Q = self.model.format_dof(react)
+
+        if temp is not None:
+            frame.field_outputs['T'].add_data(temp)
+            if react is not None:
+                frame.field_outputs['Q'].add_data(Q)
+        if u.shape[1]:
+            frame.field_outputs['U'].add_data(u)
+            if react is not None:
+                frame.field_outputs['RF'].add_data(RF)
+        if R.shape[1]:
+            frame.field_outputs['THETA'].add_data(R)
+            if react is not None:
+                frame.field_outputs['MOM'].add_data(M)
+
 
 class SDStep(Step):
     """Base class for stress/displacement steps"""
