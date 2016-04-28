@@ -31,6 +31,9 @@ class StaticStep(SDStep):
         elif solver == NEWTON:
             self.newton_solve(**kwargs)
 
+        elif solver == RIKS:
+            self.riks_solve(**kwargs)
+
         else:
             raise NotImplementedError
 
@@ -149,8 +152,9 @@ class StaticStep(SDStep):
 
         return
 
-    def newton_solve1(self, period=1., increments=5, maxiters=20,
-                      tolerance=1e-4, relax=1., tolerance1=1e-6):
+    def riks_solve(self, period=1., increments=5, maxiters=20,
+                   tolerance=1e-4, relax=1., tolerance1=1e-6):
+        raise NotImplementedError("THIS FUNCTION IS STILL A NEWTON SOLVER")
 
         period = getattr(self, 'period', period)
         increments = getattr(self, 'increments', increments)
