@@ -51,10 +51,11 @@ class ND2NodeLinkElement(Element):
         compute_force = cflag in (STIFF_AND_RHS, RHS_ONLY)
 
         if compute_force:
-            Fe = zeros(2*ndof)
+            fext = zeros(2*ndof)
+            fint = zeros(2*ndof)
 
         if cflag == RHS_ONLY:
-            return Fe
+            return fext, fint
 
         # ELEMENT NORMAL
         v = self.xc[1] - self.xc[0]
@@ -77,7 +78,7 @@ class ND2NodeLinkElement(Element):
             Ke *= self.A * self.material.E / h
 
         if cflag == STIFF_AND_RHS:
-            return Ke, Fe
+            return Ke, fext, fint
 
         elif cflag == STIFF_ONLY:
             return Ke

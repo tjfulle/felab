@@ -308,21 +308,17 @@ class CSDIsoParametricElement(Element):
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')
 
-        if step_type in (GENERAL, DYNAMIC) and compute_force:
-            # SUBTRACT RESIDUAL FROM INTERNAL FORCE
-            rhs = xforce - eresid
-
-        else:
-            rhs = xforce
+        if step_type not in (GENERAL, DYNAMIC) and compute_force:
+            eresid = zeros_like(xforce)
 
         if cflag == STIFF_AND_RHS:
-            return Ke, rhs
+            return Ke, xforce, eresid
 
         elif cflag == RHS_ONLY:
-            return rhs
+            return xforce, eresid
 
         elif cflag == MASS_AND_RHS:
-            return Me, rhs
+            return Me, xforce, eresid
 
     def surface_force(self, edge, qe):
 

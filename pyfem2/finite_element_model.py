@@ -332,7 +332,7 @@ class FiniteElementModel(object):
     def assemble(self, u, du, Q, svtab, svars, dltyp, dload, predef,
                  procedure, step_type, time=array([0.,0.]), dtime=1., period=1.,
                  istep=1, iframe=1, nlgeom=False, ninc=None,
-                 cflag=STIFF_AND_RHS):
+                 cflag=STIFF_AND_RHS, disp=0):
         """
         Assembles the global system of equations
 
@@ -417,7 +417,8 @@ class FiniteElementModel(object):
             M = zeros((self.numdof, self.numdof))
 
         if compute_rhs:
-            rhs = zeros(self.numdof)
+            fext = zeros(self.numdof)
+            fint = zeros(self.numdof)
 
         # INTERPOLATE FIELD VARIABLES
         fac1 = time[1] / (time[0] + period)
@@ -442,11 +443,13 @@ class FiniteElementModel(object):
 
                 if cflag == STIFF_AND_RHS:
                     K[IX(eft, eft)] += response[0]
-                    rhs[eft] += response[1]
+                    fext[eft] += response[1]
+                    fint[eft] += response[2]
 
                 elif cflag == MASS_AND_RHS:
                     M[IX(eft, eft)] += response[0]
-                    rhs[eft] += response[1]
+                    fext[eft] += response[1]
+                    fint[eft] += response[2]
 
                 elif cflag == MASS_ONLY:
                     M[IX(eft, eft)] += response
@@ -455,29 +458,36 @@ class FiniteElementModel(object):
                     K[IX(eft, eft)] += response
 
                 elif cflag == RHS_ONLY:
-                    rhs[eft] += response
+                    fext[eft] += response[0]
+                    fint[eft] += response[1]
 
         if compute_rhs:
-            rhs += Q
+            fext += Q
 
         if compute_mass:
             # LUMPED MASS MATRIX
             M = array([sum(row) for row in M])
 
         if cflag == STIFF_AND_RHS:
-            return K, rhs
+            if disp:
+                return K, fext, fint
+            return K, fext - fint
 
         elif cflag == STIFF_ONLY:
             return K
 
         elif cflag == RHS_ONLY:
-            return rhs
+            if disp:
+                return fext, fint
+            return fext - fint
 
         elif cflag == MASS_ONLY:
             return M
 
         elif cflag == MASS_AND_RHS:
-            return M, rhs
+            if disp:
+                return M, fext, fint
+            return M, fext - fint
 
     def apply_bc(self, K, F, doftags, dofvals, u=None, du=None):
         """

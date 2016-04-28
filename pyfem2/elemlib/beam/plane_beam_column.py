@@ -36,15 +36,12 @@ class PlaneBeamColumn(Element):
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
                  predef, procedure, nlgeom, cflag, step_type):
 
-        # INTERNAL FORCE
-        Fe = zeros(6)
-
         if cflag == LP_OUTPUT:
             return
             raise NotImplementError
 
         if cflag == RHS_ONLY:
-            return Fe
+            return zeros(6), zeros(6)
 
         # COMPUTE ELEMENT NORMAL
         v = self.xc[1] - self.xc[0]
@@ -74,7 +71,7 @@ class PlaneBeamColumn(Element):
         Ke = dot(dot(Te.T, K1+K2), Te)
 
         if cflag == STIFF_AND_RHS:
-            return Ke, Fe
+            return Ke, zeros(6), zeros(6)
 
         elif cflag == STIFF_ONLY:
             return Ke

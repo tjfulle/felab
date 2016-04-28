@@ -34,7 +34,7 @@ class CHTIsoParametricElement(Element):
         raise NotImplementedError
 
     def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type):
+                 predef, procedure, nlgeom, cflag, step_type, disp=0):
 
         # --- ELEMENT STIFFNESS AND FORCE
 
@@ -70,10 +70,10 @@ class CHTIsoParametricElement(Element):
                     Fe += self.conduction_flux_array(iedge, qn)
 
         if cflag == STIFF_AND_RHS:
-            return Ke, Fe
+            return Ke, Fe, zeros(3)
 
         elif cflag == STIFF_ONLY:
             return Ke
 
         elif cflag == RHS_ONLY:
-            return Fe
+            return Fe, zeros(3)
