@@ -213,8 +213,8 @@ class CSDIsoParametricElement(Element):
 
             # MATERIAL RESPONSE
             xv = zeros(1)
-            e = svars[0,ij+a1*ntens:ij+(a1+1)*ntens]
-            s = svars[0,ij+a3*ntens:ij+(a3+1)*ntens]
+            e = array(svars[0,ij+a1*ntens:ij+(a1+1)*ntens])
+            s = array(svars[0,ij+a3*ntens:ij+(a3+1)*ntens])
             s, xv, D = self.material.response(
                 s, xv, e, de, time, dtime, temp, dtemp, None, None,
                 self.ndir, self.nshr, self.ndir+self.nshr, xc, F0, F,
