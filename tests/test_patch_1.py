@@ -1,5 +1,5 @@
 from conf import *
-from pyfem2 import *
+from felab import *
 
 def test_4_node_plane_stress():
     nodtab = [[ 0, 0.0,  0.0],
@@ -18,24 +18,24 @@ def test_4_node_plane_stress():
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
     mat = Material('Mat-1', elastic={'E':1e6, 'Nu':.25})
 
-    V = FiniteElementModel(mesh=mesh)
-    V.ElementBlock('Block-1', ALL)
-    V.AssignProperties('Block-1', PlaneStressQuad4, mat)
+    V = fe_model(mesh=mesh)
+    V.create_element_block('Block-1', ALL)
+    V.assign_properties('Block-1', CPS4, mat)
 
     # Fixed BC
-    V.FixNodes(0)
+    V.fix_nodes(0)
 
     # Load step
-    step = V.StaticStep()
+    step = V.create_static_step()
 
-    step.PrescribedBC(1, X, 2.4e-4)
-    step.PrescribedBC(1, Y, 1.2e-4)
+    step.assign_prescribed_bc(1, X, 2.4e-4)
+    step.assign_prescribed_bc(1, Y, 1.2e-4)
 
-    step.PrescribedBC(22, X, 3.0e-4)
-    step.PrescribedBC(22, Y, 2.4e-4)
+    step.assign_prescribed_bc(22, X, 3.0e-4)
+    step.assign_prescribed_bc(22, Y, 2.4e-4)
 
-    step.PrescribedBC(3, X, 6.0e-5)
-    step.PrescribedBC(3, Y, 1.2e-4)
+    step.assign_prescribed_bc(3, X, 6.0e-5)
+    step.assign_prescribed_bc(3, Y, 1.2e-4)
 
     step.run()
 
@@ -73,27 +73,27 @@ def test_8_node_plane_stress():
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
     mat = Material('Mat-1', elastic={'E':1e6, 'Nu':.25})
 
-    V = FiniteElementModel(mesh=mesh, jobid='foo')
-    V.ElementBlock('Block-1', ALL)
-    V.AssignProperties('Block-1', PlaneStressQuad8, mat)
+    V = fe_model(mesh=mesh, jobid='foo')
+    V.create_element_block('Block-1', ALL)
+    V.assign_properties('Block-1', CPS8, mat)
 
-    V.FixNodes(0)
+    V.fix_nodes(0)
 
-    step = V.StaticStep()
-    step.PrescribedBC(1, X, 1.2e-4)
-    step.PrescribedBC(1, Y, 6.0e-5)
-    step.PrescribedBC(2, X, 2.4e-4)
-    step.PrescribedBC(2, Y, 1.2e-4)
-    step.PrescribedBC(3, X, 2.7e-4)
-    step.PrescribedBC(3, Y, 1.8e-4)
-    step.PrescribedBC(4, X, 3.0e-4)
-    step.PrescribedBC(4, Y, 2.4e-4)
-    step.PrescribedBC(5, X, 1.8e-4)
-    step.PrescribedBC(5, Y, 1.8e-4)
-    step.PrescribedBC(6, X, 6.0e-5)
-    step.PrescribedBC(6, Y, 1.2e-4)
-    step.PrescribedBC(7, X, 3.0e-5)
-    step.PrescribedBC(7, Y, 6.0e-5)
+    step = V.create_static_step()
+    step.assign_prescribed_bc(1, X, 1.2e-4)
+    step.assign_prescribed_bc(1, Y, 6.0e-5)
+    step.assign_prescribed_bc(2, X, 2.4e-4)
+    step.assign_prescribed_bc(2, Y, 1.2e-4)
+    step.assign_prescribed_bc(3, X, 2.7e-4)
+    step.assign_prescribed_bc(3, Y, 1.8e-4)
+    step.assign_prescribed_bc(4, X, 3.0e-4)
+    step.assign_prescribed_bc(4, Y, 2.4e-4)
+    step.assign_prescribed_bc(5, X, 1.8e-4)
+    step.assign_prescribed_bc(5, Y, 1.8e-4)
+    step.assign_prescribed_bc(6, X, 6.0e-5)
+    step.assign_prescribed_bc(6, Y, 1.2e-4)
+    step.assign_prescribed_bc(7, X, 3.0e-5)
+    step.assign_prescribed_bc(7, Y, 6.0e-5)
 
     step.run()
 
@@ -123,22 +123,27 @@ def test_3_node_plane_stress():
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
     mat = Material('Mat-1', elastic={'E':1e6, 'Nu':.25})
 
-    V = FiniteElementModel(mesh=mesh)
-    V.ElementBlock('Block-1', ALL)
-    V.AssignProperties('Block-1', PlaneStressTria3, mat)
+    V = fe_model(mesh=mesh)
+    V.create_element_block('Block-1', ALL)
+    V.assign_properties('Block-1', CPS3, mat)
 
-    V.FixNodes(0)
+    V.fix_nodes(0)
 
-    step = V.StaticStep()
-    step.PrescribedBC(1,  X, 2.4e-4)
-    step.PrescribedBC(1,  Y, 1.2e-4)
-    step.PrescribedBC(22, X, 3.0e-4)
-    step.PrescribedBC(22, Y, 2.4e-4)
-    step.PrescribedBC(3,  X, 6.0e-5)
-    step.PrescribedBC(3,  Y, 1.2e-4)
+    step = V.create_static_step()
+    step.assign_prescribed_bc(1,  X, 2.4e-4)
+    step.assign_prescribed_bc(1,  Y, 1.2e-4)
+    step.assign_prescribed_bc(22, X, 3.0e-4)
+    step.assign_prescribed_bc(22, Y, 2.4e-4)
+    step.assign_prescribed_bc(3,  X, 6.0e-5)
+    step.assign_prescribed_bc(3,  Y, 1.2e-4)
 
     step.run()
 
     s = step.frames[-1].field_outputs['S'].data
     assert allclose(s[:,:,:2], 1333.3333)
     assert allclose(s[:,:,2], 400.0)
+
+if __name__ == '__main__':
+    test_3_node_plane_stress()
+    test_4_node_plane_stress()
+    test_8_node_plane_stress()
