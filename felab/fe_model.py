@@ -6,6 +6,7 @@ import numpy.linalg as la
 from .utilities import *
 from .constants import *
 from .mesh import *
+from .exodusii import File
 from .step_repository import step_repository
 from .material import Material
 
@@ -65,7 +66,7 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.genesis_mesh
+        felab.mesh.genesis_mesh
 
         """
         self.mesh = genesis_mesh(filename=filename)
@@ -76,7 +77,7 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.abaqus_mesh
+        felab.mesh.abaqus_mesh
 
         """
         self.mesh = abaqus_mesh(filename=filename)
@@ -87,7 +88,7 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.vtk_mesh
+        felab.mesh.vtk_mesh
 
         """
         self.mesh = vtk_mesh(filename=filename)
@@ -98,10 +99,10 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.RectilinearMesh2D
+        felab.mesh.rectilinear_mesh_2d
 
         """
-        self.mesh = RectilinearMesh2D(nx=nx, ny=ny, lx=lx, ly=ly, shift=shift)
+        self.mesh = rectilinear_mesh_2d(nx=nx, ny=ny, lx=lx, ly=ly, shift=shift)
 
     def unit_square_mesh(self, nx=1, ny=1, shift=None):
         """
@@ -109,7 +110,7 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.unit_square_mesh
+        felab.mesh.unit_square_mesh
 
         """
         self.mesh = unit_square_mesh(nx=nx, ny=ny, shift=shift)
@@ -120,7 +121,7 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.Mesh
+        felab.mesh.Mesh
 
         """
         self.mesh = Mesh(**kwds)
@@ -546,7 +547,7 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.Mesh.element_block
+        felab.mesh.Mesh.element_block
 
         """
         if self.mesh is None:
@@ -628,7 +629,7 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.Mesh.node_set
+        felab.mesh.Mesh.node_set
 
         """
         if self.mesh is None:
@@ -647,7 +648,7 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.Mesh.side_set
+        felab.mesh.Mesh.side_set
 
         """
         if self.mesh is None:
@@ -666,7 +667,7 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.Mesh.element_set
+        felab.mesh.Mesh.element_set
 
         """
         if self.mesh is None:
@@ -702,7 +703,7 @@ class fe_model(object):
             Plot the deformed mesh if True
         color : matplotlib color
         kwds : dict
-            kwds passed to felab.mesh._mesh.Plot2D
+            kwds passed to felab.mesh.Plot2D
 
         Returns
         -------
@@ -711,7 +712,7 @@ class fe_model(object):
 
         See Also
         --------
-        felab.mesh._mesh.Mesh.Plot2D
+        felab.mesh.Mesh.Plot2D
 
         """
         assert self.dimensions == 2

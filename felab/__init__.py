@@ -11,6 +11,7 @@ from .first_fe_program import UniformBar
 from .fe_model import fe_model
 from .material import Material
 from .mesh import *
+from .exodusii import File, put_nodal_solution
 
 set_printoptions(4, suppress=True)
 def printprecision(a):

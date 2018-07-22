@@ -3,11 +3,11 @@ from numpy import *
 from argparse import ArgumentParser
 from collections import OrderedDict
 
-from ..constants import *
-from ..utilities import is_listlike, UserInputError
-from ..elemlib import element_family
+from .constants import *
+from .utilities import is_listlike, UserInputError
+from .elemlib import element_family
 
-__all__ = ['Mesh', 'unit_square_mesh', 'RectilinearMesh2D', 'vtk_mesh',
+__all__ = ['Mesh', 'unit_square_mesh', 'rectilinear_mesh_2d', 'vtk_mesh',
            'abaqus_mesh', 'genesis_mesh']
 
 def is_listlike(a):
@@ -170,9 +170,9 @@ class Mesh(object):
         self.num_assigned = self.numele
 
     def init_from_file(self, filename):
-        import felab.mesh.aba as aba
-        import felab.mesh.vtk as vtk
-        import felab.mesh.exodusii as exodusii
+        import felab.aba as aba
+        import felab.vtk as vtk
+        import felab.exodusii as exodusii
         if filename.endswith(('.vtk', '.vtu')):
             data = self.parse_nod_and_elem_tables(*vtk.ReadMesh(filename))
             self.init1(*data)
@@ -560,7 +560,7 @@ class Mesh(object):
         return
 
     def put_nodal_solution(self, filename, u):
-        import felab.mesh.exodusii as exodusii
+        import felab.exodusii as exodusii
         if not self.element_blocks:
             self.create_element_block('ElementBlock1', ALL)
         if not filename.endswith(('.exo', '.e')):
@@ -637,7 +637,7 @@ def vtk_mesh(filename):
         raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
     return Mesh(filename=filename)
 
-def RectilinearMesh2D(nx=1, ny=1, lx=1, ly=1, shift=None):
+def rectilinear_mesh_2d(nx=1, ny=1, lx=1, ly=1, shift=None):
     """
     Generates a rectilinear 2D finite element mesh.
 
@@ -655,7 +655,7 @@ def RectilinearMesh2D(nx=1, ny=1, lx=1, ly=1, shift=None):
     Mesh object
 
     """
-    nodtab, eletab = GenRectilinearMesh2D((nx, ny), (lx, ly), shift=shift)
+    nodtab, eletab = _rectilinear_mesh_2d((nx, ny), (lx, ly), shift=shift)
     return Mesh(nodtab=nodtab, eletab=eletab)
 
 def unit_square_mesh(nx=1, ny=1, shift=None):
@@ -674,14 +674,14 @@ def unit_square_mesh(nx=1, ny=1, shift=None):
 
     Notes
     -----
-    This method calls the ``Mesh.RectilinearMesh2D`` class method and
+    This method calls the ``Mesh.rectilinear_mesh_2d`` class method and
     stores the returned mesh as the ``fe_model.mesh`` attribute.
 
     """
-    nodtab, eletab = GenRectilinearMesh2D((nx, ny), (1, 1), shift=shift)
+    nodtab, eletab = _rectilinear_mesh_2d((nx, ny), (1, 1), shift=shift)
     return Mesh(nodtab=nodtab, eletab=eletab)
 
-def GenRectilinearMesh2D(shape, lengths, shift=None):
+def _rectilinear_mesh_2d(shape, lengths, shift=None):
     nx, ny = shape
     if nx < 1:
         raise UserInputError('Requres at least 1 element in x')
