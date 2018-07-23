@@ -23,7 +23,7 @@ class isop_p3_base(isop_base):
     """
     nodes = 3
     dimensions = 2
-    elefab = {'t':1.}
+    elefab = {'t': 1.}
     cp = array([1., 1., 1.]) / 3.
     edges = array([[0, 1], [1, 2], [2, 0]])
     xp = array([[1., 0., 0], [0., 1., 0], [0., 0., 1]])
