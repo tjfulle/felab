@@ -6,7 +6,7 @@ from .element_base import element_base
 # --------------------------------------------------------------------------- #
 # ------------------------------ TRUSS ELEMENT ------------------------------ #
 # --------------------------------------------------------------------------- #
-class link_base(element_base):
+class LMD2(element_base):
     """Base class for 2 node elastic link elements
 
     Parameters
