@@ -3,9 +3,14 @@ from numpy import *
 from argparse import ArgumentParser
 from collections import OrderedDict
 
-from .constants import *
-from .utilities import is_listlike, UserInputError
-from .elemlib import element_family
+from ..constants import *
+from ..utilities import is_listlike, UserInputError
+from ..elemlib import element_family
+
+from . import aba
+from . import vtk
+from . import exodusii
+from .element_block import element_block
 
 __all__ = ['Mesh', 'unit_square_mesh', 'rectilinear_mesh_2d', 'vtk_mesh',
            'abaqus_mesh', 'genesis_mesh']
@@ -16,21 +21,6 @@ def is_listlike(a):
 
 def is_stringlike(s):
     return hasattr(s, 'strip')
-
-class element_block:
-    def __init__(self, name, id, labels, elefam, elecon):
-        self.name = name.upper()
-        self.id = id
-        self.labels = labels
-        self.elefam = elefam
-        self.numele = len(labels)
-        self.elecon = elecon
-    @property
-    def eletyp(self):
-        return self.elefam
-    @eletyp.setter
-    def eletyp(self, arg):
-        self.elefam = arg
 
 class Mesh(object):
     """Class for creating a finite element mesh.
@@ -170,9 +160,6 @@ class Mesh(object):
         self.num_assigned = self.numele
 
     def init_from_file(self, filename):
-        import felab.aba as aba
-        import felab.vtk as vtk
-        import felab.exodusii as exodusii
         if filename.endswith(('.vtk', '.vtu')):
             data = self.parse_nod_and_elem_tables(*vtk.ReadMesh(filename))
             self.init1(*data)
@@ -560,7 +547,7 @@ class Mesh(object):
         return
 
     def put_nodal_solution(self, filename, u):
-        import felab.exodusii as exodusii
+        import felab.mesh.exodusii as exodusii
         if not self.element_blocks:
             self.create_element_block('ElementBlock1', ALL)
         if not filename.endswith(('.exo', '.e')):

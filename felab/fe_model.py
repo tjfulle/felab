@@ -6,7 +6,6 @@ import numpy.linalg as la
 from .utilities import *
 from .constants import *
 from .mesh import *
-from .exodusii import File
 from .step_repository import step_repository
 from .material import Material
 
@@ -34,7 +33,7 @@ class fe_model(object):
     def exofile(self):
         if self.fh is not None:
             return self.fh
-        self.fh = File(self.jobid+'.exo', mode='w')
+        self.fh = ExodusFile(self.jobid+'.exo', mode='w')
         self.fh.genesis(self.mesh.nodmap, self.mesh.elemap, self.mesh.coord,
                         self.mesh.element_blocks, nodesets=self.mesh.nodesets,
                         elemsets=self.mesh.elemsets, sidesets=self.mesh.surfaces)

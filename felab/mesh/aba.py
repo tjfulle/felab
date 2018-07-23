@@ -1,7 +1,7 @@
 from .abaparse import AbaqusModel
+from .. import elemlib
 
 def ElementType(name):
-    import felab.elemlib as elemlib
     name = name.upper()
     if name == 'CPE4':
         return elemlib.CPE4

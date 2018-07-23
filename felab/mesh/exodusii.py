@@ -7,12 +7,12 @@ from numpy import *
 from copy import deepcopy
 from os.path import basename, join, splitext, isfile
 
-from .constants import *
-from .mesh import element_block
-from .elemlib import element_family
-from .utilities import *
-from .constants import *
-from .data_wharehouse import *
+from .element_block import element_block
+from ..constants import *
+from ..elemlib import element_family
+from ..utilities import *
+from ..constants import *
+from ..data_wharehouse import *
 
 
 # True if we are running on Python 3.

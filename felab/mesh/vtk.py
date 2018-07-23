@@ -5,8 +5,8 @@ from os.path import join, isdir
 from numpy import *
 import xml.dom.minidom as xdom
 
-from .constants import *
-from .elemlib import element_family
+from ..constants import *
+from ..elemlib import element_family
 
 # Linear cells
 VTK_EMPTY_CELL       = 0
