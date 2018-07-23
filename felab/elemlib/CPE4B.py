@@ -1,15 +1,11 @@
 from numpy import *
 from numpy.linalg import det, inv
-from .isop_p4_base import isop_p4_base
-from .isop_base import stress_displacement
+from .CPX4 import CPX4
 from .gauss_rule_info import quad_gauss_rule_info
 
 
-# --------------------------------------------------------------------------- #
-# --------------------- BILINEAR PLANE STRAIN ELEMENT ----------------------- #
-# ---------------------- MEAN DILATATIONAL FORUMULA ------------------------- #
-# --------------------------------------------------------------------------- #
-class CPE4B(isop_p4_base, stress_displacement):
+class CPE4B(CPX4):
+    """4 node plane-strain stress-displacement element with bbar stabilization"""
     ndir = 3
     nshr = 1
     num_gauss = 4

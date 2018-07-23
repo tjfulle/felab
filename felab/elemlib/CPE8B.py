@@ -1,11 +1,11 @@
 from numpy import *
 from numpy.linalg import det, inv
-from .isop_p8_base import isop_p8_base
-from .isop_base import stress_displacement
+from .CPX8 import CPX8
 from .gauss_rule_info import quad_gauss_rule_info
 
 
-class CPE8B(isop_p8_base, stress_displacement):
+class CPE8B(CPX8):
+    """8 node plane-strain element with bbar stabilization"""
     ndir = 3
     nshr = 1
     num_gauss = 9

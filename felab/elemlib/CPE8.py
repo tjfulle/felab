@@ -1,17 +1,17 @@
 from numpy import *
-from .isop_p8_base import isop_p8_base
-from .isop_base import stress_displacement
+from .CPX8 import CPX8
 from .gauss_rule_info import quad_gauss_rule_info
 
 
-class CPE8(isop_p8_base, stress_displacement):
+class CPE8(CPX8):
+    """8 node plane-strain element"""
     ndir = 3
     nshr = 1
     num_gauss = 9
 
     @staticmethod
     def gauss_rule_info(point=None):
-        return quad_gauss_rule_info(3, point)
+        return quad_gauss_rule_info(rule=3, point=point)
 
     def bmatrix(self, dN, *args):
         """Assemble and return the B matrix"""

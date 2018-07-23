@@ -1,13 +1,14 @@
 from numpy import *
-from .isop_p4_base import isop_p4_base
-from .isop_base import stress_displacement
+from .CPX4 import CPX4
 from .gauss_rule_info import quad_gauss_rule_info
 
 
-class CAX4(isop_p4_base, stress_displacement):
+class CAX4(CPX4):
+    """4 node axisymmetric stress-displacement element"""
     ndir = 3
     nshr = 1
     num_gauss = 4
+    axisymmetric = 1
     elefab = {'formulation': 1}
 
     @property

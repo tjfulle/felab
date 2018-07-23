@@ -1,11 +1,11 @@
 from numpy import *
-from .isop_base import isop_base
+from .CMDN import CMDN
 
 
 # --------------------------------------------------------------------------- #
 # --------------------- TRIANGLE ISOPARAMETRIC ELEMENTS --------------------- #
 # --------------------------------------------------------------------------- #
-class isop_p3_base(isop_base):
+class CPX3(CMDN):
     """3-node isoparametric stress-displacement element
 
     Notes

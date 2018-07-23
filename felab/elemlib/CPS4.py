@@ -1,12 +1,10 @@
 from numpy import *
-from .isop_p4_base import isop_p4_base
-from .isop_base import stress_displacement
+from .CPX4 import CPX4
 from .gauss_rule_info import quad_gauss_rule_info
 
-# --------------------------------------------------------------------------- #
-# --------------------- BILINEAR PLANE STRESS ELEMENT ----------------------- #
-# --------------------------------------------------------------------------- #
-class CPS4(isop_p4_base, stress_displacement):
+
+class CPS4(CPX4):
+    """4 node plane-stress stress-displacement element"""
     ndir = 2
     nshr = 1
     num_gauss = 4

@@ -1,13 +1,10 @@
 from numpy import *
-from .isop_p3_base import isop_p3_base
-from .isop_base import stress_displacement
+from .CPX3 import CPX3
 from .gauss_rule_info import tri_gauss_rule_info
 
 
-# --------------------------------------------------------------------------- #
-# --------------------- TRIANGLE ISOPARAMETRIC ELEMENTS --------------------- #
-# --------------------------------------------------------------------------- #
-class CPE3(isop_p3_base, stress_displacement):
+class CPE3(CPX3):
+    """3 node plane-strain stress-displacement element"""
     ndir = 3
     nshr = 1
     num_gauss = 3

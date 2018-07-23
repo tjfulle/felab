@@ -1,10 +1,10 @@
 from numpy import *
-from .isop_p4_base import isop_p4_base
-from .isop_base import stress_displacement
+from .CPX4 import CPX4
 from .gauss_rule_info import quad_gauss_rule_info
 
 
-class CPE4R(isop_p4_base, stress_displacement):
+class CPE4R(CPX4):
+    """4 node plane-strain stress-displacement element with reduced integration"""
     ndir = 3
     nshr = 1
     num_gauss = 1

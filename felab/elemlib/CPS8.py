@@ -1,10 +1,10 @@
 from numpy import *
-from .isop_p8_base import isop_p8_base
-from .isop_base import stress_displacement
+from .CPX8 import CPX8
 from .gauss_rule_info import quad_gauss_rule_info
 
 
-class CPS8(isop_p8_base, stress_displacement):
+class CPS8(CPX8):
+    """8 node plane-stress element"""
     ndir = 2
     nshr = 1
     num_gauss = 9

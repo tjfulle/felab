@@ -1,12 +1,12 @@
 from numpy import *
-from .isop_base import isop_base
+from .CMDN import CMDN
 
 
 # --------------------------------------------------------------------------- #
 # --------------------- QUADRATIC ISOPARAMETRIC ELEMENTS -------------------- #
 # --------------------------------------------------------------------------- #
-class isop_p4_base(isop_base):
-    """4-node isoparametric element
+class CPX4(CMDN):
+    """4-node isoparametric element stress-displacement element base
 
     Notes
     -----
@@ -95,5 +95,3 @@ class isop_p4_base(isop_base):
         dNdx = dot(dxidx, dNdxi)
 
         return N, dNdx, J
-
-

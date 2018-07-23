@@ -1,12 +1,12 @@
 from numpy import *
-from .isop_base import isop_base
+from .CMDN import CMDN
 
 
 # --------------------------------------------------------------------------- #
 # --------------------- QUADRATIC ISOPARAMETRIC ELEMENTS -------------------- #
 # --------------------------------------------------------------------------- #
-class isop_p8_base(isop_base):
-    """8-node isoparametric element
+class CPX8(CMDN):
+    """8 node isoparametric stress-displacement element
 
     Notes
     -----
