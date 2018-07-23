@@ -1,12 +1,17 @@
+import logging
 from numpy import *
+from numpy.linalg import det, inv
 
+from ..constants import *
 from ..utilities import *
-from .isop_p3_base import isop_p3_base
+from .isop_base import isop_base
 
-# --------------------------------------------------------------------------- #
-# ------------------------ HEAT TRANSFER ELEMENT ---------------------------- #
-# --------------------------------------------------------------------------- #
-class isop_dp3_base(isop_p3_base):
+
+class DCMDN(isop_base):
+
+    @staticmethod
+    def variables():
+        return None
 
     def conduction_stiff_contrib(self):
         raise NotImplementedError
