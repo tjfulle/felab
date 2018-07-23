@@ -5,10 +5,10 @@ import numpy.linalg as la
 
 from .utilities import *
 from .constants import *
-from .mesh import *
-from .stage import stage_repository
-from .material import Material
-from .assembly import vdof, apply_boundary_conditions
+from ..mesh import *
+from ..stage import stage_repository
+from ..material import Material
+from ..assembly import vdof, apply_boundary_conditions
 
 __all__ = ['fe_model']
 

@@ -2,7 +2,7 @@ from numpy import *
 from numpy.linalg import eigvalsh
 from collections import OrderedDict
 
-from .utilities import *
+from ..x.utilities import *
 
 __all__ = ['FieldOutputs', 'ScalarField', 'VectorField', 'SymmetricTensorField']
 

@@ -1,5 +1,5 @@
 from numpy import *
-from ..utilities import *
+from ..x.utilities import *
 from .DCMDN import DCMDN
 from .gauss_rule_info import tri_gauss_rule_info, line_gauss_rule_info
 

@@ -3,8 +3,8 @@ import logging
 from numpy import *
 import numpy.linalg as la
 
-from ..utilities import *
-from ..constants import *
+from ..x.utilities import *
+from ..x.constants import *
 
 
 def assemble_system(rhs, A, svtab, svars, energy, Q, u, du, v, a,

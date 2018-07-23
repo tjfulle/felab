@@ -1,5 +1,5 @@
 import numpy as np
-from ..utilities import is_listlike
+from ..x.utilities import is_listlike
 
 
 # ---------------------------------------------------------------------------- #

@@ -1,6 +1,6 @@
 from numpy import *
 
-from ..constants import *
+from ..x.constants import *
 from .element_base import element_base
 
 # --------------------------------------------------------------------------- #

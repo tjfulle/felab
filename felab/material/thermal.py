@@ -1,5 +1,5 @@
 from numpy import *
-from ..utilities import *
+from ..x.utilities import *
 
 class thermally_conductive(object):
     name = 'Thermally Conductive'

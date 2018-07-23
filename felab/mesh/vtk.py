@@ -5,7 +5,7 @@ from os.path import join, isdir
 from numpy import *
 import xml.dom.minidom as xdom
 
-from ..constants import *
+from ..x.constants import *
 from ..elemlib import element_family
 
 # Linear cells

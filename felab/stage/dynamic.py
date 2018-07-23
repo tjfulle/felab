@@ -1,8 +1,8 @@
 from numpy import *
 
 from .stage import sd_stage
-from ..constants import *
-from ..utilities import *
+from ..x.constants import *
+from ..x.utilities import *
 from ..assembly import assemble_system
 
 class dynamic_stage(sd_stage):

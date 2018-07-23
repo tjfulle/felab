@@ -1,5 +1,5 @@
 from numpy import *
-from ..utilities import *
+from ..x.utilities import *
 from .element_base import element_base
 
 

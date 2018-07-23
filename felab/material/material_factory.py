@@ -1,6 +1,6 @@
 import logging
 from numpy import *
-from ..utilities import UserInputError, is_listlike
+from ..x.utilities import UserInputError, is_listlike
 from .elas import elas
 from .linear_elastic import linear_elastic
 from .neohooke import neo_hooke

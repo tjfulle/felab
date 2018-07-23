@@ -1,7 +1,7 @@
 from numpy import zeros, array
 
-from ..constants import *
-from ..utilities import *
+from ..x.constants import *
+from ..x.utilities import *
 
 
 def node_freedom_association_table(numnod, elements, disp=0):

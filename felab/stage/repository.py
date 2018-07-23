@@ -4,8 +4,8 @@ from .stage import load_stage
 from .diffusive_ht import diffusive_ht_stage
 from .static import static_stage
 from .dynamic import dynamic_stage
-from ..utilities import *
-from ..constants import *
+from ..x.utilities import *
+from ..x.constants import *
 
 __all__ = ['repository']
 

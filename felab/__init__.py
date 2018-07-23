@@ -6,9 +6,9 @@ from numpy import *
 
 from .elemlib import *
 
-from .constants import *
-from .first_fe_program import UniformBar
-from .fe_model import fe_model
+from .x.constants import *
+from .x.first_fe_program import UniformBar
+from .x.fe_model import fe_model
 from .material import Material
 from .mesh import *
 from .mesh.exodusii import File, put_nodal_solution

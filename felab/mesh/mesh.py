@@ -3,8 +3,8 @@ from numpy import *
 from argparse import ArgumentParser
 from collections import OrderedDict
 
-from ..constants import *
-from ..utilities import is_listlike, UserInputError
+from ..x.constants import *
+from ..x.utilities import is_listlike, UserInputError
 from ..elemlib import element_family
 
 from . import aba

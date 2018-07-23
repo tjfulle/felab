@@ -2,8 +2,8 @@ import logging
 from numpy import *
 from numpy.linalg import det, inv
 
-from ..constants import *
-from ..utilities import *
+from ..x.constants import *
+from ..x.utilities import *
 from .element_base import element_base
 
 

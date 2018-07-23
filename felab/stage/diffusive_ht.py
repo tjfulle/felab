@@ -1,8 +1,8 @@
 from numpy import *
 
 from .stage import load_stage
-from ..constants import *
-from ..utilities import *
+from ..x.constants import *
+from ..x.utilities import *
 from ..elemlib import DC2D3
 from ..assembly import assemble_system, apply_boundary_conditions
 

@@ -1,9 +1,9 @@
 from numpy import *
 from copy import deepcopy
 
-from ..utilities import *
-from ..constants import *
-from ..data_wharehouse import *
+from .data_wharehouse import *
+from ..x.utilities import *
+from ..x.constants import *
 
 class load_stage(object):
     def __init__(self, model, number, name, previous, period):
