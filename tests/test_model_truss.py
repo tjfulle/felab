@@ -11,12 +11,12 @@ def test_model_truss_0():
     V.materials['Material-1'].elastic(E=70e9, Nu=.3)
     V.create_element_block('B1', ALL)
     V.assign_properties('B1', L2D2, 'Material-1', A=5*.01*.01)
-    step = V.create_static_step()
-    step.assign_prescribed_bc(1, X, -.05)
-    step.assign_prescribed_bc((2,3), (X,Y))
-    step.assign_concentrated_load(1, Y, 1000e3)
-    step.run()
-    u = V.steps.last.frames[-1].field_outputs['U'].data
+    stage = V.create_static_stage()
+    stage.assign_prescribed_bc(1, X, -.05)
+    stage.assign_prescribed_bc((2,3), (X,Y))
+    stage.assign_concentrated_load(1, Y, 1000e3)
+    stage.run()
+    u = V.stages.last.increments[-1].field_outputs['U'].data
     assert allclose([[-0.05,     0.0882842],
                      [ 0.,       0.,      ],
                      [ 0.,       0.,      ]], u)
@@ -41,17 +41,17 @@ def test_model_truss_1():
     V.create_element_block('element_block-1', ALL)
     V.assign_properties('element_block-1', L3D2, 'Material-1', A=A)
 
-    step = V.create_static_step()
-    step.assign_prescribed_bc(1, (X,Y))
-    step.assign_prescribed_bc(12, Y)
-    step.assign_prescribed_bc(ALL, Z)
+    stage = V.create_static_stage()
+    stage.assign_prescribed_bc(1, (X,Y))
+    stage.assign_prescribed_bc(12, Y)
+    stage.assign_prescribed_bc(ALL, Z)
 
-    step.assign_concentrated_load((3,5,9,11), Y, -10)
-    step.assign_concentrated_load(7, Y, -16)
+    stage.assign_concentrated_load((3,5,9,11), Y, -10)
+    stage.assign_concentrated_load(7, Y, -16)
 
-    step.run()
-    u = V.steps.last.frames[-1].field_outputs['U'].data
-    RF = V.steps.last.frames[-1].field_outputs['RF'].data
+    stage.run()
+    u = V.stages.last.increments[-1].field_outputs['U'].data
+    RF = V.stages.last.increments[-1].field_outputs['RF'].data
     assert allclose([[0.,      0.,      0.],
                      [0.80954,-1.7756,  0.],
                      [0.28,   -1.79226, 0.],
@@ -97,16 +97,16 @@ def test_model_truss_2():
     V.create_element_block('element_block-1', ALL)
     V.assign_properties('element_block-1', L2D2, 'Material-1', A=A)
 
-    step = V.create_static_step()
-    step.assign_prescribed_bc(1, (X,Y))
-    step.assign_prescribed_bc(12, Y)
+    stage = V.create_static_stage()
+    stage.assign_prescribed_bc(1, (X,Y))
+    stage.assign_prescribed_bc(12, Y)
 
-    step.assign_concentrated_load((3,5,9,11), Y, -10)
-    step.assign_concentrated_load(7, Y, -16)
+    stage.assign_concentrated_load((3,5,9,11), Y, -10)
+    stage.assign_concentrated_load(7, Y, -16)
 
-    step.run()
-    u = V.steps.last.frames[-1].field_outputs['U'].data
-    RF = V.steps.last.frames[-1].field_outputs['RF'].data
+    stage.run()
+    u = V.stages.last.increments[-1].field_outputs['U'].data
+    RF = V.stages.last.increments[-1].field_outputs['RF'].data
     assert allclose([[0.,      0.     ],
                      [0.80954,-1.7756 ],
                      [0.28,   -1.79226],
@@ -142,12 +142,12 @@ def test_model_truss_3():
     A = 5 * .01 * .01
     V.create_element_block('element_block-1', ALL)
     V.assign_properties('element_block-1', L2D2, 'Material-1', A=A)
-    step = V.create_static_step()
-    step.fix_nodes((2,3))
-    step.assign_prescribed_bc(1, X, -.05)
-    step.assign_concentrated_load(1, Y, 1000e3)
-    step.run()
-    u = V.steps.last.frames[-1].field_outputs['U'].data
+    stage = V.create_static_stage()
+    stage.fix_nodes((2,3))
+    stage.assign_prescribed_bc(1, X, -.05)
+    stage.assign_concentrated_load(1, Y, 1000e3)
+    stage.run()
+    u = V.stages.last.increments[-1].field_outputs['U'].data
     assert allclose([[-0.05,     0.0882842],
                      [ 0.,       0.,      ],
                      [ 0.,       0.,      ]], u)
@@ -162,13 +162,13 @@ def test_model_truss_4():
     A = 5 * .01 * .01
     V.create_element_block('element_block-1', ALL)
     V.assign_properties('element_block-1', L3D2, 'Material-1', A=A)
-    step = V.create_static_step()
-    step.fix_nodes((2,3))
-    step.assign_prescribed_bc(1, X, -.05)
-    step.assign_prescribed_bc(1, Z)
-    step.assign_concentrated_load(1, Y, 1000e3)
-    step.run()
-    u = V.steps.last.frames[-1].field_outputs['U'].data
+    stage = V.create_static_stage()
+    stage.fix_nodes((2,3))
+    stage.assign_prescribed_bc(1, X, -.05)
+    stage.assign_prescribed_bc(1, Z)
+    stage.assign_concentrated_load(1, Y, 1000e3)
+    stage.run()
+    u = V.stages.last.increments[-1].field_outputs['U'].data
     assert allclose([[-0.05,     0.0882842, 0.],
                      [ 0.,       0.,        0.],
                      [ 0.,       0.,        0.]], u)
@@ -183,14 +183,14 @@ def test_model_truss_5():
     A = [.302, .729, .187]
     V.create_element_block('element_block-1', ALL)
     V.assign_properties('element_block-1', L3D2, 'Material-1', A=A)
-    step = V.create_static_step()
+    stage = V.create_static_stage()
     # Boundary conditions
-    step.fix_nodes((2,3,4))
-    step.assign_prescribed_bc(1, Y)
+    stage.fix_nodes((2,3,4))
+    stage.assign_prescribed_bc(1, Y)
     # Concentrated force in 'z' direction on node 1
-    step.assign_concentrated_load(1, Z, -1000)
-    step.run()
-    u = V.steps.last.frames[-1].field_outputs['U'].data
+    stage.assign_concentrated_load(1, Z, -1000)
+    stage.run()
+    u = V.stages.last.increments[-1].field_outputs['U'].data
     ua = array([[-8.5337228, 0., -31.9486913],
                 [ 0.,        0.,   0.       ],
                 [ 0.,        0.,   0.       ],
@@ -219,23 +219,23 @@ def test_model_truss_6():
     V.create_element_block('element_block-1', ALL)
     V.assign_properties('element_block-1', L3D2, 'Material-1', A=A)
 
-    step = V.create_static_step()
+    stage = V.create_static_stage()
 
     # Define boundary conditons
-    step.fix_nodes([7, 8, 9, 10])
+    stage.fix_nodes([7, 8, 9, 10])
 
     # Define concentrated loads
-    step.assign_concentrated_load(1, X, 1000)
-    step.assign_concentrated_load(1, Y, 10000)
-    step.assign_concentrated_load(1, Z, -5000)
-    step.assign_concentrated_load(2, Y, 10000)
-    step.assign_concentrated_load(2, Z, -5000)
-    step.assign_concentrated_load(3, X, 500)
-    step.assign_concentrated_load(6, X, 500)
+    stage.assign_concentrated_load(1, X, 1000)
+    stage.assign_concentrated_load(1, Y, 10000)
+    stage.assign_concentrated_load(1, Z, -5000)
+    stage.assign_concentrated_load(2, Y, 10000)
+    stage.assign_concentrated_load(2, Z, -5000)
+    stage.assign_concentrated_load(3, X, 500)
+    stage.assign_concentrated_load(6, X, 500)
 
     # Solve and write results
-    step.run()
-    u = V.steps.last.frames[-1].field_outputs['U'].data
+    stage.run()
+    u = V.stages.last.increments[-1].field_outputs['U'].data
 
     assert allclose([[0.00851510679597,0.349956039184,-0.0221277138856],
                      [0.0319156311642,0.349956039184,-0.0322420125936],
@@ -263,10 +263,10 @@ def test_model_truss_beam_0():
     V.assign_properties('B3', L2D2, 'Material-2', A=.003)
     V.assign_prescribed_bc(1, (X,Y,TZ))
     V.assign_prescribed_bc(5, Y)
-    step = V.create_static_step()
-    step.assign_concentrated_load(2, Y, 100)
-    step.assign_concentrated_load(5, TZ, 200)
-    step.assign_concentrated_load(5, X, 300)
-    step.run()
+    stage = V.create_static_stage()
+    stage.assign_concentrated_load(2, Y, 100)
+    stage.assign_concentrated_load(5, TZ, 200)
+    stage.assign_concentrated_load(5, X, 300)
+    stage.run()
 
 

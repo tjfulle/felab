@@ -3,13 +3,14 @@ import logging
 from numpy import *
 import numpy.linalg as la
 
-from .utilities import *
-from .constants import *
+from ..utilities import *
+from ..constants import *
 
 
-def assemble_system(model, u, du, Q, svtab, svars, dltyp, dload, predef,
-                    procedure, step_type, time=array([0.,0.]), dtime=1.,
-                    period=1., istep=1, iframe=1, nlgeom=False, ninc=None,
+def assemble_system(element_blocks, element_map, elements, element_freedom_table,
+                    u, du, Q, svtab, svars, dltyp, dload, predef,
+                    procedure, stage_type, time=array([0.,0.]), dtime=1.,
+                    period=1., istage=1, iincrement=1, nlgeom=False, ninc=None,
                     cflag=STIFF_AND_RHS, disp=0):
     """
     Assembles the global system of equations
@@ -17,7 +18,7 @@ def assemble_system(model, u, du, Q, svtab, svars, dltyp, dload, predef,
     Parameters
     ----------
     u, du : ndarray
-        Value of DOFs at beginning of step and increment, respectively.
+        Value of DOFs at beginning of stage and increment, respectively.
     Q : ndarray
         Force array due to Neumann boundary condtions
     svtab : ndarray of int
@@ -32,16 +33,16 @@ def assemble_system(model, u, du, Q, svtab, svars, dltyp, dload, predef,
         Predefined fields
     procedure : symbolic constant
         The procedure specifier
-    step_type : symbolic constant
-        The step type
+    stage_type : symbolic constant
+        The stage type
     time : ndarray, optional {array([0.,0.])}
-        time[0] is the step time, time[1] the total time
+        time[0] is the stage time, time[1] the total time
     dtime : float {1.}
         Time increment
     period : float {1.}
-        Step period
-    istep, iframe : int, optional {1, 1}
-        Step and frame numbers
+        Stage period
+    istage, iincrement : int, optional {1, 1}
+        Stage and increment numbers
     nlgeom : bool, optional {False}
         Nonlinear geometry
     ninc : int, opitional {None}
@@ -68,17 +69,17 @@ def assemble_system(model, u, du, Q, svtab, svars, dltyp, dload, predef,
 
     """
     procname = get_procname(procedure)
-    steptypname = get_steptypname(step_type)
+    stagetypname = get_stagetypname(stage_type)
     msg  = 'ASSEMBLING GLOBAL SYSTEM OF EQUATIONS\n      '
-    msg += 'PROCEDURE: {0}, STEP TYPE: {1}, NLGEOM: {2}\n      '.format(
-        procname, steptypname, nlgeom)
+    msg += 'PROCEDURE: {0}, STAGE TYPE: {1}, NLGEOM: {2}\n      '.format(
+        procname, stagetypname, nlgeom)
     tf = time[-1] + dtime
-    msg += 'STEP: {0}, FRAME: {1}, TIME: {2}'.format(istep, iframe, tf)
+    msg += 'STAGE: {0}, INCREMENT: {1}, TIME: {2}'.format(istage, iincrement, tf)
     if ninc is not None:
         msg += ', INCREMENT: {0}'.format(ninc)
     if not ninc:
         logging.debug(msg)
-    elif ninc == 1 and iframe == 1:
+    elif ninc == 1 and iincrement == 1:
         logging.debug(msg)
 
     if cflag not in CFLAGS:
@@ -88,15 +89,16 @@ def assemble_system(model, u, du, Q, svtab, svars, dltyp, dload, predef,
     compute_rhs = cflag in (STIFF_AND_RHS, RHS_ONLY, MASS_AND_RHS)
     compute_mass = cflag in (MASS_AND_RHS, MASS_ONLY)
 
+    numdof = u.shape[0]
     if compute_stiff:
-        K = zeros((model.numdof, model.numdof))
+        K = zeros((numdof, numdof))
 
     if compute_mass:
-        M = zeros((model.numdof, model.numdof))
+        M = zeros((numdof, numdof))
 
     if compute_rhs:
-        fext = zeros(model.numdof)
-        fint = zeros(model.numdof)
+        fext = zeros(numdof)
+        fint = zeros(numdof)
 
     # INTERPOLATE FIELD VARIABLES
     fac1 = time[1] / (time[0] + period)
@@ -106,18 +108,18 @@ def assemble_system(model, u, du, Q, svtab, svars, dltyp, dload, predef,
     predef_i = array([x0, xf-x0])
 
     # COMPUTE THE ELEMENT STIFFNESS AND SCATTER TO GLOBAL ARRAY
-    for (ieb, eb) in enumerate(model.mesh.element_blocks):
+    for (ieb, eb) in enumerate(element_blocks):
         for (e, xel) in enumerate(eb.labels):
 
             # ELEMENT STIFFNESS
-            iel = model.mesh.elemap[xel]
-            el = model.elements[iel]
-            eft = model.eftab[iel]
-            response = el.response(u[eft], du[eft], time, dtime, istep,
-                                   iframe, svars[:,svtab[iel]],
+            iel = element_map[xel]
+            el = elements[iel]
+            eft = element_freedom_table[iel]
+            response = el.response(u[eft], du[eft], time, dtime, istage,
+                                   iincrement, svars[:,svtab[iel]],
                                    dltyp[iel], dload[iel],
                                    predef_i[:,:,el.inodes], procedure, nlgeom,
-                                   cflag, step_type)
+                                   cflag, stage_type)
 
             if cflag == STIFF_AND_RHS:
                 K[IX(eft, eft)] += response[0]

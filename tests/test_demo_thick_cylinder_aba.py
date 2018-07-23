@@ -12,10 +12,10 @@ def LinearSolution(ax=None):
     V.assign_properties('ALL', CPE4R, mat, t=1)
     V.assign_prescribed_bc('SymYZ', X)
     V.assign_prescribed_bc('SymXZ', Y)
-    step = V.create_static_step()
+    stage = V.create_static_stage()
     # Pressure on inside face
-    step.assign_pressure('SurfID', 1.)
-    step.run()
+    stage.assign_pressure('SurfID', 1.)
+    stage.run()
     V.write_results()
     if ax is not None:
         ax = V.Plot2D(deformed=1, color='b', linestyle='-.', ax=ax, label='Linear',
@@ -32,9 +32,9 @@ def QuadraticSolution(ax=None):
     V.assign_prescribed_bc('SymYZ', X)
     V.assign_prescribed_bc('SymXZ', Y)
     # Pressure on inside face
-    step = V.create_static_step()
-    step.assign_pressure('SurfID', 1.)
-    step.run()
+    stage = V.create_static_stage()
+    stage.assign_pressure('SurfID', 1.)
+    stage.run()
     V.write_results()
     if ax is not None:
         return ax

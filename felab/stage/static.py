@@ -1,15 +1,17 @@
 from numpy import *
 
-from .constants import *
-from .utilities import *
-from .step import sd_step
-from .assembly import assemble_system
+from .stage import sd_stage
+from ..constants import *
+from ..utilities import *
+from ..assembly import assemble_system, apply_boundary_conditions
 
-class static_step(sd_step):
+class static_stage(sd_stage):
     procedure = STATIC
     def __init__(self, model, number, name, previous, period=1., **kwds):
-        super(static_step, self).__init__(model, number, name, previous, period)
+        super(static_stage, self).__init__(model, number, name, previous, period)
         for (key, val) in kwds.items():
+            if key == 'increments':
+                key = '_increments'
             setattr(self, key, val)
 
     # ----------------------------------------------------------------------- #
@@ -18,10 +20,10 @@ class static_step(sd_step):
     def run(self, **kwargs):
 
         if self.ran:
-            raise RuntimeError('STEP ALREADY RUN')
+            raise RuntimeError('STAGE ALREADY RUN')
 
         solver = kwargs.pop('solver', getattr(self, 'solver', None))
-        increments = kwargs.get('increments', getattr(self, 'increments', None))
+        increments = kwargs.get('increments', getattr(self, '_increments', None))
 
         if solver is None and increments:
             solver = NEWTON
@@ -51,14 +53,15 @@ class static_step(sd_step):
 
         # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
         u = zeros_like(self.dofs)
-        K, rhs = assemble_system(self.model, self.dofs, u, Qf, self.svtab,
-                                 self.svars, dltyp, dload, self.predef,
-                                 self.procedure, DIRECT, cflag=STIFF_AND_RHS,
-                                 time=time)
+        K, rhs = assemble_system(
+            self.model.mesh.element_blocks, self.model.mesh.elemap,
+            self.model.elements, self.model.eftab, self.dofs, u, Qf, self.svtab,
+            self.svars, dltyp, dload, self.predef, self.procedure, DIRECT,
+            cflag=STIFF_AND_RHS, time=time)
         self._K = K
 
         # ENFORCE BOUNDARY CONDITIONS
-        Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, X)
+        Kbc, Fbc = apply_boundary_conditions(K, rhs, self.doftags, X)
 
         # SOLVE FOR UNKNOWN DOFS
         u[:] = linsolve(Kbc, Fbc)
@@ -72,9 +75,10 @@ class static_step(sd_step):
 
         # ASSEMBLE AGAIN - ONLY TO UPDATE STRESS IN ELEMENTS TO COMPUTED
         # DISPLACEMENT
-        assemble_system(self.model, self.dofs, u, Qf, self.svtab, self.svars,
-                        dltyp, dload, self.predef, self.procedure, DIRECT,
-                        cflag=LP_OUTPUT)
+        assemble_system(self.model.mesh.element_blocks, self.model.mesh.elemap,
+                        self.model.elements, self.model.eftab, self.dofs, u, Qf,
+                        self.svtab, self.svars, dltyp, dload, self.predef,
+                        self.procedure, DIRECT, cflag=LP_OUTPUT)
 
         self.dofs = u
         self.advance(self.period, self.dofs, react=react)
@@ -83,11 +87,11 @@ class static_step(sd_step):
                      tolerance=1e-4, relax=1., tolerance1=1e-6):
 
         period = getattr(self, 'period', period)
-        increments = getattr(self, 'increments', increments)
+        increments = getattr(self, '_increments', increments)
         maxiters = getattr(self, 'maxiters', maxiters)
 
         # TIME IS:
-        # TIME[0]: VALUE OF STEP TIME AT BEGINNING OF INCREMENT
+        # TIME[0]: VALUE OF STAGE TIME AT BEGINNING OF INCREMENT
         # TIME[1]: VALUE OF TOTAL TIME AT BEGINNING OF INCREMENT
         time = array([0., self.start])
         dtime = period / float(increments)
@@ -95,7 +99,7 @@ class static_step(sd_step):
         maxit2 = int(maxiters)
         maxit1 = max(int(maxit2/2.),1)
 
-        for iframe in range(increments):
+        for iincrement in range(increments):
 
             # GET LOADS AND PRESCRIBED DISPLACEMENTS
             Q = self.cload(time[0]+dtime)
@@ -107,15 +111,15 @@ class static_step(sd_step):
             u = zeros(self.model.numdof)
             for nit in range(maxit2):
 
-                K, rhs = assemble_system(self.model, self.dofs, u, Q,
-                                         self.svtab, self.svars, dltyp, dload,
-                                         self.predef, self.procedure, GENERAL,
-                                         cflag=STIFF_AND_RHS, time=time,
-                                         istep=self.number, iframe=iframe+1,
-                                         ninc=nit+1)
+                K, rhs = assemble_system(
+                    self.model.mesh.element_blocks, self.model.mesh.elemap,
+                    self.model.elements, self.model.eftab, self.dofs,
+                    u, Q, self.svtab, self.svars, dltyp, dload, self.predef,
+                    self.procedure, GENERAL, cflag=STIFF_AND_RHS, time=time,
+                    istage=self.number, iincrement=iincrement+1, ninc=nit+1)
 
                 # ENFORCE BOUNDARY CONDITIONS
-                Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, X, self.dofs, u)
+                Kbc, Fbc = apply_boundary_conditions(K, rhs, self.doftags, X, self.dofs, u)
 
                 # --- SOLVE FOR THE NODAL DISPLACEMENT
                 w = linsolve(Kbc, Fbc)
@@ -137,20 +141,20 @@ class static_step(sd_step):
                     if err1 < tolerance:
                         break
                     elif err2 < 5e-2:
-                        logging.debug('CONVERGING TO LOSER TOLERANCE ON STEP '
-                                      '{0}, FRAME {1}'.format(self.number, iframe+1))
+                        logging.debug('CONVERGING TO LOSER TOLERANCE ON STAGE '
+                                      '{0}, INCREMENT {1}'.format(self.number, iincrement+1))
                         break
 
                 continue
 
             else:
-                message  = 'FAILED TO CONVERGE ON STEP '
-                message += '{0}, FRAME {1}'.format(self.number, iframe+1)
+                message  = 'FAILED TO CONVERGE ON STAGE '
+                message += '{0}, INCREMENT {1}'.format(self.number, iincrement+1)
                 logging.error(message)
                 raise RuntimeError(message)
 
-            logging.debug('STEP {0}, FRAME {1}, '
-                          'COMPLETE.'.format(self.number, iframe+1))
+            logging.debug('STAGE {0}, INCREMENT {1}, '
+                          'COMPLETE.'.format(self.number, iincrement+1))
             time += dtime
             self.dofs += u
             self.advance(dtime, self.dofs)
@@ -162,11 +166,11 @@ class static_step(sd_step):
         raise NotImplementedError("THIS FUNCTION IS STILL A NEWTON SOLVER")
 
         period = getattr(self, 'period', period)
-        increments = getattr(self, 'increments', increments)
+        increments = getattr(self, '_increments', increments)
         maxiters = getattr(self, 'maxiters', maxiters)
 
         # TIME IS:
-        # TIME[0]: VALUE OF STEP TIME AT BEGINNING OF INCREMENT
+        # TIME[0]: VALUE OF STAGE TIME AT BEGINNING OF INCREMENT
         # TIME[1]: VALUE OF TOTAL TIME AT BEGINNING OF INCREMENT
         time = array([0., self.start])
         dtime = period / float(increments)
@@ -174,7 +178,7 @@ class static_step(sd_step):
         maxit2 = int(maxiters)
         maxit1 = max(int(maxit2/2.),1)
 
-        for iframe in range(increments):
+        for iincrement in range(increments):
 
             # GET LOADS AND PRESCRIBED DISPLACEMENTS
             Q = self.cload(time[0]+dtime)
@@ -187,14 +191,16 @@ class static_step(sd_step):
             for nit in range(maxit2):
 
                 K, fext, fint = assemble_system(
-                    self.model, self.dofs, u, Q, self.svtab, self.svars, dltyp,
+                    self.model.mesh.element_blocks, self.model.mesh.elemap,
+                    self.model.elements, self.model.eftab, self.dofs,
+                    self.dofs, u, Q, self.svtab, self.svars, dltyp,
                     dload, self.predef, self.procedure, GENERAL,
-                    cflag=STIFF_AND_RHS, time=time, istep=self.number,
-                    iframe=iframe+1, ninc=nit+1, disp=1)
+                    cflag=STIFF_AND_RHS, time=time, istage=self.number,
+                    iincrement=iincrement+1, ninc=nit+1, disp=1)
                 rhs = fext - fint
 
                 # ENFORCE BOUNDARY CONDITIONS
-                Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, X, self.dofs, u)
+                Kbc, Fbc = apply_boundary_conditions(K, rhs, self.doftags, X, self.dofs, u)
 
                 # --- SOLVE FOR THE NODAL DISPLACEMENT
                 w = linsolve(Kbc, Fbc)
@@ -216,20 +222,20 @@ class static_step(sd_step):
                     if err1 < tolerance:
                         break
                     elif err2 < 5e-2:
-                        logging.debug('CONVERGING TO LOSER TOLERANCE ON STEP '
-                                      '{0}, FRAME {1}'.format(self.number, iframe+1))
+                        logging.debug('CONVERGING TO LOSER TOLERANCE ON STAGE '
+                                      '{0}, INCREMENT {1}'.format(self.number, iincrement+1))
                         break
 
                 continue
 
             else:
-                message  = 'FAILED TO CONVERGE ON STEP '
-                message += '{0}, FRAME {1}'.format(self.number, iframe+1)
+                message  = 'FAILED TO CONVERGE ON STAGE '
+                message += '{0}, INCREMENT {1}'.format(self.number, iincrement+1)
                 logging.error(message)
                 raise RuntimeError(message)
 
-            logging.debug('STEP {0}, FRAME {1}, '
-                          'COMPLETE.'.format(self.number, iframe+1))
+            logging.debug('STAGE {0}, INCREMENT {1}, '
+                          'COMPLETE.'.format(self.number, iincrement+1))
             time += dtime
             self.dofs += u
             self.advance(dtime, self.dofs)

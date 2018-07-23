@@ -1,15 +1,17 @@
 from numpy import *
 
-from .constants import *
-from .utilities import *
-from .step import sd_step
-from .assembly import assemble_system
+from .stage import sd_stage
+from ..constants import *
+from ..utilities import *
+from ..assembly import assemble_system
 
-class dynamic_step(sd_step):
+class dynamic_stage(sd_stage):
     procedure = DYNAMIC
     def __init__(self, model, number, name, previous, period, **kwds):
-        super(dynamic_step, self).__init__(model, number, name, previous, period)
+        super(dynamic_stage, self).__init__(model, number, name, previous, period)
         for (key, val) in kwds.items():
+            if key == 'increments':
+                key = '_increments'
             setattr(self, key, val)
 
     # ----------------------------------------------------------------------- #
@@ -18,7 +20,7 @@ class dynamic_step(sd_step):
     def run(self, period=1., increments=10, alpha=.5, beta=0.):
 
         period = getattr(self, 'period', period)
-        increments = getattr(self, 'increments', increments)
+        increments = getattr(self, '_increments', increments)
 
         time = array([0., self.start])
         dtime = period / float(increments)
@@ -32,7 +34,9 @@ class dynamic_step(sd_step):
         Q = self.cload(time[0])
         dltyp, dload = self.dload(time[0])
 
-        mass, rhs = assemble_system(self.model, self.dofs, un[:,0], Q,
+        mass, rhs = assemble_system(self.model.mesh.element_blocks,
+                                    self.model.mesh.elemap, self.model.elements,
+                                    self.model.eftab, self.dofs, un[:,0], Q,
                                     self.svtab, self.svars, dltyp, dload,
                                     self.predef, self.procedure, GENERAL,
                                     cflag=MASS_AND_RHS, time=time)
@@ -46,11 +50,14 @@ class dynamic_step(sd_step):
             X = self.dofvals(time[0]+dtime)
             dltyp, dload = self.dload(time[0]+dtime)
 
-            mass, rhs = assemble_system(self.model, self.dofs, un[:,0], Q,
-                                        self.svtab, self.svars, dltyp, dload,
-                                        self.predef, self.procedure, GENERAL,
+            mass, rhs = assemble_system(self.model.mesh.element_blocks,
+                                        self.model.mesh.elemap,
+                                        self.model.elements, self.model.eftab,
+                                        self.dofs, un[:,0], Q, self.svtab,
+                                        self.svars, dltyp, dload, self.predef,
+                                        self.procedure, GENERAL,
                                         cflag=MASS_AND_RHS, time=time,
-                                        istep=self.number, iframe=n+1)
+                                        istage=self.number, iincrement=n+1)
 
             # UPDATE ACCELERATION
             an[:,1] = rhs / mass

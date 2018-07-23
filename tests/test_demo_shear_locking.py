@@ -20,9 +20,9 @@ def PlaneStressBeam(ratio, plot=False):
     V.assign_properties('ElementBlock1', CPS4, mat, t=1)
     V.assign_prescribed_bc(IHI, (X,Y))
 
-    step = V.create_static_step()
-    step.assign_surface_load(ILO, [0, -q])
-    step.run()
+    stage = V.create_static_stage()
+    stage.assign_surface_load(ILO, [0, -q])
+    stage.run()
 
     if plot:
         ax = V.Plot2D(deformed=1, color='b')

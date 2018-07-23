@@ -28,23 +28,23 @@ class CMDN(isop_base):
     def shapegrad(self, *args):
         raise NotImplementedError
 
-    def response(self, u, du, time, dtime, kstep, kframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type):
+    def response(self, u, du, time, dtime, kstage, kincrement, svars, dltyp, dload,
+                 predef, procedure, nlgeom, cflag, stage_type):
         """Assemble the element stiffness and rhs"""
 
         if cflag == MASS_ONLY:
             return self.mass_matrix(u, du)
 
         if cflag == STIFF_ONLY:
-            return self.eval(u, du, time, dtime, kstep, kframe, svars,
-                             predef, procedure, nlgeom, step_type)[1]
+            return self.eval(u, du, time, dtime, kstage, kincrement, svars,
+                             predef, procedure, nlgeom, stage_type)[1]
 
         compute_stiff = cflag in (STIFF_AND_RHS, STIFF_ONLY)
         compute_force = cflag in (STIFF_AND_RHS, RHS_ONLY, MASS_AND_RHS)
         compute_mass = cflag in (MASS_AND_RHS,)
 
-        Re, Ke = self.eval(u, du, time, dtime, kstep, kframe, svars,
-                           predef, procedure, nlgeom, step_type)
+        Re, Ke = self.eval(u, du, time, dtime, kstage, kincrement, svars,
+                           predef, procedure, nlgeom, stage_type)
 
         if cflag == LP_OUTPUT:
             return
@@ -64,7 +64,7 @@ class CMDN(isop_base):
                 else:
                     logging.warn('UNRECOGNIZED DLOAD FLAG')
 
-        if step_type not in (GENERAL, DYNAMIC) and compute_force:
+        if stage_type not in (GENERAL, DYNAMIC) and compute_force:
             Re = zeros_like(Fe)
 
         if cflag == STIFF_AND_RHS:
@@ -115,8 +115,8 @@ class CMDN(isop_base):
 
         return Fe
 
-    def eval(self, u, du, time, dtime, kstep, kframe, svars,
-             predef, procedure, nlgeom, step_type):
+    def eval(self, u, du, time, dtime, kstage, kincrement, svars,
+             predef, procedure, nlgeom, stage_type):
         """Evaluate the element stiffness and residual"""
         xc = self.xc  # + u.reshape(self.xc.shape)
         Re = zeros(self.numdof)
@@ -205,9 +205,9 @@ class CMDN(isop_base):
             s, xv, D = self.material.response(
                 s, xv, e, de, time, dtime, temp, dtemp, None, None,
                 self.ndir, self.nshr, self.ndir+self.nshr, xc, F0, F,
-                self.label, kstep, kframe)
+                self.label, kstage, kincrement)
 
-            # Rotate stress to material frame
+            # Rotate stress to material increment
             #T = dot(R, dot(asmatrix(sig), R.T))
 
             # Calculate strain
@@ -254,7 +254,7 @@ class CMDN(isop_base):
             Ke -= dot(dot(Kci, inv(Kii)), Kci.T)
 
         if self.selective_reduced:
-            Ke += self.sri_correction(u, du, time, dtime, kstep, kframe,
+            Ke += self.sri_correction(u, du, time, dtime, kstage, kincrement,
                                       svars, predef, nlgeom)
 
         if self.hourglass_control:
@@ -306,7 +306,7 @@ class CMDN(isop_base):
 
         return Khg
 
-    def sri_correction(self, u, du, time, dtime, kstep, kframe, svars, predef,
+    def sri_correction(self, u, du, time, dtime, kstage, kincrement, svars, predef,
                        nlgeom):
         # SELECTIVE REDUCED INTEGRATION CORRECTION
 
@@ -351,7 +351,7 @@ class CMDN(isop_base):
         s, xv, D = self.material.response(
             s, xv, e, de, time, dtime, temp, dtemp, None, None,
             self.ndir, self.nshr, self.ndir+self.nshr, xc, F0, F,
-            self.label, kstep, kframe)
+            self.label, kstage, kincrement)
         D1, D2 = iso_dev_split(self.ndir, self.nshr, self.dimensions, D)
 
         # GAUSS INTEGRATION

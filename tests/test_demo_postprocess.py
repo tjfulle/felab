@@ -11,24 +11,24 @@ def PostProcessDemo():
     V.assign_prescribed_bc('LeftHandSide', X)
     V.fix_nodes('PinNode')
 
-    step = V.create_static_step()
-    step.assign_surface_load(IHI, [1,0])
-    step.run()
+    stage = V.create_static_stage()
+    stage.assign_surface_load(IHI, [1,0])
+    stage.run()
 
     V.write_results()
 
     F = File('PlateWithHoleQuad4.exo')
     max_p = [0., None]
     max_u = [0., None]
-    for step in F.steps.values():
-        for frame in step.frames:
-            u = frame.field_outputs['U']
+    for stage in F.stages.values():
+        for increment in stage.increments:
+            u = increment.field_outputs['U']
             for value in u.values:
                 u1 = value.magnitude
                 if max_u[0] < u1:
                     max_u = [u1, value]
 
-            s = frame.field_outputs['S']
+            s = increment.field_outputs['S']
             for value in s.values:
                 s1 = value.max_principal
                 if max_p[0] < s1:

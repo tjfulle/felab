@@ -13,9 +13,9 @@ def LinearSolution(ax=None):
     V.assign_prescribed_bc('Nodeset-200', X)
     V.assign_prescribed_bc('Nodeset-201', Y)
     # Pressure on inside face
-    step = V.create_static_step()
-    step.assign_pressure('SURFACE-1', 1.)
-    step.run()
+    stage = V.create_static_stage()
+    stage.assign_pressure('SURFACE-1', 1.)
+    stage.run()
     V.write_results()
     if ax is not None:
         ax = V.Plot2D(deformed=1, color='b', linestyle='-.', ax=ax, label='Linear',
@@ -33,10 +33,10 @@ def ReducedIntegrationSolution(ax=None):
     V.assign_prescribed_bc('Nodeset-200', X)
     V.assign_prescribed_bc('Nodeset-201', Y)
 
-    step = V.create_static_step()
+    stage = V.create_static_stage()
     # Pressure on inside face
-    step.assign_pressure('SURFACE-1', 1.)
-    step.run()
+    stage.assign_pressure('SURFACE-1', 1.)
+    stage.run()
 
     V.write_results()
     if ax is not None:
@@ -54,10 +54,10 @@ def SelReducedIntegrationSolution(ax=None):
     V.assign_prescribed_bc('Nodeset-200', X)
     V.assign_prescribed_bc('Nodeset-201', Y)
 
-    step = V.create_static_step()
+    stage = V.create_static_stage()
     # Pressure on inside face
-    step.assign_pressure('SURFACE-1', 1.)
-    step.run()
+    stage.assign_pressure('SURFACE-1', 1.)
+    stage.run()
 
     V.write_results()
     if ax is not None:
@@ -74,14 +74,14 @@ def QuadraticSolution(ax=None):
     V.assign_prescribed_bc('Nodeset-200', X)
     V.assign_prescribed_bc('Nodeset-201', Y)
 
-    step = V.create_static_step()
+    stage = V.create_static_stage()
     # Pressure on inside face
     #V.assign_pressure('SURFACE-1', 1.)
-    step.assign_surface_load("SURFACE-300", [0.195090322, 0.98078528])
-    step.assign_surface_load("SURFACE-301", [0.555570233, 0.831469612])
-    step.assign_surface_load("SURFACE-302", [0.831469612, 0.555570233])
-    step.assign_surface_load("SURFACE-303", [0.98078528, 0.195090322])
-    step.run()
+    stage.assign_surface_load("SURFACE-300", [0.195090322, 0.98078528])
+    stage.assign_surface_load("SURFACE-301", [0.555570233, 0.831469612])
+    stage.assign_surface_load("SURFACE-302", [0.831469612, 0.555570233])
+    stage.assign_surface_load("SURFACE-303", [0.98078528, 0.195090322])
+    stage.run()
 
     V.write_results()
 

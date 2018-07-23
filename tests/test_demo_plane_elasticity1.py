@@ -11,12 +11,12 @@ def PlaneElasticity1(plot=False):
 
     V.assign_properties('ElementBlock1', CPE4, mat, t=1)
 
-    step = V.create_static_step()
-    step.assign_prescribed_bc('LeftHandSide', X, 0.)
-    step.assign_prescribed_bc('PinNode', Y, 0.)
-    step.assign_prescribed_bc('RightHandSide', X, .1)
+    stage = V.create_static_stage()
+    stage.assign_prescribed_bc('LeftHandSide', X, 0.)
+    stage.assign_prescribed_bc('PinNode', Y, 0.)
+    stage.assign_prescribed_bc('RightHandSide', X, .1)
 
-    step.run()
+    stage.run()
 
     V.write_results()
 

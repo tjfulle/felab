@@ -30,8 +30,8 @@ class LMD2(element_base):
     def variables(cls):
         return (('P', SCALAR), ('S', SCALAR))
 
-    def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type):
+    def response(self, u, du, time, dtime, kstage, kincrement, svars, dltyp, dload,
+                 predef, procedure, nlgeom, cflag, stage_type):
         """Computes the response of a n-dimensional elastic link
 
         Parameters

@@ -126,7 +126,7 @@ DIM_FOUR           = 'four'
 DIM_NUM_DIM        = 'num_dim'
 DIM_NUM_QA         = 'num_qa_rec'
 DIM_TIME_STEP      = 'time_step'
-DIM_MAX_STEPS      = 'max_steps'
+DIM_MAX_STAGES     = 'max_stages'
 VAR_TIME_WHOLE     = 'time_whole'
 VAR_QA_RECORDS     = 'qa_records'
 VAR_COOR_NAMES     = 'coor_names'
@@ -185,8 +185,8 @@ VAR_ELE_SS         = lambda i: cat('elem_ss', i)
 
 # --- Field variable dimensions and variables (femlib specific)
 DIM_NUM_FIELD      = 'num_field'
-VAR_STEP_NUM       = 'step_num'
-VAR_STEP_NAMES     = 'step_names'
+VAR_STAGE_NUM      = 'stage_num'
+VAR_STAGE_NAMES    = 'stage_names'
 VAR_FIELD_ELE_VAR  = 'field_elem_var'
 VAR_FIELD_NOD_VAR  = 'field_nod_var'
 VAR_FO_PROP1       = 'fo_prop1'
@@ -491,10 +491,10 @@ class EXOFileWriter(EXOFile):
         self.initialized = True
         return
 
-    def snapshot(self, step):
+    def snapshot(self, stage):
         if not self.initialized:
             nodvarnames, elevarnames = [], []
-            for fo in step.frames[0].field_outputs.values():
+            for fo in stage.increments[0].field_outputs.values():
                 if fo.position == NODE:
                     nodvarnames.extend(fo.keys)
                 else:
@@ -508,22 +508,22 @@ class EXOFileWriter(EXOFile):
         numblk = self.getdim(DIM_NUM_ELEBLK)
         numdim = self.getdim(DIM_NUM_DIM)
 
-        for frame in step.frames:
-            if not frame.converged:
-                logging.warn('CANNOT WRITE UNCONVERGED FRAME')
+        for increment in stage.increments:
+            if not increment.converged:
+                logging.warn('CANNOT WRITE UNCONVERGED INCREMENT')
                 return
-            self.putframe(frame)
+            self.putincrement(increment)
 
-    def putframe(self, frame):
+    def putincrement(self, increment):
         # write time value
         count = self.count
-        self.fh.variables[VAR_TIME_WHOLE][count] = frame.value
-        self.fh.variables[VALS_GLO_VAR][count] = frame.increment
+        self.fh.variables[VAR_TIME_WHOLE][count] = increment.value
+        self.fh.variables[VALS_GLO_VAR][count] = increment.increment
 
         nodvars = self.fh.variables.get(VAR_NAME_NOD_VAR)
         if nodvars is not None:
             nodvars = stringify2(nodvars)
-            for fo in frame.field_outputs.values():
+            for fo in increment.field_outputs.values():
                 if fo.position != NODE:
                     continue
                 for (k, label) in enumerate(fo.keys):
@@ -534,7 +534,7 @@ class EXOFileWriter(EXOFile):
         if elevars is not None:
             elevars = stringify2(elevars)
             ebs = stringify2(self.fh.variables[VAR_EB_NAMES][:])
-            for (name, fo) in frame.field_outputs.items():
+            for (name, fo) in increment.field_outputs.items():
                 if fo.position == NODE:
                     continue
                 ieb = ebs.index(name[0])
@@ -725,78 +725,78 @@ class EXOFileReader(EXOFile):
         scalars1, vectors1, tensors1 = self.parse_names_and_components(nodvarnames)
         scalars2, vectors2, tensors2 = self.parse_names_and_components(elevarnames)
 
-        self.steps = StepRepository1()
-        step = self.steps.Step()
-        frame = step.frames[0]
+        self.stages = StageRepository()
+        stage = self.stages.Stage()
+        increment = stage.increments[0]
 
         # --- REGISTER VARIABLES
 
         # NODE DATA
         for (i, name) in scalars1:
-            frame.ScalarField(name, NODE, node_labels)
+            increment.ScalarField(name, NODE, node_labels)
         for (name, item) in vectors1.items():
             if name == 'displ': name = 'U'
-            frame.VectorField(name, NODE, node_labels, self.numdim)
+            increment.VectorField(name, NODE, node_labels, self.numdim)
         for (name, item) in tensors1.items():
             ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
-            frame.SymmetricTensorField(name, NODE, node_labels, ndir, nshr)
+            increment.SymmetricTensorField(name, NODE, node_labels, ndir, nshr)
 
         # ELEMENT DATA
         for (ieb, eb) in enumerate(self.element_blocks):
             elems = [eb.elefam] * len(eb.labels)
             for (i, name) in scalars2:
-                frame.ScalarField(name, ELEMENT_CENTROID, eb.labels, eb.name)
+                increment.ScalarField(name, ELEMENT_CENTROID, eb.labels, eb.name)
             for (name, item) in vectors2.items():
-                frame.VectorField(name, ELEMENT_CENTROID,
+                increment.VectorField(name, ELEMENT_CENTROID,
                                   eb.labels, self.numdim, eb.name)
             for (name, item) in tensors2.items():
                 ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
-                frame.SymmetricTensorField(name, ELEMENT_CENTROID, eb.labels,
+                increment.SymmetricTensorField(name, ELEMENT_CENTROID, eb.labels,
                                            ndir, nshr, eleblk=eb.name,
                                            elements=elems)
 
         for (count, time) in enumerate(times):
             if count > 0:
-                frame = step.Frame(dtimes[count])
+                increment = stage.Increment(dtimes[count])
 
             # NODE DATA
             for (i, name) in scalars1:
                 d = self.fh.variables[VALS_NOD_VAR(i+1)][count]
-                frame.field_outputs[name].add_data(d)
+                increment.field_outputs[name].add_data(d)
             for (name, item) in vectors1.items():
                 if name == 'displ': name = 'U'
                 d = []
                 for (i, comp) in item:
                     d.append(self.fh.variables[VALS_NOD_VAR(i+1)][count])
                 d = column_stack(d)
-                frame.field_outputs[name].add_data(d)
+                increment.field_outputs[name].add_data(d)
             for (name, item) in tensors1.items():
                 d = []
                 for (i, comp) in item:
                     d.append(self.fh.variables[VALS_NOD_VAR(i+1)][count])
                 d = column_stack(d)
-                frame.field_outputs[name].add_data(d)
+                increment.field_outputs[name].add_data(d)
 
             # ELEMENT DATA
             for (ieb, eb) in enumerate(self.element_blocks):
                 for (i, name) in scalars2:
                     d = self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count]
-                    frame.field_outputs[eb.name,name].add_data(d)
+                    increment.field_outputs[eb.name,name].add_data(d)
                 for (name, item) in vectors2.items():
                     d = []
                     for (i, comp) in item:
                         d.append(self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count])
                     d = column_stack(d)
-                    frame.field_outputs[eb.name,name].add_data(d)
+                    increment.field_outputs[eb.name,name].add_data(d)
                 for (name, item) in tensors2.items():
                     d = []
                     for (i, comp) in item:
                         d.append(self.fh.variables[VALS_ELE_VAR(i+1,ieb+1)][count])
                     d = column_stack(d)
                     ndir, nshr = {1:(1,0), 3:(2,1), 4:(3,1), 6:(3,3)}[len(item)]
-                    frame.field_outputs[eb.name,name].add_data(d)
+                    increment.field_outputs[eb.name,name].add_data(d)
 
-        return self.steps
+        return self.stages
 
     def get_elem_coord(self, xel):
         iel = self.elemap[xel]
@@ -849,7 +849,7 @@ def put_nodal_solution(filename, nodmap, elemap, coord, element_blocks, u):
 # --------------------------------------------------------------------------- #
 # --- THE FOLLOWING IS FOR OUTPUT ONLY -------------------------------------- #
 # --------------------------------------------------------------------------- #
-class StepRepository1(object):
+class StageRepository(object):
     def __init__(self):
         self._keys = []
         self._values = []
@@ -874,22 +874,22 @@ class StepRepository1(object):
     def items(self):
         for (i, key) in enumerate(self._keys):
             yield (key, self._values[i])
-    def Step(self, name=None, copy=1):
+    def Stage(self, name=None, copy=1):
         if name is None:
             j = 1
             while 1:
-                name = 'Step-{0}'.format(len(self._keys)+j)
+                name = 'Stage-{0}'.format(len(self._keys)+j)
                 if name not in self._keys:
                     break
                 j += 1
         if not self._values:
-            step = Step(name, 0.)
+            stage = Stage(name, 0.)
         else:
             last = self._values[-1].framces[-1]
-            step = Step(name, last.value)
+            stage = Stage(name, last.value)
             if copy:
-                step.frames[0].field_outputs = deepcopy(last.field_outputs)
-        self[name] = step
+                stage.increments[0].field_outputs = deepcopy(last.field_outputs)
+        self[name] = stage
         return self._values[-1]
     @property
     def last(self):
@@ -898,28 +898,28 @@ class StepRepository1(object):
     def first(self):
         return self._values[0]
 
-class Step(object):
+class Stage(object):
     def __init__(self, name, start):
         self.written = 0
         self.name = name
         self.time = start
-        self.frames = []
-        self.Frame(0.)
+        self.increments = []
+        self.Increment(0.)
 
     def __len__(self):
-        return len(self.frames)
+        return len(self.increments)
 
-    def Frame(self, dtime, copy=1):
-        frame = Frame(self.time, dtime)
+    def Increment(self, dtime, copy=1):
+        increment = Increment(self.time, dtime)
         self.time += dtime
-        if self.frames and copy:
-            frame_n = self.frames[-1]
-            frame.field_outputs = deepcopy(frame_n.field_outputs)
-        frame.number = len(self.frames)
-        self.frames.append(frame)
-        return frame
+        if self.increments and copy:
+            increment_n = self.increments[-1]
+            increment.field_outputs = deepcopy(increment_n.field_outputs)
+        increment.number = len(self.increments)
+        self.increments.append(increment)
+        return increment
 
-class Frame(object):
+class Increment(object):
     def __init__(self, start, dtime):
         self.start = start
         self.increment = dtime

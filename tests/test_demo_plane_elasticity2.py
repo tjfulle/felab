@@ -17,12 +17,12 @@ def PlaneElasticity2(plot=False):
     V.assign_prescribed_bc('LeftHandSide', X)
     V.assign_prescribed_bc('BottomLeft', Y)
 
-    # CREATE LOAD STEP AND PRESCRIBED NONHOMOGENEOUS BCS TO IT
-    step = V.create_static_step()
-    step.assign_prescribed_bc('RightHandSide', X, .1)
+    # CREATE LOAD STAGE AND PRESCRIBED NONHOMOGENEOUS BCS TO IT
+    stage = V.create_static_stage()
+    stage.assign_prescribed_bc('RightHandSide', X, .1)
 
-    # RUN THE STEP TO SOLVE FOR THE UNKNOWN DEGREES OF FREEDOM
-    step.run()
+    # RUN THE STAGE TO SOLVE FOR THE UNKNOWN DEGREES OF FREEDOM
+    stage.run()
 
     # WRITE RESULTS
     V.write_results()

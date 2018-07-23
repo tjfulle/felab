@@ -7,9 +7,9 @@ def Cantilever8():
     V = fe_model(mesh=mesh)
     V.assign_properties('EAll', CPS8, mat, t=1)
     V.fix_nodes((1, 22, 33))
-    step = V.create_static_step()
-    step.assign_concentrated_load(49, Y, .01)
-    step.run(increments=10)
+    stage = V.create_static_stage()
+    stage.assign_concentrated_load(49, Y, .01)
+    stage.run(increments=10)
     V.write_results()
 
 

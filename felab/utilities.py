@@ -160,8 +160,8 @@ def get_procname(proc):
             DYNAMIC: 'DYNAMIC',
             HEAT_TRANSFER: 'HEAT TRANSFER'}[proc]
 
-def get_steptypname(step_type):
-    return step_type.upper()
+def get_stagetypname(stage_type):
+    return stage_type.upper()
 
 def emptywithlists(n):
     a = zeros(n, dtype=object)

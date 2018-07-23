@@ -31,8 +31,8 @@ class DCMDN(isop_base):
     def boundary_flux_array(self, edge, qn):
         raise NotImplementedError
 
-    def response(self, u, du, time, dtime, istep, iframe, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, step_type, disp=0):
+    def response(self, u, du, time, dtime, kstage, kincrement, svars, dltyp, dload,
+                 predef, procedure, nlgeom, cflag, stage_type, disp=0):
 
         # --- ELEMENT STIFFNESS AND FORCE
 

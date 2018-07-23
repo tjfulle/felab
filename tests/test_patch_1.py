@@ -25,21 +25,21 @@ def test_4_node_plane_stress():
     # Fixed BC
     V.fix_nodes(0)
 
-    # Load step
-    step = V.create_static_step()
+    # Load stage
+    stage = V.create_static_stage()
 
-    step.assign_prescribed_bc(1, X, 2.4e-4)
-    step.assign_prescribed_bc(1, Y, 1.2e-4)
+    stage.assign_prescribed_bc(1, X, 2.4e-4)
+    stage.assign_prescribed_bc(1, Y, 1.2e-4)
 
-    step.assign_prescribed_bc(22, X, 3.0e-4)
-    step.assign_prescribed_bc(22, Y, 2.4e-4)
+    stage.assign_prescribed_bc(22, X, 3.0e-4)
+    stage.assign_prescribed_bc(22, Y, 2.4e-4)
 
-    step.assign_prescribed_bc(3, X, 6.0e-5)
-    step.assign_prescribed_bc(3, Y, 1.2e-4)
+    stage.assign_prescribed_bc(3, X, 6.0e-5)
+    stage.assign_prescribed_bc(3, Y, 1.2e-4)
 
-    step.run()
+    stage.run()
 
-    s = step.frames[-1].field_outputs['S'].data
+    s = stage.increments[-1].field_outputs['S'].data
     assert allclose(s[:,:,:2], 1333.3333)
     assert allclose(s[:,:,2], 400.0)
 
@@ -79,25 +79,25 @@ def test_8_node_plane_stress():
 
     V.fix_nodes(0)
 
-    step = V.create_static_step()
-    step.assign_prescribed_bc(1, X, 1.2e-4)
-    step.assign_prescribed_bc(1, Y, 6.0e-5)
-    step.assign_prescribed_bc(2, X, 2.4e-4)
-    step.assign_prescribed_bc(2, Y, 1.2e-4)
-    step.assign_prescribed_bc(3, X, 2.7e-4)
-    step.assign_prescribed_bc(3, Y, 1.8e-4)
-    step.assign_prescribed_bc(4, X, 3.0e-4)
-    step.assign_prescribed_bc(4, Y, 2.4e-4)
-    step.assign_prescribed_bc(5, X, 1.8e-4)
-    step.assign_prescribed_bc(5, Y, 1.8e-4)
-    step.assign_prescribed_bc(6, X, 6.0e-5)
-    step.assign_prescribed_bc(6, Y, 1.2e-4)
-    step.assign_prescribed_bc(7, X, 3.0e-5)
-    step.assign_prescribed_bc(7, Y, 6.0e-5)
+    stage = V.create_static_stage()
+    stage.assign_prescribed_bc(1, X, 1.2e-4)
+    stage.assign_prescribed_bc(1, Y, 6.0e-5)
+    stage.assign_prescribed_bc(2, X, 2.4e-4)
+    stage.assign_prescribed_bc(2, Y, 1.2e-4)
+    stage.assign_prescribed_bc(3, X, 2.7e-4)
+    stage.assign_prescribed_bc(3, Y, 1.8e-4)
+    stage.assign_prescribed_bc(4, X, 3.0e-4)
+    stage.assign_prescribed_bc(4, Y, 2.4e-4)
+    stage.assign_prescribed_bc(5, X, 1.8e-4)
+    stage.assign_prescribed_bc(5, Y, 1.8e-4)
+    stage.assign_prescribed_bc(6, X, 6.0e-5)
+    stage.assign_prescribed_bc(6, Y, 1.2e-4)
+    stage.assign_prescribed_bc(7, X, 3.0e-5)
+    stage.assign_prescribed_bc(7, Y, 6.0e-5)
 
-    step.run()
+    stage.run()
 
-    s = step.frames[-1].field_outputs['S'].data
+    s = stage.increments[-1].field_outputs['S'].data
     assert allclose(s[:,:,:2], 1333.3333)
     assert allclose(s[:,:,2], 400.0)
 
@@ -129,17 +129,17 @@ def test_3_node_plane_stress():
 
     V.fix_nodes(0)
 
-    step = V.create_static_step()
-    step.assign_prescribed_bc(1,  X, 2.4e-4)
-    step.assign_prescribed_bc(1,  Y, 1.2e-4)
-    step.assign_prescribed_bc(22, X, 3.0e-4)
-    step.assign_prescribed_bc(22, Y, 2.4e-4)
-    step.assign_prescribed_bc(3,  X, 6.0e-5)
-    step.assign_prescribed_bc(3,  Y, 1.2e-4)
+    stage = V.create_static_stage()
+    stage.assign_prescribed_bc(1,  X, 2.4e-4)
+    stage.assign_prescribed_bc(1,  Y, 1.2e-4)
+    stage.assign_prescribed_bc(22, X, 3.0e-4)
+    stage.assign_prescribed_bc(22, Y, 2.4e-4)
+    stage.assign_prescribed_bc(3,  X, 6.0e-5)
+    stage.assign_prescribed_bc(3,  Y, 1.2e-4)
 
-    step.run()
+    stage.run()
 
-    s = step.frames[-1].field_outputs['S'].data
+    s = stage.increments[-1].field_outputs['S'].data
     assert allclose(s[:,:,:2], 1333.3333)
     assert allclose(s[:,:,2], 400.0)
 

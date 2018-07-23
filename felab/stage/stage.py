@@ -1,11 +1,11 @@
 from numpy import *
 from copy import deepcopy
 
-from .utilities import *
-from .constants import *
-from .data_wharehouse import *
+from ..utilities import *
+from ..constants import *
+from ..data_wharehouse import *
 
-class load_step(object):
+class load_stage(object):
     def __init__(self, model, number, name, previous, period):
         self.model = model
         self.written = 0
@@ -15,10 +15,10 @@ class load_step(object):
             self.start = 0.
             self.value = 0.
         else:
-            self.start = previous.frames[-1].value
-            self.value = previous.frames[-1].value
-        self.frames = []
-        self.Frame(0.)
+            self.start = previous.increments[-1].value
+            self.value = previous.increments[-1].value
+        self.increments = []
+        self.Increment(0.)
         self.period = period
         self.number = number
         self.previous = previous
@@ -66,7 +66,7 @@ class load_step(object):
         self._K = None
 
     def __len__(self):
-        return len(self.frames)
+        return len(self.increments)
 
     def print_stiffness_structure(self, style='ascii', stream=sys.stdout):
         if self._K is None:
@@ -101,49 +101,49 @@ class load_step(object):
     def doftags(self):
         return array(sorted(self.dofx), dtype=int)
 
-    def dofvals(self, step_time):
+    def dofvals(self, stage_time):
 
         ix = self.doftags
 
-        # DOFS AT END OF LAST STEP
+        # DOFS AT END OF LAST STAGE
         X0 = array([self.previous.dofx.get(I, 0) for I in ix])
 
-        # DOFS AT END OF THIS STEP
+        # DOFS AT END OF THIS STAGE
         Xf = array([self.dofx[I] for I in ix])
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
-        fac = max(1., step_time / self.period)
+        fac = max(1., stage_time / self.period)
         return (1. - fac) * X0 + fac * Xf
 
     @property
     def cltags(self):
         return array(sorted(self.cloadx), dtype=int)
 
-    def cload(self, step_time):
-        # CONCENTRATED LOAD AT END OF LAST STEP
+    def cload(self, stage_time):
+        # CONCENTRATED LOAD AT END OF LAST STAGE
         ix = self.previous.cltags
         Q0 = zeros_like(self.dofs)
         Q0[ix] = [self.previous.cloadx[key] for key in ix]
 
-        # CONCENTRATED LOAD AT END OF THIS STEP
+        # CONCENTRATED LOAD AT END OF THIS STAGE
         ix = self.cltags
         Qf = zeros_like(self.dofs)
         Qf[ix] = [self.cloadx[key] for key in ix]
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
-        fac = max(1., step_time / self.period)
+        fac = max(1., stage_time / self.period)
         return (1. - fac) * Q0 + fac * Qf
 
-    def dload(self, step_time):
+    def dload(self, stage_time):
 
-        # INTERPOLATES ALL DISTRIBUTED LOADS (BODY AND SURFACE) TO STEP_TIME
+        # INTERPOLATES ALL DISTRIBUTED LOADS (BODY AND SURFACE) TO STAGE_TIME
 
         # CONTAINER FOR ALL DLOADS
         dltyp = emptywithlists(self.model.numele)
         dload = emptywithlists(self.model.numele)
 
         # INTERPOLATION FACTOR
-        fac = min(1., step_time / self.period)
+        fac = min(1., stage_time / self.period)
 
         # INTERPOLATE SURFACE LOADS
         for (key, Ff) in self.sloadx.items():
@@ -203,28 +203,28 @@ class load_step(object):
     def assign_hsrc(self, iel, s):
         self.hsrcx[iel] = asarray(s)
 
-    def Frame(self, dtime, copy=1):
-        frame = Frame(self.value, dtime)
+    def Increment(self, dtime, copy=1):
+        increment = Increment(self.value, dtime)
         self.value += dtime
-        if self.frames and copy:
-            frame_n = self.frames[-1]
-            frame.field_outputs = deepcopy(frame_n.field_outputs)
-        frame.number = len(self.frames)
-        self.frames.append(frame)
-        return frame
+        if self.increments and copy:
+            increment_n = self.increments[-1]
+            increment.field_outputs = deepcopy(increment_n.field_outputs)
+        increment.number = len(self.increments)
+        self.increments.append(increment)
+        return increment
 
-    def copy_from(self, step):
-        self.frames[0].field_outputs = deepcopy(step.frames[-1].field_outputs)
-        self.dofs[:] = step.dofs
-        self.dofx = deepcopy(step.dofx)
-        self.cloadx = deepcopy(step.cloadx)
-        self.dloadx = deepcopy(step.dloadx)
-        self.sloadx = deepcopy(step.sloadx)
-        self.sfluxx = deepcopy(step.sfluxx)
-        self.sfilmx = deepcopy(step.sfilmx)
-        self.hsrcx = deepcopy(step.hsrcx)
-        self.predef[:] = step.predef
-        self.svars[:] = step.svars
+    def copy_from(self, stage):
+        self.increments[0].field_outputs = deepcopy(stage.increments[-1].field_outputs)
+        self.dofs[:] = stage.dofs
+        self.dofx = deepcopy(stage.dofx)
+        self.cloadx = deepcopy(stage.cloadx)
+        self.dloadx = deepcopy(stage.dloadx)
+        self.sloadx = deepcopy(stage.sloadx)
+        self.sfluxx = deepcopy(stage.sfluxx)
+        self.sfilmx = deepcopy(stage.sfilmx)
+        self.hsrcx = deepcopy(stage.hsrcx)
+        self.predef[:] = stage.predef
+        self.svars[:] = stage.svars
 
     # ----------------------------------------------------------------------- #
     # --- BOUNDARY CONDITIONS ----------------------------------------------- #
@@ -380,15 +380,15 @@ class load_step(object):
         self.final_temp = a
 
     def advance(self, dtime, dofs, react=None, **kwds):
-        frame_n = self.frames[-1]
-        if not frame_n.converged:
-            raise RuntimeError('ATTEMPTING TO UPDATE AN UNCONVERGED FRAME')
+        increment_n = self.increments[-1]
+        if not increment_n.converged:
+            raise RuntimeError('ATTEMPTING TO UPDATE AN UNCONVERGED INCREMENT')
 
         # ADVANCE STATE VARIABLES
         self.svars[0] = self.svars[1]
 
-        # CREATE FRAME TO HOLD RESULTS
-        frame = self.Frame(dtime)
+        # CREATE INCREMENT TO HOLD RESULTS
+        increment = self.Increment(dtime)
 
         # STORE DEGREES OF FREEDOM
         u, R, temp = self.model.format_dof(dofs)
@@ -396,27 +396,27 @@ class load_step(object):
             RF, M, Q = self.model.format_dof(react)
 
         if temp is not None:
-            frame.field_outputs['T'].add_data(temp)
+            increment.field_outputs['T'].add_data(temp)
             if react is not None:
-                frame.field_outputs['Q'].add_data(Q)
+                increment.field_outputs['Q'].add_data(Q)
         if u.shape[1]:
-            frame.field_outputs['U'].add_data(u)
+            increment.field_outputs['U'].add_data(u)
             if react is not None:
-                frame.field_outputs['RF'].add_data(RF)
+                increment.field_outputs['RF'].add_data(RF)
         if R.shape[1]:
-            frame.field_outputs['R'].add_data(R)
+            increment.field_outputs['R'].add_data(R)
             if react is not None:
-                frame.field_outputs['M'].add_data(M)
+                increment.field_outputs['M'].add_data(M)
 
         # STORE KEYWORDS
         for (kwd, val) in kwds.items():
-            frame.field_outputs[kwd].add_data(val)
+            increment.field_outputs[kwd].add_data(val)
 
         for (ieb, eb) in enumerate(self.model.mesh.element_blocks):
             if not eb.eletyp.variables():
                 continue
 
-            # PASS VALUES FROM SVARS TO THE FRAME OUTPUT
+            # PASS VALUES FROM SVARS TO THE INCREMENT OUTPUT
             if eb.eletyp.ndir is not None:
                 ntens = eb.eletyp.ndir + eb.eletyp.nshr
             else:
@@ -433,11 +433,11 @@ class load_step(object):
                     svars = self.svars[0,self.svtab[iel]].reshape(m,n)
                 for (j, variable) in enumerate(el.variables()):
                     name, ftype = variable[:2]
-                    frame.field_outputs[eb.name,name].add_data(svars[:,j], e)
+                    increment.field_outputs[eb.name,name].add_data(svars[:,j], e)
 
-        frame.converged = True
+        increment.converged = True
 
-class Frame(object):
+class Increment(object):
     def __init__(self, start, dtime):
         self.start = start
         self.increment = dtime
@@ -484,8 +484,8 @@ class Frame(object):
                     raise ValueError('Unknown add_data option for {0}'.format(key))
             self.field_outputs[key].add_data(value, **d)
 
-class sd_step(load_step):
-    """Base class for stress/displacement steps"""
+class sd_stage(load_stage):
+    """Base class for stress/displacement stages"""
 
     def pin_nodes(self, nodes):
         """Pin nodal degrees of freedom

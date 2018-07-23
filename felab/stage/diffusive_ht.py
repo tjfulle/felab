@@ -1,21 +1,20 @@
 from numpy import *
 
-from .constants import *
-from .utilities import *
-from .elemlib import DC2D3
-from .step import load_step
-from .assembly import assemble_system
+from .stage import load_stage
+from ..constants import *
+from ..utilities import *
+from ..elemlib import DC2D3
+from ..assembly import assemble_system, apply_boundary_conditions
 
-class heat_transfer_step(load_step):
+class diffusive_ht_stage(load_stage):
     procedure = HEAT_TRANSFER
     def __init__(self, model, number, name, previous, period):
-        super(heat_transfer_step, self).__init__(model, number, name, previous,
-                                               period)
+        super(diffusive_ht_stage, self).__init__(model, number, name, previous, period)
 
         # CHECK ELEMENTS
         eletyp = (DC2D3,)
         if not all([isinstance(el, eletyp) for el in self.model.elements]):
-            raise UserInputError('INCORRECT ELEMENT TYPE FOR HEAT TRANSFER STEP')
+            raise UserInputError('INCORRECT ELEMENT TYPE FOR HEAT TRANSFER STAGE')
 
     # ----------------------------------------------------------------------- #
     # --- HEAT TRANSFER LOADINGS -------------------------------------------- #
@@ -69,11 +68,13 @@ class heat_transfer_step(load_step):
         qe = zeros_like(self.dofs)
         dltyp, dload = self.dload(self.period)
         X = self.dofvals(self.period)
-        K, rhs = assemble_system(self.model, self.dofs, du, qe, self.svtab,
-                                 self.svars, dltyp, dload, self.predef,
-                                 self.procedure, DIRECT, time=time)
+        K, rhs = assemble_system(self.model.mesh.element_blocks,
+                                 self.model.mesh.elemap, self.model.elements,
+                                 self.model.eftab, self.dofs, du, qe,
+                                 self.svtab, self.svars, dltyp, dload,
+                                 self.predef, self.procedure, DIRECT, time=time)
         self._K = K
-        Kbc, Fbc = self.model.apply_bc(K, rhs, self.doftags, X)
+        Kbc, Fbc = apply_boundary_conditions(K, rhs, self.doftags, X)
         self.dofs[:] = linsolve(Kbc, Fbc)
         react = dot(K, self.dofs) - rhs
         self.advance(self.period, self.dofs, react)

@@ -32,10 +32,10 @@ def Runall(plot=False):
         V.assign_prescribed_bc('Nodeset-200', X)
         V.assign_prescribed_bc('Nodeset-201', Y)
 
-        step = V.create_static_step()
+        stage = V.create_static_stage()
         # Pressure on inside face
-        step.assign_pressure('SURFACE-1', 1.)
-        step.run()
+        stage.assign_pressure('SURFACE-1', 1.)
+        stage.run()
         if plot:
             V.Plot2D(deformed=1, color='b', linestyle='-.',
                      label=r'Linear, $\nu=%g$'%Nu, ax=ax, show=1, #filename=filename,

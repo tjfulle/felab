@@ -14,21 +14,21 @@ def PlaneStressTria3PatchDemo(plot=False):
     # ASSIGN HOMOGENEOUS BCS TO MODEL
     V.assign_prescribed_bc(10, (X,Y))
 
-    # CREATE LOAD STEP AND TO IT ASSIGN INHOMOGENEOUS BCS
-    step = V.create_static_step(solver=NEWTON)
-    step.assign_prescribed_bc(20, X, .24e-3)
-    step.assign_prescribed_bc(20, Y, .12e-3)
-    step.assign_prescribed_bc(30, X,  .3e-3)
-    step.assign_prescribed_bc(30, Y, .24e-3)
-    step.assign_prescribed_bc(40, X, .06e-3)
-    step.assign_prescribed_bc(40, Y, .12e-3)
+    # CREATE LOAD STAGE AND TO IT ASSIGN INHOMOGENEOUS BCS
+    stage = V.create_static_stage(solver=NEWTON)
+    stage.assign_prescribed_bc(20, X, .24e-3)
+    stage.assign_prescribed_bc(20, Y, .12e-3)
+    stage.assign_prescribed_bc(30, X,  .3e-3)
+    stage.assign_prescribed_bc(30, Y, .24e-3)
+    stage.assign_prescribed_bc(40, X, .06e-3)
+    stage.assign_prescribed_bc(40, Y, .12e-3)
 
-    # RUN THE STEP
-    step.run()
+    # RUN THE STAGE
+    stage.run()
 
     # CHECK THE RESULTS AGAINST ANALYTIC SOLUTION
-    step = V.steps.last
-    field = step.frames[-1].field_outputs['S']
+    stage = V.stages.last
+    field = stage.increments[-1].field_outputs['S']
     error = []
     for value in field.values:
         data = value.data
@@ -36,7 +36,7 @@ def PlaneStressTria3PatchDemo(plot=False):
         assert allclose(data[:,1], 1333.333333333), error.append('Syy')
         assert allclose(data[:,2],  400.), error.append('Sxy')
 
-    field = step.frames[-1].field_outputs['E']
+    field = stage.increments[-1].field_outputs['E']
     for value in field.values:
         data = value.data
         assert allclose(data[:,0], 1e-3), error.append('Exx')
@@ -62,21 +62,21 @@ def PlaneStressTria3PatchDemo(plot=False):
     # ASSIGN HOMOGENEOUS BCS TO MODEL
     V.assign_prescribed_bc(10, (X,Y))
 
-    # CREATE LOAD STEP AND TO IT ASSIGN INHOMOGENEOUS BCS
-    step = V.create_static_step()
-    step.assign_prescribed_bc(20, X, .24e-3)
-    step.assign_prescribed_bc(20, Y, .12e-3)
-    step.assign_prescribed_bc(30, X,  .3e-3)
-    step.assign_prescribed_bc(30, Y, .24e-3)
-    step.assign_prescribed_bc(40, X, .06e-3)
-    step.assign_prescribed_bc(40, Y, .12e-3)
+    # CREATE LOAD STAGE AND TO IT ASSIGN INHOMOGENEOUS BCS
+    stage = V.create_static_stage()
+    stage.assign_prescribed_bc(20, X, .24e-3)
+    stage.assign_prescribed_bc(20, Y, .12e-3)
+    stage.assign_prescribed_bc(30, X,  .3e-3)
+    stage.assign_prescribed_bc(30, Y, .24e-3)
+    stage.assign_prescribed_bc(40, X, .06e-3)
+    stage.assign_prescribed_bc(40, Y, .12e-3)
 
-    # RUN THE STEP
-    step.run()
+    # RUN THE STAGE
+    stage.run()
 
     # CHECK THE RESULTS AGAINST ANALYTIC SOLUTION
-    step = V.steps.last
-    field = step.frames[-1].field_outputs['S']
+    stage = V.stages.last
+    field = stage.increments[-1].field_outputs['S']
     error = []
     for value in field.values:
         data = value.data
@@ -84,7 +84,7 @@ def PlaneStressTria3PatchDemo(plot=False):
         assert allclose(data[:,1], 1333.333333333), error.append('Syy')
         assert allclose(data[:,2],  400.), error.append('Sxy')
 
-    field = step.frames[-1].field_outputs['E']
+    field = stage.increments[-1].field_outputs['E']
     for value in field.values:
         data = value.data
         assert allclose(data[:,0], 1e-3), error.append('Exx')
