@@ -28,53 +28,38 @@ class CMDN(isop_base):
     def shapegrad(self, *args):
         raise NotImplementedError
 
-    def response(self, u, du, time, dtime, kstage, kincrement, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, stage_type):
+    def response(self, rhs, A, svars, energy, u, du, v, a, time, dtime,
+                 kstage, kinc, dltyp, dlmag, predef, lflags,
+                 ddlmag, mdload, pnewdt):
         """Assemble the element stiffness and rhs"""
 
-        if cflag == MASS_ONLY:
-            return self.mass_matrix(u, du)
+        if lflags[2] not in (STIFF_AND_RHS, STIFF_ONLY, MASS_ONLY, RHS_ONLY, MASS_AND_RHS):
+            raise NotImplementedError
 
-        if cflag == STIFF_ONLY:
-            return self.eval(u, du, time, dtime, kstage, kincrement, svars,
-                             predef, procedure, nlgeom, stage_type)[1]
+        if lflags[2] in (MASS_ONLY, MASS_AND_RHS):
+            A[:] = self.mass_matrix(u, du)
+            if lflags[2] == MASS_ONLY:
+                return
 
-        compute_stiff = cflag in (STIFF_AND_RHS, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_RHS, RHS_ONLY, MASS_AND_RHS)
-        compute_mass = cflag in (MASS_AND_RHS,)
+        if lflags[2] in (STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY, MASS_AND_RHS):
+            self.eval(rhs, A, svars, u, du, time, dtime, kstage, kinc, predef, lflags)
+            if lflags[2] == STIFF_ONLY:
+                return
 
-        Re, Ke = self.eval(u, du, time, dtime, kstage, kincrement, svars,
-                           predef, procedure, nlgeom, stage_type)
-
-        if cflag == LP_OUTPUT:
+        if kinc == 0:
             return
 
-        if compute_mass:
-            Me = self.mass_matrix(u, du)
-
-        if compute_force:
-            Fe = self.body_force(dltyp, dload)
+        if lflags[2] in (STIFF_AND_RHS, RHS_ONLY, MASS_AND_RHS):
+            rhs[:] += self.body_force(dltyp, dlmag)
             for (i, typ) in enumerate(dltyp):
                 if typ == DLOAD:
                     continue
                 if typ == SLOAD:
                     # SURFACE LOAD
-                    iedge, components = dload[i][0], dload[i][1:]
-                    Fe += self.surface_force(iedge, components)
+                    iedge, components = dlmag[i][0], dlmag[i][1:]
+                    rhs[:] += self.surface_force(iedge, components)
                 else:
-                    logging.warn('UNRECOGNIZED DLOAD FLAG')
-
-        if stage_type not in (GENERAL, DYNAMIC) and compute_force:
-            Re = zeros_like(Fe)
-
-        if cflag == STIFF_AND_RHS:
-            return Ke, Fe, Re
-
-        elif cflag == RHS_ONLY:
-            return Fe, Re
-
-        elif cflag == MASS_AND_RHS:
-            return Me, Fe, Re
+                    logging.warn('UNRECOGNIZED DLTYP FLAG')
 
     def surface_force(self, edge, qe):
 
@@ -115,12 +100,9 @@ class CMDN(isop_base):
 
         return Fe
 
-    def eval(self, u, du, time, dtime, kstage, kincrement, svars,
-             predef, procedure, nlgeom, stage_type):
+    def eval(self, rhs, A, svars, u, du, time, dtime, kstage, kinc, predef, lflags):
         """Evaluate the element stiffness and residual"""
         xc = self.xc  # + u.reshape(self.xc.shape)
-        Re = zeros(self.numdof)
-        Ke = zeros((self.numdof, self.numdof))
 
         if self.incompatible_modes:
             # INCOMPATIBLE MODES STIFFNESSES
@@ -168,11 +150,11 @@ class CMDN(isop_base):
             _W_ = -.5 * axialt(_w_)
 
             # UPDATE THE ROTATION
-            A = I3x3 - _W_ * dtime / 2.
-            RHS = dot(I3x3 + _W_ * dtime / 2., R)
+            _A = I3x3 - _W_ * dtime / 2.
+            _R = dot(I3x3 + _W_ * dtime / 2., R)
 
             # UPDATED ROTATION
-            R = dot(inv(A), RHS)
+            R = dot(inv(_A), _R)
 
             # RATE OF STRETCH
             Vdot = dot((D + W), V) - dot(V, _W_)
@@ -205,7 +187,7 @@ class CMDN(isop_base):
             s, xv, D = self.material.response(
                 s, xv, e, de, time, dtime, temp, dtemp, None, None,
                 self.ndir, self.nshr, self.ndir+self.nshr, xc, F0, F,
-                self.label, kstage, kincrement)
+                self.label, kstage, kinc)
 
             # Rotate stress to material increment
             #T = dot(R, dot(asmatrix(sig), R.T))
@@ -225,12 +207,18 @@ class CMDN(isop_base):
                 rp = dot(Ne, xc[:,0])
                 c *= rp
 
+            # Update element residual
+            if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):
+                rhs[:] -=  c * dot(s, B)
+                if lflags[2] == RHS_ONLY:
+                    continue
+
             if self.selective_reduced:
                 D1, D2 = iso_dev_split(self.ndir, self.nshr, self.dimensions, D)
-                Ke += c * dot(dot(B.T, D2), B)
+                A += c * dot(dot(B.T, D2), B)
 
             else:
-                Ke += c * dot(dot(B.T, D), B)
+                A += c * dot(dot(B.T, D), B)
                 if self.axisymmetric == 2:
                     c = J * wt
                     Pe = self.pmatrix(Ne)
@@ -239,10 +227,7 @@ class CMDN(isop_base):
                     Dh[0,:3] = D[2,:3]
                     Db = zeros((2,4))
                     Db[0,0], Db[1,0] = D[0,0], D[3,0]
-                    Ke += c / rp * dot(Pe.T, (dot(Dh, B) - dot(Db, B)))
-
-            # Update element residual
-            Re +=  J * wt * dot(s, B)
+                    A += c / rp * dot(Pe.T, (dot(Dh, B) - dot(Db, B)))
 
             if self.incompatible_modes:
                 # INCOMPATIBLE MODES
@@ -250,19 +235,18 @@ class CMDN(isop_base):
                 Kci += dot(dot(B.T, D), G) * J * wt
                 Kii += dot(dot(G.T, D), G) * J * wt
 
-        if self.incompatible_modes:
-            Ke -= dot(dot(Kci, inv(Kii)), Kci.T)
+        if lflags[2] in (STIFF_AND_RHS, STIFF_ONLY):
+            if self.incompatible_modes:
+                A -= dot(dot(Kci, inv(Kii)), Kci.T)
 
-        if self.selective_reduced:
-            Ke += self.sri_correction(u, du, time, dtime, kstage, kincrement,
-                                      svars, predef, nlgeom)
+            if self.selective_reduced:
+                A += self.sri_correction(svars, u, du, time, dtime,
+                                         kstage, kinc, predef, lflags)
 
-        if self.hourglass_control:
-            Ke += self.hourglass_correction(u, du, nlgeom)
+            if self.hourglass_control:
+                A += self.hourglass_correction(u, du, lflags)
 
-        return Re, Ke
-
-    def hourglass_correction(self, u, du, nlgeom):
+    def hourglass_correction(self, u, du, lflags):
 
         # PERFORM HOURGLASS CORRECTION
         xc = self.xc
@@ -306,8 +290,8 @@ class CMDN(isop_base):
 
         return Khg
 
-    def sri_correction(self, u, du, time, dtime, kstage, kincrement, svars, predef,
-                       nlgeom):
+    def sri_correction(self, svars, u, du, time, dtime,
+                       kstage, kinc, predef, lflags):
         # SELECTIVE REDUCED INTEGRATION CORRECTION
 
         Ksri = zeros((self.numdof, self.numdof))
@@ -351,7 +335,7 @@ class CMDN(isop_base):
         s, xv, D = self.material.response(
             s, xv, e, de, time, dtime, temp, dtemp, None, None,
             self.ndir, self.nshr, self.ndir+self.nshr, xc, F0, F,
-            self.label, kstage, kincrement)
+            self.label, kstage, kinc)
         D1, D2 = iso_dev_split(self.ndir, self.nshr, self.dimensions, D)
 
         # GAUSS INTEGRATION
@@ -379,19 +363,19 @@ class CMDN(isop_base):
             Me += J * wt * self.material.density * dot(Pe.T, Pe)
         return Me
 
-    def body_force(self, dltyp, dload):
-        bload = [dload[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
+    def body_force(self, dltyp, dlmag):
+        bload = [dlmag[i] for (i, typ) in enumerate(dltyp) if typ==DLOAD]
         Fe = zeros(self.numdof)
         for p in range(self.num_gauss):
             # INDEX TO START OF STATE VARIABLES
             xi, wt = self.gauss_rule_info(p)
             Ne, dNdx, J = self.shapefun_der(self.xc, xi)
             Pe = self.pmatrix(Ne)
-            for dloadx in bload:
+            for dlmagx in bload:
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
                 c = J * wt
                 if self.axisymmetric == 1:
                     rp = dot(Ne, self.xc[:,0])
                     c *= rp
-                Fe += c * dot(Pe.T, dloadx)
+                Fe += c * dot(Pe.T, dlmagx)
         return Fe

@@ -9,5 +9,8 @@ def test_element_beam_0():
     svars = zeros((2, 3))
     A, Izz = 125, 250
     El = B2D2(1, [0, 1], coord, mat, A=A, Izz=Izz)
-    Ke = El.response(zeros((2,2)),zeros((2,2)),[0,0],1.,1,1,svars,[],[],[],
-                     STATIC, False, STIFF_ONLY, DIRECT)
+    rhs = zeros(6)
+    A = zeros((6, 6))
+    lflags = [None, None, STIFF_ONLY, None, None, None]
+    El.response(rhs, A, [], None, zeros((2,2)), zeros((2,2)), None, None, [0,0],
+                1., 1, 1, None, None, None, lflags, None, None, None)

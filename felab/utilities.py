@@ -156,12 +156,10 @@ def iso_dev_split2(ndir, nshr, numdim, D):
 iso_dev_split = iso_dev_split1
 
 def get_procname(proc):
-    return {STATIC: 'STATIC',
+    return {STATIC_DIRECT: 'DIRECT STATIC',
+            STATIC_ITERATIVE: 'ITERATIVE STATIC',
             DYNAMIC: 'DYNAMIC',
-            HEAT_TRANSFER: 'HEAT TRANSFER'}[proc]
-
-def get_stagetypname(stage_type):
-    return stage_type.upper()
+            HEAT_TRANSFER_STEADY_STATE: 'STEADY STATE HEAT TRANSFER'}[proc]
 
 def emptywithlists(n):
     a = zeros(n, dtype=object)

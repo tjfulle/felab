@@ -7,7 +7,6 @@ from ..elemlib import DC2D3
 from ..assembly import assemble_system, apply_boundary_conditions
 
 class diffusive_ht_stage(load_stage):
-    procedure = HEAT_TRANSFER
     def __init__(self, model, number, name, previous, period):
         super(diffusive_ht_stage, self).__init__(model, number, name, previous, period)
 
@@ -63,16 +62,26 @@ class diffusive_ht_stage(load_stage):
     # --- RUN --------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
     def run(self):
+        # define arguments needed for assembly
         time = array([0., self.start])
         du = zeros(self.model.numdof)
-        qe = zeros_like(self.dofs)
-        dltyp, dload = self.dload(self.period)
+        Q = zeros_like(self.dofs)
+        dltyp, dlmag = self.dload(self.period)
         X = self.dofvals(self.period)
-        K, rhs = assemble_system(self.model.mesh.element_blocks,
-                                 self.model.mesh.elemap, self.model.elements,
-                                 self.model.eftab, self.dofs, du, qe,
-                                 self.svtab, self.svars, dltyp, dload,
-                                 self.predef, self.procedure, DIRECT, time=time)
+        energy = v = a = ddlmag = mdload = pnewdt = None
+        time = array([1., 1.])
+        dtime = 1.
+        lflags = [HEAT_TRANSFER_STEADY_STATE, SMALL_DISPLACEMENT, STIFF_AND_RHS, GENERAL, 0]
+
+        # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
+        rhs = zeros(self.model.numdof)
+        K = zeros((self.model.numdof, self.model.numdof))
+        assemble_system(rhs, K, self.svtab, self.svars, energy, Q,
+                        self.dofs, du, v, a, time, dtime, self.number, 1, 0,
+                        dltyp, dlmag, self.predef, lflags,
+                        ddlmag, mdload, pnewdt, self.period,
+                        self.model.mesh.element_blocks, self.model.mesh.elemap,
+                        self.model.elements, self.model.eftab)
         self._K = K
         Kbc, Fbc = apply_boundary_conditions(K, rhs, self.doftags, X)
         self.dofs[:] = linsolve(Kbc, Fbc)

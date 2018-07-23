@@ -30,8 +30,9 @@ class LMD2(element_base):
     def variables(cls):
         return (('P', SCALAR), ('S', SCALAR))
 
-    def response(self, u, du, time, dtime, kstage, kincrement, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, stage_type):
+    def response(self, rhs, A, svars, energy, u, du, v, a, time, dtime,
+                 kstage, kinc, dltyp, dlmag, predef, lflags,
+                 ddlmag, mdload, pnewdt):
         """Computes the response of a n-dimensional elastic link
 
         Parameters
@@ -45,18 +46,14 @@ class LMD2(element_base):
             (2*nd, 0) internal force
 
         """
+        if lflags[2] not in (STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY):
+            raise NotImplementedError
+
         # INTERNAL FORCE
-        ndof = count_digits(self.signature[0])
-
-        compute_stiff = cflag in (STIFF_AND_RHS, STIFF_ONLY)
-        compute_force = cflag in (STIFF_AND_RHS, RHS_ONLY)
-
-        if compute_force:
-            fext = zeros(2*ndof)
-            fint = zeros(2*ndof)
-
-        if cflag == RHS_ONLY:
-            return fext, fint
+        if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):
+            rhs[:] = 0.
+            if lflags[2] == RHS_ONLY:
+                return
 
         # ELEMENT NORMAL
         v = self.xc[1] - self.xc[0]
@@ -70,19 +67,13 @@ class LMD2(element_base):
         svars[1,0] = self.internal_force(u+du)
         svars[1,1] = svars[1,0] / self.A
 
-        if compute_stiff:
-            # ASSEMBLE ELEMENT STIFFNESS
+        if lflags[2] in (STIFF_AND_RHS, STIFF_ONLY):
+            ndof = count_digits(self.signature[0])
             i, j = ndof, 2*ndof
-            Ke = zeros((2*ndof, 2*ndof))
-            Ke[0:i, 0:i] = Ke[i:j, i:j] =  nn # UPPER LEFT AND LOWER RIGHT 2X2
-            Ke[0:i, i:j] = Ke[i:j, 0:i] = -nn # LOWER LEFT AND UPPER RIGHT 2X2
-            Ke *= self.A * self.material.E / h
-
-        if cflag == STIFF_AND_RHS:
-            return Ke, fext, fint
-
-        elif cflag == STIFF_ONLY:
-            return Ke
+            # ASSEMBLE ELEMENT STIFFNESS
+            A[0:i, 0:i] = A[i:j, i:j] =  nn # UPPER LEFT AND LOWER RIGHT 2X2
+            A[0:i, i:j] = A[i:j, 0:i] = -nn # LOWER LEFT AND UPPER RIGHT 2X2
+            A *= self.A * self.material.E / h
 
     def internal_force(self, uc):
         """

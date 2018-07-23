@@ -7,11 +7,11 @@ from ..utilities import *
 from ..constants import *
 
 
-def assemble_system(element_blocks, element_map, elements, element_freedom_table,
-                    u, du, Q, svtab, svars, dltyp, dload, predef,
-                    procedure, stage_type, time=array([0.,0.]), dtime=1.,
-                    period=1., istage=1, iincrement=1, nlgeom=False, ninc=None,
-                    cflag=STIFF_AND_RHS, disp=0):
+def assemble_system(rhs, A, svtab, svars, energy, Q, u, du, v, a,
+                    time, dtime, kstage, kinc, kiter, dltyp, dlmag, predef, lflags,
+                    ddlmag, mdload, pnewdt, period,
+                    element_blocks, element_map, elements,
+                    element_freedom_table):
     """
     Assembles the global system of equations
 
@@ -27,26 +27,22 @@ def assemble_system(element_blocks, element_map, elements, element_freedom_table
         svtab[:,svtab[iel]] are the state variables for element iel
     dltyp : ndarray
         Distributed load type specifier
-    dload : ndarray
+    dlmag : ndarray
         Distributed loads
     predef : ndarray
         Predefined fields
-    procedure : symbolic constant
-        The procedure specifier
-    stage_type : symbolic constant
-        The stage type
     time : ndarray, optional {array([0.,0.])}
         time[0] is the stage time, time[1] the total time
     dtime : float {1.}
         Time increment
     period : float {1.}
         Stage period
-    istage, iincrement : int, optional {1, 1}
+    kstage, kinc : int, optional {1, 1}
         Stage and increment numbers
     nlgeom : bool, optional {False}
         Nonlinear geometry
-    ninc : int, opitional {None}
-        Current increment
+    kiter : int, opitional {None}
+        Current iteration
     cflag : symbolic constant, optional {STIFF_AND_RHS}
 
     Returns
@@ -68,37 +64,25 @@ def assemble_system(element_blocks, element_map, elements, element_freedom_table
     - the global stiffness matrix is stored as a full symmetric matrix.
 
     """
-    procname = get_procname(procedure)
-    stagetypname = get_stagetypname(stage_type)
+    procname = get_procname(lflags[0])
+    nlgeom = lflags[1] == 1
     msg  = 'ASSEMBLING GLOBAL SYSTEM OF EQUATIONS\n      '
-    msg += 'PROCEDURE: {0}, STAGE TYPE: {1}, NLGEOM: {2}\n      '.format(
-        procname, stagetypname, nlgeom)
+    msg += 'PROCEDURE: {0}, NLGEOM: {1}\n      '.format(
+        procname, nlgeom)
+
     tf = time[-1] + dtime
-    msg += 'STAGE: {0}, INCREMENT: {1}, TIME: {2}'.format(istage, iincrement, tf)
-    if ninc is not None:
-        msg += ', INCREMENT: {0}'.format(ninc)
-    if not ninc:
+    msg += 'STAGE: {0}, INCREMENT: {1}, TIME: {2}'.format(kstage, kinc, tf)
+    if kiter is not None:
+        msg += ', INCREMENT: {0}'.format(kiter)
+
+    if not kiter:
         logging.debug(msg)
-    elif ninc == 1 and iincrement == 1:
+
+    elif kiter == 1 and kinc == 1:
         logging.debug(msg)
 
-    if cflag not in CFLAGS:
-        raise ValueError('UNKNOWN COMPUTE QUANTITY')
-
-    compute_stiff = cflag in (STIFF_AND_RHS, STIFF_ONLY)
-    compute_rhs = cflag in (STIFF_AND_RHS, RHS_ONLY, MASS_AND_RHS)
-    compute_mass = cflag in (MASS_AND_RHS, MASS_ONLY)
-
-    numdof = u.shape[0]
-    if compute_stiff:
-        K = zeros((numdof, numdof))
-
-    if compute_mass:
-        M = zeros((numdof, numdof))
-
-    if compute_rhs:
-        fext = zeros(numdof)
-        fint = zeros(numdof)
+    if lflags[2] not in (STIFF_AND_RHS, STIFF_ONLY, MASS_ONLY, RHS_ONLY, MASS_AND_RHS):
+        raise NotImplementedError
 
     # INTERPOLATE FIELD VARIABLES
     fac1 = time[1] / (time[0] + period)
@@ -115,56 +99,20 @@ def assemble_system(element_blocks, element_map, elements, element_freedom_table
             iel = element_map[xel]
             el = elements[iel]
             eft = element_freedom_table[iel]
-            response = el.response(u[eft], du[eft], time, dtime, istage,
-                                   iincrement, svars[:,svtab[iel]],
-                                   dltyp[iel], dload[iel],
-                                   predef_i[:,:,el.inodes], procedure, nlgeom,
-                                   cflag, stage_type)
+            n = len(eft)
+            A_e = zeros((n, n))
+            rhs_e = zeros(n)
+            el.response(rhs_e, A_e, svars[:,svtab[iel]], energy, u[eft], du[eft],
+                        v, a, time, dtime, kstage, kinc,
+                        dltyp[iel], dlmag[iel], predef_i[:,:,el.inodes],
+                        lflags, ddlmag, mdload, pnewdt)
+            if lflags[2] in (STIFF_AND_RHS, STIFF_ONLY, MASS_ONLY, MASS_AND_RHS):
+                A[IX(eft, eft)] += A_e
 
-            if cflag == STIFF_AND_RHS:
-                K[IX(eft, eft)] += response[0]
-                fext[eft] += response[1]
-                fint[eft] += response[2]
+            if lflags[2] in (STIFF_AND_RHS, RHS_ONLY, MASS_AND_RHS):
+                rhs[eft] += rhs_e
 
-            elif cflag == MASS_AND_RHS:
-                M[IX(eft, eft)] += response[0]
-                fext[eft] += response[1]
-                fint[eft] += response[2]
+    if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):
+        rhs[:] += Q
 
-            elif cflag == MASS_ONLY:
-                M[IX(eft, eft)] += response
-
-            elif cflag == STIFF_ONLY:
-                K[IX(eft, eft)] += response
-
-            elif cflag == RHS_ONLY:
-                fext[eft] += response[0]
-                fint[eft] += response[1]
-
-    if compute_rhs:
-        fext += Q
-
-    if compute_mass:
-        # LUMPED MASS MATRIX
-        M = array([sum(row) for row in M])
-
-    if cflag == STIFF_AND_RHS:
-        if disp:
-            return K, fext, fint
-        return K, fext - fint
-
-    elif cflag == STIFF_ONLY:
-        return K
-
-    elif cflag == RHS_ONLY:
-        if disp:
-            return fext, fint
-        return fext - fint
-
-    elif cflag == MASS_ONLY:
-        return M
-
-    elif cflag == MASS_AND_RHS:
-        if disp:
-            return M, fext, fint
-        return M, fext - fint
+    return

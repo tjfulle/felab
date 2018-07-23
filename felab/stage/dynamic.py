@@ -6,7 +6,6 @@ from ..utilities import *
 from ..assembly import assemble_system
 
 class dynamic_stage(sd_stage):
-    procedure = DYNAMIC
     def __init__(self, model, number, name, previous, period, **kwds):
         super(dynamic_stage, self).__init__(model, number, name, previous, period)
         for (key, val) in kwds.items():
@@ -32,32 +31,43 @@ class dynamic_stage(sd_stage):
 
         # GET MASS AND RHS AT TIME 0
         Q = self.cload(time[0])
-        dltyp, dload = self.dload(time[0])
+        dltyp, dlmag = self.dload(time[0])
 
-        mass, rhs = assemble_system(self.model.mesh.element_blocks,
-                                    self.model.mesh.elemap, self.model.elements,
-                                    self.model.eftab, self.dofs, un[:,0], Q,
-                                    self.svtab, self.svars, dltyp, dload,
-                                    self.predef, self.procedure, GENERAL,
-                                    cflag=MASS_AND_RHS, time=time)
+        energy = v = a = ddlmag = mdload = None
+        pnewdt = zeros(1)
+        lflags = [DYNAMIC, SMALL_DISPLACEMENT, MASS_AND_RHS, GENERAL, 0]
+        A = zeros((self.model.numdof, self.model.numdof))
+        rhs = zeros(self.model.numdof)
+        assemble_system(rhs, A, self.svtab, self.svars, energy, Q,
+                        self.dofs, un[:,0], vn[:,0], an[:,0], time, dtime,
+                        0, 1, 1, dltyp, dlmag, self.predef, lflags,
+                        ddlmag, mdload, pnewdt, period,
+                        self.model.mesh.element_blocks,
+                        self.model.mesh.elemap, self.model.elements,
+                        self.model.eftab)
 
+        # LUMPED MASS MATRIX
+        mass = array([sum(row) for row in A])
         an[:,0] = rhs / mass
 
-        for n in range(increments):
+        for kinc in range(increments):
 
             # GET LOADS AND PRESCRIBED DISPLACEMENTS
             Q = self.cload(time[0]+dtime)
             X = self.dofvals(time[0]+dtime)
             dltyp, dload = self.dload(time[0]+dtime)
 
-            mass, rhs = assemble_system(self.model.mesh.element_blocks,
-                                        self.model.mesh.elemap,
-                                        self.model.elements, self.model.eftab,
-                                        self.dofs, un[:,0], Q, self.svtab,
-                                        self.svars, dltyp, dload, self.predef,
-                                        self.procedure, GENERAL,
-                                        cflag=MASS_AND_RHS, time=time,
-                                        istage=self.number, iincrement=n+1)
+            rhs = zeros(self.model.numdof)
+            A = zeros((self.model.numdof, self.model.numdof))
+            assemble_system(rhs, A, self.svtab, self.svars, energy, Q,
+                            self.dofs, un[:,0], vn[:,0], an[:,0], time, dtime,
+                            self.number, kinc+1, 1, dltyp, dlmag, self.predef,
+                            lflags, ddlmag, mdload, pnewdt, self.period,
+                            self.model.mesh.element_blocks,
+                            self.model.mesh.elemap, self.model.elements,
+                            self.model.eftab)
+            # LUMPED MASS MATRIX
+            mass = array([sum(row) for row in A])
 
             # UPDATE ACCELERATION
             an[:,1] = rhs / mass

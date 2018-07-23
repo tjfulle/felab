@@ -33,15 +33,20 @@ class B2D2(element_base):
     def variables(cls):
         return (('P', SCALAR), ('S', SCALAR))
 
-    def response(self, u, du, time, dtime, kstage, kincrement, svars, dltyp, dload,
-                 predef, procedure, nlgeom, cflag, stage_type):
+    def response(self, rhs, A, svars, energy, u, du, v, a, time, dtime,
+                 kstage, kinc, dltyp, dlmag, predef, lflags,
+                 ddlmag, mdload, pnewdt):
 
-        if cflag == LP_OUTPUT:
+        if lflags[2] not in (STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY):
+            raise NotImplementedError
+
+        if kinc == 0:
             return
-            raise NotImplementError
 
-        if cflag == RHS_ONLY:
-            return zeros(6), zeros(6)
+        if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):
+            rhs[:] = 0.
+            if lflags[2] == RHS_ONLY:
+                return
 
         # COMPUTE ELEMENT NORMAL
         v = self.xc[1] - self.xc[0]
@@ -68,10 +73,4 @@ class B2D2(element_base):
                                      [0., -6.,   -3.*h,   0.,  6.,  -3.*h  ],
                                      [0.,  3.*h,  h*h,    0., -3.*h, 2.*h*h]])
 
-        Ke = dot(dot(Te.T, K1+K2), Te)
-
-        if cflag == STIFF_AND_RHS:
-            return Ke, zeros(6), zeros(6)
-
-        elif cflag == STIFF_ONLY:
-            return Ke
+        A[:] = dot(dot(Te.T, K1+K2), Te)
