@@ -1,7 +1,7 @@
 from felab import *
 
 def BeamQuad(plot=False):
-    mesh = rectilinear_mesh_2d(nx=10, ny=2, lx=10, ly=2)
+    mesh = rectilinear_mesh2d(nx=10, ny=2, lx=10, ly=2)
     mat = Material('Material-1', elastic={'E':20000, 'Nu':0})
 
     V = fe_model(mesh=mesh, jobid='QuadBeam')

@@ -93,7 +93,8 @@ class fe_model(object):
         """
         self.mesh = vtk_mesh(filename=filename)
 
-    def rectilinear_mesh(self, nx=1, ny=1, lx=1, ly=1, shift=None):
+    def rectilinear_mesh(self, nx=1, ny=1, lx=1, ly=1, shiftx=None, shifty=None,
+                         method=None):
         """
         Generates a rectilinear 2D finite element mesh.
 
@@ -102,9 +103,11 @@ class fe_model(object):
         felab.mesh.rectilinear_mesh_2d
 
         """
-        self.mesh = rectilinear_mesh_2d(nx=nx, ny=ny, lx=lx, ly=ly, shift=shift)
+        self.mesh = rectilinear_mesh2d(nx=nx, ny=ny, lx=lx, ly=ly,
+                                       shiftx=shiftx, shifty=shifty,
+                                       method=method)
 
-    def unit_square_mesh(self, nx=1, ny=1, shift=None):
+    def unit_square_mesh(self, nx=1, ny=1, shiftx=None, shifty=None, method=None):
         """
         Generates a rectilinear 2D finite element mesh.
 
@@ -113,7 +116,8 @@ class fe_model(object):
         felab.mesh.unit_square_mesh
 
         """
-        self.mesh = unit_square_mesh(nx=nx, ny=ny, shift=shift)
+        self.mesh = unit_square_mesh(nx=nx, ny=ny, shiftx=shiftx, shifty=shifty,
+                                     method=method)
 
     def create_mesh(self, **kwds):
         """

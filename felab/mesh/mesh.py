@@ -12,8 +12,8 @@ from . import vtk
 from . import exodusii
 from .element_block import element_block
 
-__all__ = ['Mesh', 'unit_square_mesh', 'rectilinear_mesh_2d', 'vtk_mesh',
-           'abaqus_mesh', 'genesis_mesh']
+__all__ = ['Mesh']
+
 
 def is_listlike(a):
     return (not hasattr(a, 'strip') and
@@ -114,6 +114,17 @@ class Mesh(object):
     def unassigned(self):
         return self.num_assigned != self.numele
 
+    def connectivity(self):
+        M = len(self.eletab)
+        N = max([len(x) for x in self.eletab.values()])
+        elecon = zeros((M, N), dtype=int)
+
+        a = sorted(self.eletab.keys())
+        for (i, e) in enumerate(a):
+            ec = self.eletab[e]
+            elecon[i, :len(ec)] = ec
+        return elecon
+
     def init1(self, nodmap, coord, eletab, nodesets=None,
               elemsets=None, surfaces=None):
         self.nodmap = nodmap
@@ -161,7 +172,7 @@ class Mesh(object):
 
     def init_from_file(self, filename):
         if filename.endswith(('.vtk', '.vtu')):
-            data = self.parse_nod_and_elem_tables(*vtk.ReadMesh(filename))
+            data = self.parse_nod_and_elem_tables(*vtk.read_mesh(filename))
             self.init1(*data)
 
         elif filename.endswith(('.exo', '.g', '.gen')):
@@ -493,6 +504,8 @@ class Mesh(object):
             p.set_clim(vmin=colorby.min(), vmax=colorby.max())
             fig.colorbar(p)
         else:
+            if color is None:
+                color = 'black'
             p.set_edgecolor(color)
             p.set_facecolor('None')
             p.set_linewidth(weight)
@@ -519,6 +532,8 @@ class Mesh(object):
         ax.set_aspect('equal')
 
         if show:
+            if label:
+                plt.legend()
             plt.show()
 
         if filename is not None:
@@ -554,242 +569,3 @@ class Mesh(object):
             filename += '.exo'
         exodusii.put_nodal_solution(filename, self.nodmap, self.elemap, self.coord,
                                   self.element_blocks, u)
-
-def genesis_mesh(filename):
-    """
-    Generates a finite element mesh from a Genesis file.
-
-    Parameters
-    ----------
-    filename : str
-        The path to a valid Genesis file
-
-    Returns
-    -------
-    Mesh object
-
-    Notes
-    -----
-    This method calls ``mesh.Mesh`` with the ``filename`` keyword and
-    stores the returned mesh as the ``fe_model.mesh`` attribute.
-
-    """
-    if not os.path.isfile(filename):
-        raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
-    return Mesh(filename=filename)
-
-def abaqus_mesh(filename):
-    """
-    Generates a finite element mesh from a Abaqus input file.
-
-    Parameters
-    ----------
-    filename : str
-        The path to a valid Genesis file
-
-    Returns
-    -------
-    Mesh object
-
-    Notes
-    -----
-    This method calls ``mesh.Mesh`` with the ``filename`` keyword and
-    stores the returned mesh as the ``fe_model.mesh`` attribute.
-
-    """
-    if not os.path.isfile(filename):
-        raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
-    return Mesh(filename=filename)
-
-def vtk_mesh(filename):
-    """
-    Generates a finite element mesh from a vtk .vtu file.
-
-    Parameters
-    ----------
-    filename : str
-        The path to a valid .vtu file
-
-    Returns
-    -------
-    Mesh object
-
-    Notes
-    -----
-    This method calls ``mesh.Mesh`` with the ``filename`` keyword and
-    stores the returned mesh as the ``fe_model.mesh`` attribute.
-
-    """
-    if not os.path.isfile(filename):
-        raise UserInputError('NO SUCH FILE {0!r}'.format(filename))
-    return Mesh(filename=filename)
-
-def rectilinear_mesh_2d(nx=1, ny=1, lx=1, ly=1, shift=None):
-    """
-    Generates a rectilinear 2D finite element mesh.
-
-    Parameters
-    ----------
-    shape : tuple
-        (nx, ny) where nx is the number elements in :math:`x` and ny
-        number of element in :math:`y`.
-    lengths : tuple
-        (lx, ly) where lx is the length of the mesh in :math:`x` and ny
-        is the length of the mesh in :math:`y`.
-
-    Returns
-    -------
-    Mesh object
-
-    """
-    nodtab, eletab = _rectilinear_mesh_2d((nx, ny), (lx, ly), shift=shift)
-    return Mesh(nodtab=nodtab, eletab=eletab)
-
-def unit_square_mesh(nx=1, ny=1, shift=None):
-    """
-    Generates a rectilinear 2D finite element mesh.
-
-    Parameters
-    ----------
-    shape : tuple
-        (nx, ny) where nx is the number elements in :math:`x` and ny
-        number of element in :math:`y`.
-
-    Returns
-    -------
-    Mesh object
-
-    Notes
-    -----
-    This method calls the ``Mesh.rectilinear_mesh_2d`` class method and
-    stores the returned mesh as the ``fe_model.mesh`` attribute.
-
-    """
-    nodtab, eletab = _rectilinear_mesh_2d((nx, ny), (1, 1), shift=shift)
-    return Mesh(nodtab=nodtab, eletab=eletab)
-
-def _rectilinear_mesh_2d(shape, lengths, shift=None):
-    nx, ny = shape
-    if nx < 1:
-        raise UserInputError('Requres at least 1 element in x')
-    if ny < 1:
-        raise UserInputError('Requres at least 1 element in y')
-
-    if shift is None:
-        shift = zeros(2)
-    else:
-        shift = asarray(shift)
-
-    shape = asarray([nx+1,ny+1])
-    lx, ly = lengths
-    xpoints = linspace(0, lx, nx+1) + shift[0]
-    ypoints = linspace(0, ly, ny+1) + shift[1]
-    coord = array([(x, y) for y in ypoints for x in xpoints])
-    numnod = prod(shape)
-    numele = prod(shape - 1)
-
-    # Connectivity
-    row = 0
-    elecon = zeros((numele, 4), dtype=int)
-    nelx = xpoints.size - 1
-    for elem_num in range(numele):
-        ii = elem_num + row
-        elem_nodes = [ii, ii + 1, ii + nelx + 2, ii + nelx + 1]
-        elecon[elem_num, :] = elem_nodes
-        if (elem_num + 1) % (nelx) == 0:
-            row += 1
-        continue
-
-    nodtab = []
-    for n in range(numnod):
-        nodtab.append([n+1])
-        nodtab[-1].extend(coord[n])
-    eletab = []
-    for e in range(numele):
-        eletab.append([e+1])
-        eletab[-1].extend([n+1 for n in elecon[e]])
-
-    return nodtab, eletab
-
-def VTU2Genesis(nodtab=None, eletab=None, filename=None):
-    if filename is None:
-        assert nodtab is not None and eletab is not None
-        outfile = 'mesh.g'
-    elif not os.path.isfile(filename):
-        assert nodtab is not None and eletab is not None
-        assert filename.endswith('.g')
-        outfile = filename
-        filename = None
-    else:
-        assert nodtab is None and eletab is None
-        outfile = os.path.splitext(filename)[0] + '.g'
-    try:
-        mesh = Mesh(nodtab=nodtab, eletab=eletab, filename=filename)
-    except KeyError:
-        return
-    mesh.to_genesis(outfile)
-
-def INP2Genesis(filename):
-    lines = open(filename).readlines()
-    kw, name = None, None
-    nodtab = []
-    eletab = []
-    nodesets = {}
-    elemsets = {}
-    element_blocks = {}
-    for line in lines:
-        line = ','.join([x.strip() for x in line.split(',')])
-        if line.startswith('**'):
-            continue
-        if not line.split():
-            continue
-        if line.startswith('*'):
-            name = None
-            line = line.split(',')
-            kw = line[0][1:].lower()
-            opts = {}
-            for opt in line[1:]:
-                k, v = opt.split('=')
-                opts[k.strip().lower()] = v.strip()
-            if kw != 'element':
-                name = None
-            if kw == 'element':
-                name = opts.get('elset')
-                if name is None:
-                    raise UserInputError('requires elements be put in elset')
-                element_blocks[name.upper()] = []
-            elif kw == 'nset':
-                name = opts['nset']
-                nodesets[name.upper()] = []
-            elif kw == 'elset':
-                elemsets[name.upper()] = []
-            continue
-        if kw is None:
-            continue
-        if kw == 'node':
-            line = line.split(',')
-            nodtab.append([int(line[0])] + [float(x) for x in line[1:]])
-            continue
-        elif kw == 'element':
-            eledef = [int(n) for n in line.split(',')]
-            eletab.append(eledef)
-            element_blocks[name].append(eledef[0])
-            continue
-        elif kw == 'nset':
-            nodesets[name.upper()].extend([int(n) for n in line.split(',')
-                                           if n.split()])
-            continue
-        elif kw == 'elset':
-            elemsets[name.upper()].extend([int(n) for n in line.split(',')
-                                           if n.split()])
-            continue
-    mesh = Mesh(nodtab=nodtab, eletab=eletab)
-    for (name, elems) in element_blocks.items():
-        mesh.create_element_block(name, elems)
-    for (name, nodes) in nodesets.items():
-        mesh.create_node_set(name, nodes)
-    for (name, elems) in elemsets.items():
-        mesh.create_element_set(name, elems)
-    outfile = os.path.splitext(filename)[0] + '.g'
-    mesh.to_genesis(outfile)
-    return

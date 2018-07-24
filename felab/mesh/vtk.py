@@ -121,7 +121,7 @@ class VTKFile(object):
             if not os.path.isfile(filename):
                 raise ValueError('File not found: {0!r}'.format(filename))
             self.filename = filename
-            x = self.readmesh(filename)
+            x = self.read_mesh(filename)
             (self.coord, self.nodlab, self.elecon, self.elelab, self.nodesets,
              self.elemsets, self.surfaces) = x
 
@@ -134,7 +134,7 @@ class VTKFile(object):
         self.nodes, self.dimensions = coord.shape
         self.numele, self.max_num_node_per_elem = elecon.shape
 
-    def readmesh(self, filename):
+    def read_mesh(self, filename):
         if filename.endswith('.gz'):
             f = gzip.open(filename, 'rb')
             self.doc = xdom.parseString(f.read())
@@ -224,7 +224,7 @@ class VTKFile(object):
                       for a in x.split() if x.split()]
 
         # Element sets
-        for item in fd.getElementsByTagName('element_set'):
+        for item in fd.getElementsByTagName('ElementSet'):
             name = item.getAttribute('Name')
             el = item.getElementsByTagName('DataArray')[0]
             if el.getAttribute('type') == 'String': f = str
@@ -235,7 +235,7 @@ class VTKFile(object):
 
         # Surfaces
         multisurf = []
-        for item in fd.getElementsByTagName('side_set'):
+        for item in fd.getElementsByTagName('Surface'):
             name = item.getAttribute('Name')
             el = item.getElementsByTagName('DataArray')[0]
             lines = [s.split() for s in el.firstChild.data.split('\n') if s.split()]
@@ -252,7 +252,7 @@ class VTKFile(object):
             surfaces[name] = surfs
 
         # Node sets
-        for item in fd.getElementsByTagName('node_set'):
+        for item in fd.getElementsByTagName('NodeSet'):
             name = item.getAttribute('Name')
             el = item.getElementsByTagName('DataArray')[0]
             if el.getAttribute('type') == 'String': f = str
@@ -443,13 +443,17 @@ class VTKFile(object):
     def close(self):
         self.pvd.close()
 
+    @classmethod
+    def from_file(klass, filename):
+        return klass(filename=filename, mode='r')
+
 def WriteVTUMesh(filename, coord, nodlab, elelab, eletyp, elecon, check=0):
     jobid = os.path.splitext(filename)[0]
     f = VTKFile(jobid, mode='w')
     f.put_init(coord, nodlab, elelab, eletyp, elecon)
     f.write_vtu_file()
     if check:
-        x, nl, ec, el = ReadMesh(filename, disp=1)
+        x, nl, ec, el = read_mesh(filename, disp=1)
         assert allclose(x, coord), 'coord'
         assert allclose(nl, nodlab), 'nodlab'
         assert allclose(ec, elecon), 'elecon'
@@ -467,9 +471,11 @@ def WriteFEResults(jobid, coord, nodmap, elemap, eletyp, elecon, u=None, **kwds)
         f.snapshot(**kw)
         f.snapshot(u=u, **kwds)
 
-def ReadMesh(filename, disp=0):
+def read_mesh(filename, disp=0):
     f = VTKFile(filename=filename, mode='r')
     if disp:
+        if disp == 2:
+            return f
         return f.coord, f.nodlab, f.elecon, f.elelab
 
     # Create node and element tables
@@ -506,5 +512,5 @@ def test_write_fe_results():
     os.remove(filename)
 
 if __name__ == '__main__':
-    #ReadMesh('uniform_plate_tri_0.05.vtu')
+    #read_mesh('uniform_plate_tri_0.05.vtu')
     test_write_fe_results()
