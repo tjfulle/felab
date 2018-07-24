@@ -3,9 +3,9 @@ from conf import *
 from felab import *
 
 
-def test_gravity_load1():
+def GravityLoad1(plot=False):
     V = fe_model(jobid='Gravity')
-    V.rectilinear_mesh(nx=101, ny=11, lx=100, ly=10)
+    V.rectilinear_mesh(nx=20, ny=5, lx=100, ly=10)
     V.create_material('Material-1')
     V.materials['Material-1'].Density(1.)
     V.materials['Material-1'].elastic(E=10e6, Nu=.333)
@@ -17,3 +17,15 @@ def test_gravity_load1():
     stage.run()
     V.write_results()
 
+    if plot:
+        ax = V.Plot2D(label='Undeformed', color='orange')
+        V.Plot2D(deformed=1, label='Deformed', color='blue', ax=ax,
+                 show=1)
+
+
+def test():
+    GravityLoad1()
+
+
+if __name__ == '__main__':
+    GravityLoad1(plot=1)
