@@ -68,14 +68,15 @@ class load_stage(object):
     def __len__(self):
         return len(self.increments)
 
-    def print_stiffness_structure(self, style='ascii', stream=sys.stdout):
+    def print_stiffness_structure(self, style='ascii', stream=sys.stdout,
+                                  index_base=0):
         if self._K is None:
             return
         m, n = self._K.shape
         assert m == n
         max_int_w = len(str(m))
         if style=='ascii':
-            header = ' '.join('{0:<{1}d}'.format(i+1, max_int_w)
+            header = ' '.join('{0:<{1}d}'.format(i+index_base, max_int_w)
                               for i in range(m))
             stream.write(header+'\n')
             for (i, row) in enumerate(self._K):
@@ -84,7 +85,7 @@ class load_stage(object):
                         stream.write('{0:<{1}s} '.format('X', max_int_w))
                     else:
                         stream.write(' '*(max_int_w+1))
-                stream.write(' {0}\n'.format(i+1))
+                stream.write(' {0}\n'.format(i+index_base))
         elif style == 'latex':
             stream.write('\\setcounter{MaxMatrixCols}{%d}\n'%n)
             stream.write('\\renewcommand{\kbldelim}{[}\n')

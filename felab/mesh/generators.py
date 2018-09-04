@@ -1,3 +1,4 @@
+import os
 from numpy import *
 from .mesh import Mesh
 from ..x.utilities import UserInputError
@@ -180,6 +181,7 @@ def gen_quad8_pt_2(nx, ny, lx, ly, sx=None, sy=None):
             k += 1
 
     return p, t
+
 
 def genesis_mesh(filename):
     """
