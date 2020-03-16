@@ -137,16 +137,6 @@ class load_step(object):
         else:
             raise ValueError("Unexpected style {0!r}".format(style))
 
-        elif style == 'numeric':
-            machine_epsilon = finfo(float).eps
-            fmt = lambda x: numeric_fmt.format(x if abs(x) > machine_epsilon else 0)
-            for (i, row) in enumerate(self._K):
-                stream.write(' '.join(fmt(x) for x in row))
-                stream.write(' {0}\n'.format(i+index_base))
-
-        else:
-            raise ValueError('Unexpected style {0!r}'.format(style))
-
     @property
     def doftags(self):
         return np.array(sorted(self.dofx), dtype=int)
