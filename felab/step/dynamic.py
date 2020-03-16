@@ -1,13 +1,13 @@
 import numpy as np
 
-from felab.stage.stage import sd_stage
+from felab.step.step import sd_step
 from felab.assembly import assemble_system
 from felab.constants import DYNAMIC, SMALL_DISPLACEMENT, MASS_AND_RHS, GENERAL
 
 
-class dynamic_stage(sd_stage):
+class dynamic_step(sd_step):
     def __init__(self, model, number, name, previous, period, **kwds):
-        super(dynamic_stage, self).__init__(model, number, name, previous, period)
+        super(dynamic_step, self).__init__(model, number, name, previous, period)
         for (key, val) in kwds.items():
             if key == "increments":
                 key = "_increments"

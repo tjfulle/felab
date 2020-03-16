@@ -12,7 +12,7 @@ from felab.mesh import (
     unit_square_mesh,
     rectilinear_mesh2d,
 )
-from felab.stage import stage_repository
+from felab.step import step_repository
 from felab.util.lang import is_listlike, is_stringlike
 from felab.assembly import vdof
 
@@ -50,7 +50,7 @@ class fe_model(object):
         self.initial_temp = []
         self.pr_bc = []
         self.fh = None
-        self.stages = None
+        self.steps = None
         self._setup = False
 
         self._mesh = None
@@ -169,7 +169,7 @@ class fe_model(object):
 
     @property
     def dofs(self):
-        return self.stages.last.dofs
+        return self.steps.last.dofs
 
     @property
     def orphaned_elements(self):
@@ -207,16 +207,16 @@ class fe_model(object):
     def _check_element_validity(self):
         pass
 
-    def initialize_stages(self):
+    def initialize_steps(self):
 
         node_labels = sorted(self.mesh.nodmap, key=lambda k: self.mesh.nodmap[k])
 
-        self.stages = stage_repository(self)
-        stage = self.stages.InitialStage("Stage-0")
+        self.steps = step_repository(self)
+        step = self.steps.InitialStep("Step-0")
         for (nodes, dof) in self.pr_bc:
-            stage.assign_prescribed_bc(nodes, dof, amplitude=0.0)
+            step.assign_prescribed_bc(nodes, dof, amplitude=0.0)
 
-        increment = stage.increments[0]
+        increment = step.increments[0]
 
         # NODE DATA
         if T in self.active_dof:
@@ -309,20 +309,20 @@ class fe_model(object):
                     ix += 1
         return u, r, temp
 
-    def snapshot(self, stage=None):
+    def snapshot(self, step=None):
 
-        if stage is None:
-            for stage in self.stages.values():
-                self.snapshot(stage)
-                if stage.written:
+        if step is None:
+            for step in self.steps.values():
+                self.snapshot(step)
+                if step.written:
                     break
             return
 
-        if stage.written:
+        if step.written:
             return
 
-        self.exofile.snapshot(stage)
-        stage.written = 1
+        self.exofile.snapshot(step)
+        step.written = 1
 
     # ----------------------------------------------------------------------- #
     # --- MATERIAL MODELS --------------------------------------------------- #
@@ -351,35 +351,35 @@ class fe_model(object):
         return self.materials[name]
 
     def assign_prescribed_bc(self, nodes, dof):
-        if self.stages is not None:
+        if self.steps is not None:
             raise UserInputError(
-                "Boundary conditions must be assigned to stages "
-                "after creation of first stage"
+                "Boundary conditions must be assigned to steps "
+                "after creation of first step"
             )
         self.pr_bc.append((nodes, dof))
 
     def fix_nodes(self, nodes):
-        if self.stages is not None:
+        if self.steps is not None:
             raise UserInputError(
-                "Boundary conditions must be assigned to stages "
-                "after creation of first stage"
+                "Boundary conditions must be assigned to steps "
+                "after creation of first step"
             )
         self.pr_bc.append((nodes, ALL))
 
     fix_dofs = fix_nodes
 
     def pin_nodes(self, nodes):
-        if self.stages is not None:
+        if self.steps is not None:
             raise UserInputError(
-                "Boundary conditions must be assigned to stages "
-                "after creation of first stage"
+                "Boundary conditions must be assigned to steps "
+                "after creation of first step"
             )
         self.pr_bc.append((nodes, PIN))
 
     def assign_initial_temperature(self, nodes, amplitude):
-        if self.stages is not None:
+        if self.steps is not None:
             raise UserInputError(
-                "Intial temperatures must be assigned " "before creating first stage"
+                "Intial temperatures must be assigned " "before creating first step"
             )
         self.initial_temp.append((nodes, amplitude))
 
@@ -402,19 +402,19 @@ class fe_model(object):
         return itemp
 
     # ----------------------------------------------------------------------- #
-    # --- STAGES ------------------------------------------------------------ #
+    # --- STEPS ------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def unique_stage_name(self):
-        i = len(self.stages)
+    def unique_step_name(self):
+        i = len(self.steps)
         while 1:
-            name = "Stage-{0}".format(i)
-            if name not in self.stages:
+            name = "Step-{0}".format(i)
+            if name not in self.steps:
                 break
             i += 1
             continue
         return name
 
-    def _validate_stage1(self, nlgeom=False, density=None):
+    def _validate_step1(self, nlgeom=False, density=None):
         # VALIDATE INPUT
         for eb in self.mesh.element_blocks:
             iel = self.mesh.elemap[eb.labels[0]]
@@ -426,80 +426,80 @@ class fe_model(object):
                         "MATERIAL {0!r} REQUIRES " "nlgeom=True".format(name.upper())
                     )
             if density and not el.material.density:
-                raise UserInputError("STAGE REQUIRES MATERIAL DENSITY")
+                raise UserInputError("STEP REQUIRES MATERIAL DENSITY")
 
             if not any(el.signature[0][:3]):
                 raise UserInputError(
-                    "STAGE REQUIRES ELEMENTS WITH " "DISPLACEMENT DEGREES OF FREEDOM"
+                    "STEP REQUIRES ELEMENTS WITH " "DISPLACEMENT DEGREES OF FREEDOM"
                 )
 
-    def _validate_stage2(self):
+    def _validate_step2(self):
         # VALIDATE INPUT
         for eb in self.mesh.element_blocks:
             iel = self.mesh.elemap[eb.labels[0]]
             el = self.elements[iel]
             if not el.signature[0][T]:
                 raise UserInputError(
-                    "STAGE REQUIRES ELEMENTS WITH " "TEMPERATURE DEGREE OF FREEDOM"
+                    "STEP REQUIRES ELEMENTS WITH " "TEMPERATURE DEGREE OF FREEDOM"
                 )
             if any(el.signature[0][:3]):
-                tty.warn("STAGE WILL IGNORE DISPLACEMENT DEGREES OF FREEDOM")
+                tty.warn("STEP WILL IGNORE DISPLACEMENT DEGREES OF FREEDOM")
 
-    def create_static_stage(self, name=None, period=1.0, **kwds):
+    def create_static_step(self, name=None, period=1.0, **kwds):
 
-        if self.stages is None:
+        if self.steps is None:
             self.setup()
-            self.initialize_stages()
+            self.initialize_steps()
 
         # VALIDATE INPUT
-        self._validate_stage1(nlgeom=kwds.get("nlgeom", False))
+        self._validate_step1(nlgeom=kwds.get("nlgeom", False))
 
         if name is None:
-            name = self.unique_stage_name()
+            name = self.unique_step_name()
 
-        if name in self.stages:
-            raise UserInputError("Duplicate stage name {0!r}".format(name))
+        if name in self.steps:
+            raise UserInputError("Duplicate step name {0!r}".format(name))
 
-        stage = self.stages.create_static_stage(name, period, **kwds)
-        return stage
+        step = self.steps.create_static_step(name, period, **kwds)
+        return step
 
-    def create_dynamic_stage(self, name=None, period=1.0, **kwds):
+    def create_dynamic_step(self, name=None, period=1.0, **kwds):
 
         if period is None:
-            raise UserInputError("DYNAMIC STAGE REQUIRES PERIOD")
+            raise UserInputError("DYNAMIC STEP REQUIRES PERIOD")
 
-        if self.stages is None:
+        if self.steps is None:
             self.setup()
-            self.initialize_stages()
+            self.initialize_steps()
 
         # VALIDATE INPUT
-        self._validate_stage1(nlgeom=kwds.get("nlgeom"), density=True)
+        self._validate_step1(nlgeom=kwds.get("nlgeom"), density=True)
 
         if name is None:
-            name = self.unique_stage_name()
+            name = self.unique_step_name()
 
-        if name in self.stages:
-            raise UserInputError("Duplicate stage name {0!r}".format(name))
+        if name in self.steps:
+            raise UserInputError("Duplicate step name {0!r}".format(name))
 
-        stage = self.stages.create_dynamic_stage(name, period, **kwds)
-        return stage
+        step = self.steps.create_dynamic_step(name, period, **kwds)
+        return step
 
-    def create_heat_transfer_stage(self, name=None, period=1.0):
-        if self.stages is None:
+    def create_heat_transfer_step(self, name=None, period=1.0):
+        if self.steps is None:
             self.setup()
-            self.initialize_stages()
+            self.initialize_steps()
 
         # VALIDATE INPUT
-        self._validate_stage2()
+        self._validate_step2()
 
         if name is None:
-            name = self.unique_stage_name()
+            name = self.unique_step_name()
 
-        if name in self.stages:
-            raise UserInputError("Duplicate stage name {0!r}".format(name))
+        if name in self.steps:
+            raise UserInputError("Duplicate step name {0!r}".format(name))
 
-        stage = self.stages.create_heat_transfer_stage(name, period=period)
-        return stage
+        step = self.steps.create_heat_transfer_step(name, period=period)
+        return step
 
     # ----------------------------------------------------------------------- #
     # --- ELEMENT BLOCKS AND SETS-------------------------------------------- #
@@ -647,7 +647,7 @@ class fe_model(object):
         key1 = key.lower()
         if key1 in ("u", "ux", "uy", "uz"):
             key1 = "displ" + key1[1:]
-        for (name, field) in self.stages.last.increments[-1].field_outputs.items():
+        for (name, field) in self.steps.last.increments[-1].field_outputs.items():
             if key1 == name.lower() or key.lower() == name.lower():
                 if field.type != SCALAR:
                     comps = ",".join(key + comp for comp in field.components)
@@ -689,7 +689,7 @@ class fe_model(object):
             raise UserInputError("Plot2D IS ONLY APPLICABLE TO 2D PROBLEMS")
         xy = np.array(self.mesh.coord)
         if deformed:
-            xy += scale * self.stages.last.dofs.reshape(xy.shape)
+            xy += scale * self.steps.last.dofs.reshape(xy.shape)
         elecon = []
         for blk in self.mesh.element_blocks:
             if (blk.eletyp.dimensions, blk.eletyp.nodes) == (2, 8):
@@ -705,6 +705,6 @@ class fe_model(object):
 
     def write_results(self):
         """Write the finite element results to a file"""
-        for (name, stage) in self.stages.items():
-            self.snapshot(stage)
+        for (name, step) in self.steps.items():
+            self.snapshot(step)
         self.fh.close()

@@ -10,13 +10,13 @@ from felab.constants import (
     STATIC_ITERATIVE,
 )
 from felab.util.numeric import linsolve
-from felab.stage.stage import sd_stage
+from felab.step.step import sd_step
 from felab.assembly import assemble_system, apply_boundary_conditions
 
 
-class static_stage(sd_stage):
+class static_step(sd_step):
     def __init__(self, model, number, name, previous, period=1.0, **kwds):
-        super(static_stage, self).__init__(model, number, name, previous, period)
+        super(static_step, self).__init__(model, number, name, previous, period)
         for (key, val) in kwds.items():
             if key == "increments":
                 key = "_increments"
@@ -28,7 +28,7 @@ class static_stage(sd_stage):
     def run(self, **kwargs):
 
         if self.ran:
-            raise RuntimeError("STAGE ALREADY RUN")
+            raise RuntimeError("STEP ALREADY RUN")
 
         solver = kwargs.pop("solver", getattr(self, "solver", None))
         increments = kwargs.get("increments", getattr(self, "_increments", None))
@@ -162,7 +162,7 @@ class static_stage(sd_stage):
         maxiters = getattr(self, "maxiters", maxiters)
 
         # TIME IS:
-        # TIME[0]: VALUE OF STAGE TIME AT BEGINNING OF INCREMENT
+        # TIME[0]: VALUE OF STEP TIME AT BEGINNING OF INCREMENT
         # TIME[1]: VALUE OF TOTAL TIME AT BEGINNING OF INCREMENT
         time = np.array([0.0, self.start])
         dtime = period / float(increments)
@@ -242,7 +242,7 @@ class static_stage(sd_stage):
                         break
                     elif err2 < 5e-2:
                         tty.debug(
-                            "CONVERGING TO LOSER TOLERANCE ON STAGE "
+                            "CONVERGING TO LOSER TOLERANCE ON STEP "
                             "{0}, INCREMENT {1}".format(self.number, kinc + 1)
                         )
                         break
@@ -250,13 +250,13 @@ class static_stage(sd_stage):
                 continue
 
             else:
-                message = "FAILED TO CONVERGE ON STAGE "
+                message = "FAILED TO CONVERGE ON STEP "
                 message += "{0}, INCREMENT {1}".format(self.number, kinc + 1)
                 tty.error(message)
                 raise RuntimeError(message)
 
             tty.debug(
-                "STAGE {0}, INCREMENT {1}, " "COMPLETE.".format(self.number, kinc + 1)
+                "STEP {0}, INCREMENT {1}, " "COMPLETE.".format(self.number, kinc + 1)
             )
             time += dtime
             self.dofs += u

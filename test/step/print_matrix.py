@@ -45,12 +45,12 @@ def test_print_matrix_1():
     V.create_element_block("ElementBlock1", ALL)
     V.assign_properties("ElementBlock1", DC2D3, "Material-1")
     V.assign_initial_temperature(ALL, 50)
-    stage = V.create_heat_transfer_stage()
-    stage.assign_prescribed_bc(BOUNDARY, T, 50)
+    step = V.create_heat_transfer_step()
+    step.assign_prescribed_bc(BOUNDARY, T, 50)
     fun = lambda x: np.ones_like(x[:, 0])
-    stage.HeatGeneration(ALL, fun)
-    stage.run()
-    stage.print_stiffness_structure(style="numeric", stream=sys.stdout)
+    step.HeatGeneration(ALL, fun)
+    step.run()
+    step.print_stiffness_structure(style="numeric", stream=sys.stdout)
     V.write_results()
 
 

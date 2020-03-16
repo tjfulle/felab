@@ -14,16 +14,16 @@ def test_unit_square(plot=False):
     V.assign_properties("All", CPS4, mat)
     V.fix_nodes(ILO)
 
-    stage = V.create_static_stage()
-    stage.assign_prescribed_bc(IHI, X, 0.1)
-    stage.run()
-    stage.print_stiffness_structure(style="latex")
+    step = V.create_static_step()
+    step.assign_prescribed_bc(IHI, X, 0.1)
+    step.run()
+    step.print_stiffness_structure(style="latex")
     if plot:
         V.Plot2D(deformed=1, show=1)
 
-    stage = V.create_static_stage()
-    stage.assign_prescribed_bc(IHI, X, 0)
-    stage.run()
+    step = V.create_static_step()
+    step.assign_prescribed_bc(IHI, X, 0)
+    step.run()
 
     if plot:
         V.Plot2D(deformed=1, show=1)

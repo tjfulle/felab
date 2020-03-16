@@ -13,11 +13,11 @@ def test_beam_quad(plot=False):
     V.create_element_block("ElementBlock1", ALL)
     V.assign_properties("ElementBlock1", CPE4, mat, t=1)
 
-    stage = V.create_static_stage()
-    stage.fix_dofs(ILO)
-    stage = V.create_static_stage()
-    stage.assign_concentrated_load(IHI, Y, -10)
-    stage.run()
+    step = V.create_static_step()
+    step.fix_dofs(ILO)
+    step = V.create_static_step()
+    step.assign_concentrated_load(IHI, Y, -10)
+    step.run()
     V.write_results()
     if plot:
         V.Plot2D(show=1, deformed=1)

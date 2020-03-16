@@ -39,10 +39,10 @@ def test_volume_locking(plot=False):
         V.assign_prescribed_bc("Nodeset-200", X)
         V.assign_prescribed_bc("Nodeset-201", Y)
 
-        stage = V.create_static_stage()
+        step = V.create_static_step()
         # Pressure on inside face
-        stage.assign_pressure("SURFACE-1", 1.0)
-        stage.run()
+        step.assign_pressure("SURFACE-1", 1.0)
+        step.run()
         filename = "VolumeLocking_%d.png" % i
         if plot:
             V.Plot2D(

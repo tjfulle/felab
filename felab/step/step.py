@@ -6,7 +6,7 @@ import felab.util.tty as tty
 from felab.error import UserInputError
 from felab.util.lang import is_listlike
 from felab.util.numeric import emptywithlists, normal2d
-from felab.stage.data_wharehouse import (
+from felab.step.data_wharehouse import (
     SymmetricTensorField,
     FieldOutputs,
     ScalarField,
@@ -31,7 +31,7 @@ from felab.constants import (
 )
 
 
-class load_stage(object):
+class load_step(object):
     def __init__(self, model, number, name, previous, period):
         self.model = model
         self.written = 0
@@ -141,49 +141,49 @@ class load_stage(object):
     def doftags(self):
         return np.array(sorted(self.dofx), dtype=int)
 
-    def dofvals(self, stage_time):
+    def dofvals(self, step_time):
 
         ix = self.doftags
 
-        # DOFS AT END OF LAST STAGE
+        # DOFS AT END OF LAST STEP
         X0 = np.array([self.previous.dofx.get(I, 0) for I in ix])
 
-        # DOFS AT END OF THIS STAGE
+        # DOFS AT END OF THIS STEP
         Xf = np.array([self.dofx[I] for I in ix])
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
-        fac = max(1.0, stage_time / self.period)
+        fac = max(1.0, step_time / self.period)
         return (1.0 - fac) * X0 + fac * Xf
 
     @property
     def cltags(self):
         return np.array(sorted(self.cloadx), dtype=int)
 
-    def cload(self, stage_time):
-        # CONCENTRATED LOAD AT END OF LAST STAGE
+    def cload(self, step_time):
+        # CONCENTRATED LOAD AT END OF LAST STEP
         ix = self.previous.cltags
         Q0 = np.zeros_like(self.dofs)
         Q0[ix] = [self.previous.cloadx[key] for key in ix]
 
-        # CONCENTRATED LOAD AT END OF THIS STAGE
+        # CONCENTRATED LOAD AT END OF THIS STEP
         ix = self.cltags
         Qf = np.zeros_like(self.dofs)
         Qf[ix] = [self.cloadx[key] for key in ix]
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
-        fac = max(1.0, stage_time / self.period)
+        fac = max(1.0, step_time / self.period)
         return (1.0 - fac) * Q0 + fac * Qf
 
-    def dload(self, stage_time):
+    def dload(self, step_time):
 
-        # INTERPOLATES ALL DISTRIBUTED LOADS (BODY AND SURFACE) TO STAGE_TIME
+        # INTERPOLATES ALL DISTRIBUTED LOADS (BODY AND SURFACE) TO STEP_TIME
 
         # CONTAINER FOR ALL DLOADS
         dltyp = emptywithlists(self.model.numele)
         dload = emptywithlists(self.model.numele)
 
         # INTERPOLATION FACTOR
-        fac = min(1.0, stage_time / self.period)
+        fac = min(1.0, step_time / self.period)
 
         # INTERPOLATE SURFACE LOADS
         for (key, Ff) in self.sloadx.items():
@@ -253,20 +253,20 @@ class load_stage(object):
         self.increments.append(increment)
         return increment
 
-    def copy_from(self, stage):
+    def copy_from(self, step):
         self.increments[0].field_outputs = _copy.deepcopy(
-            stage.increments[-1].field_outputs
+            step.increments[-1].field_outputs
         )
-        self.dofs[:] = stage.dofs
-        self.dofx = _copy.deepcopy(stage.dofx)
-        self.cloadx = _copy.deepcopy(stage.cloadx)
-        self.dloadx = _copy.deepcopy(stage.dloadx)
-        self.sloadx = _copy.deepcopy(stage.sloadx)
-        self.sfluxx = _copy.deepcopy(stage.sfluxx)
-        self.sfilmx = _copy.deepcopy(stage.sfilmx)
-        self.hsrcx = _copy.deepcopy(stage.hsrcx)
-        self.predef[:] = stage.predef
-        self.svars[:] = stage.svars
+        self.dofs[:] = step.dofs
+        self.dofx = _copy.deepcopy(step.dofx)
+        self.cloadx = _copy.deepcopy(step.cloadx)
+        self.dloadx = _copy.deepcopy(step.dloadx)
+        self.sloadx = _copy.deepcopy(step.sloadx)
+        self.sfluxx = _copy.deepcopy(step.sfluxx)
+        self.sfilmx = _copy.deepcopy(step.sfilmx)
+        self.hsrcx = _copy.deepcopy(step.hsrcx)
+        self.predef[:] = step.predef
+        self.svars[:] = step.svars
 
     # ----------------------------------------------------------------------- #
     # --- BOUNDARY CONDITIONS ----------------------------------------------- #
@@ -562,8 +562,8 @@ class Increment(object):
             self.field_outputs[key].add_data(value, **d)
 
 
-class sd_stage(load_stage):
-    """Base class for stress/displacement stages"""
+class sd_step(load_step):
+    """Base class for stress/displacement steps"""
 
     def pin_nodes(self, nodes):
         """Pin nodal degrees of freedom

@@ -17,17 +17,17 @@ def test_postprocess():
     V.assign_prescribed_bc("LeftHandSide", X)
     V.fix_nodes("PinNode")
 
-    stage = V.create_static_stage()
-    stage.assign_surface_load(IHI, [1, 0])
-    stage.run()
+    step = V.create_static_step()
+    step.assign_surface_load(IHI, [1, 0])
+    step.run()
 
     V.write_results()
 
     F = EXOFileReader("PlateWithHoleQuad4.exo")
     max_p = [0.0, None]
     max_u = [0.0, None]
-    for stage in F.stages.values():
-        for increment in stage.increments:
+    for step in F.steps.values():
+        for increment in step.increments:
             u = increment.field_outputs["U"]
             for value in u.values:
                 u1 = value.magnitude

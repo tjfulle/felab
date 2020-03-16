@@ -18,9 +18,9 @@ def test_linear(ax=None):
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
-    stage = V.create_static_stage()
-    stage.assign_pressure("SURFACE-1", 1.0)
-    stage.run()
+    step = V.create_static_step()
+    step.assign_pressure("SURFACE-1", 1.0)
+    step.run()
     V.write_results()
     if ax is not None:
         ax = V.Plot2D(
@@ -45,9 +45,9 @@ def test_bbar(ax=None):
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
-    stage = V.create_static_stage()
-    stage.assign_pressure("SURFACE-1", 1.0)
-    stage.run()
+    step = V.create_static_step()
+    step.assign_pressure("SURFACE-1", 1.0)
+    step.run()
     V.write_results()
     if ax is not None:
         ax = V.Plot2D(deformed=1, ax=ax, color="r", label="bbar")
@@ -64,9 +64,9 @@ def test_reduced_integration(ax=None):
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
-    stage = V.create_static_stage()
-    stage.assign_pressure("SURFACE-1", 1.0)
-    stage.run()
+    step = V.create_static_step()
+    step.assign_pressure("SURFACE-1", 1.0)
+    step.run()
     V.write_results()
     if ax is not None:
         ax = V.Plot2D(deformed=1, ax=ax, color="k", label="reduced")
@@ -83,9 +83,9 @@ def test_selectively_reduced_integration(ax=None):
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
-    stage = V.create_static_stage()
-    stage.assign_pressure("SURFACE-1", 1.0)
-    stage.run()
+    step = V.create_static_step()
+    step.assign_pressure("SURFACE-1", 1.0)
+    step.run()
     V.write_results()
     if ax is not None:
         ax = V.Plot2D(deformed=1, ax=ax, color="g", label="Sel. reduced integration")
@@ -102,13 +102,13 @@ def test_quadratic(ax=None):
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
-    stage = V.create_static_stage(solver=NEWTON)
-    stage.assign_pressure("SURFACE-1", 1.0)
+    step = V.create_static_step(solver=NEWTON)
+    step.assign_pressure("SURFACE-1", 1.0)
     # V.assign_surface_load("SURFACE-300", [0.195090322, 0.98078528])
     # V.assign_surface_load("SURFACE-301", [0.555570233, 0.831469612])
     # V.assign_surface_load("SURFACE-302", [0.831469612, 0.555570233])
     # V.assign_surface_load("SURFACE-303", [0.98078528, 0.195090322])
-    stage.run()
+    step.run()
     V.write_results()
 
 

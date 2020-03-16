@@ -15,22 +15,22 @@ def test_cycle_loads(plot=False):
 
     V.fix_nodes(ILO)
 
-    stage = V.create_static_stage(solver=NEWTON)
-    stage.assign_prescribed_bc(IHI, X, 0.1)
-    stage.run()
+    step = V.create_static_step(solver=NEWTON)
+    step.assign_prescribed_bc(IHI, X, 0.1)
+    step.run()
     if plot:
         V.Plot2D(show=1, deformed=True)
 
-    stage = V.create_static_stage(solver=NEWTON)
-    stage.assign_prescribed_bc(IHI, X, 0)
-    stage.run()
+    step = V.create_static_step(solver=NEWTON)
+    step.assign_prescribed_bc(IHI, X, 0)
+    step.run()
     if plot:
         V.Plot2D(show=1, deformed=True)
 
-    stage = V.create_static_stage(solver=NEWTON)
-    stage.remove_bc(IHI, X)
-    stage.assign_surface_load(IHI, [100, 0])
-    stage.run()
+    step = V.create_static_step(solver=NEWTON)
+    step.remove_bc(IHI, X)
+    step.assign_surface_load(IHI, [100, 0])
+    step.run()
     if plot:
         V.Plot2D(show=1, deformed=True)
 

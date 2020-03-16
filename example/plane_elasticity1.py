@@ -13,12 +13,12 @@ def test_plane_elasticity1(plot=False):
 
     V.assign_properties("ElementBlock1", CPE4, mat, t=1)
 
-    stage = V.create_static_stage()
-    stage.assign_prescribed_bc("LeftHandSide", X, 0.0)
-    stage.assign_prescribed_bc("PinNode", Y, 0.0)
-    stage.assign_prescribed_bc("RightHandSide", X, 0.1)
+    step = V.create_static_step()
+    step.assign_prescribed_bc("LeftHandSide", X, 0.0)
+    step.assign_prescribed_bc("PinNode", Y, 0.0)
+    step.assign_prescribed_bc("RightHandSide", X, 0.1)
 
-    stage.run()
+    step.run()
 
     V.write_results()
 

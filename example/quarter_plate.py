@@ -14,17 +14,17 @@ def test_quarter_plate(plot=False):
     V.assign_prescribed_bc("SymXZ", Y)
     V.assign_initial_temperature(ALL, 60)
 
-    stage = V.create_static_stage("Stage-1")
-    stage.assign_surface_load("RightHandSide", [1, 0])
-    stage.run()
+    step = V.create_static_step("Step-1")
+    step.assign_surface_load("RightHandSide", [1, 0])
+    step.run()
 
     V.write_results()
 
     F = EXOFileReader("PlateWithHoleQuad4QuarterSym.exo")
     max_p = [0.0, None]
     max_u = [0.0, None]
-    for stage in F.stages.values():
-        for increment in stage.increments:
+    for step in F.steps.values():
+        for increment in step.increments:
             u = increment.field_outputs["U"]
             for value in u.values:
                 u1 = value.magnitude

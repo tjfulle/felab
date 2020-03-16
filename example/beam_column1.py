@@ -26,11 +26,11 @@ def test_beam_column():
     V.assign_prescribed_bc(1, (X, Y, TZ))
     V.assign_prescribed_bc(5, Y)
 
-    stage = V.create_static_stage()
-    stage.assign_concentrated_load(2, Y, 100)
-    stage.assign_concentrated_load(5, TZ, 200)
-    stage.assign_concentrated_load(5, X, 300)
-    stage.run()
+    step = V.create_static_step()
+    step.assign_concentrated_load(2, Y, 100)
+    step.assign_concentrated_load(5, TZ, 200)
+    step.assign_concentrated_load(5, X, 300)
+    step.run()
     V.write_results()
 
 

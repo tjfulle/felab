@@ -43,7 +43,7 @@ class B2D2(element_base):
         a,
         time,
         dtime,
-        kstage,
+        kstep,
         kinc,
         dltyp,
         dlmag,

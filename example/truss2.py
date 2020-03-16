@@ -88,18 +88,18 @@ def test_truss():
     V.fix_nodes((7, 8, 9, 10))
 
     # Define concentrated loads
-    stage = V.create_static_stage()
+    step = V.create_static_step()
 
     P1, P2, P3, P4 = 1000, 10000, -5000, 500
-    stage.assign_concentrated_load(1, X, P1)
-    stage.assign_concentrated_load(1, Y, P2)
-    stage.assign_concentrated_load(1, Z, P3)
-    stage.assign_concentrated_load(2, Y, P2)
-    stage.assign_concentrated_load(2, Z, P3)
-    stage.assign_concentrated_load((3, 6), X, P4)
+    step.assign_concentrated_load(1, X, P1)
+    step.assign_concentrated_load(1, Y, P2)
+    step.assign_concentrated_load(1, Z, P3)
+    step.assign_concentrated_load(2, Y, P2)
+    step.assign_concentrated_load(2, Z, P3)
+    step.assign_concentrated_load((3, 6), X, P4)
 
     # Solve and write results
-    stage.run()
+    step.run()
     V.write_results()
 
 

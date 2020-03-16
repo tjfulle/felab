@@ -18,9 +18,9 @@ def test_linear(ax=None):
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
-    stage = V.create_static_stage()
-    stage.assign_pressure("SURFACE-1", 1.0)
-    stage.run()
+    step = V.create_static_step()
+    step.assign_pressure("SURFACE-1", 1.0)
+    step.run()
     V.write_results()
     if ax is not None:
         ax = V.Plot2D(
@@ -45,10 +45,10 @@ def test_reduced_integration(ax=None):
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
 
-    stage = V.create_static_stage()
+    step = V.create_static_step()
     # Pressure on inside face
-    stage.assign_pressure("SURFACE-1", 1.0)
-    stage.run()
+    step.assign_pressure("SURFACE-1", 1.0)
+    step.run()
 
     V.write_results()
     if ax is not None:
@@ -66,10 +66,10 @@ def test_selectively_reduced_integration(ax=None):
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
 
-    stage = V.create_static_stage()
+    step = V.create_static_step()
     # Pressure on inside face
-    stage.assign_pressure("SURFACE-1", 1.0)
-    stage.run()
+    step.assign_pressure("SURFACE-1", 1.0)
+    step.run()
 
     V.write_results()
     if ax is not None:
@@ -87,14 +87,14 @@ def test_quadratic(ax=None):
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
 
-    stage = V.create_static_stage()
+    step = V.create_static_step()
     # Pressure on inside face
     # V.assign_pressure('SURFACE-1', 1.)
-    stage.assign_surface_load("SURFACE-300", [0.195090322, 0.98078528])
-    stage.assign_surface_load("SURFACE-301", [0.555570233, 0.831469612])
-    stage.assign_surface_load("SURFACE-302", [0.831469612, 0.555570233])
-    stage.assign_surface_load("SURFACE-303", [0.98078528, 0.195090322])
-    stage.run()
+    step.assign_surface_load("SURFACE-300", [0.195090322, 0.98078528])
+    step.assign_surface_load("SURFACE-301", [0.555570233, 0.831469612])
+    step.assign_surface_load("SURFACE-302", [0.831469612, 0.555570233])
+    step.assign_surface_load("SURFACE-303", [0.98078528, 0.195090322])
+    step.run()
 
     V.write_results()
 

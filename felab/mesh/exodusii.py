@@ -8,7 +8,7 @@ import felab.util.tty as tty
 from felab.constants import ELEMENT_CENTROID, NODE
 from felab.mesh.element_block import element_block
 from felab.elemlib import element_family
-from felab.stage.data_wharehouse import (
+from felab.step.data_wharehouse import (
     ScalarField,
     VectorField,
     FieldOutputs,
@@ -138,7 +138,7 @@ DIM_FOUR = "four"
 DIM_NUM_DIM = "num_dim"
 DIM_NUM_QA = "num_qa_rec"
 DIM_TIME_STEP = "time_step"
-DIM_MAX_STAGES = "max_stages"
+DIM_MAX_STEPS = "max_steps"
 VAR_TIME_WHOLE = "time_whole"
 VAR_QA_RECORDS = "qa_records"
 VAR_COOR_NAMES = "coor_names"
@@ -197,8 +197,8 @@ VAR_ELE_SS = lambda i: cat("elem_ss", i)
 
 # --- Field variable dimensions and variables (femlib specific)
 DIM_NUM_FIELD = "num_field"
-VAR_STAGE_NUM = "stage_num"
-VAR_STAGE_NAMES = "stage_names"
+VAR_STEP_NUM = "step_num"
+VAR_STEP_NAMES = "step_names"
 VAR_FIELD_ELE_VAR = "field_elem_var"
 VAR_FIELD_NOD_VAR = "field_nod_var"
 VAR_FO_PROP1 = "fo_prop1"
@@ -520,10 +520,10 @@ class EXOFileWriter(EXOFile):
         self.initialized = True
         return
 
-    def snapshot(self, stage):
+    def snapshot(self, step):
         if not self.initialized:
             nodvarnames, elevarnames = [], []
-            for fo in stage.increments[0].field_outputs.values():
+            for fo in step.increments[0].field_outputs.values():
                 if fo.position == NODE:
                     nodvarnames.extend(fo.keys)
                 else:
@@ -532,7 +532,7 @@ class EXOFileWriter(EXOFile):
                     elevarnames.extend(fo.keys)
             self.initialize(nodvarnames, elevarnames)
 
-        for increment in stage.increments:
+        for increment in step.increments:
             if not increment.converged:
                 tty.warn("CANNOT WRITE UNCONVERGED INCREMENT")
                 return
@@ -755,9 +755,9 @@ class EXOFileReader(EXOFile):
         scalars1, vectors1, tensors1 = self.parse_names_and_components(nodvarnames)
         scalars2, vectors2, tensors2 = self.parse_names_and_components(elevarnames)
 
-        self.stages = StageRepository()
-        stage = self.stages.Stage()
-        increment = stage.increments[0]
+        self.steps = StepRepository()
+        step = self.steps.Step()
+        increment = step.increments[0]
 
         # --- REGISTER VARIABLES
 
@@ -795,7 +795,7 @@ class EXOFileReader(EXOFile):
 
         for (count, time) in enumerate(times):
             if count > 0:
-                increment = stage.Increment(dtimes[count])
+                increment = step.Increment(dtimes[count])
 
             # NODE DATA
             for (i, name) in scalars1:
@@ -835,7 +835,7 @@ class EXOFileReader(EXOFile):
                     ndir, nshr = {1: (1, 0), 3: (2, 1), 4: (3, 1), 6: (3, 3)}[len(item)]
                     increment.field_outputs[eb.name, name].add_data(d)
 
-        return self.stages
+        return self.steps
 
     def get_elem_coord(self, xel):
         iel = self.elemap[xel]
@@ -889,7 +889,7 @@ def put_nodal_solution(filename, nodmap, elemap, coord, element_blocks, u):
 # --------------------------------------------------------------------------- #
 # --- THE FOLLOWING IS FOR OUTPUT ONLY -------------------------------------- #
 # --------------------------------------------------------------------------- #
-class StageRepository(object):
+class StepRepository(object):
     def __init__(self):
         self._keys = []
         self._values = []
@@ -922,22 +922,22 @@ class StageRepository(object):
         for (i, key) in enumerate(self._keys):
             yield (key, self._values[i])
 
-    def Stage(self, name=None, copy=1):
+    def Step(self, name=None, copy=1):
         if name is None:
             j = 1
             while 1:
-                name = "Stage-{0}".format(len(self._keys) + j)
+                name = "Step-{0}".format(len(self._keys) + j)
                 if name not in self._keys:
                     break
                 j += 1
         if not self._values:
-            stage = Stage(name, 0.0)
+            step = Step(name, 0.0)
         else:
             last = self._values[-1].framces[-1]
-            stage = Stage(name, last.value)
+            step = Step(name, last.value)
             if copy:
-                stage.increments[0].field_outputs = _copy.deepcopy(last.field_outputs)
-        self[name] = stage
+                step.increments[0].field_outputs = _copy.deepcopy(last.field_outputs)
+        self[name] = step
         return self._values[-1]
 
     @property
@@ -949,7 +949,7 @@ class StageRepository(object):
         return self._values[0]
 
 
-class Stage(object):
+class Step(object):
     def __init__(self, name, start):
         self.written = 0
         self.name = name

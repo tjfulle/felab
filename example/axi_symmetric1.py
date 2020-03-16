@@ -19,19 +19,19 @@ def test_axisymmetric_ring():
     V.assign_prescribed_bc(1, Zr)
     V.assign_prescribed_bc(2, Zr)
 
-    stage = V.create_static_stage()
-    stage.assign_pressure((1, S2), 1000)
-    stage.assign_pressure((1, S3), 1000)
-    stage.assign_pressure((1, S4), 1000)
-    stage.run()
+    step = V.create_static_step()
+    step.assign_pressure((1, S2), 1000)
+    step.assign_pressure((1, S3), 1000)
+    step.assign_pressure((1, S4), 1000)
+    step.run()
 
-    s = stage.increments[-1].field_outputs["S"]
+    s = step.increments[-1].field_outputs["S"]
     # print(s.data[:,:,[0,1,2]])
     # print(s.data[:,:,3])
     assert allclose(s.data[:, :, [0, 1, 2]], -1000.0)
     assert allclose(s.data[:, :, 3], 0)
 
-    e = stage.increments[-1].field_outputs["E"]
+    e = step.increments[-1].field_outputs["E"]
     assert allclose(e.data[:, :, [0, 1, 2]], -1.3333e-5)
     assert allclose(e.data[:, :, 3], 0)
 

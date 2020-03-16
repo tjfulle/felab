@@ -20,31 +20,31 @@ def test_heat_unit_square(plot=False):
     V.assign_properties("EALL", DC2D3, mat)
 
     # Fix temperatures on left and right edge
-    stage = V.create_heat_transfer_stage()
-    stage.assign_prescribed_bc(ILO, T, 200)
-    stage.assign_prescribed_bc(IHI, T, 50)
+    step = V.create_heat_transfer_step()
+    step.assign_prescribed_bc(ILO, T, 200)
+    step.assign_prescribed_bc(IHI, T, 50)
 
     # Define surface flux on bottome edge of domain
-    stage.SurfaceFlux(JLO, 2000)
+    step.SurfaceFlux(JLO, 2000)
 
     # Define surface convection on top edge of domain
     # Too, h = 25, 250
-    # stage.SurfaceConvection(JHI, Too, h)
+    # step.SurfaceConvection(JHI, Too, h)
 
     # Define a function specifying the heat generation
     def fun(x):
         return 1000.0 / sqrt(x[:, 0] ** 2 + x[:, 1] ** 2)
 
-    # stage.HeatGeneration(ALL, fun)
+    # step.HeatGeneration(ALL, fun)
 
     # Solve for the unknown degrees of freedom
-    stage.run()
-    stage.print_stiffness_structure()
+    step.run()
+    step.print_stiffness_structure()
 
     V.write_results()
 
     if plot:
-        V.Plot2D(colorby=stage.dofs.flatten(), show=1)
+        V.Plot2D(colorby=step.dofs.flatten(), show=1)
 
         # PlotScalar2D(V.mesh.coord, V.mesh.elecon, V.dofs.flatten())
 

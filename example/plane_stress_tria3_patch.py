@@ -21,21 +21,21 @@ def test_plane_stress_tria3_patch(plot=False):
     # ASSIGN HOMOGENEOUS BCS TO MODEL
     V.assign_prescribed_bc(10, (X, Y))
 
-    # CREATE LOAD STAGE AND TO IT ASSIGN INHOMOGENEOUS BCS
-    stage = V.create_static_stage(solver=NEWTON)
-    stage.assign_prescribed_bc(20, X, 0.24e-3)
-    stage.assign_prescribed_bc(20, Y, 0.12e-3)
-    stage.assign_prescribed_bc(30, X, 0.3e-3)
-    stage.assign_prescribed_bc(30, Y, 0.24e-3)
-    stage.assign_prescribed_bc(40, X, 0.06e-3)
-    stage.assign_prescribed_bc(40, Y, 0.12e-3)
+    # CREATE LOAD STEP AND TO IT ASSIGN INHOMOGENEOUS BCS
+    step = V.create_static_step(solver=NEWTON)
+    step.assign_prescribed_bc(20, X, 0.24e-3)
+    step.assign_prescribed_bc(20, Y, 0.12e-3)
+    step.assign_prescribed_bc(30, X, 0.3e-3)
+    step.assign_prescribed_bc(30, Y, 0.24e-3)
+    step.assign_prescribed_bc(40, X, 0.06e-3)
+    step.assign_prescribed_bc(40, Y, 0.12e-3)
 
-    # RUN THE STAGE
-    stage.run()
+    # RUN THE STEP
+    step.run()
 
     # CHECK THE RESULTS AGAINST ANALYTIC SOLUTION
-    stage = V.stages.last
-    field = stage.increments[-1].field_outputs["S"]
+    step = V.steps.last
+    field = step.increments[-1].field_outputs["S"]
     error = []
     for value in field.values:
         data = value.data
@@ -43,7 +43,7 @@ def test_plane_stress_tria3_patch(plot=False):
         assert np.allclose(data[:, 1], 1333.333333333), error.append("Syy")
         assert np.allclose(data[:, 2], 400.0), error.append("Sxy")
 
-    field = stage.increments[-1].field_outputs["E"]
+    field = step.increments[-1].field_outputs["E"]
     for value in field.values:
         data = value.data
         assert np.allclose(data[:, 0], 1e-3), error.append("Exx")
@@ -68,21 +68,21 @@ def test_plane_stress_tria3_patch(plot=False):
     # ASSIGN HOMOGENEOUS BCS TO MODEL
     V.assign_prescribed_bc(10, (X, Y))
 
-    # CREATE LOAD STAGE AND TO IT ASSIGN INHOMOGENEOUS BCS
-    stage = V.create_static_stage()
-    stage.assign_prescribed_bc(20, X, 0.24e-3)
-    stage.assign_prescribed_bc(20, Y, 0.12e-3)
-    stage.assign_prescribed_bc(30, X, 0.3e-3)
-    stage.assign_prescribed_bc(30, Y, 0.24e-3)
-    stage.assign_prescribed_bc(40, X, 0.06e-3)
-    stage.assign_prescribed_bc(40, Y, 0.12e-3)
+    # CREATE LOAD STEP AND TO IT ASSIGN INHOMOGENEOUS BCS
+    step = V.create_static_step()
+    step.assign_prescribed_bc(20, X, 0.24e-3)
+    step.assign_prescribed_bc(20, Y, 0.12e-3)
+    step.assign_prescribed_bc(30, X, 0.3e-3)
+    step.assign_prescribed_bc(30, Y, 0.24e-3)
+    step.assign_prescribed_bc(40, X, 0.06e-3)
+    step.assign_prescribed_bc(40, Y, 0.12e-3)
 
-    # RUN THE STAGE
-    stage.run()
+    # RUN THE STEP
+    step.run()
 
     # CHECK THE RESULTS AGAINST ANALYTIC SOLUTION
-    stage = V.stages.last
-    field = stage.increments[-1].field_outputs["S"]
+    step = V.steps.last
+    field = step.increments[-1].field_outputs["S"]
     error = []
     for value in field.values:
         data = value.data
@@ -90,7 +90,7 @@ def test_plane_stress_tria3_patch(plot=False):
         assert np.allclose(data[:, 1], 1333.333333333), error.append("Syy")
         assert np.allclose(data[:, 2], 400.0), error.append("Sxy")
 
-    field = stage.increments[-1].field_outputs["E"]
+    field = step.increments[-1].field_outputs["E"]
     for value in field.values:
         data = value.data
         assert np.allclose(data[:, 0], 1e-3), error.append("Exx")

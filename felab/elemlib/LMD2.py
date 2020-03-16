@@ -45,7 +45,7 @@ class LMD2(element_base):
         a,
         time,
         dtime,
-        kstage,
+        kstep,
         kinc,
         dltyp,
         dlmag,

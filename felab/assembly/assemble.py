@@ -37,7 +37,7 @@ def assemble_system(
     a,
     time,
     dtime,
-    kstage,
+    kstep,
     kinc,
     kiter,
     dltyp,
@@ -59,7 +59,7 @@ def assemble_system(
     Parameters
     ----------
     u, du : ndarray
-        Value of DOFs at beginning of stage and increment, respectively.
+        Value of DOFs at beginning of step and increment, respectively.
     Q : ndarray
         Force array due to Neumann boundary condtions
     svtab : ndarray of int
@@ -73,13 +73,13 @@ def assemble_system(
     predef : ndarray
         Predefined fields
     time : ndarray, optional {np.array([0.,0.])}
-        time[0] is the stage time, time[1] the total time
+        time[0] is the step time, time[1] the total time
     dtime : float {1.}
         Time increment
     period : float {1.}
-        Stage period
-    kstage, kinc : int, optional {1, 1}
-        Stage and increment numbers
+        step period
+    kstep, kinc : int, optional {1, 1}
+        step and increment numbers
     nlgeom : bool, optional {False}
         Nonlinear geometry
     kiter : int, opitional {None}
@@ -111,7 +111,7 @@ def assemble_system(
     msg += "PROCEDURE: {0}, NLGEOM: {1}\n      ".format(procname, nlgeom)
 
     tf = time[-1] + dtime
-    msg += "STAGE: {0}, INCREMENT: {1}, TIME: {2}".format(kstage, kinc, tf)
+    msg += "STEP: {0}, INCREMENT: {1}, TIME: {2}".format(kstep, kinc, tf)
     if kiter is not None:
         msg += ", INCREMENT: {0}".format(kiter)
 
@@ -153,7 +153,7 @@ def assemble_system(
                 a,
                 time,
                 dtime,
-                kstage,
+                kstep,
                 kinc,
                 dltyp[iel],
                 dlmag[iel],

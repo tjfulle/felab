@@ -12,22 +12,22 @@ def test_plane_stran_quad4_patch(plot=False):
     mat.elastic(E=1e6, Nu=0.25)
     V.assign_properties("EALL", CPE4, mat, t=0.001)
 
-    stage = V.create_static_stage()
-    stage.assign_prescribed_bc(10, (X, Y), 0.0)
-    stage.assign_prescribed_bc(20, X, 0.24e-3)
-    stage.assign_prescribed_bc(20, Y, 0.12e-3)
-    stage.assign_prescribed_bc(30, X, 0.3e-3)
-    stage.assign_prescribed_bc(30, Y, 0.24e-3)
-    stage.assign_prescribed_bc(40, X, 0.06e-3)
-    stage.assign_prescribed_bc(40, Y, 0.12e-3)
-    stage.run()
+    step = V.create_static_step()
+    step.assign_prescribed_bc(10, (X, Y), 0.0)
+    step.assign_prescribed_bc(20, X, 0.24e-3)
+    step.assign_prescribed_bc(20, Y, 0.12e-3)
+    step.assign_prescribed_bc(30, X, 0.3e-3)
+    step.assign_prescribed_bc(30, Y, 0.24e-3)
+    step.assign_prescribed_bc(40, X, 0.06e-3)
+    step.assign_prescribed_bc(40, Y, 0.12e-3)
+    step.run()
     if plot:
         V.Plot2D(show=1)
     V.write_results()
 
     # Average stress must be 1600 in x and y
-    stage = V.stages.last
-    field = stage.increments[-1].field_outputs["S"]
+    step = V.steps.last
+    field = step.increments[-1].field_outputs["S"]
     for value in field.values:
         data = value.data
         assert np.allclose(data[:, 0], 1600.0), "Wrong Sxx"

@@ -1,7 +1,7 @@
-from felab.stage.stage import load_stage
-from felab.stage.diffusive_ht import diffusive_ht_stage
-from felab.stage.static import static_stage
-from felab.stage.dynamic import dynamic_stage
+from felab.step.step import load_step
+from felab.step.diffusive_ht import diffusive_ht_step
+from felab.step.static import static_step
+from felab.step.dynamic import dynamic_step
 
 __all__ = ["repository"]
 
@@ -43,43 +43,43 @@ class repository(object):
         for (i, key) in enumerate(self._keys):
             yield (key, self._values[i])
 
-    def InitialStage(self, name):
+    def InitialStep(self, name):
         period = 0.0
-        stage = load_stage(self.model, len(self), name, None, period)
-        self[name] = stage
+        step = load_step(self.model, len(self), name, None, period)
+        self[name] = step
         return self.last
 
-    def create_static_stage(self, name, period=1.0, copy=True, **kwds):
+    def create_static_step(self, name, period=1.0, copy=True, **kwds):
         last = self._values[-1].increments[-1]
         if not last.converged:
-            raise RuntimeError("PREVIOUS STAGE HAS UNCONVERGED INCREMENTS")
-        stage = static_stage(self.model, len(self), name, self.last, period, **kwds)
+            raise RuntimeError("PREVIOUS STEP HAS UNCONVERGED INCREMENTS")
+        step = static_step(self.model, len(self), name, self.last, period, **kwds)
         if copy:
-            stage.copy_from(self.last)
-        stage.increments[0].converged = True
-        self[name] = stage
+            step.copy_from(self.last)
+        step.increments[0].converged = True
+        self[name] = step
         return self.last
 
-    def create_dynamic_stage(self, name, period=1.0, copy=True, **kwds):
+    def create_dynamic_step(self, name, period=1.0, copy=True, **kwds):
         last = self._values[-1].increments[-1]
         if not last.converged:
-            raise RuntimeError("PREVIOUS STAGE HAS UNCONVERGED INCREMENTS")
-        stage = dynamic_stage(self.model, len(self), name, self.last, period, **kwds)
+            raise RuntimeError("PREVIOUS STEP HAS UNCONVERGED INCREMENTS")
+        step = dynamic_step(self.model, len(self), name, self.last, period, **kwds)
         if copy:
-            stage.copy_from(self.last)
-        stage.increments[0].converged = True
-        self[name] = stage
+            step.copy_from(self.last)
+        step.increments[0].converged = True
+        self[name] = step
         return self.last
 
-    def create_heat_transfer_stage(self, name, period, copy=True):
+    def create_heat_transfer_step(self, name, period, copy=True):
         last = self._values[-1].increments[-1]
         if not last.converged:
-            raise RuntimeError("PREVIOUS STAGE HAS UNCONVERGED INCREMENTS")
-        stage = diffusive_ht_stage(self.model, len(self), name, self.last, period)
+            raise RuntimeError("PREVIOUS STEP HAS UNCONVERGED INCREMENTS")
+        step = diffusive_ht_step(self.model, len(self), name, self.last, period)
         if copy:
-            stage.copy_from(self.last)
-        stage.increments[0].converged = True
-        self[name] = stage
+            step.copy_from(self.last)
+        step.increments[0].converged = True
+        self[name] = step
         return self.last
 
     @property

@@ -24,9 +24,9 @@ def test_plane_stress_beam(ratio=0.25, plot=False):
     V.assign_properties("ElementBlock1", El, mat, t=1)
     V.assign_prescribed_bc(IHI, (X, Y))
 
-    stage = V.create_static_stage()
-    stage.assign_surface_load(ILO, [0, -q])
-    stage.run()
+    step = V.create_static_step()
+    step.assign_surface_load(ILO, [0, -q])
+    step.run()
 
     if plot:
         ax = V.Plot2D(deformed=1, color="b")

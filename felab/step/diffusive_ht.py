@@ -4,7 +4,7 @@ from felab.elemlib import DC2D3
 from felab.error import UserInputError
 from felab.util.numeric import linsolve
 from felab.util.lang import is_listlike
-from felab.stage.stage import load_stage
+from felab.step.step import load_step
 from felab.assembly import assemble_system, apply_boundary_conditions
 from felab.constants import (
     ALL,
@@ -15,14 +15,14 @@ from felab.constants import (
 )
 
 
-class diffusive_ht_stage(load_stage):
+class diffusive_ht_step(load_step):
     def __init__(self, model, number, name, previous, period):
-        super(diffusive_ht_stage, self).__init__(model, number, name, previous, period)
+        super(diffusive_ht_step, self).__init__(model, number, name, previous, period)
 
         # CHECK ELEMENTS
         eletyp = (DC2D3,)
         if not all([isinstance(el, eletyp) for el in self.model.elements]):
-            raise UserInputError("INCORRECT ELEMENT TYPE FOR HEAT TRANSFER STAGE")
+            raise UserInputError("INCORRECT ELEMENT TYPE FOR HEAT TRANSFER STEP")
 
     # ----------------------------------------------------------------------- #
     # --- HEAT TRANSFER LOADINGS -------------------------------------------- #

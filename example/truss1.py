@@ -87,11 +87,11 @@ def test_truss():
     V.assign_prescribed_bc(12, Y)
 
     # Apply concentrated loads
-    stage = V.create_static_stage()
-    stage.assign_concentrated_load((3, 5, 9, 11), Y, -10)
-    stage.assign_concentrated_load(7, Y, -16)
+    step = V.create_static_step()
+    step.assign_concentrated_load((3, 5, 9, 11), Y, -10)
+    step.assign_concentrated_load(7, Y, -16)
 
-    stage.run()
+    step.run()
     V.write_results()
 
 

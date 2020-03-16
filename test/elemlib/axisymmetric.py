@@ -26,16 +26,16 @@ def test_thick_pressurized_cylinder_quad4(plot=False):
 
     V.assign_prescribed_bc(ALL, Zr)
 
-    stage = V.create_static_stage()
+    step = V.create_static_step()
     pfor = Kfac * p * a * d
-    stage.assign_concentrated_load((1, 2), Rr, pfor / 2.0)
-    stage.run()
+    step.assign_concentrated_load((1, 2), Rr, pfor / 2.0)
+    step.run()
 
     if plot:
         ax = V.Plot2D(deformed=1, color="orange", weight=3)
         V.Plot2D(color="blue", weight=0.75, ax=ax, show=1)
 
-    u = stage.increments[-1].field_outputs["U"]
+    u = step.increments[-1].field_outputs["U"]
     print("node model   analytic")
     for (i, urz) in enumerate(u.data):
         ur = urz[0]

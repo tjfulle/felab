@@ -17,10 +17,10 @@ def test_linear(ax=None):
     V.assign_properties("ALL", CPE4R, mat, t=1)
     V.assign_prescribed_bc("SymYZ", X)
     V.assign_prescribed_bc("SymXZ", Y)
-    stage = V.create_static_stage()
+    step = V.create_static_step()
     # Pressure on inside face
-    stage.assign_pressure("SurfID", 1.0)
-    stage.run()
+    step.assign_pressure("SurfID", 1.0)
+    step.run()
     V.write_results()
     if ax is not None:
         ax = V.Plot2D(
@@ -45,9 +45,9 @@ def test_quadratic(ax=None):
     V.assign_prescribed_bc("SymYZ", X)
     V.assign_prescribed_bc("SymXZ", Y)
     # Pressure on inside face
-    stage = V.create_static_stage()
-    stage.assign_pressure("SurfID", 1.0)
-    stage.run()
+    step = V.create_static_step()
+    step.assign_pressure("SurfID", 1.0)
+    step.run()
     V.write_results()
     if ax is not None:
         return ax
