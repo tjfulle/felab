@@ -21,22 +21,31 @@ class CPX4(CMDN):
               [0]
 
     """
+
     nodes = 4
     dimensions = 2
-    elefab = {'t':1.}
-    signature = [(1,1,0,0,0,0,0), (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0), (1,1,0,0,0,0,0)]
+    elefab = {"t": 1.0}
+    signature = [
+        (1, 1, 0, 0, 0, 0, 0),
+        (1, 1, 0, 0, 0, 0, 0),
+        (1, 1, 0, 0, 0, 0, 0),
+        (1, 1, 0, 0, 0, 0, 0),
+    ]
     cp = array([0, 0], dtype=float64)
-    xp = array([[-1, -1], [1, -1], [1, 1], [-1, 1],
-                [0, -1], [1, 0], [0, 1], [-1, 0]], dtype=float64),
+    xp = (
+        array(
+            [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, -1], [1, 0], [0, 1], [-1, 0]],
+            dtype=float64,
+        ),
+    )
     edges = array([[0, 1], [1, 2], [2, 3], [3, 0]])
 
     @property
     def area(self):
         x, y = self.xc[:, [0, 1]].T
-        A2  = (x[0]*y[1] - x[1]*y[0]) + (x[1]*y[2] - x[2]*y[1])
-        A2 += (x[2]*y[3] - x[3]*y[2]) + (x[3]*y[0] - x[0]*y[3])
-        return A2 / 2.
+        A2 = (x[0] * y[1] - x[1] * y[0]) + (x[1] * y[2] - x[2] * y[1])
+        A2 += (x[2] * y[3] - x[3] * y[2]) + (x[3] * y[0] - x[0] * y[3])
+        return A2 / 2.0
 
     @property
     def volume(self):
@@ -46,18 +55,32 @@ class CPX4(CMDN):
         if edge is not None:
             # EVALUATE SHAPE FUNCTION ON SPECIFIC EDGE
             xi = qcoord
-            qcoord = array([[xi,-1.],[1.,xi],[xi,1.],[-1.,xi]][edge])
+            qcoord = array([[xi, -1.0], [1.0, xi], [xi, 1.0], [-1.0, xi]][edge])
         xi, eta = qcoord
-        N = array([(1.-xi)*(1.-eta),
-                   (1.+xi)*(1.-eta),
-                   (1.+xi)*(1.+eta),
-                   (1.-xi)*(1.+eta)]) / 4.
+        N = (
+            array(
+                [
+                    (1.0 - xi) * (1.0 - eta),
+                    (1.0 + xi) * (1.0 - eta),
+                    (1.0 + xi) * (1.0 + eta),
+                    (1.0 - xi) * (1.0 + eta),
+                ]
+            )
+            / 4.0
+        )
         return N
 
     def shapegrad(self, qcoord):
         xi, eta = qcoord
-        dNdxi = array([[-1. + eta,  1. - eta, 1. + eta, -1. - eta],
-                       [-1. + xi,  -1. - xi,  1. + xi,  1. - xi]]) / 4.
+        dNdxi = (
+            array(
+                [
+                    [-1.0 + eta, 1.0 - eta, 1.0 + eta, -1.0 - eta],
+                    [-1.0 + xi, -1.0 - xi, 1.0 + xi, 1.0 - xi],
+                ]
+            )
+            / 4.0
+        )
         return dNdxi
 
     def shapefun_der(self, coord, qcoord):

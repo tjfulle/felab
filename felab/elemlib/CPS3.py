@@ -5,6 +5,7 @@ from .gauss_rule_info import tri_gauss_rule_info
 
 class CPS3(CPX3):
     """3 node plane-stress stress-displacement element"""
+
     ndir = 2
     nshr = 1
     num_gauss = 3

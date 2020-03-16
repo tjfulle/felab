@@ -5,6 +5,7 @@ from .gauss_rule_info import quad_gauss_rule_info
 
 class CPE8R(CPX8):
     """8 node plane-strain element with reduced integration"""
+
     ndir = 3
     nshr = 1
     num_gauss = 4

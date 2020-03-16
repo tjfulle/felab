@@ -7,11 +7,35 @@ from ..x.utilities import *
 from ..x.constants import *
 
 
-def assemble_system(rhs, A, svtab, svars, energy, Q, u, du, v, a,
-                    time, dtime, kstage, kinc, kiter, dltyp, dlmag, predef, lflags,
-                    ddlmag, mdload, pnewdt, period,
-                    element_blocks, element_map, elements,
-                    element_freedom_table):
+def assemble_system(
+    rhs,
+    A,
+    svtab,
+    svars,
+    energy,
+    Q,
+    u,
+    du,
+    v,
+    a,
+    time,
+    dtime,
+    kstage,
+    kinc,
+    kiter,
+    dltyp,
+    dlmag,
+    predef,
+    lflags,
+    ddlmag,
+    mdload,
+    pnewdt,
+    period,
+    element_blocks,
+    element_map,
+    elements,
+    element_freedom_table,
+):
     """
     Assembles the global system of equations
 
@@ -66,14 +90,13 @@ def assemble_system(rhs, A, svtab, svars, energy, Q, u, du, v, a,
     """
     procname = get_procname(lflags[0])
     nlgeom = lflags[1] == 1
-    msg  = 'ASSEMBLING GLOBAL SYSTEM OF EQUATIONS\n      '
-    msg += 'PROCEDURE: {0}, NLGEOM: {1}\n      '.format(
-        procname, nlgeom)
+    msg = "ASSEMBLING GLOBAL SYSTEM OF EQUATIONS\n      "
+    msg += "PROCEDURE: {0}, NLGEOM: {1}\n      ".format(procname, nlgeom)
 
     tf = time[-1] + dtime
-    msg += 'STAGE: {0}, INCREMENT: {1}, TIME: {2}'.format(kstage, kinc, tf)
+    msg += "STAGE: {0}, INCREMENT: {1}, TIME: {2}".format(kstage, kinc, tf)
     if kiter is not None:
-        msg += ', INCREMENT: {0}'.format(kiter)
+        msg += ", INCREMENT: {0}".format(kiter)
 
     if not kiter:
         logging.debug(msg)
@@ -86,10 +109,10 @@ def assemble_system(rhs, A, svtab, svars, energy, Q, u, du, v, a,
 
     # INTERPOLATE FIELD VARIABLES
     fac1 = time[1] / (time[0] + period)
-    fac2 = (time[1]+dtime) / (time[0] + period)
-    x0 = (1. - fac1) * predef[0] + fac1 * predef[1]
-    xf = (1. - fac2) * predef[0] + fac2 * predef[1]
-    predef_i = array([x0, xf-x0])
+    fac2 = (time[1] + dtime) / (time[0] + period)
+    x0 = (1.0 - fac1) * predef[0] + fac1 * predef[1]
+    xf = (1.0 - fac2) * predef[0] + fac2 * predef[1]
+    predef_i = array([x0, xf - x0])
 
     # COMPUTE THE ELEMENT STIFFNESS AND SCATTER TO GLOBAL ARRAY
     for (ieb, eb) in enumerate(element_blocks):
@@ -102,10 +125,27 @@ def assemble_system(rhs, A, svtab, svars, energy, Q, u, du, v, a,
             n = len(eft)
             A_e = zeros((n, n))
             rhs_e = zeros(n)
-            el.response(rhs_e, A_e, svars[:,svtab[iel]], energy, u[eft], du[eft],
-                        v, a, time, dtime, kstage, kinc,
-                        dltyp[iel], dlmag[iel], predef_i[:,:,el.inodes],
-                        lflags, ddlmag, mdload, pnewdt)
+            el.response(
+                rhs_e,
+                A_e,
+                svars[:, svtab[iel]],
+                energy,
+                u[eft],
+                du[eft],
+                v,
+                a,
+                time,
+                dtime,
+                kstage,
+                kinc,
+                dltyp[iel],
+                dlmag[iel],
+                predef_i[:, :, el.inodes],
+                lflags,
+                ddlmag,
+                mdload,
+                pnewdt,
+            )
             if lflags[2] in (STIFF_AND_RHS, STIFF_ONLY, MASS_ONLY, MASS_AND_RHS):
                 A[IX(eft, eft)] += A_e
 

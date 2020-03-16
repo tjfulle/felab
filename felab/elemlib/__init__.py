@@ -1,4 +1,5 @@
 from .DC2D3 import DC2D3
+
 DiffussiveHeatTransfer2D3 = DC2D3
 
 from .CPE3 import CPE3
@@ -31,29 +32,36 @@ from .B2D2 import B2D2
 # --------------------------------------------------------------------------- #
 from .element_base import element_base as _Element
 from numpy import array as _array
+
+
 class LinknD2(_Element):
     nodes = 2
     edges = _array([])
 
+
 class Tria3(_Element):
     nodes = 3
     dimensions = 2
-    edges = _array([[0,1], [1,2], [2,0]])
+    edges = _array([[0, 1], [1, 2], [2, 0]])
+
 
 class Tria6(_Element):
     nodes = 6
     dimensions = 2
-    edges = _array([[0,1,3], [1,2,4], [2,0,5]])
+    edges = _array([[0, 1, 3], [1, 2, 4], [2, 0, 5]])
+
 
 class Quad4(_Element):
     nodes = 4
     dimensions = 2
-    edges = _array([[0,1], [1,2], [2,3], [3,0]])
+    edges = _array([[0, 1], [1, 2], [2, 3], [3, 0]])
+
 
 class Quad8(_Element):
     nodes = 8
     dimensions = 2
     edges = _array([[0, 1, 4], [1, 2, 5], [2, 3, 6], [3, 0, 7]])
+
 
 def element_family(dimensions, nodes, ndir=None, nshr=None, abaname=None):
     if nodes == 2:
@@ -66,4 +74,4 @@ def element_family(dimensions, nodes, ndir=None, nshr=None, abaname=None):
         return CPS4  # Quad4
     elif dimensions == 2 and nodes == 8:
         return CPS8  # Quad8
-    raise ValueError('Unknown element family')
+    raise ValueError("Unknown element family")

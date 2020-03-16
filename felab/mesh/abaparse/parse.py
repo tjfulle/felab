@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------
+# -----------------------------------------------------------------
 # plyparser.py
 #
 # PLYParser class and other utilites for simplifying programming
@@ -6,7 +6,7 @@
 #
 # Copyright (C) 2008-2011, Eli Bendersky
 # License: BSD
-#-----------------------------------------------------------------
+# -----------------------------------------------------------------
 import os
 import re
 import sys
@@ -15,12 +15,14 @@ import logging
 from ply.lex import TOKEN
 import ply.yacc
 
+
 class Coord(object):
     """ Coordinates of a syntactic element. Consists of:
             - File name
             - Line number
             - (optional) column number, for the Lexer
     """
+
     def __init__(self, file, line, column=None):
         self.file = file
         self.line = line
@@ -28,11 +30,14 @@ class Coord(object):
 
     def __str__(self):
         str = "%s:%s" % (self.file, self.line)
-        if self.column: str += ":%s" % self.column
+        if self.column:
+            str += ":%s" % self.column
         return str
+
 
 class ParseError(Exception):
     pass
+
 
 class PLYParser(object):
     def _create_opt_rule(self, rulename):
@@ -40,32 +45,31 @@ class PLYParser(object):
             for it. The name of the optional rule is
             <rulename>_opt
         """
-        optname = rulename + '_opt'
+        optname = rulename + "_opt"
 
         def optrule(self, p):
             p[0] = p[1]
 
-        optrule.__doc__ = '%s : empty\n| %s' % (optname, rulename)
-        optrule.__name__ = 'p_%s' % optname
+        optrule.__doc__ = "%s : empty\n| %s" % (optname, rulename)
+        optrule.__name__ = "p_%s" % optname
         setattr(self.__class__, optrule.__name__, optrule)
 
     def _coord(self, lineno, column=None):
-        return Coord(
-                file=self.clex.filename,
-                line=lineno,
-                column=column)
+        return Coord(file=self.clex.filename, line=lineno, column=column)
 
     def _parse_error(self, msg, coord):
         raise ParseError("%s: %s" % (coord, msg))
 
-#-----------------------------------------------------------------
+
+# -----------------------------------------------------------------
 # pycparser: c_lexer.py
 #
 # CLexer class: lexer for the C language
 #
 # Copyright (C) 2008-2011, Eli Bendersky
 # License: BSD
-#-----------------------------------------------------------------
+# -----------------------------------------------------------------
+
 
 class AbaqusLexer(object):
     """ A lexer for the C language. After building it, set the
@@ -76,6 +80,7 @@ class AbaqusLexer(object):
         filaneme, but the lexer will update it upon #line
         directives.
     """
+
     def __init__(self, error_func):
         """ Create a new Lexer.
 
@@ -86,7 +91,7 @@ class AbaqusLexer(object):
 
         """
         self.error_func = error_func
-        self.filename = ''
+        self.filename = ""
 
     def build(self, **kwargs):
         """ Builds the lexer from the specification. Must be
@@ -123,7 +128,8 @@ class AbaqusLexer(object):
     def _find_tok_column(self, token):
         i = token.lexpos
         while i > 0:
-            if self.lexer.lexdata[i] == '\n': break
+            if self.lexer.lexdata[i] == "\n":
+                break
             i -= 1
         return (token.lexpos - i) + 1
 
@@ -135,29 +141,24 @@ class AbaqusLexer(object):
     ##
     tokens = (
         # Keyword
-        'KEYWORD',
-
+        "KEYWORD",
         # Identifiers
-        'ID',
-        'PARAM',
-
+        "ID",
+        "PARAM",
         # constants
-        'INT_CONST_DEC',
-        'FLOAT_CONST',
-        'CHAR_CONST',
-        'WCHAR_CONST',
-
+        "INT_CONST_DEC",
+        "FLOAT_CONST",
+        "CHAR_CONST",
+        "WCHAR_CONST",
         # String literals
-        'STRING_LITERAL',
-        'WSTRING_LITERAL',
-
+        "STRING_LITERAL",
+        "WSTRING_LITERAL",
         # Assignment
-        'EQUALS',
-
+        "EQUALS",
         # Delimeters
-        'COMMA', 'PERIOD',          # . ,
-
-        'LASTTOKENONLINE',
+        "COMMA",
+        "PERIOD",  # . ,
+        "LASTTOKENONLINE",
     )
 
     ##
@@ -166,18 +167,20 @@ class AbaqusLexer(object):
     ##
 
     # valid C identifiers (K&R2: A.2.3)
-    identifier = r'[a-zA-Z_][0-9a-zA-Z_. ]*'
-    abaqus_keyword = r'\*[a-zA-Z][0-9a-zA-Z_ \t]*'
-    abaqus_identifier = r'[a-zA-Z_][0-9a-zA-Z_. \-\:\/]*'
-    identifier = r'[a-zA-Z_][0-9a-zA-Z_. \-\:\/]*'
+    identifier = r"[a-zA-Z_][0-9a-zA-Z_. ]*"
+    abaqus_keyword = r"\*[a-zA-Z][0-9a-zA-Z_ \t]*"
+    abaqus_identifier = r"[a-zA-Z_][0-9a-zA-Z_. \-\:\/]*"
+    identifier = r"[a-zA-Z_][0-9a-zA-Z_. \-\:\/]*"
 
     # integer constants (K&R2: A.2.5.1)
-    integer_suffix_opt = r'(u?ll|U?LL|([uU][lL])|([lL][uU])|[uU]|[lL])?'
-    decimal_constant = '(0'+integer_suffix_opt+')|([1-9][0-9]*'+integer_suffix_opt+')'
-    octal_constant = '0[0-7]*'+integer_suffix_opt
-    hex_constant = '0[xX][0-9a-fA-F]+'+integer_suffix_opt
+    integer_suffix_opt = r"(u?ll|U?LL|([uU][lL])|([lL][uU])|[uU]|[lL])?"
+    decimal_constant = (
+        "(0" + integer_suffix_opt + ")|([1-9][0-9]*" + integer_suffix_opt + ")"
+    )
+    octal_constant = "0[0-7]*" + integer_suffix_opt
+    hex_constant = "0[xX][0-9a-fA-F]+" + integer_suffix_opt
 
-    bad_octal_constant = '0[0-7]*[89]'
+    bad_octal_constant = "0[0-7]*[89]"
 
     # character constants (K&R2: A.2.5.2)
     # Note: a-zA-Z and '.-~^_!=&;,' are allowed as escape chars to support #line
@@ -188,36 +191,52 @@ class AbaqusLexer(object):
     hex_escape = r"""(x[0-9a-fA-F]+)"""
     bad_escape = r"""([\\][^a-zA-Z._~^!=&\^\-\\?'"x0-7])"""
 
-    escape_sequence = r"""(\\("""+simple_escape+'|'+octal_escape+'|'+hex_escape+'))'
-    cconst_char = r"""([^'\\\n]|"""+escape_sequence+')'
-    char_const = "'"+cconst_char+"'"
-    wchar_const = 'L'+char_const
-    unmatched_quote = "('"+cconst_char+"*\\n)|('"+cconst_char+"*$)"
-    bad_char_const = r"""('"""+cconst_char+"""[^'\n]+')|('')|('"""+bad_escape+r"""[^'\n]*')"""
+    escape_sequence = (
+        r"""(\\(""" + simple_escape + "|" + octal_escape + "|" + hex_escape + "))"
+    )
+    cconst_char = r"""([^'\\\n]|""" + escape_sequence + ")"
+    char_const = "'" + cconst_char + "'"
+    wchar_const = "L" + char_const
+    unmatched_quote = "('" + cconst_char + "*\\n)|('" + cconst_char + "*$)"
+    bad_char_const = (
+        r"""('"""
+        + cconst_char
+        + """[^'\n]+')|('')|('"""
+        + bad_escape
+        + r"""[^'\n]*')"""
+    )
 
     # string literals (K&R2: A.2.6)
-    string_char = r"""([^"\\\n]|"""+escape_sequence+')'
-    string_literal = '"'+string_char+'*"'
-    wstring_literal = 'L'+string_literal
-    bad_string_literal = '"'+string_char+'*'+bad_escape+string_char+'*"'
+    string_char = r"""([^"\\\n]|""" + escape_sequence + ")"
+    string_literal = '"' + string_char + '*"'
+    wstring_literal = "L" + string_literal
+    bad_string_literal = '"' + string_char + "*" + bad_escape + string_char + '*"'
 
     # floating constants (K&R2: A.2.5.3)
     exponent_part = r"""([eE][-+]?[0-9]+)"""
     fractional_constant = r"""([\+\-]*[0-9]*\.[0-9]+)|([\+\-]*[0-9]+\.)"""
-    floating_constant = '(((('+fractional_constant+')'+exponent_part+'?)|([0-9]+'+exponent_part+'))[FfLl]?)'
+    floating_constant = (
+        "(((("
+        + fractional_constant
+        + ")"
+        + exponent_part
+        + "?)|([0-9]+"
+        + exponent_part
+        + "))[FfLl]?)"
+    )
 
     ##
     ## Lexer states
     ##
     states = (
-              #
-              ('keywordstate', 'inclusive'),
-              ('datalinestate', 'inclusive'),
-             )
+        #
+        ("keywordstate", "inclusive"),
+        ("datalinestate", "inclusive"),
+    )
 
     @TOKEN(abaqus_keyword)
     def t_KEYWORD(self, t):
-        t.lexer.push_state('keywordstate')
+        t.lexer.push_state("keywordstate")
         t.value = t.value[1:]
         return t
 
@@ -226,52 +245,51 @@ class AbaqusLexer(object):
         return t
 
     def t_keywordstate_CONTINUE(self, t):
-        r',\n'
-        t.value = ','
-        t.type = 'COMMA'
+        r",\n"
+        t.value = ","
+        t.type = "COMMA"
         return t
 
     def t_keywordstate_NEWLINE(self, t):
-        r'\n'
+        r"\n"
         t.lexer.pop_state()
-        t.lexer.push_state('datalinestate')
+        t.lexer.push_state("datalinestate")
         t.lexer.lineno += t.value.count("\n")
 
-    t_keywordstate_ignore = ' \t'
+    t_keywordstate_ignore = " \t"
 
     def t_keywordstate_error(self, t):
-        msg = 'INVALID KEYWORD'
+        msg = "INVALID KEYWORD"
         self._error(msg, t)
 
     def t_datalinestate_LASTTOKENONLINE(self, t):
-        r'\n+'
+        r"\n+"
         t.lexer.lineno += t.value.count("\n")
         return t
 
     ##
     ## Rules for the normal state
     ##
-    t_ignore = ' \t'
-
+    t_ignore = " \t"
 
     def t_COMMENT(self, t):
-        r'[ \t]*\*\*.*\n'
+        r"[ \t]*\*\*.*\n"
         t.lexer.lineno += t.value.count("\n")
 
     # Newlines
 
     def t_NEWLINEALONE(self, t):
-        r'\n+'
+        r"\n+"
         t.lexer.lineno += t.value.count("\n")
 
     # Assignment operators
-    t_EQUALS            = r'='
+    t_EQUALS = r"="
 
     # Delimeters
-    t_COMMA             = r','
-    t_PERIOD            = r'\.'
+    t_COMMA = r","
+    t_PERIOD = r"\."
 
-    t_STRING_LITERAL    = string_literal
+    t_STRING_LITERAL = string_literal
 
     # The following floating and integer constants are defined as
     # functions to impose a strict order (otherwise, decimal
@@ -282,17 +300,17 @@ class AbaqusLexer(object):
     def t_FLOAT_CONST(self, t):
         return t
 
-    #@TOKEN(hex_constant)
-    #def t_INT_CONST_HEX(self, t):
+    # @TOKEN(hex_constant)
+    # def t_INT_CONST_HEX(self, t):
     #    return t
 
-    #@TOKEN(bad_octal_constant)
-    #def t_BAD_CONST_OCT(self, t):
+    # @TOKEN(bad_octal_constant)
+    # def t_BAD_CONST_OCT(self, t):
     #    msg = "Invalid octal constant"
     #    self._error(msg, t)
 
-    #@TOKEN(octal_constant)
-    #def t_INT_CONST_OCT(self, t):
+    # @TOKEN(octal_constant)
+    # def t_INT_CONST_OCT(self, t):
     #    return t
 
     @TOKEN(decimal_constant)
@@ -337,47 +355,60 @@ class AbaqusLexer(object):
         return t
 
     def t_error(self, t):
-        msg = 'ILLEGAL CHARACTER %s' % repr(t.value[0])
+        msg = "ILLEGAL CHARACTER %s" % repr(t.value[0])
         self._error(msg, t)
+
 
 def list_append(lst, item):
     lst.append(item)
     return lst
 
+
 def chunker(seq, size=8):
-    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
+    return (seq[pos : pos + size] for pos in range(0, len(seq), size))
+
 
 def cat(key, sep):
-    return sep.join([s.strip() for s in key.split(' ') if s.split()])
+    return sep.join([s.strip() for s in key.split(" ") if s.split()])
+
 
 class Parameter(object):
-    def __init__(self, name, value = None):
+    def __init__(self, name, value=None):
         self.name = name.strip()
         self.value = value
-        self.key = cat(self.name, '_').lower()
+        self.key = cat(self.name, "_").lower()
+
 
 class Parameters(object):
     def __init__(self, params):
         self.data = params or []
+
     def __iter__(self):
         return iter(self.data)
+
     def __getitem__(self, i):
         if isinstance(i, int):
             return self.data[i]
         return self.get(i)
+
     def __contains__(self, key):
         return key.lower() in [p.key for p in self.data]
+
     def __bool__(self):
         return bool(self.data)
+
     def get(self, key):
         kw = key.lower()
         for p in self.data:
             if kw == p.key:
                 return p.value
+
     def todict(self):
         return dict([(p.key, p.value) for p in self.data])
+
     def toinp(self):
-        return ', '.join(['{0}={1}'.format(p.key, p.value) for p in self.data])
+        return ", ".join(["{0}={1}".format(p.key, p.value) for p in self.data])
+
     def index(self, key):
         kw = key.lower()
         for (i, p) in enumerate(self.data):
@@ -385,51 +416,55 @@ class Parameters(object):
                 return i
         raise IndexError(key)
 
+
 class Keyword(object):
     def __init__(self, keyword, params=None, data=None):
         self.keyword = keyword.strip()
         self.params = Parameters(params)
         self.data = data
-        self.key = cat(self.keyword, '_').lower()
+        self.key = cat(self.keyword, "_").lower()
 
     def __str__(self):
-        kwd_str_list = ['Keyword:{0}'.format(self.keyword),]
-        kwd_str_list.append('\n')
+        kwd_str_list = ["Keyword:{0}".format(self.keyword)]
+        kwd_str_list.append("\n")
         for param in self.params:
-            kwd_str_list.append('Parameter:{0}={1}'.format(param.name, param.value))
-            kwd_str_list.append('\n')
-        kwd_str_list.append('Data:\n')
+            kwd_str_list.append("Parameter:{0}={1}".format(param.name, param.value))
+            kwd_str_list.append("\n")
+        kwd_str_list.append("Data:\n")
         if self.data is not None:
             for data in self.data:
-                kwd_str_list.append('{0},'.format(data))
-                kwd_str_list.append('\n')
-        return ''.join([item for item in kwd_str_list])
+                kwd_str_list.append("{0},".format(data))
+                kwd_str_list.append("\n")
+        return "".join([item for item in kwd_str_list])
 
     def __repr__(self):
         return str(self)
 
     def toinp(self):
-        o = ['*{0}'.format(self.keyword.title())]
+        o = ["*{0}".format(self.keyword.title())]
         if self.params:
-            o[0] += ', ' + self.params.toinp()
+            o[0] += ", " + self.params.toinp()
         if self.data is not None:
             for data in self.data:
                 chunks = chunker(data)
                 for chunk in chunker(data):
-                    o.append(' ' + ', '.join(chunk) + ',')
+                    o.append(" " + ", ".join(chunk) + ",")
                 o[-1] = o[-1][:-1]
-        return '\n'.join(o)
+        return "\n".join(o)
+
 
 keywords = []
 
+
 class AbaqusParser(PLYParser):
     def __init__(
-            self,
-            lex_optimize=True,
-            lextab='pycparser.lextab',
-            yacc_optimize=True,
-            yacctab='pycparser.yacctab',
-            yacc_debug=False):
+        self,
+        lex_optimize=True,
+        lextab="pycparser.lextab",
+        yacc_optimize=True,
+        yacctab="pycparser.yacctab",
+        yacc_debug=False,
+    ):
         """ Create a new AbaqusParser.
 
             Some arguments for controlling the debug/optimization
@@ -473,20 +508,18 @@ class AbaqusParser(PLYParser):
         """
         self.clex = AbaqusLexer(error_func=self._lex_error_func)
 
-        self.clex.build(
-            optimize=lex_optimize,
-            lextab=lextab)
+        self.clex.build(optimize=lex_optimize, lextab=lextab)
         self.tokens = self.clex.tokens
 
         self.cparser = ply.yacc.yacc(
             module=self,
-            start='keyword_list',
+            start="keyword_list",
             debug=yacc_debug,
             optimize=yacc_optimize,
-            tabmodule=yacctab)
+            tabmodule=yacctab,
+        )
 
-
-    def parse(self, text, filename='', debuglevel=0):
+    def parse(self, text, filename="", debuglevel=0):
         """ Parses Abaqus input files and returns an AST.
 
             text:
@@ -510,7 +543,6 @@ class AbaqusParser(PLYParser):
 
     ######################--   PRIVATE   --######################
 
-
     def _lex_error_func(self, msg, line, column):
         self._parse_error(msg, self._coord(line, column))
 
@@ -519,85 +551,85 @@ class AbaqusParser(PLYParser):
     ##
 
     def p_keyword_list(self, p):
-        '''
+        """
         keyword_list : keyword_list keyword
-        '''
+        """
         p[0] = p[1] + [p[2]]
 
     def p_keyword(self, p):
-        '''
+        """
         keyword_list : keyword
-        '''
+        """
         p[0] = [p[1]]
 
     def p_single_keyword(self, p):
-        '''
+        """
         keyword : KEYWORD
                 | KEYWORD data_lines
                 | KEYWORD COMMA param_list
                 | KEYWORD COMMA param_list data_lines
-        '''
+        """
         if len(p) == 2:
             # KEYWORD
             p[0] = Keyword(p[1])
         elif len(p) == 3:
             # KEYWORD data_list
-            p[0] = Keyword(p[1], data = p[2])
+            p[0] = Keyword(p[1], data=p[2])
         elif len(p) == 4:
             # KEYWORD COMMA param_list
-            p[0] = Keyword(p[1], params = p[3])
+            p[0] = Keyword(p[1], params=p[3])
         elif len(p) == 5:
             # KEYWORD COMMA param_list data_list
-            p[0] = Keyword(p[1], params = p[3], data = p[4])
+            p[0] = Keyword(p[1], params=p[3], data=p[4])
         else:
             # Error?
             pass
 
     def p_param_list(self, p):
-        '''param_list : param_list COMMA param'''
+        """param_list : param_list COMMA param"""
         p[0] = p[1] + [p[3]]
 
     def p_param(self, p):
-        '''param_list : param'''
+        """param_list : param"""
         p[0] = [p[1]]
 
     def p_single_param(self, p):
-        '''
+        """
         param : PARAM
               | PARAM EQUALS PARAM
               | PARAM EQUALS FLOAT_CONST
               | PARAM EQUALS INT_CONST_DEC
-        '''
+        """
         if len(p) == 2:
             p[0] = Parameter(p[1])
         elif len(p) == 4:
-            p[0] = Parameter(p[1], value = p[3])
+            p[0] = Parameter(p[1], value=p[3])
 
     def p_data_lines_list(self, p):
-        '''
+        """
         data_lines : data_lines data_line
-        '''
-        p[0] = list_append(p[1],p[2])
+        """
+        p[0] = list_append(p[1], p[2])
 
     def p_data_lines(self, p):
-        '''
+        """
         data_lines : data_line
-        '''
+        """
         p[0] = [p[1]]
 
     def p_data_line(self, p):
-        '''
+        """
         data_line : data_list LASTTOKENONLINE
                   | data_list COMMA LASTTOKENONLINE
-        '''
+        """
         p[0] = p[1]
 
     def p_data_list(self, p):
-        '''
+        """
         data_list : data_list COMMA data
                   | data_list COMMA LASTTOKENONLINE data
                   | data_list data
-        '''
+        """
         if len(p) == 3:
             p[0] = p[1] + [p[2]]
         elif len(p) == 4:
@@ -606,29 +638,28 @@ class AbaqusParser(PLYParser):
             p[0] = p[1] + [p[4]]
 
     def p_data(self, p):
-        '''
+        """
         data_list : data
-        '''
+        """
         p[0] = [p[1]]
 
     def p_single_data(self, p):
-        '''
+        """
         data : ID
              | INT_CONST_DEC
              | FLOAT_CONST
-        '''
+        """
         p[0] = p[1]
 
     def p_error(self, p):
         if p:
-            self._parse_error(
-                'BEFORE: %s' % p.value,
-                self._coord(p.lineno))
+            self._parse_error("BEFORE: %s" % p.value, self._coord(p.lineno))
         else:
-            self._parse_error('AT END OF INPUT', '')
+            self._parse_error("AT END OF INPUT", "")
+
 
 if __name__ == "__main__":
-    text = '''
+    text = """
     *heading
     word1 word2
     line2
@@ -649,7 +680,8 @@ if __name__ == "__main__":
     1,1,2,3,4,5,6,7,
     8,9,10,11,12,13,14,15
     *end
-    '''
+    """
+
     def errfoo(msg, a, b):
         print(msg + "\n")
         sys.exit()
@@ -660,7 +692,8 @@ if __name__ == "__main__":
 
     while 1:
         tok = clex.token()
-        if not tok: break
+        if not tok:
+            break
 
-        #~ print type(tok)
+        # ~ print type(tok)
         print([tok.value, tok.type, tok.lineno, clex.filename, tok.lexpos])

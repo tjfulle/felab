@@ -23,16 +23,36 @@ class LMD2(element_base):
         Requires area 'A'
 
     """
+
     nodes = 2
-    elefab = {'A': 1.}
+    elefab = {"A": 1.0}
 
     @classmethod
     def variables(cls):
-        return (('P', SCALAR), ('S', SCALAR))
+        return (("P", SCALAR), ("S", SCALAR))
 
-    def response(self, rhs, A, svars, energy, u, du, v, a, time, dtime,
-                 kstage, kinc, dltyp, dlmag, predef, lflags,
-                 ddlmag, mdload, pnewdt):
+    def response(
+        self,
+        rhs,
+        A,
+        svars,
+        energy,
+        u,
+        du,
+        v,
+        a,
+        time,
+        dtime,
+        kstage,
+        kinc,
+        dltyp,
+        dlmag,
+        predef,
+        lflags,
+        ddlmag,
+        mdload,
+        pnewdt,
+    ):
         """Computes the response of a n-dimensional elastic link
 
         Parameters
@@ -51,7 +71,7 @@ class LMD2(element_base):
 
         # INTERNAL FORCE
         if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):
-            rhs[:] = 0.
+            rhs[:] = 0.0
             if lflags[2] == RHS_ONLY:
                 return
 
@@ -60,19 +80,19 @@ class LMD2(element_base):
         h = sqrt(dot(v, v))
         n = v / h
         if self.dimensions == 1:
-            nn = 1.
+            nn = 1.0
         else:
             nn = outer(n, n)
 
-        svars[1,0] = self.internal_force(u+du)
-        svars[1,1] = svars[1,0] / self.A
+        svars[1, 0] = self.internal_force(u + du)
+        svars[1, 1] = svars[1, 0] / self.A
 
         if lflags[2] in (STIFF_AND_RHS, STIFF_ONLY):
             ndof = count_digits(self.signature[0])
-            i, j = ndof, 2*ndof
+            i, j = ndof, 2 * ndof
             # ASSEMBLE ELEMENT STIFFNESS
-            A[0:i, 0:i] = A[i:j, i:j] =  nn # UPPER LEFT AND LOWER RIGHT 2X2
-            A[0:i, i:j] = A[i:j, 0:i] = -nn # LOWER LEFT AND UPPER RIGHT 2X2
+            A[0:i, 0:i] = A[i:j, i:j] = nn  # UPPER LEFT AND LOWER RIGHT 2X2
+            A[0:i, i:j] = A[i:j, 0:i] = -nn  # LOWER LEFT AND UPPER RIGHT 2X2
             A *= self.A * self.material.E / h
 
     def internal_force(self, uc):

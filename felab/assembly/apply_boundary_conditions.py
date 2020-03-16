@@ -27,16 +27,18 @@ def apply_boundary_conditions(K, F, doftags, dofvals, u=None, du=None):
         return _apply_bc_1(K, F, doftags, dofvals)
     return _apply_bc_2(K, F, doftags, dofvals, u, du)
 
+
 def _apply_bc_1(K, F, doftags, dofvals):
     ubc = []
-    Kbc,  Fbc = K.copy(), F.copy()
+    Kbc, Fbc = K.copy(), F.copy()
     for (i, I) in enumerate(doftags):
         ubc.append(dofvals[i])
-        Fbc -= [K[k,I] * dofvals[i] for k in range(K.shape[0])]
-        Kbc[I,:] = Kbc[:,I] = 0.
-        Kbc[I,I] = 1.
+        Fbc -= [K[k, I] * dofvals[i] for k in range(K.shape[0])]
+        Kbc[I, :] = Kbc[:, I] = 0.0
+        Kbc[I, I] = 1.0
     Fbc[doftags] = ubc
     return Kbc, Fbc
+
 
 def _apply_bc_2(K, F, doftags, dofvals, u, du):
     ubc = []
@@ -45,8 +47,8 @@ def _apply_bc_2(K, F, doftags, dofvals, u, du):
         u_cur = u[I] + du[I]
         ufac = dofvals[i] - u_cur
         ubc.append(ufac)
-        Fbc -= [K[k,I] * ufac for k in range(K.shape[0])]
-        Kbc[I,:] = Kbc[:,I] = 0.
-        Kbc[I,I] = 1.
+        Fbc -= [K[k, I] * ufac for k in range(K.shape[0])]
+        Kbc[I, :] = Kbc[:, I] = 0.0
+        Kbc[I, I] = 1.0
     Fbc[doftags] = ubc
     return Kbc, Fbc

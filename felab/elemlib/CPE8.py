@@ -5,6 +5,7 @@ from .gauss_rule_info import quad_gauss_rule_info
 
 class CPE8(CPX8):
     """8 node plane-strain element"""
+
     ndir = 3
     nshr = 1
     num_gauss = 9

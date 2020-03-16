@@ -6,13 +6,14 @@ from .gauss_rule_info import quad_gauss_rule_info
 
 class CPS4I(CPX4):
     """4 node plane-stress stress-displacement element with incompatible modes"""
+
     ndir = 2
     nshr = 1
     incompatible_modes = True
     num_gauss = 4
 
     @staticmethod
-    def gauss_rule_info(self, point=None):
+    def gauss_rule_info(point=None):
         return quad_gauss_rule_info(2, point)
 
     def bmatrix(self, dN, *args):
@@ -39,17 +40,21 @@ class CPS4I(CPX4):
         J0 = det(dx0dxi)
 
         # COMPUTE THE JACOBIAN OF THE ELEMENT
-        _, _, J = self.shapefun_der(xi)
+        _, _, J = self.shapefun_der(self.xc, xi)
 
         # COMPUTE DNDXI ASSOCIATED WITH THE INCOMPATIBLE MODES AND THEN FROM IT
         # AND THE JACOBIANS COMPUTED ABOVE COMPUTE DNDX
         # N = [1 - xi**2, 1 - eta**2]
-        dNdxi = array([[-2*xi[0], 0], [0, -2*xi[1]]])
+        dNdxi = array([[-2 * xi[0], 0], [0, -2 * xi[1]]])
         dNdx = J0 / J * dot(dxidx0, dNdxi)
 
         # FORM THE INCOMPATIBLE G MATRIX
-        G = array([[dNdx[0,0], 0,         dNdx[0,1], 0],
-                   [0,         dNdx[1,0], 0,         dNdx[1,1]],
-                   [dNdx[0,1], dNdx[0,0], dNdx[1,1], dNdx[1,0]]])
+        G = array(
+            [
+                [dNdx[0, 0], 0, dNdx[0, 1], 0],
+                [0, dNdx[1, 0], 0, dNdx[1, 1]],
+                [dNdx[0, 1], dNdx[0, 0], dNdx[1, 1], dNdx[1, 0]],
+            ]
+        )
 
         return G

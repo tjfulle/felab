@@ -5,14 +5,15 @@ from .gauss_rule_info import quad_gauss_rule_info
 
 class CPE4R(CPX4):
     """4 node plane-strain stress-displacement element with reduced integration"""
+
     ndir = 3
     nshr = 1
     num_gauss = 1
     hourglass_control = True
 
     # HOURGLASS CONTROL
-    hglassp = array([[0., 0.]])
-    hglassv = array([[1., -1., 1., -1.]])
+    hglassp = array([[0.0, 0.0]])
+    hglassv = array([[1.0, -1.0, 1.0, -1.0]])
 
     @staticmethod
     def gauss_rule_info(point=None):

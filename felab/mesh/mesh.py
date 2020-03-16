@@ -12,15 +12,18 @@ from . import vtk
 from . import exodusii
 from .element_block import element_block
 
-__all__ = ['Mesh']
+__all__ = ["Mesh"]
 
 
 def is_listlike(a):
-    return (not hasattr(a, 'strip') and
-            hasattr(a, '__getitem__') or hasattr(a, '__iter__'))
+    return (
+        not hasattr(a, "strip") and hasattr(a, "__getitem__") or hasattr(a, "__iter__")
+    )
+
 
 def is_stringlike(s):
-    return hasattr(s, 'strip')
+    return hasattr(s, "strip")
+
 
 class Mesh(object):
     """Class for creating a finite element mesh.
@@ -81,15 +84,17 @@ class Mesh(object):
     >>> mesh = Mesh(p=p, t=t)
 
     """
+
     def __init__(self, nodtab=None, eletab=None, filename=None, p=None, t=None):
         o1 = nodtab is not None and eletab is not None
         o2 = filename is not None
         o3 = p is not None and t is not None
         if not (o1 or o2 or o3):
-            raise UserInputError('nodtab/eletab, filename, or p/t required')
+            raise UserInputError("nodtab/eletab, filename, or p/t required")
         elif len([x for x in (o1, o2, o3) if x]) > 1:
-            raise UserInputError('nodtab/eletab, filename, an p/t are '
-                                 'mutually exclusive')
+            raise UserInputError(
+                "nodtab/eletab, filename, an p/t are " "mutually exclusive"
+            )
         if o1:
             # Format nodes and elements
             data = self.parse_nod_and_elem_tables(nodtab, eletab)
@@ -101,11 +106,11 @@ class Mesh(object):
         elif o3:
             p, t = asarray(p, dtype=float), asarray(t, dtype=int)
             nodmap = dict(zip(range(p.shape[0]), range(p.shape[0])))
-            eletab = dict([(i,t[i]) for i in range(t.shape[0])])
+            eletab = dict([(i, t[i]) for i in range(t.shape[0])])
             self.init1(nodmap, p, eletab)
 
         else:
-            raise UserInputError('nodtab/eletab or filename required')
+            raise UserInputError("nodtab/eletab or filename required")
 
         self._bndry_nod2 = None
         self._free_edges = None
@@ -122,18 +127,17 @@ class Mesh(object):
         a = sorted(self.eletab.keys())
         for (i, e) in enumerate(a):
             ec = self.eletab[e]
-            elecon[i, :len(ec)] = ec
+            elecon[i, : len(ec)] = ec
         return elecon
 
-    def init1(self, nodmap, coord, eletab, nodesets=None,
-              elemsets=None, surfaces=None):
+    def init1(self, nodmap, coord, eletab, nodesets=None, elemsets=None, surfaces=None):
         self.nodmap = nodmap
         self.coord = asarray(coord)
         self.numnod, self.dimensions = self.coord.shape
 
         self.eletab = eletab
         self.numele = len(self.eletab)
-        self.elemap = dict(zip(self.eletab.keys(), [None]*self.numele))
+        self.elemap = dict(zip(self.eletab.keys(), [None] * self.numele))
         self.ielemap = {}
 
         self.nodesets = nodesets or {}
@@ -143,13 +147,19 @@ class Mesh(object):
         self.element_blocks = []
 
         # maximum number of edges on any one element
-        self.maxedge = max([len(element_family(self.dimensions,len(nodes)).edges)
-                            for nodes in self.eletab.values()])
+        self.maxedge = max(
+            [
+                len(element_family(self.dimensions, len(nodes)).edges)
+                for nodes in self.eletab.values()
+            ]
+        )
 
         # Number of elements assigned to a block
         self.num_assigned = 0
 
-    def init2(self, nodmap, coord, elemap, element_blocks, nodesets, elemsets, sidesets):
+    def init2(
+        self, nodmap, coord, elemap, element_blocks, nodesets, elemsets, sidesets
+    ):
         self.nodmap = nodmap
         self.coord = asarray(coord)
         self.numnod, self.dimensions = self.coord.shape
@@ -171,16 +181,23 @@ class Mesh(object):
         self.num_assigned = self.numele
 
     def init_from_file(self, filename):
-        if filename.endswith(('.vtk', '.vtu')):
+        if filename.endswith((".vtk", ".vtu")):
             data = self.parse_nod_and_elem_tables(*vtk.read_mesh(filename))
             self.init1(*data)
 
-        elif filename.endswith(('.exo', '.g', '.gen')):
-            exo = exodusii.File(filename, mode='r')
-            self.init2(exo.nodmap, exo.coord, exo.elemap, exo.element_blocks,
-                       exo.nodesets, exo.elemsets, exo.sidesets)
+        elif filename.endswith((".exo", ".g", ".gen")):
+            exo = exodusii.File(filename, mode="r")
+            self.init2(
+                exo.nodmap,
+                exo.coord,
+                exo.elemap,
+                exo.element_blocks,
+                exo.nodesets,
+                exo.elemsets,
+                exo.sidesets,
+            )
 
-        elif filename.endswith('.inp'):
+        elif filename.endswith(".inp"):
             data = aba.ReadInput(filename)
             nodtab, eletab, nodesets, elemsets, surfaces, element_blocks = data
             nodmap, coord, eletab1 = self.parse_nod_and_elem_tables(nodtab, eletab)
@@ -195,7 +212,7 @@ class Mesh(object):
                 self.create_side_set(name, surf)
 
         else:
-            raise UserInputError('Unknown file type')
+            raise UserInputError("Unknown file type")
 
     def get_internal_node_ids(self, label):
         if is_stringlike(label) and label.upper() in self.nodesets:
@@ -209,7 +226,7 @@ class Mesh(object):
         elif label in (ILO, IHI, JLO, JHI, KLO, KHI):
             inodes = self.nodes_in_rectilinear_region(label)
         elif is_stringlike(label):
-            raise UserInputError('No such node set {0!r}'.format(label))
+            raise UserInputError("No such node set {0!r}".format(label))
         else:
             inodes = [self.nodmap[xn] for xn in label]
         return array(inodes, dtype=int)
@@ -250,19 +267,20 @@ class Mesh(object):
         numnod, maxdim = len(nodtab), 0
         for (inode, noddef) in enumerate(nodtab):
             if noddef[0] in nodmap:
-                raise UserInputError('Duplicate node label: {0}'.format(noddef[0]))
+                raise UserInputError("Duplicate node label: {0}".format(noddef[0]))
             nodmap[noddef[0]] = inode
         maxdim = max(maxdim, len(noddef[1:]))
         coord = zeros((numnod, maxdim))
         for (inode, noddef) in enumerate(nodtab):
-            coord[inode,:len(noddef[1:])] = noddef[1:]
+            coord[inode, : len(noddef[1:])] = noddef[1:]
 
         # Basic element info
         eletab1 = {}
         for (iel, eledef) in enumerate(eletab):
             if eledef[0] in eletab1:
-                raise UserInputError('Duplicate element label: '
-                                     '{0}'.format(eledef[0]))
+                raise UserInputError(
+                    "Duplicate element label: " "{0}".format(eledef[0])
+                )
             eletab1[eledef[0]] = [nodmap[n] for n in eledef[1:]]
 
         return nodmap, coord, eletab1
@@ -270,8 +288,10 @@ class Mesh(object):
     def find_edges(self):
         # Find edges
         if self.unassigned:
-            raise UserInputError('Mesh element operations require all elements be '
-                                 'assigned to an element block')
+            raise UserInputError(
+                "Mesh element operations require all elements be "
+                "assigned to an element block"
+            )
         if self._free_edges is not None:
             return self._free_edges
 
@@ -282,7 +302,7 @@ class Mesh(object):
                 iel = self.elemap[eb.labels[j]]
                 for (i, ix) in enumerate(eb.elefam.edges):
                     edge = tuple(elenod[ix])
-                    edges.setdefault(tuple(sorted(edge)), []).append((iel, i)+edge)
+                    edges.setdefault(tuple(sorted(edge)), []).append((iel, i) + edge)
         self._free_edges = edges.values()
         return self._free_edges
 
@@ -303,25 +323,29 @@ class Mesh(object):
             return [argmin(self.coord), argmax(self.coord)]
         elif self.dimensions == 2:
             return self.boundary_nodes2()
-        raise UserInputError('3D meshes not supported')
+        raise UserInputError("3D meshes not supported")
 
     def nodes_in_rectilinear_region(self, region, tol=1e-6):
         # Find nodes in region
         if region not in (ILO, IHI, JLO, JHI, KLO, KHI):
-            raise UserInputError('unknown region {0!r}'.format(region))
-        axis, fun = {ILO: (0, amin),
-                     IHI: (0, amax),
-                     JLO: (1, amin),
-                     JHI: (1, amax),
-                     KLO: (2, amin),
-                     KHI: (2, amax)}[region]
-        xpos = fun(self.coord[:,axis])
-        return where(abs(self.coord[:,axis] - xpos) < tol)[0]
+            raise UserInputError("unknown region {0!r}".format(region))
+        axis, fun = {
+            ILO: (0, amin),
+            IHI: (0, amax),
+            JLO: (1, amin),
+            JHI: (1, amax),
+            KLO: (2, amin),
+            KHI: (2, amax),
+        }[region]
+        xpos = fun(self.coord[:, axis])
+        return where(abs(self.coord[:, axis] - xpos) < tol)[0]
 
     def find_surface(self, region):
         if self.unassigned:
-            raise UserInputError('Mesh element operations require all elements be '
-                                 'assigned to an element block')
+            raise UserInputError(
+                "Mesh element operations require all elements be "
+                "assigned to an element block"
+            )
         if is_stringlike(region) and region.upper() in self.surfaces:
             return self.surfaces[region.upper()]
         if region in (ILO, IHI, JLO, JHI, KLO, KHI):
@@ -330,14 +354,14 @@ class Mesh(object):
             if self.dimensions == 2:
                 return self.find_surface2(region)
         elif is_stringlike(region):
-            raise UserInputError('No such surface {0!r}'.format(region))
+            raise UserInputError("No such surface {0!r}".format(region))
         # Check if region is a surface
         if not is_listlike(region):
-            raise UserInputError('Unrecognized surface: {0}'.format(region))
+            raise UserInputError("Unrecognized surface: {0}".format(region))
         surface = []
         region = asarray(region)
         if region.ndim == 1:
-            region = region[newaxis,:]
+            region = region[newaxis, :]
         for item in region:
             elem, edge = [int(x) for x in item]
             if is_listlike(elem):
@@ -348,7 +372,7 @@ class Mesh(object):
 
     def find_surface1(self, region):
         if region not in (ILO, IHI):
-            raise UserInputError('Incorrect 1D region')
+            raise UserInputError("Incorrect 1D region")
         if region == ILO:
             node = argmin(self.coord)
         else:
@@ -375,7 +399,7 @@ class Mesh(object):
         return array(surface)
 
         for (e, c) in enumerate(self.elecon):
-            c = c[:self.elefam[e].nodes]
+            c = c[: self.elefam[e].nodes]
             w = where(in1d(c, nodes))[0]
             if len(w) < 2:
                 continue
@@ -388,23 +412,27 @@ class Mesh(object):
 
     def create_node_set(self, name, region):
         if not is_stringlike(name):
-            raise UserInputError('Name must be a string')
+            raise UserInputError("Name must be a string")
         self.nodesets[name.upper()] = self.get_internal_node_ids(region)
 
     def create_side_set(self, name, surface):
         if self.unassigned:
-            raise UserInputError('Mesh element operations require all elements be '
-                                 'assigned to an element block')
+            raise UserInputError(
+                "Mesh element operations require all elements be "
+                "assigned to an element block"
+            )
         if not is_stringlike(name):
-            raise UserInputError('Name must be a string')
+            raise UserInputError("Name must be a string")
         self.surfaces[name.upper()] = self.find_surface(surface)
 
     def create_element_set(self, name, region):
         if self.unassigned:
-            raise UserInputError('Mesh element operations require all elements be '
-                                 'assigned to an element block')
+            raise UserInputError(
+                "Mesh element operations require all elements be "
+                "assigned to an element block"
+            )
         if not is_stringlike(name):
-            raise UserInputError('Name must be a string')
+            raise UserInputError("Name must be a string")
         if region == ALL:
             ielems = range(self.numele)
         else:
@@ -416,7 +444,7 @@ class Mesh(object):
     def create_element_block(self, name, elements):
 
         if name.upper() in [eb.name.upper() for eb in self.element_blocks]:
-            raise UserInputError('{0!r} already an element block'.format(name))
+            raise UserInputError("{0!r} already an element block".format(name))
         if elements == ALL:
             xelems = sorted(self.elemap.keys())
         else:
@@ -425,13 +453,13 @@ class Mesh(object):
             xelems = elements
 
         if not self.unassigned:
-            raise UserInputError('All elements have been assigned')
+            raise UserInputError("All elements have been assigned")
 
         # Elements are numbered in the order the appear in element blocks,
         # we need to map from the temporary internal numbers
         blkcon, badel = [], []
         numblkel = len(xelems)
-        ielems = arange(self.num_assigned, self.num_assigned+numblkel)
+        ielems = arange(self.num_assigned, self.num_assigned + numblkel)
         for (i, xelem) in enumerate(xelems):
             # external element label -> new internal element ID
             ielem = ielems[i]
@@ -443,30 +471,52 @@ class Mesh(object):
                 continue
             blkcon.append(elenod)
         if badel:
-            badel = ',\n   '.join(str(e) for e in badel)
-            raise UserInputError('The following elements have inconsistent element '
-                                 'connectivity:\n   {0}'.format(badel))
+            badel = ",\n   ".join(str(e) for e in badel)
+            raise UserInputError(
+                "The following elements have inconsistent element "
+                "connectivity:\n   {0}".format(badel)
+            )
         blkcon = array(blkcon, dtype=int)
         elefam = element_family(self.dimensions, blkcon.shape[1])
-        blk = element_block(name, len(self.element_blocks)+1, xelems, elefam, blkcon)
+        blk = element_block(name, len(self.element_blocks) + 1, xelems, elefam, blkcon)
         self.element_blocks.append(blk)
         self.num_assigned += len(ielems)
         self.maxedge = max(self.maxedge, len(elefam.edges))
         return blk
 
     def to_genesis(self, filename):
-        exof = File(filename, mode='w')
+        exof = File(filename, mode="w")
         if not self.element_blocks:
             # put in a single element block
-            self.create_element_block('ElementBlock1', ALL)
-        exof.genesis(self.nodmap, self.elemap, self.coord,
-                     self.element_blocks, nodesets=self.nodesets, elemsets=self.elemsets,
-                     sidesets=self.surfaces)
+            self.create_element_block("ElementBlock1", ALL)
+        exof.genesis(
+            self.nodmap,
+            self.elemap,
+            self.coord,
+            self.element_blocks,
+            nodesets=self.nodesets,
+            elemsets=self.elemsets,
+            sidesets=self.surfaces,
+        )
         exof.close()
 
-    def Plot2D(self, xy=None, elecon=None, u=None, color=None, ax=None, show=0,
-               weight=None, colorby=None, linestyle='-', label=None, xlim=None,
-               ylim=None, filename=None, **kwds):
+    def Plot2D(
+        self,
+        xy=None,
+        elecon=None,
+        u=None,
+        color=None,
+        ax=None,
+        show=0,
+        weight=None,
+        colorby=None,
+        linestyle="-",
+        label=None,
+        xlim=None,
+        ylim=None,
+        filename=None,
+        **kwds
+    ):
         assert self.dimensions == 2
         from matplotlib.patches import Polygon
         import matplotlib.lines as mlines
@@ -492,22 +542,22 @@ class Mesh(object):
         if ax is None:
             fig, ax = plt.subplots()
 
-        #colors = 100 * random.rand(len(patches))
+        # colors = 100 * random.rand(len(patches))
         p = PatchCollection(patches, linewidth=weight, **kwds)
         if colorby is not None:
             colorby = asarray(colorby).flatten()
             if len(colorby) == len(xy):
                 # average value in element
                 colorby = array([average(colorby[points]) for points in elecon])
-            p.set_cmap(Spectral)  #coolwarm)
+            p.set_cmap(Spectral)  # coolwarm)
             p.set_array(colorby)
             p.set_clim(vmin=colorby.min(), vmax=colorby.max())
             fig.colorbar(p)
         else:
             if color is None:
-                color = 'black'
+                color = "black"
             p.set_edgecolor(color)
-            p.set_facecolor('None')
+            p.set_facecolor("None")
             p.set_linewidth(weight)
             p.set_linestyle(linestyle)
 
@@ -517,19 +567,19 @@ class Mesh(object):
         ax.add_collection(p)
 
         if not ylim:
-            ymin, ymax = amin(xy[:,1]), amax(xy[:,1])
-            dy = max(abs(ymin*.05), abs(ymax*.05))
-            ax.set_ylim([ymin-dy, ymax+dy])
+            ymin, ymax = amin(xy[:, 1]), amax(xy[:, 1])
+            dy = max(abs(ymin * 0.05), abs(ymax * 0.05))
+            ax.set_ylim([ymin - dy, ymax + dy])
         else:
             ax.set_ylim(ylim)
 
         if not xlim:
-            xmin, xmax = amin(xy[:,0]), amax(xy[:,0])
-            dx = max(abs(xmin*.05), abs(xmax*.05))
-            ax.set_xlim([xmin-dx, xmax+dx])
+            xmin, xmax = amin(xy[:, 0]), amax(xy[:, 0])
+            dx = max(abs(xmin * 0.05), abs(xmax * 0.05))
+            ax.set_xlim([xmin - dx, xmax + dx])
         else:
             ax.set_xlim(xlim)
-        ax.set_aspect('equal')
+        ax.set_aspect("equal")
 
         if show:
             if label:
@@ -538,8 +588,7 @@ class Mesh(object):
 
         if filename is not None:
             plt.legend()
-            plt.savefig(filename, transparent=True,
-                        bbox_inches="tight", pad_inches=0)
+            plt.savefig(filename, transparent=True, bbox_inches="tight", pad_inches=0)
 
         return ax
 
@@ -547,25 +596,29 @@ class Mesh(object):
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
         from matplotlib.cm import Spectral
+
         fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1, projection='3d')
+        ax = fig.add_subplot(1, 1, 1, projection="3d")
         elecon = []
         for eb in self.element_blocks:
             elecon.extend(eb.elecon)
         elecon = asarray(elecon)
-        ax.plot_trisurf(self.coord[:,0], self.coord[:,1], u,
-                        triangles=elecon, cmap=Spectral)
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
+        ax.plot_trisurf(
+            self.coord[:, 0], self.coord[:, 1], u, triangles=elecon, cmap=Spectral
+        )
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
         if show:
             plt.show()
         return
 
     def put_nodal_solution(self, filename, u):
         import felab.mesh.exodusii as exodusii
+
         if not self.element_blocks:
-            self.create_element_block('ElementBlock1', ALL)
-        if not filename.endswith(('.exo', '.e')):
-            filename += '.exo'
-        exodusii.put_nodal_solution(filename, self.nodmap, self.elemap, self.coord,
-                                  self.element_blocks, u)
+            self.create_element_block("ElementBlock1", ALL)
+        if not filename.endswith((".exo", ".e")):
+            filename += ".exo"
+        exodusii.put_nodal_solution(
+            filename, self.nodmap, self.elemap, self.coord, self.element_blocks, u
+        )

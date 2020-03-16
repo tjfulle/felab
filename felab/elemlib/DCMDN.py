@@ -8,7 +8,6 @@ from .isop_base import isop_base
 
 
 class DCMDN(isop_base):
-
     @staticmethod
     def variables():
         return None
@@ -31,9 +30,28 @@ class DCMDN(isop_base):
     def boundary_flux_array(self, edge, qn):
         raise NotImplementedError
 
-    def response(self, rhs, A, svars, energy, u, du, v, a, time, dtime,
-                 kstage, kinc, dltyp, dlmag, predef, lflags,
-                 ddlmag, mdload, pnewdt):
+    def response(
+        self,
+        rhs,
+        A,
+        svars,
+        energy,
+        u,
+        du,
+        v,
+        a,
+        time,
+        dtime,
+        kstage,
+        kinc,
+        dltyp,
+        dlmag,
+        predef,
+        lflags,
+        ddlmag,
+        mdload,
+        pnewdt,
+    ):
 
         if lflags[2] not in (STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY):
             raise NotImplementedError
@@ -43,7 +61,7 @@ class DCMDN(isop_base):
             A[:] = self.conduction_stiff_contrib()
 
         if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):
-            rhs[:] = 0.
+            rhs[:] = 0.0
 
         for (i, typ) in enumerate(dltyp):
             # CONTRIBUTIONS FROM EXTERNAL LOADS

@@ -1,6 +1,7 @@
 from numpy import *
 from numpy.linalg import solve
 
+
 def UniformBar(xa, xb, A, E, p, q, numele=10):
     """Solve for the displacement along a uniform bar, fixed on its left end
     and with a constant distributed load acting over its length and point
@@ -46,7 +47,7 @@ def UniformBar(xa, xb, A, E, p, q, numele=10):
     # NUMBER OF NODES, COORDINATES, AND ELEMENT CONNECTIVITY
     numnod = numele + 1
     coord = linspace(xa, xb, numnod)
-    elecon = array([[el, el+1] for el in range(numele)])
+    elecon = array([[el, el + 1] for el in range(numele)])
 
     # LOOP OVER ELEMENTS IN THE CONNECTIVITY AND ASSEMBLE GLOBAL STIFFNESS, FORCE
     K, F = zeros((numnod, numnod)), zeros(numnod)
@@ -55,8 +56,8 @@ def UniformBar(xa, xb, A, E, p, q, numele=10):
         nodes = elecon[iel]
         xe = coord[nodes]
         he = xe[1] - xe[0]
-        ke = A * E / he * array([[1., -1.], [-1., 1.]])
-        qe = q * he / 2. * ones(2)  # DISTRIBUTED LOAD CONTRIBUTION
+        ke = A * E / he * array([[1.0, -1.0], [-1.0, 1.0]])
+        qe = q * he / 2.0 * ones(2)  # DISTRIBUTED LOAD CONTRIBUTION
 
         # ADD CONTRIBUTIONS TO GLOBAL MATRICES
         F[nodes] += qe
@@ -64,12 +65,12 @@ def UniformBar(xa, xb, A, E, p, q, numele=10):
             I = nodes[i]
             for j in range(i, 2):
                 J = nodes[j]
-                K[I,J] += ke[i,j]
-                K[J,I] = K[I,J]
+                K[I, J] += ke[i, j]
+                K[J, I] = K[I, J]
 
     # APPLY BOUNDARY CONDITIONS
-    K[0, :] = 0.
-    K[0, 0] = 1.
+    K[0, :] = 0.0
+    K[0, 0] = 1.0
     F[0] = 0
     F[-1] = p
 
@@ -79,8 +80,8 @@ def UniformBar(xa, xb, A, E, p, q, numele=10):
     # DETERMINE ELEMENT FORCES AND STRAINS
     elefor, e = zeros(numele), zeros(numele)
     for i in range(numele):
-        du = u[i+1] - u[i]
-        he = coord[i+1] - coord[i]
+        du = u[i + 1] - u[i]
+        he = coord[i + 1] - coord[i]
         elefor[i] = A * E / he * du
         e[i] = du / he
 

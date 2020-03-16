@@ -11,7 +11,7 @@ def node_freedom_association_table(numnod, elements, disp=0):
     for el in elements:
         for (i, node) in enumerate(el.inodes):
             nfs = el.signature[i]
-            nf = [max(nfs[j], nodfat[node,j]) for j in range(MDOF)]
+            nf = [max(nfs[j], nodfat[node, j]) for j in range(MDOF)]
             nodfat[node] = nf
             for (j, k) in enumerate(nfs):
                 if k:
@@ -35,8 +35,9 @@ def node_freedom_map_table(nodfat, disp=0):
     nodfmt = [0]
     for i in range(nodfat.shape[0]):
         for (j, k) in enumerate(nodfat[i]):
-            if not k: continue
-            dofmap[i,j] = dof
+            if not k:
+                continue
+            dofmap[i, j] = dof
             dof += 1
         nodfmt.append(dof)
     nodfmt = array(nodfmt[:-1], dtype=int)
@@ -64,8 +65,9 @@ def element_freedom_table(nodfat, nodfmt, elements):
                         eft[k] = nodfmt[inode] + sx[j]
                         count += 1
                     k += 1
-        if all(eft==0.):
-            raise UserInputError('ZERO ENTRY IN EFTAB FOR '
-                                 'ELEMENT {0}'.format(el.label))
+        if all(eft == 0.0):
+            raise UserInputError(
+                "ZERO ENTRY IN EFTAB FOR " "ELEMENT {0}".format(el.label)
+            )
         eftab.append(eft)
     return eftab

@@ -23,19 +23,38 @@ class B2D2(element_base):
         Requires area 'A' and 'Izz'
 
     """
+
     nodes = 2
     dimensions = 2
-    signature = [(1,1,0,0,0,1,0),
-                 (1,1,0,0,0,1,0)]
-    elefab = {'A': None, 'Izz': None}
+    signature = [(1, 1, 0, 0, 0, 1, 0), (1, 1, 0, 0, 0, 1, 0)]
+    elefab = {"A": None, "Izz": None}
 
     @classmethod
     def variables(cls):
-        return (('P', SCALAR), ('S', SCALAR))
+        return (("P", SCALAR), ("S", SCALAR))
 
-    def response(self, rhs, A, svars, energy, u, du, v, a, time, dtime,
-                 kstage, kinc, dltyp, dlmag, predef, lflags,
-                 ddlmag, mdload, pnewdt):
+    def response(
+        self,
+        rhs,
+        A,
+        svars,
+        energy,
+        u,
+        du,
+        v,
+        a,
+        time,
+        dtime,
+        kstage,
+        kinc,
+        dltyp,
+        dlmag,
+        predef,
+        lflags,
+        ddlmag,
+        mdload,
+        pnewdt,
+    ):
 
         if lflags[2] not in (STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY):
             raise NotImplementedError
@@ -44,7 +63,7 @@ class B2D2(element_base):
             return
 
         if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):
-            rhs[:] = 0.
+            rhs[:] = 0.0
             if lflags[2] == RHS_ONLY:
                 return
 
@@ -55,22 +74,39 @@ class B2D2(element_base):
 
         # TRANSFORMATION MATRIX
         Te = eye(6)
-        Te[0:2, 0:2] = Te[3:5, 3:5] =  [[n[0], n[1]], [-n[1], n[0]]]
+        Te[0:2, 0:2] = Te[3:5, 3:5] = [[n[0], n[1]], [-n[1], n[0]]]
 
         # COLUMN STIFFNESS
         EA, EI = self.material.E * self.A, self.material.E * self.Izz
-        K1 = EA / h * array([[ 1., 0., 0.,-1., 0., 0.],
-                             [ 0., 0., 0., 0., 0., 0.],
-                             [ 0., 0., 0., 0., 0., 0.],
-                             [-1., 0., 0., 1., 0., 0.],
-                             [ 0., 0., 0., 0., 0., 0.],
-                             [ 0., 0., 0., 0., 0., 0.]])
+        K1 = (
+            EA
+            / h
+            * array(
+                [
+                    [1.0, 0.0, 0.0, -1.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [-1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                ]
+            )
+        )
         # BEAM STIFFNESS
-        K2 = 2. * EI / h**3 * array([[0.,  0.,    0.,     0.,  0.,   0     ],
-                                     [0.,  6.,    3.*h,   0., -6.,   3.*h  ],
-                                     [0.,  3.*h,  2.*h*h, 0., -3.*h, h*h   ],
-                                     [0.,  0.,    0.,     0.,  0.,   0.    ],
-                                     [0., -6.,   -3.*h,   0.,  6.,  -3.*h  ],
-                                     [0.,  3.*h,  h*h,    0., -3.*h, 2.*h*h]])
+        K2 = (
+            2.0
+            * EI
+            / h ** 3
+            * array(
+                [
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0],
+                    [0.0, 6.0, 3.0 * h, 0.0, -6.0, 3.0 * h],
+                    [0.0, 3.0 * h, 2.0 * h * h, 0.0, -3.0 * h, h * h],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, -6.0, -3.0 * h, 0.0, 6.0, -3.0 * h],
+                    [0.0, 3.0 * h, h * h, 0.0, -3.0 * h, 2.0 * h * h],
+                ]
+            )
+        )
 
-        A[:] = dot(dot(Te.T, K1+K2), Te)
+        A[:] = dot(dot(Te.T, K1 + K2), Te)

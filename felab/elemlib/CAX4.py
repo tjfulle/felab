@@ -5,11 +5,12 @@ from .gauss_rule_info import quad_gauss_rule_info
 
 class CAX4(CPX4):
     """4 node axisymmetric stress-displacement element"""
+
     ndir = 3
     nshr = 1
     num_gauss = 4
     axisymmetric = 1
-    elefab = {'formulation': 1}
+    elefab = {"formulation": 1}
 
     @property
     def formulation(self):
@@ -26,7 +27,7 @@ class CAX4(CPX4):
 
     def bmatrix(self, dN, *args):
         N = args[0]
-        rp = dot(N, self.xc[:,0])
+        rp = dot(N, self.xc[:, 0])
         B = zeros((4, 8))
         B[0, 0::2] = B[3, 1::2] = dN[0, :]
         B[1, 1::2] = B[3, 0::2] = dN[1, :]

@@ -1,4 +1,3 @@
-
 class element_block:
     def __init__(self, name, id, labels, elefam, elecon):
         self.name = name.upper()

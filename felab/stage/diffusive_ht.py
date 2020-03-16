@@ -6,6 +6,7 @@ from ..x.utilities import *
 from ..elemlib import DC2D3
 from ..assembly import assemble_system, apply_boundary_conditions
 
+
 class diffusive_ht_stage(load_stage):
     def __init__(self, model, number, name, previous, period):
         super(diffusive_ht_stage, self).__init__(model, number, name, previous, period)
@@ -13,7 +14,7 @@ class diffusive_ht_stage(load_stage):
         # CHECK ELEMENTS
         eletyp = (DC2D3,)
         if not all([isinstance(el, eletyp) for el in self.model.elements]):
-            raise UserInputError('INCORRECT ELEMENT TYPE FOR HEAT TRANSFER STAGE')
+            raise UserInputError("INCORRECT ELEMENT TYPE FOR HEAT TRANSFER STAGE")
 
     # ----------------------------------------------------------------------- #
     # --- HEAT TRANSFER LOADINGS -------------------------------------------- #
@@ -25,7 +26,7 @@ class diffusive_ht_stage(load_stage):
 
     def SurfaceConvection(self, surface, Too, h):
         if self.model.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
+            raise UserInputError("MESH MUST FIRST BE CREATED")
         surf = self.model.mesh.find_surface(surface)
         for (iel, iedge) in surf:
             self.assign_sfilm(iel, iedge, Too, h)
@@ -41,7 +42,7 @@ class diffusive_ht_stage(load_stage):
                 if xel in xelems:
                     inodes.extend(eb.elecon[i])
         inodes = unique(inodes)
-        if hasattr(amplitude, '__call__'):
+        if hasattr(amplitude, "__call__"):
             # AMPLITUDE IS A FUNCTION
             x = self.model.mesh.coord[inodes]
             a = amplitude(x)
@@ -49,8 +50,10 @@ class diffusive_ht_stage(load_stage):
             a = amplitude * ones(len(inodes))
         else:
             if len(amplitude) != len(inodes):
-                raise UserInputError('HEAT GENERATION AMPLITUDE MUST HAVE '
-                                     'LENGTH {0}'.format(len(inodes)))
+                raise UserInputError(
+                    "HEAT GENERATION AMPLITUDE MUST HAVE "
+                    "LENGTH {0}".format(len(inodes))
+                )
             a = asarray(amplitude)
         nodmap = dict(zip(inodes, range(inodes.shape[0])))
         for xelem in xelems:
@@ -63,25 +66,54 @@ class diffusive_ht_stage(load_stage):
     # ----------------------------------------------------------------------- #
     def run(self):
         # define arguments needed for assembly
-        time = array([0., self.start])
+        time = array([0.0, self.start])
         du = zeros(self.model.numdof)
         Q = zeros_like(self.dofs)
         dltyp, dlmag = self.dload(self.period)
         X = self.dofvals(self.period)
         energy = v = a = ddlmag = mdload = pnewdt = None
-        time = array([1., 1.])
-        dtime = 1.
-        lflags = [HEAT_TRANSFER_STEADY_STATE, SMALL_DISPLACEMENT, STIFF_AND_RHS, GENERAL, 0]
+        time = array([1.0, 1.0])
+        dtime = 1.0
+        lflags = [
+            HEAT_TRANSFER_STEADY_STATE,
+            SMALL_DISPLACEMENT,
+            STIFF_AND_RHS,
+            GENERAL,
+            0,
+        ]
 
         # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
         rhs = zeros(self.model.numdof)
         K = zeros((self.model.numdof, self.model.numdof))
-        assemble_system(rhs, K, self.svtab, self.svars, energy, Q,
-                        self.dofs, du, v, a, time, dtime, self.number, 1, 0,
-                        dltyp, dlmag, self.predef, lflags,
-                        ddlmag, mdload, pnewdt, self.period,
-                        self.model.mesh.element_blocks, self.model.mesh.elemap,
-                        self.model.elements, self.model.eftab)
+        assemble_system(
+            rhs,
+            K,
+            self.svtab,
+            self.svars,
+            energy,
+            Q,
+            self.dofs,
+            du,
+            v,
+            a,
+            time,
+            dtime,
+            self.number,
+            1,
+            0,
+            dltyp,
+            dlmag,
+            self.predef,
+            lflags,
+            ddlmag,
+            mdload,
+            pnewdt,
+            self.period,
+            self.model.mesh.element_blocks,
+            self.model.mesh.elemap,
+            self.model.elements,
+            self.model.eftab,
+        )
         self._K = K
         Kbc, Fbc = apply_boundary_conditions(K, rhs, self.doftags, X)
         self.dofs[:] = linsolve(Kbc, Fbc)

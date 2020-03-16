@@ -22,18 +22,22 @@ class element_base(object):
 
         if self.elefab is None:
             if elefab:
-                raise UserInputError('Element takes no element '
-                                     'fabrication properties')
+                raise UserInputError(
+                    "Element takes no element " "fabrication properties"
+                )
         else:
             unknown = [key for key in elefab if key not in self.elefab]
             if unknown:
-                raise UserInputError('Unrecognized element fabrication '
-                                     'properties: {0}'.format(','.join(unknown)))
+                raise UserInputError(
+                    "Unrecognized element fabrication "
+                    "properties: {0}".format(",".join(unknown))
+                )
             for (name, default) in self.elefab.items():
                 p = elefab.get(name, default)
                 if p is None:
-                    raise UserInputError('Missing required fabrication '
-                                         'property {0}'.format(name))
+                    raise UserInputError(
+                        "Missing required fabrication " "property {0}".format(name)
+                    )
                 setattr(self, name, p)
 
     def response(self, *args):

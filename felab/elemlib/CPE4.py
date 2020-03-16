@@ -5,6 +5,7 @@ from .gauss_rule_info import quad_gauss_rule_info
 
 class CPE4(CPX4):
     """4 node plane-strain stress-displacement element"""
+
     ndir = 3
     nshr = 1
     num_gauss = 4

@@ -7,7 +7,8 @@ from .dynamic import dynamic_stage
 from ..x.utilities import *
 from ..x.constants import *
 
-__all__ = ['repository']
+__all__ = ["repository"]
+
 
 class repository(object):
     def __init__(self, model):
@@ -47,15 +48,15 @@ class repository(object):
             yield (key, self._values[i])
 
     def InitialStage(self, name):
-        start, period = 0., 0.
+        start, period = 0.0, 0.0
         stage = load_stage(self.model, len(self), name, None, period)
         self[name] = stage
         return self.last
 
-    def create_static_stage(self, name, period=1., **kwds):
+    def create_static_stage(self, name, period=1.0, **kwds):
         last = self._values[-1].increments[-1]
         if not last.converged:
-            raise RuntimeError('PREVIOUS STAGE HAS UNCONVERGED INCREMENTS')
+            raise RuntimeError("PREVIOUS STAGE HAS UNCONVERGED INCREMENTS")
         stage = static_stage(self.model, len(self), name, self.last, period, **kwds)
         if copy:
             stage.copy_from(self.last)
@@ -63,10 +64,10 @@ class repository(object):
         self[name] = stage
         return self.last
 
-    def create_dynamic_stage(self, name, period=1., **kwds):
+    def create_dynamic_stage(self, name, period=1.0, **kwds):
         last = self._values[-1].increments[-1]
         if not last.converged:
-            raise RuntimeError('PREVIOUS STAGE HAS UNCONVERGED INCREMENTS')
+            raise RuntimeError("PREVIOUS STAGE HAS UNCONVERGED INCREMENTS")
         stage = dynamic_stage(self.model, len(self), name, self.last, period, **kwds)
         if copy:
             stage.copy_from(self.last)
@@ -77,7 +78,7 @@ class repository(object):
     def create_heat_transfer_stage(self, name, period):
         last = self._values[-1].increments[-1]
         if not last.converged:
-            raise RuntimeError('PREVIOUS STAGE HAS UNCONVERGED INCREMENTS')
+            raise RuntimeError("PREVIOUS STAGE HAS UNCONVERGED INCREMENTS")
         stage = diffusive_ht_stage(self.model, len(self), name, self.last, period)
         if copy:
             stage.copy_from(self.last)

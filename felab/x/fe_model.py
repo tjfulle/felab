@@ -10,12 +10,14 @@ from ..stage import stage_repository
 from ..material import Material
 from ..assembly import vdof, apply_boundary_conditions
 
-__all__ = ['fe_model']
+__all__ = ["fe_model"]
+
 
 class fe_model(object):
     """The base finite element class"""
+
     def __init__(self, mesh=None, jobid=None):
-        self.jobid = jobid or 'Job-1'
+        self.jobid = jobid or "Job-1"
         self.dimensions = None
         self.materials = {}
         self.initial_temp = []
@@ -27,17 +29,23 @@ class fe_model(object):
         self._mesh = None
         if mesh is not None:
             if not isinstance(mesh, Mesh):
-                raise UserInputError('mesh must be a Mesh object')
+                raise UserInputError("mesh must be a Mesh object")
             self.mesh = mesh
 
     @property
     def exofile(self):
         if self.fh is not None:
             return self.fh
-        self.fh = ExodusFile(self.jobid+'.exo', mode='w')
-        self.fh.genesis(self.mesh.nodmap, self.mesh.elemap, self.mesh.coord,
-                        self.mesh.element_blocks, nodesets=self.mesh.nodesets,
-                        elemsets=self.mesh.elemsets, sidesets=self.mesh.surfaces)
+        self.fh = ExodusFile(self.jobid + ".exo", mode="w")
+        self.fh.genesis(
+            self.mesh.nodmap,
+            self.mesh.elemap,
+            self.mesh.coord,
+            self.mesh.element_blocks,
+            nodesets=self.mesh.nodesets,
+            elemsets=self.mesh.elemsets,
+            sidesets=self.mesh.surfaces,
+        )
         return self.fh
 
     @property
@@ -48,10 +56,10 @@ class fe_model(object):
     def mesh(self, mesh):
 
         if self._mesh is not None:
-            logging.warn('MESH ALREADY ASSIGNED, OVERWRITING')
+            logging.warn("MESH ALREADY ASSIGNED, OVERWRITING")
 
         if not isinstance(mesh, Mesh):
-            raise UserInputError('MESH MUST BE A MESH OBJECT')
+            raise UserInputError("MESH MUST BE A MESH OBJECT")
 
         self._mesh = mesh
         self.dimensions = self.mesh.dimensions
@@ -93,8 +101,9 @@ class fe_model(object):
         """
         self.mesh = vtk_mesh(filename=filename)
 
-    def rectilinear_mesh(self, nx=1, ny=1, lx=1, ly=1, shiftx=None, shifty=None,
-                         method=None):
+    def rectilinear_mesh(
+        self, nx=1, ny=1, lx=1, ly=1, shiftx=None, shifty=None, method=None
+    ):
         """
         Generates a rectilinear 2D finite element mesh.
 
@@ -103,9 +112,9 @@ class fe_model(object):
         felab.mesh.rectilinear_mesh_2d
 
         """
-        self.mesh = rectilinear_mesh2d(nx=nx, ny=ny, lx=lx, ly=ly,
-                                       shiftx=shiftx, shifty=shifty,
-                                       method=method)
+        self.mesh = rectilinear_mesh2d(
+            nx=nx, ny=ny, lx=lx, ly=ly, shiftx=shiftx, shifty=shifty, method=method
+        )
 
     def unit_square_mesh(self, nx=1, ny=1, shiftx=None, shifty=None, method=None):
         """
@@ -116,8 +125,9 @@ class fe_model(object):
         felab.mesh.unit_square_mesh
 
         """
-        self.mesh = unit_square_mesh(nx=nx, ny=ny, shiftx=shiftx, shifty=shifty,
-                                     method=method)
+        self.mesh = unit_square_mesh(
+            nx=nx, ny=ny, shiftx=shiftx, shifty=shifty, method=method
+        )
 
     def create_mesh(self, **kwds):
         """
@@ -141,18 +151,18 @@ class fe_model(object):
     def setup(self):
 
         if self._setup:
-            raise RuntimeError('SETUP MUST BE PERFORMED ONLY ONCE')
+            raise RuntimeError("SETUP MUST BE PERFORMED ONLY ONCE")
 
         # VALIDATE USER INPUT
         if self.orphaned_elements:
-            raise UserInputError('ALL ELEMENTS MUST BE ASSIGNED '
-                                 'TO AN ELEMENT BLOCK')
+            raise UserInputError("ALL ELEMENTS MUST BE ASSIGNED " "TO AN ELEMENT BLOCK")
 
         # CHECK VALIDITY OF ELEMENTS
         self._check_element_validity()
 
         self.nodfat, self.active_dof = vdof.node_freedom_association_table(
-            self.numnod, self.elements, disp=1)
+            self.numnod, self.elements, disp=1
+        )
 
         # TOTAL NUMBER OF DEGREES OF FREEDOM
         self.numdof = vdof.total_degrees_of_freedom(self.nodfat)
@@ -165,7 +175,7 @@ class fe_model(object):
         self._setup = True
 
     def dofmap(self, inode, dof):
-        return self._dofmap.get((inode,dof))
+        return self._dofmap.get((inode, dof))
 
     def _check_element_validity(self):
         pass
@@ -175,29 +185,29 @@ class fe_model(object):
         node_labels = sorted(self.mesh.nodmap, key=lambda k: self.mesh.nodmap[k])
 
         self.stages = stage_repository(self)
-        stage = self.stages.InitialStage('Stage-0')
+        stage = self.stages.InitialStage("Stage-0")
         for (nodes, dof) in self.pr_bc:
-            stage.assign_prescribed_bc(nodes, dof, amplitude=0.)
+            stage.assign_prescribed_bc(nodes, dof, amplitude=0.0)
 
         increment = stage.increments[0]
 
         # NODE DATA
         nd = self.dimensions
         if T in self.active_dof:
-            increment.FieldOutput(SCALAR, 'Q', NODE, node_labels)
-        increment.FieldOutput(SCALAR, 'T', NODE, node_labels)
-        increment.FieldOutput(VECTOR, 'U', NODE, node_labels, ncomp=self.dimensions)
-        increment.FieldOutput(VECTOR, 'RF', NODE, node_labels, ncomp=self.dimensions)
+            increment.FieldOutput(SCALAR, "Q", NODE, node_labels)
+        increment.FieldOutput(SCALAR, "T", NODE, node_labels)
+        increment.FieldOutput(VECTOR, "U", NODE, node_labels, ncomp=self.dimensions)
+        increment.FieldOutput(VECTOR, "RF", NODE, node_labels, ncomp=self.dimensions)
 
-        a = in1d((TX,TY,TZ), self.active_dof)
+        a = in1d((TX, TY, TZ), self.active_dof)
         if any(a):
             n = len([x for x in a if x])
-            increment.FieldOutput(VECTOR, 'R', NODE, node_labels, ncomp=n)
-            increment.FieldOutput(VECTOR, 'M', NODE, node_labels, ncomp=n)
+            increment.FieldOutput(VECTOR, "R", NODE, node_labels, ncomp=n)
+            increment.FieldOutput(VECTOR, "M", NODE, node_labels, ncomp=n)
 
         if self.initial_temp:
             itemp = self.get_initial_temperature()
-            increment.field_outputs['T'].add_data(itemp)
+            increment.field_outputs["T"].add_data(itemp)
 
         # ELEMENT DATA
         for eb in self.mesh.element_blocks:
@@ -223,24 +233,33 @@ class fe_model(object):
                 if idata is not None:
                     if idata == 1 and vtype == SYMTENSOR:
                         # IDENTITY
-                        idata = array([1.]*elems[0].ndir+[0.]*elems[0].nshr)
+                        idata = array([1.0] * elems[0].ndir + [0.0] * elems[0].nshr)
                     elif idata == 1 and vtype == TENSOR:
                         idata = eye(elems[0].ndir)
 
-                increment.FieldOutput(vtype, name, position, eb.labels,
-                                  ndir=elems[0].ndir, nshr=elems[0].nshr,
-                                  eleblk=eb.name, ngauss=elems[0].num_integration(),
-                                  elements=elems, ncomp=self.dimensions, data=idata)
+                increment.FieldOutput(
+                    vtype,
+                    name,
+                    position,
+                    eb.labels,
+                    ndir=elems[0].ndir,
+                    nshr=elems[0].nshr,
+                    eleblk=eb.name,
+                    ngauss=elems[0].num_integration(),
+                    elements=elems,
+                    ncomp=self.dimensions,
+                    data=idata,
+                )
 
         increment.converged = True
         return
 
     def format_dof(self, dofs):
         # CONSTRUCT DISPLACEMENT AND ROTATION VECTORS
-        d1 = len([x for x in self.active_dof if x in (X,Y,Z)])
+        d1 = len([x for x in self.active_dof if x in (X, Y, Z)])
         u = zeros((self.numnod, d1))
 
-        d2 = len([x for x in self.active_dof if x in (TX,TY,TZ)])
+        d2 = len([x for x in self.active_dof if x in (TX, TY, TZ)])
         r = zeros((self.numnod, d2))
 
         if T in self.active_dof:
@@ -251,13 +270,13 @@ class fe_model(object):
         for n in range(self.numnod):
             ix, ui, ri = 0, 0, 0
             for j in range(MDOF):
-                if self.nodfat[n,j] > 0:
+                if self.nodfat[n, j] > 0:
                     ii = self.nodfmt[n] + ix
-                    if j in (X,Y,Z):
-                        u[n,ui] = dofs[ii]
+                    if j in (X, Y, Z):
+                        u[n, ui] = dofs[ii]
                         ui += 1
-                    elif j in (TX,TY,TZ):
-                        r[n,ri] = dofs[ii]
+                    elif j in (TX, TY, TZ):
+                        r[n, ri] = dofs[ii]
                         ri += 1
                     else:
                         temp[n] = dofs[ii]
@@ -301,40 +320,48 @@ class fe_model(object):
 
         """
         if name in self.materials:
-            raise UserInputError('DUPLICATE MATERIAL {0!r}'.format(name))
+            raise UserInputError("DUPLICATE MATERIAL {0!r}".format(name))
         self.materials[name] = Material(name, **kwargs)
         return self.materials[name]
 
     def assign_prescribed_bc(self, nodes, dof):
         if self.stages is not None:
-            raise UserInputError('Boundary conditions must be assigned to stages '
-                                 'after creation of first stage')
+            raise UserInputError(
+                "Boundary conditions must be assigned to stages "
+                "after creation of first stage"
+            )
         self.pr_bc.append((nodes, dof))
 
     def fix_nodes(self, nodes):
         if self.stages is not None:
-            raise UserInputError('Boundary conditions must be assigned to stages '
-                                 'after creation of first stage')
+            raise UserInputError(
+                "Boundary conditions must be assigned to stages "
+                "after creation of first stage"
+            )
         self.pr_bc.append((nodes, ALL))
+
     fix_dofs = fix_nodes
 
     def pin_nodes(self, nodes):
         if self.stages is not None:
-            raise UserInputError('Boundary conditions must be assigned to stages '
-                                 'after creation of first stage')
+            raise UserInputError(
+                "Boundary conditions must be assigned to stages "
+                "after creation of first stage"
+            )
         self.pr_bc.append((nodes, PIN))
 
     def assign_initial_temperature(self, nodes, amplitude):
         if self.stages is not None:
-            raise UserInputError('Intial temperatures must be assigned '
-                                 'before creating first stage')
+            raise UserInputError(
+                "Intial temperatures must be assigned " "before creating first stage"
+            )
         self.initial_temp.append((nodes, amplitude))
 
     def get_initial_temperature(self):
         itemp = zeros(self.numnod)
         for (nodes, amplitude) in self.initial_temp:
             inodes = self.mesh.get_internal_node_ids(nodes)
-            if hasattr(amplitude, '__call__'):
+            if hasattr(amplitude, "__call__"):
                 # AMPLITUDE IS A FUNCTION
                 a = amplitude(self.mesh.coord[inodes])
             elif not is_listlike(amplitude):
@@ -342,7 +369,7 @@ class fe_model(object):
                 a = ones(len(inodes)) * amplitude
             else:
                 if len(amplitude) != len(inodes):
-                    raise UserInputError('INCORRECT AMPLITUDE LENGTH')
+                    raise UserInputError("INCORRECT AMPLITUDE LENGTH")
                 # AMPLITUDE IS A LIST OF AMPLITUDES
                 a = asarray(amplitude)
             itemp[inodes] = a
@@ -354,7 +381,7 @@ class fe_model(object):
     def unique_stage_name(self):
         i = len(self.stages)
         while 1:
-            name = 'Stage-{0}'.format(i)
+            name = "Stage-{0}".format(i)
             if name not in self.stages:
                 break
             i += 1
@@ -367,16 +394,18 @@ class fe_model(object):
             iel = self.mesh.elemap[eb.labels[0]]
             el = self.elements[iel]
             if el.material.model.requires:
-                if 'nlgeom' in el.material.model.requires and not nlgeom:
+                if "nlgeom" in el.material.model.requires and not nlgeom:
                     name = el.material.model.name
-                    raise UserInputError('MATERIAL {0!r} REQUIRES '
-                                         'nlgeom=True'.format(name.upper()))
+                    raise UserInputError(
+                        "MATERIAL {0!r} REQUIRES " "nlgeom=True".format(name.upper())
+                    )
             if density and not el.material.density:
-                raise UserInputError('STAGE REQUIRES MATERIAL DENSITY')
+                raise UserInputError("STAGE REQUIRES MATERIAL DENSITY")
 
             if not any(el.signature[0][:3]):
-                raise UserInputError('STAGE REQUIRES ELEMENTS WITH '
-                                     'DISPLACEMENT DEGREES OF FREEDOM')
+                raise UserInputError(
+                    "STAGE REQUIRES ELEMENTS WITH " "DISPLACEMENT DEGREES OF FREEDOM"
+                )
 
     def _validate_stage2(self):
         # VALIDATE INPUT
@@ -384,51 +413,52 @@ class fe_model(object):
             iel = self.mesh.elemap[eb.labels[0]]
             el = self.elements[iel]
             if not el.signature[0][T]:
-                raise UserInputError('STAGE REQUIRES ELEMENTS WITH '
-                                     'TEMPERATURE DEGREE OF FREEDOM')
+                raise UserInputError(
+                    "STAGE REQUIRES ELEMENTS WITH " "TEMPERATURE DEGREE OF FREEDOM"
+                )
             if any(el.signature[0][:3]):
-                logging.warn('STAGE WILL IGNORE DISPLACEMENT DEGREES OF FREEDOM')
+                logging.warn("STAGE WILL IGNORE DISPLACEMENT DEGREES OF FREEDOM")
 
-    def create_static_stage(self, name=None, period=1., **kwds):
+    def create_static_stage(self, name=None, period=1.0, **kwds):
 
         if self.stages is None:
             self.setup()
             self.initialize_stages()
 
         # VALIDATE INPUT
-        self._validate_stage1(nlgeom=kwds.get('nlgeom',False))
+        self._validate_stage1(nlgeom=kwds.get("nlgeom", False))
 
         if name is None:
             name = self.unique_stage_name()
 
         if name in self.stages:
-            raise UserInputError('Duplicate stage name {0!r}'.format(name))
+            raise UserInputError("Duplicate stage name {0!r}".format(name))
 
         stage = self.stages.create_static_stage(name, period, **kwds)
         return stage
 
-    def create_dynamic_stage(self, name=None, period=1., **kwds):
+    def create_dynamic_stage(self, name=None, period=1.0, **kwds):
 
         if period is None:
-            raise UserInputError('DYNAMIC STAGE REQUIRES PERIOD')
+            raise UserInputError("DYNAMIC STAGE REQUIRES PERIOD")
 
         if self.stages is None:
             self.setup()
             self.initialize_stages()
 
         # VALIDATE INPUT
-        self._validate_stage1(nlgeom=kwds.get('nlgeom'), density=True)
+        self._validate_stage1(nlgeom=kwds.get("nlgeom"), density=True)
 
         if name is None:
             name = self.unique_stage_name()
 
         if name in self.stages:
-            raise UserInputError('Duplicate stage name {0!r}'.format(name))
+            raise UserInputError("Duplicate stage name {0!r}".format(name))
 
         stage = self.stages.create_dynamic_stage(name, period, **kwds)
         return stage
 
-    def create_heat_transfer_stage(self, name=None, period=1.):
+    def create_heat_transfer_stage(self, name=None, period=1.0):
         if self.stages is None:
             self.setup()
             self.initialize_stages()
@@ -440,7 +470,7 @@ class fe_model(object):
             name = self.unique_stage_name()
 
         if name in self.stages:
-            raise UserInputError('Duplicate stage name {0!r}'.format(name))
+            raise UserInputError("Duplicate stage name {0!r}".format(name))
 
         stage = self.stages.create_heat_transfer_stage(name, period=period)
         return stage
@@ -464,7 +494,7 @@ class fe_model(object):
 
         """
         if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
+            raise UserInputError("MESH MUST FIRST BE CREATED")
         blk = self.mesh.create_element_block(name, elements)
         return blk
 
@@ -495,22 +525,22 @@ class fe_model(object):
 
         """
         if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
+            raise UserInputError("MESH MUST FIRST BE CREATED")
         if elemat in self.materials:
             elemat = self.materials[elemat]
         elif isinstance(elemat, Material):
             if elemat.name not in self.materials:
                 self.materials[elemat.name] = elemat
         else:
-            raise UserInputError('NO SUCH MATERIAL {0!r}'.format(elemat))
+            raise UserInputError("NO SUCH MATERIAL {0!r}".format(elemat))
         for blk in self.mesh.element_blocks:
             if blk.name.upper() == blknam.upper():
                 break
         else:
-            raise UserInputError('NO SUCH ELEMENT BLOCK {0!r}'.format(blknam))
+            raise UserInputError("NO SUCH ELEMENT BLOCK {0!r}".format(blknam))
         blk.eletyp = eletyp
         if eletyp.nodes != blk.elecon.shape[1]:
-            raise UserInputError('NODE TYPE NOT CONSISTENT WITH ELEMENT BLOCK')
+            raise UserInputError("NODE TYPE NOT CONSISTENT WITH ELEMENT BLOCK")
 
         if elefab:
             # ELEMENT FABRICATION PROPERTIES GIVEN, MAKE SURE THERE IS ONE
@@ -546,7 +576,7 @@ class fe_model(object):
 
         """
         if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
+            raise UserInputError("MESH MUST FIRST BE CREATED")
         self.mesh.create_node_set(name, region)
 
     def create_side_set(self, name, surface):
@@ -565,7 +595,7 @@ class fe_model(object):
 
         """
         if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
+            raise UserInputError("MESH MUST FIRST BE CREATED")
         self.mesh.create_side_set(name, surface)
 
     def create_element_set(self, name, region):
@@ -584,30 +614,30 @@ class fe_model(object):
 
         """
         if self.mesh is None:
-            raise UserInputError('MESH MUST FIRST BE CREATED')
+            raise UserInputError("MESH MUST FIRST BE CREATED")
         self.mesh.create_element_set(name, region)
 
     def _get_field(self, key):
         key1 = key.lower()
-        if key1 in ('u', 'ux', 'uy', 'uz'):
-            key1 = 'displ' + key1[1:]
+        if key1 in ("u", "ux", "uy", "uz"):
+            key1 = "displ" + key1[1:]
         for (name, field) in self.stages.last.increments[-1].field_outputs.items():
             if key1 == name.lower() or key.lower() == name.lower():
                 if field.type != SCALAR:
-                    comps = ','.join(key+comp for comp in field.components)
-                    msg = 'NON SCALAR PLOTTING REQUIRES COMPONENTS BE SPECIFIED. '
-                    msg += 'TRY ONE OF {0}'.format(comps)
+                    comps = ",".join(key + comp for comp in field.components)
+                    msg = "NON SCALAR PLOTTING REQUIRES COMPONENTS BE SPECIFIED. "
+                    msg += "TRY ONE OF {0}".format(comps)
                     raise UserInputError(msg)
                 return field.data
             if key.lower() == name.lower():
                 key1 = key.lower()
             if key1 in field.keys:
                 if field.position in (ELEMENT, INTEGRATION_POINT):
-                    raise NotImplementedError('PLOTTING ELEMENT DATA NOT DONE')
-                return field.data[:,field.keys.index(key1)]
-        raise UserInputError('NO SUCH FIELD {0!r}'.format(key))
+                    raise NotImplementedError("PLOTTING ELEMENT DATA NOT DONE")
+                return field.data[:, field.keys.index(key1)]
+        raise UserInputError("NO SUCH FIELD {0!r}".format(key))
 
-    def Plot2D(self, deformed=False, color=None, colorby=None, scale=1., **kwds):
+    def Plot2D(self, deformed=False, color=None, colorby=None, scale=1.0, **kwds):
         """Create a 2D plot
 
         Parameters
@@ -630,21 +660,22 @@ class fe_model(object):
         """
         assert self.dimensions == 2
         if self.dimensions != 2:
-            raise UserInputError('Plot2D IS ONLY APPLICABLE TO 2D PROBLEMS')
+            raise UserInputError("Plot2D IS ONLY APPLICABLE TO 2D PROBLEMS")
         xy = array(self.mesh.coord)
         if deformed:
             xy += scale * self.stages.last.dofs.reshape(xy.shape)
         elecon = []
         for blk in self.mesh.element_blocks:
-            if (blk.eletyp.dimensions, blk.eletyp.nodes) == (2,8):
-                raise NotImplementedError('PLOTTING VALID ONLY FOR LINEAR ELEMENT')
+            if (blk.eletyp.dimensions, blk.eletyp.nodes) == (2, 8):
+                raise NotImplementedError("PLOTTING VALID ONLY FOR LINEAR ELEMENT")
             else:
                 elecon.extend(blk.elecon)
 
         if colorby is not None and is_stringlike(colorby):
             colorby = self._get_field(colorby)
-        return self.mesh.Plot2D(xy=xy, elecon=array(elecon), color=color,
-                                colorby=colorby, **kwds)
+        return self.mesh.Plot2D(
+            xy=xy, elecon=array(elecon), color=color, colorby=colorby, **kwds
+        )
 
     def write_results(self):
         """Write the finite element results to a file"""

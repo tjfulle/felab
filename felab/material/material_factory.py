@@ -6,7 +6,8 @@ from .linear_elastic import linear_elastic
 from .neohooke import neo_hooke
 from .thermal import thermally_conductive
 
-__all__ = ['Material']
+__all__ = ["Material"]
+
 
 class Material(object):
     """The base material object.
@@ -41,6 +42,7 @@ class Material(object):
          mat.isotropic_thermal_conductivity(12)
 
     """
+
     def __init__(self, name, **kwds):
 
         self.name = name
@@ -58,28 +60,30 @@ class Material(object):
         # CHECK KEYWORDS
         for (kwd, v) in kwds.items():
             k = kwd.lower()
-            if k in ('density', 'rho'):
+            if k in ("density", "rho"):
                 self.density = v
 
-            elif k == 'elastic':
+            elif k == "elastic":
                 try:
                     self.elastic(**v)
                 except TypeError:
-                    raise UserInputError('ELASTIC PROPERTIES MUST BE A '
-                                         'DICT, NOT {0}'.format(type(v)))
+                    raise UserInputError(
+                        "ELASTIC PROPERTIES MUST BE A " "DICT, NOT {0}".format(type(v))
+                    )
 
-            elif 'neo' in k and 'hooke' in k:
+            elif "neo" in k and "hooke" in k:
                 try:
                     self.neo_hooke(**v)
                 except TypeError:
-                    raise UserInputError('NEOHOOKE PROPERTIES MUST BE A '
-                                         'DICT, NOT {0}'.format(type(v)))
+                    raise UserInputError(
+                        "NEOHOOKE PROPERTIES MUST BE A " "DICT, NOT {0}".format(type(v))
+                    )
 
-            elif 'thermal_conductivity' in k:
+            elif "thermal_conductivity" in k:
                 self.thermal_conductivity(v)
 
             else:
-                logging.warn('SETTING UNKNOWN MATERIAL PROPERTY {0!r}'.format(kwd))
+                logging.warn("SETTING UNKNOWN MATERIAL PROPERTY {0!r}".format(kwd))
                 setattr(self, kwd, v)
 
     @property
@@ -89,7 +93,7 @@ class Material(object):
     @model.setter
     def model(self, m):
         self._model = m
-        if not hasattr(self._model, 'requires'):
+        if not hasattr(self._model, "requires"):
             self._model.requires = None
 
     def Density(self, rho):
@@ -169,14 +173,14 @@ class Material(object):
         self.model = neo_hooke(self.E, self.Nu)
 
     def set_elastic_properties(self, **kwds):
-        if 'rho' in [s.lower() for s in kwds.keys()]:
+        if "rho" in [s.lower() for s in kwds.keys()]:
             if len(kwds) != 3:
-                raise UserInputError('EXACTLY 2 ELASTIC CONSTANTS REQUIRED')
-            for (k,v) in kwds.items():
-                if k.lower() == 'rho':
+                raise UserInputError("EXACTLY 2 ELASTIC CONSTANTS REQUIRED")
+            for (k, v) in kwds.items():
+                if k.lower() == "rho":
                     self.Density(v)
         elif len(kwds) != 2:
-            raise UserInputError('EXACTLY 2 ELASTIC CONSTANTS REQUIRED')
+            raise UserInputError("EXACTLY 2 ELASTIC CONSTANTS REQUIRED")
         props = elas(**kwds)
         # ADD PROPERTIES TO SELF
         self.__dict__.update(props)
@@ -191,11 +195,49 @@ class Material(object):
 
         """
         self.model = thermally_conductive(k)
+
     isotropic_thermal_conductivity = thermal_conductivity
 
-    def response(self, stress, statev, strain, dstrain, time, dtime,
-                 temp, dtemp, predef, dpred, ndir, nshr, ntens,
-                 coords, F0, F, noel, kstep, kinc):
+    def response(
+        self,
+        stress,
+        statev,
+        strain,
+        dstrain,
+        time,
+        dtime,
+        temp,
+        dtemp,
+        predef,
+        dpred,
+        ndir,
+        nshr,
+        ntens,
+        coords,
+        F0,
+        F,
+        noel,
+        kstep,
+        kinc,
+    ):
         return self.model.response(
-            stress, statev, strain, dstrain, time, dtime, temp, dtemp,
-            predef, dpred, ndir, nshr, ntens, coords, F0, F, noel, kstep, kinc)
+            stress,
+            statev,
+            strain,
+            dstrain,
+            time,
+            dtime,
+            temp,
+            dtemp,
+            predef,
+            dpred,
+            ndir,
+            nshr,
+            ntens,
+            coords,
+            F0,
+            F,
+            noel,
+            kstep,
+            kinc,
+        )

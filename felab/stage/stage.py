@@ -5,6 +5,7 @@ from .data_wharehouse import *
 from ..x.utilities import *
 from ..x.constants import *
 
+
 class load_stage(object):
     def __init__(self, model, number, name, previous, period):
         self.model = model
@@ -12,13 +13,13 @@ class load_stage(object):
         self.ran = False
         self.name = name
         if previous is None:
-            self.start = 0.
-            self.value = 0.
+            self.start = 0.0
+            self.value = 0.0
         else:
             self.start = previous.increments[-1].value
             self.value = previous.increments[-1].value
         self.increments = []
-        self.Increment(0.)
+        self.Increment(0.0)
         self.period = period
         self.number = number
         self.previous = previous
@@ -58,7 +59,7 @@ class load_stage(object):
             m *= len(el.variables())
             if el.num_integration():
                 m *= el.num_integration()
-            a = [nstatev, nstatev+m]
+            a = [nstatev, nstatev + m]
             svtab.append(slice(*a))
             nstatev += m
         self.svars = zeros((2, nstatev))
@@ -68,35 +69,48 @@ class load_stage(object):
     def __len__(self):
         return len(self.increments)
 
-    def print_stiffness_structure(self, style='ascii', stream=sys.stdout,
-                                  index_base=0):
+    def print_stiffness_structure(
+        self, style="ascii", stream=sys.stdout, index_base=0, numeric_fmt="{0: 8f}"
+    ):
         if self._K is None:
             return
         m, n = self._K.shape
         assert m == n
         max_int_w = len(str(m))
-        if style=='ascii':
-            header = ' '.join('{0:<{1}d}'.format(i+index_base, max_int_w)
-                              for i in range(m))
-            stream.write(header+'\n')
+        if style == "ascii":
+            header = " ".join(
+                "{0:<{1}d}".format(i + index_base, max_int_w) for i in range(m)
+            )
+            stream.write(header + "\n")
             for (i, row) in enumerate(self._K):
                 for item in row:
                     if abs(item) > 0:
-                        stream.write('{0:<{1}s} '.format('X', max_int_w))
+                        stream.write("{0:<{1}s} ".format("X", max_int_w))
                     else:
-                        stream.write(' '*(max_int_w+1))
-                stream.write(' {0}\n'.format(i+index_base))
-        elif style == 'latex':
-            stream.write('\\setcounter{MaxMatrixCols}{%d}\n'%n)
-            stream.write('\\renewcommand{\kbldelim}{[}\n')
-            stream.write('\\renewcommand{\kbrdelim}{]}\n')
-            stream.write('\\begin{displaymath}\n  \\kbordermatrix{\n')
-            header = '      &' + ' & '.join('{0}'.format(i) for i in range(m))
-            stream.write(header + '\\\\\n')
+                        stream.write(" " * (max_int_w + 1))
+                stream.write(" {0}\n".format(i + index_base))
+
+        elif style == "latex":
+            stream.write("\\setcounter{MaxMatrixCols}{%d}\n" % n)
+            stream.write("\\renewcommand{\kbldelim}{[}\n")
+            stream.write("\\renewcommand{\kbrdelim}{]}\n")
+            stream.write("\\begin{displaymath}\n  \\kbordermatrix{\n")
+            header = "      &" + " & ".join("{0}".format(i) for i in range(m))
+            stream.write(header + "\\\\\n")
             for (i, row) in enumerate(self._K):
-                s = ' & '.join(['\\mathrm{x}' if abs(x)>0. else ' ' for x in row])
-                stream.write('    {0} & {1} \\\\\n'.format(i,s))
-            stream.write('  }\n\\end{displaymath}\n')
+                s = " & ".join(["\\mathrm{x}" if abs(x) > 0.0 else " " for x in row])
+                stream.write("    {0} & {1} \\\\\n".format(i, s))
+            stream.write("  }\n\\end{displaymath}\n")
+
+        elif style == "numeric":
+            machine_epsilon = finfo(float).eps
+            fmt = lambda x: numeric_fmt.format(x if abs(x) > machine_epsilon else 0)
+            for (i, row) in enumerate(self._K):
+                stream.write(" ".join(fmt(x) for x in row))
+                stream.write(" {0}\n".format(i + index_base))
+
+        else:
+            raise ValueError("Unexpected style {0!r}".format(style))
 
     @property
     def doftags(self):
@@ -113,8 +127,8 @@ class load_stage(object):
         Xf = array([self.dofx[I] for I in ix])
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
-        fac = max(1., stage_time / self.period)
-        return (1. - fac) * X0 + fac * Xf
+        fac = max(1.0, stage_time / self.period)
+        return (1.0 - fac) * X0 + fac * Xf
 
     @property
     def cltags(self):
@@ -132,8 +146,8 @@ class load_stage(object):
         Qf[ix] = [self.cloadx[key] for key in ix]
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
-        fac = max(1., stage_time / self.period)
-        return (1. - fac) * Q0 + fac * Qf
+        fac = max(1.0, stage_time / self.period)
+        return (1.0 - fac) * Q0 + fac * Qf
 
     def dload(self, stage_time):
 
@@ -144,13 +158,13 @@ class load_stage(object):
         dload = emptywithlists(self.model.numele)
 
         # INTERPOLATION FACTOR
-        fac = min(1., stage_time / self.period)
+        fac = min(1.0, stage_time / self.period)
 
         # INTERPOLATE SURFACE LOADS
         for (key, Ff) in self.sloadx.items():
             iel, iedge = key
             F0 = self.previous.sloadx.get(key, zeros_like(Ff))
-            Fx = (1. - fac) * F0 + fac * Ff
+            Fx = (1.0 - fac) * F0 + fac * Ff
             dltyp[iel].append(SLOAD)
             dload[iel].append([iedge] + [x for x in Fx])
 
@@ -158,24 +172,24 @@ class load_stage(object):
         for (key, Ff) in self.dloadx.items():
             iel = key
             F0 = self.previous.dloadx.get(key, zeros_like(Ff))
-            Fx = (1. - fac) * F0 + fac * Ff
+            Fx = (1.0 - fac) * F0 + fac * Ff
             dltyp[iel].append(DLOAD)
             dload[iel].append(Fx)
 
         # INTERPOLATE SURFACE FLUXES
         for (key, qf) in self.sfluxx.items():
             iel, iedge = key
-            q0 = self.previous.sfluxx.get(key, 0.)
-            qn = (1. - fac) * q0 + fac * qf
+            q0 = self.previous.sfluxx.get(key, 0.0)
+            qn = (1.0 - fac) * q0 + fac * qf
             dltyp[iel].append(SFLUX)
             dload[iel].append([iedge, qn])
 
         # INTERPOLATE SURFACE FILMS
         for (key, (Tf, hf)) in self.sfilmx.items():
             iel, iedge = key
-            T0, h0 = self.previous.sfilmx.get(key, [0., 0.])
-            Too = (1. - fac) * T0 + fac * Tf
-            h = (1. - fac) * h0 + fac * hf
+            T0, h0 = self.previous.sfilmx.get(key, [0.0, 0.0])
+            Too = (1.0 - fac) * T0 + fac * Tf
+            h = (1.0 - fac) * h0 + fac * hf
             dltyp[iel].append(SFILM)
             dload[iel].append([iedge, Too, h])
 
@@ -183,7 +197,7 @@ class load_stage(object):
         for (key, sf) in self.hsrcx.items():
             iel = key
             s0 = self.previous.hsrcx.get(key, zeros_like(sf))
-            sx = (1. - fac) * s0 + fac * sf
+            sx = (1.0 - fac) * s0 + fac * sf
             dltyp[iel].append(HSRC)
             dload[iel].append(sx)
 
@@ -246,7 +260,8 @@ class load_stage(object):
         All active displacement and rotation degrees of freedom are set to 0.
 
         """
-        self.assign_dof(DIRICHLET, nodes, ALL, 0.)
+        self.assign_dof(DIRICHLET, nodes, ALL, 0.0)
+
     fix_dofs = fix_nodes
 
     def remove_bc(self, nodes, dof):
@@ -255,7 +270,7 @@ class load_stage(object):
     def remove_concentrated_load(self, nodes, dof):
         self.assign_dof(NEUMANN, nodes, dof, None)
 
-    def assign_prescribed_bc(self, nodes, dof, amplitude=0.):
+    def assign_prescribed_bc(self, nodes, dof, amplitude=0.0):
         """Prescribe nodal degrees of freedom
 
         Parameters
@@ -299,6 +314,7 @@ class load_stage(object):
 
         """
         self.assign_dof(DIRICHLET, nodes, dof, amplitude)
+
     PrescribedDOF = assign_prescribed_bc
 
     def assign_dof(self, doftype, nodes, dof, amplitude):
@@ -306,7 +322,7 @@ class load_stage(object):
         if dof == ALL:
             dofs = self.model.active_dof
         elif dof == PIN:
-            dofs = [x for x in (X,Y,Z) if x in self.model.active_dof]
+            dofs = [x for x in (X, Y, Z) if x in self.model.active_dof]
         elif not is_listlike(dof):
             dofs = [dof]
         else:
@@ -316,12 +332,11 @@ class load_stage(object):
 
         if amplitude is None:
             # REMOVE THIS BC
-            for (i,inode) in enumerate(inodes):
+            for (i, inode) in enumerate(inodes):
                 for j in dofs:
                     I = self.model.dofmap(inode, j)
                     if I is None:
-                        logging.warn('INVALID DOF FOR NODE '
-                                     '{0}'.format(inode))
+                        logging.warn("INVALID DOF FOR NODE " "{0}".format(inode))
                         continue
                     if doftype == DIRICHLET and I in self.dofx:
                         self.dofx.pop(I)
@@ -329,7 +344,7 @@ class load_stage(object):
                         self.cloadx.pop(I)
             return
 
-        if hasattr(amplitude, '__call__'):
+        if hasattr(amplitude, "__call__"):
             # AMPLITUDE IS A FUNCTION
             a = amplitude(self.model.mesh.coord[inodes])
         elif not is_listlike(amplitude):
@@ -337,22 +352,22 @@ class load_stage(object):
             a = ones(len(inodes)) * amplitude
         else:
             if len(amplitude) != len(inodes):
-                raise UserInputError('INCORRECT AMPLITUDE LENGTH')
+                raise UserInputError("INCORRECT AMPLITUDE LENGTH")
             # AMPLITUDE IS A LIST OF AMPLITUDES
             a = asarray(amplitude)
 
-        for (i,inode) in enumerate(inodes):
+        for (i, inode) in enumerate(inodes):
             for j in dofs:
                 I = self.model.dofmap(inode, j)
                 if I is None:
-                    raise UserInputError('INVALID DOF FOR NODE {0}'.format(inode))
+                    raise UserInputError("INVALID DOF FOR NODE {0}".format(inode))
                 if I in self.cloadx and doftype == DIRICHLET:
-                    msg = 'ATTEMPTING TO APPLY LOAD AND DISPLACEMENT '
-                    msg += 'ON SAME DOF'
+                    msg = "ATTEMPTING TO APPLY LOAD AND DISPLACEMENT "
+                    msg += "ON SAME DOF"
                     raise UserInputError(msg)
                 elif I in self.dofx and doftype == NEUMANN:
-                    msg = 'ATTEMPTING TO APPLY LOAD AND DISPLACEMENT '
-                    msg += 'ON SAME DOF'
+                    msg = "ATTEMPTING TO APPLY LOAD AND DISPLACEMENT "
+                    msg += "ON SAME DOF"
                     raise UserInputError(msg)
                 if doftype == DIRICHLET:
                     self.dofx[I] = float(a[i])
@@ -362,12 +377,12 @@ class load_stage(object):
     # ----------------------------------------------------------------------- #
     # --- LOADING CONDITIONS ------------------------------------------------ #
     # ----------------------------------------------------------------------- #
-    def assign_concentrated_load(self, nodes, dof, amplitude=0.):
+    def assign_concentrated_load(self, nodes, dof, amplitude=0.0):
         self.assign_dof(NEUMANN, nodes, dof, amplitude)
 
     def assign_temperature(self, nodes, amplitude):
         inodes = self.model.mesh.get_internal_node_ids(nodes)
-        if hasattr(amplitude, '__call__'):
+        if hasattr(amplitude, "__call__"):
             # AMPLITUDE IS A FUNCTION
             a = amplitude(self.model.mesh.coord[inodes])
         elif not is_listlike(amplitude):
@@ -375,7 +390,7 @@ class load_stage(object):
             a = ones(len(inodes)) * amplitude
         else:
             if len(amplitude) != len(inodes):
-                raise UserInputError('INCORRECT AMPLITUDE LENGTH')
+                raise UserInputError("INCORRECT AMPLITUDE LENGTH")
             # AMPLITUDE IS A LIST OF AMPLITUDES
             a = asarray(amplitude)
         self.final_temp = a
@@ -383,7 +398,7 @@ class load_stage(object):
     def advance(self, dtime, dofs, react=None, **kwds):
         increment_n = self.increments[-1]
         if not increment_n.converged:
-            raise RuntimeError('ATTEMPTING TO UPDATE AN UNCONVERGED INCREMENT')
+            raise RuntimeError("ATTEMPTING TO UPDATE AN UNCONVERGED INCREMENT")
 
         # ADVANCE STATE VARIABLES
         self.svars[0] = self.svars[1]
@@ -397,17 +412,17 @@ class load_stage(object):
             RF, M, Q = self.model.format_dof(react)
 
         if temp is not None:
-            increment.field_outputs['T'].add_data(temp)
+            increment.field_outputs["T"].add_data(temp)
             if react is not None:
-                increment.field_outputs['Q'].add_data(Q)
+                increment.field_outputs["Q"].add_data(Q)
         if u.shape[1]:
-            increment.field_outputs['U'].add_data(u)
+            increment.field_outputs["U"].add_data(u)
             if react is not None:
-                increment.field_outputs['RF'].add_data(RF)
+                increment.field_outputs["RF"].add_data(RF)
         if R.shape[1]:
-            increment.field_outputs['R'].add_data(R)
+            increment.field_outputs["R"].add_data(R)
             if react is not None:
-                increment.field_outputs['M'].add_data(M)
+                increment.field_outputs["M"].add_data(M)
 
         # STORE KEYWORDS
         for (kwd, val) in kwds.items():
@@ -429,14 +444,15 @@ class load_stage(object):
                 el = self.model.elements[iel]
                 ue = u[el.inodes]
                 if ntens is not None:
-                    svars = self.svars[0,self.svtab[iel]].reshape(m,n,ntens)
+                    svars = self.svars[0, self.svtab[iel]].reshape(m, n, ntens)
                 else:
-                    svars = self.svars[0,self.svtab[iel]].reshape(m,n)
+                    svars = self.svars[0, self.svtab[iel]].reshape(m, n)
                 for (j, variable) in enumerate(el.variables()):
                     name, ftype = variable[:2]
-                    increment.field_outputs[eb.name,name].add_data(svars[:,j], e)
+                    increment.field_outputs[eb.name, name].add_data(svars[:, j], e)
 
         increment.converged = True
+
 
 class Increment(object):
     def __init__(self, start, dtime):
@@ -450,22 +466,56 @@ class Increment(object):
         self.increment = dtime
         self.value = self.start + dtime
 
-    def FieldOutput(self, ftype, name, position, labels, eleblk=None,
-                    ndir=None, nshr=None, ngauss=None,
-                    ncomp=None, elements=None, data=None):
+    def FieldOutput(
+        self,
+        ftype,
+        name,
+        position,
+        labels,
+        eleblk=None,
+        ndir=None,
+        nshr=None,
+        ngauss=None,
+        ncomp=None,
+        elements=None,
+        data=None,
+    ):
 
         if ftype == SYMTENSOR:
-            field = SymmetricTensorField(name, position, labels, ndir, nshr,
-                                         eleblk=eleblk, ngauss=ngauss,
-                                         elements=elements, data=data)
+            field = SymmetricTensorField(
+                name,
+                position,
+                labels,
+                ndir,
+                nshr,
+                eleblk=eleblk,
+                ngauss=ngauss,
+                elements=elements,
+                data=data,
+            )
 
         elif ftype == VECTOR:
-            field = VectorField(name, position, labels, ncomp, eleblk=eleblk,
-                                ngauss=ngauss, elements=elements, data=data)
+            field = VectorField(
+                name,
+                position,
+                labels,
+                ncomp,
+                eleblk=eleblk,
+                ngauss=ngauss,
+                elements=elements,
+                data=data,
+            )
 
         elif ftype == SCALAR:
-            field = ScalarField(name, position, labels, eleblk=eleblk,
-                                ngauss=ngauss, elements=elements, data=data)
+            field = ScalarField(
+                name,
+                position,
+                labels,
+                eleblk=eleblk,
+                ngauss=ngauss,
+                elements=elements,
+                data=data,
+            )
 
         if field.eleblk is not None:
             name = (field.eleblk, name)
@@ -479,11 +529,12 @@ class Increment(object):
             d = {}
             if isinstance(value, tuple):
                 if len(value) == 2:
-                    d['ix'] = value[1]
+                    d["ix"] = value[1]
                     value = value[0]
                 else:
-                    raise ValueError('Unknown add_data option for {0}'.format(key))
+                    raise ValueError("Unknown add_data option for {0}".format(key))
             self.field_outputs[key].add_data(value, **d)
+
 
 class sd_stage(load_stage):
     """Base class for stress/displacement stages"""
@@ -504,7 +555,7 @@ class sd_stage(load_stage):
         All active displacement degrees of freedom are set to 0.
 
         """
-        self.assign_dof(DIRICHLET, nodes, PIN, 0.)
+        self.assign_dof(DIRICHLET, nodes, PIN, 0.0)
 
     # ----------------------------------------------------------------------- #
     # --- LOADING CONDITIONS ------------------------------------------------ #
@@ -515,25 +566,30 @@ class sd_stage(load_stage):
         else:
             ielems = [self.model.mesh.elemap[el] for el in region]
         if not is_listlike(components):
-            raise UserInputError('EXPECTED GRAVITY LOAD VECTOR')
+            raise UserInputError("EXPECTED GRAVITY LOAD VECTOR")
         if len(components) != self.model.dimensions:
-            raise UserInputError('EXPECTED {0} GRAVITY LOAD '
-                                 'COMPONENTS'.format(len(self.model.active_dof)))
+            raise UserInputError(
+                "EXPECTED {0} GRAVITY LOAD "
+                "COMPONENTS".format(len(self.model.active_dof))
+            )
         a = asarray(components)
         for iel in ielems:
             el = self.model.elements[iel]
             rho = el.material.density
             if rho is None:
-                raise UserInputError('ELEMENT MATERIAL DENSITY MUST BE ASSIGNED '
-                                     'BEFORE GRAVITY LOADS')
-            self.assign_dload(iel, rho*a)
+                raise UserInputError(
+                    "ELEMENT MATERIAL DENSITY MUST BE ASSIGNED " "BEFORE GRAVITY LOADS"
+                )
+            self.assign_dload(iel, rho * a)
 
     def assign_distributed_load(self, region, components):
         if not is_listlike(components):
-            raise UserInputError('EXPECTED DISTRIBUTED LOAD VECTOR')
+            raise UserInputError("EXPECTED DISTRIBUTED LOAD VECTOR")
         if len(components) != self.model.dimensions:
-            raise UserInputError('EXPECTED {0} DISTRIBUTED LOAD '
-                                 'COMPONENTS'.format(len(self.model.active_dof)))
+            raise UserInputError(
+                "EXPECTED {0} DISTRIBUTED LOAD "
+                "COMPONENTS".format(len(self.model.active_dof))
+            )
         if region == ALL:
             ielems = range(self.model.numele)
         elif not is_listlike(region):
@@ -546,10 +602,12 @@ class sd_stage(load_stage):
 
     def assign_surface_load(self, surface, components):
         if not is_listlike(components):
-            raise UserInputError('EXPECTED SURFACE LOAD VECTOR')
+            raise UserInputError("EXPECTED SURFACE LOAD VECTOR")
         if len(components) != self.model.dimensions:
-            raise UserInputError('EXPECTED {0} SURFACE LOAD '
-                                 'COMPONENTS'.format(len(self.model.active_dof)))
+            raise UserInputError(
+                "EXPECTED {0} SURFACE LOAD "
+                "COMPONENTS".format(len(self.model.active_dof))
+            )
         surface = self.model.mesh.find_surface(surface)
         components = [x for x in components]
         for (iel, iedge) in surface:
@@ -565,8 +623,8 @@ class sd_stage(load_stage):
             if self.model.dimensions == 2:
                 n = normal2d(xb)
             else:
-                raise NotImplementedError('3D SURFACE NORMAL')
-            components = [x for x in amplitude*n]
+                raise NotImplementedError("3D SURFACE NORMAL")
+            components = [x for x in amplitude * n]
             self.assign_sload(iel, iedge, components)
 
     def assign_pressure(self, surface, amplitude):

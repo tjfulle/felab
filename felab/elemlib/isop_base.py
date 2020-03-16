@@ -9,6 +9,7 @@ from .element_base import element_base
 
 class isop_base(element_base):
     """Base class for isoparametric stress-displacement elements"""
+
     num_gauss = None
 
     @classmethod
@@ -35,9 +36,9 @@ class isop_base(element_base):
 
     def pmatrix(self, N):
         n = count_digits(self.signature[0])
-        P = zeros((n, self.nodes*n))
+        P = zeros((n, self.nodes * n))
         for i in range(self.dimensions):
-            P[i, i::self.dimensions] = N
+            P[i, i :: self.dimensions] = N
         return P
 
     @classmethod
@@ -47,8 +48,12 @@ class isop_base(element_base):
         if index is not None:
             ntens = cls.ndir + cls.nshr
             m = len(cls.variables()) * ntens
-            data = row_stack([data[(m*p)+index*ntens:(m*p)+(index+1)*ntens]
-                              for p in range(cls.num_gauss)])
+            data = row_stack(
+                [
+                    data[(m * p) + index * ntens : (m * p) + (index + 1) * ntens]
+                    for p in range(cls.num_gauss)
+                ]
+            )
         return cls.average(cls.cp, data)
 
     @classmethod
@@ -58,7 +63,7 @@ class isop_base(element_base):
         nx = len(v)
         a = zeros((cls.nodes, nx))
         for i in range(cls.nodes):
-            a[i,:] = cls.average(cls.xp[i], data, v)
+            a[i, :] = cls.average(cls.xp[i], data, v)
         return a
 
     @classmethod
@@ -74,16 +79,16 @@ class isop_base(element_base):
             assert data.shape[0] == cls.num_gauss
 
         else:
-            raise TypeError('Unknown data type')
+            raise TypeError("Unknown data type")
 
         if cls.num_gauss == 1:
-            weights = [1.]
+            weights = [1.0]
         else:
             dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
             weights = zeros(cls.num_gauss)
             for p in range(cls.num_gauss):
                 xi, _ = cls.gauss_rule_info(p)
-                weights[p] = 1./dist(point, xi)
+                weights[p] = 1.0 / dist(point, xi)
 
         if data.ndim == 1:
             # SCALAR DATA

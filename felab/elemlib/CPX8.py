@@ -21,24 +21,35 @@ class CPX8(CMDN):
                [0]
 
     """
+
     nodes = 8
     dimensions = 2
-    elefab = {'t':1.}
+    elefab = {"t": 1.0}
     cp = array([0, 0], dtype=float64)
-    xp = array([[-1, -1], [1, -1], [1, 1], [-1, 1],
-                [0, -1], [1, 0], [0, 1], [-1, 0]], dtype=float64),
+    xp = (
+        array(
+            [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, -1], [1, 0], [0, 1], [-1, 0]],
+            dtype=float64,
+        ),
+    )
     edges = array([[0, 1, 4], [1, 2, 5], [2, 3, 6], [3, 0, 7]])
-    signature = [(1,1,0,0,0,0,0), (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0), (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0), (1,1,0,0,0,0,0),
-                 (1,1,0,0,0,0,0), (1,1,0,0,0,0,0)]
+    signature = [
+        (1, 1, 0, 0, 0, 0, 0),
+        (1, 1, 0, 0, 0, 0, 0),
+        (1, 1, 0, 0, 0, 0, 0),
+        (1, 1, 0, 0, 0, 0, 0),
+        (1, 1, 0, 0, 0, 0, 0),
+        (1, 1, 0, 0, 0, 0, 0),
+        (1, 1, 0, 0, 0, 0, 0),
+        (1, 1, 0, 0, 0, 0, 0),
+    ]
 
     @property
     def area(self):
         x, y = self.xc[:, [0, 1]].T
-        A2  = (x[0]*y[1] - x[1]*y[0]) + (x[1]*y[2] - x[2]*y[1])
-        A2 += (x[2]*y[3] - x[3]*y[2]) + (x[3]*y[0] - x[0]*y[3])
-        return A2 / 2.
+        A2 = (x[0] * y[1] - x[1] * y[0]) + (x[1] * y[2] - x[2] * y[1])
+        A2 += (x[2] * y[3] - x[3] * y[2]) + (x[3] * y[0] - x[0] * y[3])
+        return A2 / 2.0
 
     @property
     def volume(self):
@@ -47,47 +58,47 @@ class CPX8(CMDN):
     def foo():
         if edge is not None:
             # EVALUATE SHAPE FUNCTION ON SPECIFIC EDGE
-            xi = array([[xi,-1.],[1.,xi],[xi,1.],[-1.,xi]][edge])
+            xi = array([[xi, -1.0], [1.0, xi], [xi, 1.0], [-1.0, xi]][edge])
 
     def shape(self, qcoord, edge=None):
         if edge is not None:
             # EVALUATE SHAPE FUNCTION ON SPECIFIC EDGE
             x = qcoord
-            qcoord = array([[x,-1.],[1.,x],[x,1.],[-1.,x]][edge])
+            qcoord = array([[x, -1.0], [1.0, x], [x, 1.0], [-1.0, x]][edge])
         xi, eta = qcoord[:2]
         # CORNER NODES
         N = zeros(8)
-        N[0] = -0.25 * (1. - xi) * (1. - eta) * (1. + xi + eta)
-        N[1] =  0.25 * (1. + xi) * (1. - eta) * (xi - eta - 1.)
-        N[2] =  0.25 * (1. + xi) * (1. + eta) * (xi + eta - 1.)
-        N[3] =  0.25 * (1. - xi) * (1. + eta) * (eta - xi - 1.)
+        N[0] = -0.25 * (1.0 - xi) * (1.0 - eta) * (1.0 + xi + eta)
+        N[1] = 0.25 * (1.0 + xi) * (1.0 - eta) * (xi - eta - 1.0)
+        N[2] = 0.25 * (1.0 + xi) * (1.0 + eta) * (xi + eta - 1.0)
+        N[3] = 0.25 * (1.0 - xi) * (1.0 + eta) * (eta - xi - 1.0)
         # MIDSIDE NODES
-        N[4] =  0.5 * (1. - xi * xi) * (1. - eta)
-        N[5] =  0.5 * (1. + xi) * (1. - eta * eta)
-        N[6] =  0.5 * (1. - xi * xi) * (1. + eta)
-        N[7] =  0.5 * (1. - xi) * (1. - eta * eta)
+        N[4] = 0.5 * (1.0 - xi * xi) * (1.0 - eta)
+        N[5] = 0.5 * (1.0 + xi) * (1.0 - eta * eta)
+        N[6] = 0.5 * (1.0 - xi * xi) * (1.0 + eta)
+        N[7] = 0.5 * (1.0 - xi) * (1.0 - eta * eta)
         return N
 
     def shapegrad(self, qcoord):
         xi, eta = qcoord[:2]
         dN = zeros((2, 8))
-        dN[0,0] =  0.25 * (1. - eta) * (2. * xi + eta)
-        dN[0,1] =  0.25 * (1. - eta) * (2. * xi - eta)
-        dN[0,2] =  0.25 * (1. + eta) * (2. * xi + eta)
-        dN[0,3] =  0.25 * (1. + eta) * (2. * xi - eta)
-        dN[0,4] = -xi * (1. - eta)
-        dN[0,5] =  0.5 * (1. - eta * eta)
-        dN[0,6] = -xi * (1. + eta)
-        dN[0,7] = -0.5 * (1. - eta * eta)
+        dN[0, 0] = 0.25 * (1.0 - eta) * (2.0 * xi + eta)
+        dN[0, 1] = 0.25 * (1.0 - eta) * (2.0 * xi - eta)
+        dN[0, 2] = 0.25 * (1.0 + eta) * (2.0 * xi + eta)
+        dN[0, 3] = 0.25 * (1.0 + eta) * (2.0 * xi - eta)
+        dN[0, 4] = -xi * (1.0 - eta)
+        dN[0, 5] = 0.5 * (1.0 - eta * eta)
+        dN[0, 6] = -xi * (1.0 + eta)
+        dN[0, 7] = -0.5 * (1.0 - eta * eta)
 
-        dN[1,0] =  0.25 * (1. - xi) * (xi + 2. * eta)
-        dN[1,1] =  0.25 * (1. + xi) * (2. * eta - xi)
-        dN[1,2] =  0.25 * (1. + xi) * (2. * eta + xi)
-        dN[1,3] =  0.25 * (1. - xi) * (2. * eta - xi)
-        dN[1,4] = -0.5 * (1. - xi * xi)
-        dN[1,5] = -(1. + xi) * eta
-        dN[1,6] =  0.5 * (1. - xi * xi)
-        dN[1,7] = -(1. - xi) * eta
+        dN[1, 0] = 0.25 * (1.0 - xi) * (xi + 2.0 * eta)
+        dN[1, 1] = 0.25 * (1.0 + xi) * (2.0 * eta - xi)
+        dN[1, 2] = 0.25 * (1.0 + xi) * (2.0 * eta + xi)
+        dN[1, 3] = 0.25 * (1.0 - xi) * (2.0 * eta - xi)
+        dN[1, 4] = -0.5 * (1.0 - xi * xi)
+        dN[1, 5] = -(1.0 + xi) * eta
+        dN[1, 6] = 0.5 * (1.0 - xi * xi)
+        dN[1, 7] = -(1.0 - xi) * eta
         return dN
 
     def shapefun_der(self, coord, qcoord):

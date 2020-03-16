@@ -6,12 +6,13 @@ from .gauss_rule_info import quad_gauss_rule_info
 class CPE4RS(CPX4):
     """4 node plane-strain stress-displacement element with selective-reduced
     integration"""
+
     ndir = 3
     nshr = 1
     num_gauss = 4
     selective_reduced = True
-    srip = array([[0., 0.]])
-    sriw = array([4.])
+    srip = array([[0.0, 0.0]])
+    sriw = array([4.0])
 
     @staticmethod
     def gauss_rule_info(point=None):

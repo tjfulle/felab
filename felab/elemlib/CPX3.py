@@ -21,20 +21,19 @@ class CPX3(CMDN):
               [2]
 
     """
+
     nodes = 3
     dimensions = 2
-    elefab = {'t': 1.}
-    cp = array([1., 1., 1.]) / 3.
+    elefab = {"t": 1.0}
+    cp = array([1.0, 1.0, 1.0]) / 3.0
     edges = array([[0, 1], [1, 2], [2, 0]])
-    xp = array([[1., 0., 0], [0., 1., 0], [0., 0., 1]])
-    signature = [(1,1,0,0,0,0,0), (1,1,0,0,0,0,0), (1,1,0,0,0,0,0)]
+    xp = array([[1.0, 0.0, 0], [0.0, 1.0, 0], [0.0, 0.0, 1]])
+    signature = [(1, 1, 0, 0, 0, 0, 0), (1, 1, 0, 0, 0, 0, 0), (1, 1, 0, 0, 0, 0, 0)]
 
     @property
     def area(self):
         x, y = self.xc[:, [0, 1]].T
-        a = .5 * (x[0] * (y[1] - y[2]) +
-                  x[1] * (y[2] - y[0]) +
-                  x[2] * (y[0] - y[1]))
+        a = 0.5 * (x[0] * (y[1] - y[2]) + x[1] * (y[2] - y[0]) + x[2] * (y[0] - y[1]))
         return a
 
     @property
@@ -44,10 +43,10 @@ class CPX3(CMDN):
     def edge_shape(self, edge, xp):
         # ORDERING OF NODES
         xb = self.xc[self.edges[edge]]
-        he = sqrt((xb[1,0]-xb[0,0])**2 + (xb[1,1]-xb[0,1])**2)
-        o = array({0:[0,1,2],1:[2,0,1],2:[1,2,0]}[edge])
+        he = sqrt((xb[1, 0] - xb[0, 0]) ** 2 + (xb[1, 1] - xb[0, 1]) ** 2)
+        o = array({0: [0, 1, 2], 1: [2, 0, 1], 2: [1, 2, 0]}[edge])
         s = he * (xp + 1) / 2.0
-        return array([(he - s) / he, s / he, 0.])[o]
+        return array([(he - s) / he, s / he, 0.0])[o]
 
     def shapefun_der(self, coord, qcoord):
         """Shape functions of 3 node triangle
@@ -69,18 +68,21 @@ class CPX3(CMDN):
             The Jacobian of the transformation
 
         """
-        x = coord[:,0]
-        y = coord[:,1]
+        x = coord[:, 0]
+        y = coord[:, 1]
         z1, z2, z3 = qcoord
         # Triangle coordinates *are* the shape functions
         N = array([z1, z2, z3])
         dNdz = eye(3)
-        J = array([[1, 1, 1],
-                      [dot(x, dNdz[:,0]), dot(x, dNdz[:,1]), dot(x, dNdz[:,2])],
-                      [dot(y, dNdz[:,0]), dot(y, dNdz[:,1]), dot(y, dNdz[:,2])]])
+        J = array(
+            [
+                [1, 1, 1],
+                [dot(x, dNdz[:, 0]), dot(x, dNdz[:, 1]), dot(x, dNdz[:, 2])],
+                [dot(y, dNdz[:, 0]), dot(y, dNdz[:, 1]), dot(y, dNdz[:, 2])],
+            ]
+        )
         Jdet = linalg.det(J)
         D = array([[0, 0], [1, 0], [0, 1]])
         P = dot(linalg.inv(J), D)
         dNdx_T = dot(dNdz, P)
         return N, dNdx_T.T, Jdet
-
