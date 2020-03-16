@@ -51,20 +51,20 @@ class LoadStep(object):
 
         self.dofs = np.zeros(self.model.numdof)
 
-        # DOFX[I] IS THE PRESCRIBED DOF FOR DOF I
-        self.dofx = {}
+        # _dof[I] IS THE PRESCRIBED DOF FOR DOF I
+        self._dof = {}
 
-        # CLOADX[I] IS THE PRESCRIBED CONCENTRATED LOAD FOR DOF I
-        self.cloadx = {}
+        # _cload[I] IS THE PRESCRIBED CONCENTRATED LOAD FOR DOF I
+        self._cload = {}
 
         # CONTAINERS TO HOLD DISTRIBUTED LOADS
-        self.dloadx = {}
-        self.sloadx = {}
+        self._dload = {}
+        self._sload = {}
 
         # CONTAINERS TO HOLD HEAT TRANSFER LOADS
-        self.sfluxx = {}
-        self.sfilmx = {}
-        self.hsrcx = {}
+        self._sflux = {}
+        self._sfilm = {}
+        self._hsrc = {}
 
         # PREDEFINED FIELDS
         self.predef = np.zeros((3, 1, self.model.numnod))
@@ -139,17 +139,17 @@ class LoadStep(object):
 
     @property
     def doftags(self):
-        return np.array(sorted(self.dofx), dtype=int)
+        return np.array(sorted(self._dof), dtype=int)
 
     def dofvals(self, step_time):
 
         ix = self.doftags
 
         # DOFS AT END OF LAST STEP
-        X0 = np.array([self.previous.dofx.get(I, 0) for I in ix])
+        X0 = np.array([self.previous._dof.get(I, 0) for I in ix])
 
         # DOFS AT END OF THIS STEP
-        Xf = np.array([self.dofx[I] for I in ix])
+        Xf = np.array([self._dof[I] for I in ix])
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
         fac = max(1.0, step_time / self.period)
@@ -157,18 +157,18 @@ class LoadStep(object):
 
     @property
     def cltags(self):
-        return np.array(sorted(self.cloadx), dtype=int)
+        return np.array(sorted(self._cload), dtype=int)
 
     def cload(self, step_time):
         # CONCENTRATED LOAD AT END OF LAST STEP
         ix = self.previous.cltags
         Q0 = np.zeros_like(self.dofs)
-        Q0[ix] = [self.previous.cloadx[key] for key in ix]
+        Q0[ix] = [self.previous._cload[key] for key in ix]
 
         # CONCENTRATED LOAD AT END OF THIS STEP
         ix = self.cltags
         Qf = np.zeros_like(self.dofs)
-        Qf[ix] = [self.cloadx[key] for key in ix]
+        Qf[ix] = [self._cload[key] for key in ix]
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
         fac = max(1.0, step_time / self.period)
@@ -186,42 +186,42 @@ class LoadStep(object):
         fac = min(1.0, step_time / self.period)
 
         # INTERPOLATE SURFACE LOADS
-        for (key, Ff) in self.sloadx.items():
+        for (key, Ff) in self._sload.items():
             iel, iedge = key
-            F0 = self.previous.sloadx.get(key, np.zeros_like(Ff))
+            F0 = self.previous._sload.get(key, np.zeros_like(Ff))
             Fx = (1.0 - fac) * F0 + fac * Ff
             dltyp[iel].append(SLOAD)
             dload[iel].append([iedge] + [x for x in Fx])
 
         # INTERPOLATE DISTRIBUTED LOADS
-        for (key, Ff) in self.dloadx.items():
+        for (key, Ff) in self._dload.items():
             iel = key
-            F0 = self.previous.dloadx.get(key, np.zeros_like(Ff))
+            F0 = self.previous._dload.get(key, np.zeros_like(Ff))
             Fx = (1.0 - fac) * F0 + fac * Ff
             dltyp[iel].append(DLOAD)
             dload[iel].append(Fx)
 
         # INTERPOLATE SURFACE FLUXES
-        for (key, qf) in self.sfluxx.items():
+        for (key, qf) in self._sflux.items():
             iel, iedge = key
-            q0 = self.previous.sfluxx.get(key, 0.0)
+            q0 = self.previous._sflux.get(key, 0.0)
             qn = (1.0 - fac) * q0 + fac * qf
             dltyp[iel].append(SFLUX)
             dload[iel].append([iedge, qn])
 
         # INTERPOLATE SURFACE FILMS
-        for (key, (Tf, hf)) in self.sfilmx.items():
+        for (key, (Tf, hf)) in self._sfilm.items():
             iel, iedge = key
-            T0, h0 = self.previous.sfilmx.get(key, [0.0, 0.0])
+            T0, h0 = self.previous._sfilm.get(key, [0.0, 0.0])
             Too = (1.0 - fac) * T0 + fac * Tf
             h = (1.0 - fac) * h0 + fac * hf
             dltyp[iel].append(SFILM)
             dload[iel].append([iedge, Too, h])
 
         # INTERPOLATE HEAT SOURCES
-        for (key, sf) in self.hsrcx.items():
+        for (key, sf) in self._hsrc.items():
             iel = key
-            s0 = self.previous.hsrcx.get(key, np.zeros_like(sf))
+            s0 = self.previous._hsrc.get(key, np.zeros_like(sf))
             sx = (1.0 - fac) * s0 + fac * sf
             dltyp[iel].append(HSRC)
             dload[iel].append(sx)
@@ -229,19 +229,19 @@ class LoadStep(object):
         return dltyp, dload
 
     def assign_sload(self, iel, iedge, a):
-        self.sloadx[(iel, iedge)] = np.asarray(a)
+        self._sload[(iel, iedge)] = np.asarray(a)
 
     def assign_dload(self, iel, a):
-        self.dloadx[iel] = np.asarray(a)
+        self._dload[iel] = np.asarray(a)
 
     def assign_sflux(self, iel, iedge, a):
-        self.sfluxx[(iel, iedge)] = np.asarray(a)
+        self._sflux[(iel, iedge)] = np.asarray(a)
 
     def assign_sfilm(self, iel, iedge, Too, h):
-        self.sfilmx[(iel, iedge)] = [Too, h]
+        self._sfilm[(iel, iedge)] = [Too, h]
 
     def assign_hsrc(self, iel, s):
-        self.hsrcx[iel] = np.asarray(s)
+        self._hsrc[iel] = np.asarray(s)
 
     def Frame(self, dtime, copy=1):
         frame = Frame(self.value, dtime)
@@ -258,13 +258,13 @@ class LoadStep(object):
             step.frames[-1].field_outputs
         )
         self.dofs[:] = step.dofs
-        self.dofx = _copy.deepcopy(step.dofx)
-        self.cloadx = _copy.deepcopy(step.cloadx)
-        self.dloadx = _copy.deepcopy(step.dloadx)
-        self.sloadx = _copy.deepcopy(step.sloadx)
-        self.sfluxx = _copy.deepcopy(step.sfluxx)
-        self.sfilmx = _copy.deepcopy(step.sfilmx)
-        self.hsrcx = _copy.deepcopy(step.hsrcx)
+        self._dof = _copy.deepcopy(step._dof)
+        self._cload = _copy.deepcopy(step._cload)
+        self._dload = _copy.deepcopy(step._dload)
+        self._sload = _copy.deepcopy(step._sload)
+        self._sflux = _copy.deepcopy(step._sflux)
+        self._sfilm = _copy.deepcopy(step._sfilm)
+        self._hsrc = _copy.deepcopy(step._hsrc)
         self.predef[:] = step.predef
         self.svars[:] = step.svars
 
@@ -365,10 +365,10 @@ class LoadStep(object):
                     if I is None:
                         tty.warn("INVALID DOF FOR NODE " "{0}".format(inode))
                         continue
-                    if doftype == DIRICHLET and I in self.dofx:
-                        self.dofx.pop(I)
-                    elif I in self.cloadx:
-                        self.cloadx.pop(I)
+                    if doftype == DIRICHLET and I in self._dof:
+                        self._dof.pop(I)
+                    elif I in self._cload:
+                        self._cload.pop(I)
             return
 
         if hasattr(amplitude, "__call__"):
@@ -388,18 +388,18 @@ class LoadStep(object):
                 I = self.model.dofmap(inode, j)  # noqa: E741
                 if I is None:
                     raise UserInputError("INVALID DOF FOR NODE {0}".format(inode))
-                if I in self.cloadx and doftype == DIRICHLET:
+                if I in self._cload and doftype == DIRICHLET:
                     msg = "ATTEMPTING TO APPLY LOAD AND DISPLACEMENT "
                     msg += "ON SAME DOF"
                     raise UserInputError(msg)
-                elif I in self.dofx and doftype == NEUMANN:
+                elif I in self._dof and doftype == NEUMANN:
                     msg = "ATTEMPTING TO APPLY LOAD AND DISPLACEMENT "
                     msg += "ON SAME DOF"
                     raise UserInputError(msg)
                 if doftype == DIRICHLET:
-                    self.dofx[I] = float(a[i])
+                    self._dof[I] = float(a[i])
                 else:
-                    self.cloadx[I] = float(a[i])
+                    self._cload[I] = float(a[i])
 
     # ----------------------------------------------------------------------- #
     # --- LOADING CONDITIONS ------------------------------------------------ #
