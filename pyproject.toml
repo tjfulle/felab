@@ -1,0 +1,14 @@
+[tool.black]
+line-length = 88
+target_version = ['py36']
+include = '\.pyi?$'
+exclude = '''
+(
+    __pycache__
+  | \.cache
+  | \.git
+  | ^/lib/nevada/external
+  | ^/lib/nevada/vvtest-plugin/vvtest_user_plugin.py
+  | ^/share/nevada
+)
+'''

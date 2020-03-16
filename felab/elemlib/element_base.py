@@ -1,5 +1,6 @@
-from numpy import *
-from ..x.utilities import *
+import numpy as np
+from felab.error import UserInputError
+
 
 # --------------------------------------------------------------------------- #
 # ------------------------- BASE ELEMENT CLASS ------------------------------ #
@@ -16,8 +17,8 @@ class element_base(object):
     def __init__(self, label, elenod, elecoord, elemat, **elefab):
 
         self.label = label
-        self.inodes = asarray(elenod)
-        self.xc = asarray(elecoord)
+        self.inodes = np.asarray(elenod)
+        self.xc = np.asarray(elecoord)
         self.material = elemat
 
         if self.elefab is None:

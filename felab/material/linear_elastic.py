@@ -1,4 +1,4 @@
-from numpy import *
+import numpy as np
 from numpy.linalg import inv
 
 
@@ -36,7 +36,7 @@ class linear_elastic(object):
         C11 = self.Lambda + 2 * self.Mu
         C12 = self.Lambda
         C44 = self.Mu
-        D = array(
+        D = np.array(
             [
                 [C11, C12, C12, 0, 0, 0],
                 [C12, C11, C12, 0, 0, 0],
@@ -64,5 +64,5 @@ class linear_elastic(object):
                 idx = [[[0], [1], [2], [3]], [0, 1, 2, 3]]
                 D = D[idx]
 
-        stress += dot(D, dstrain)
+        stress += np.dot(D, dstrain)
         return stress, statev, D

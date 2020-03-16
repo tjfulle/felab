@@ -1,19 +1,19 @@
-import logging
+import os
 import pickle
-from numpy import *
+import numpy as np
 from numpy.ma import masked, masked_array
 from collections import OrderedDict
-from os.path import basename, isfile, splitext
 
-from .parse import AbaqusParser
+import felab.util.tty as tty
+from felab.mesh.abaparse.parse import AbaqusParser
 
 
 def mag(a):
-    return sqrt(dot(a, a))
+    return np.sqrt(np.dot(a, a))
 
 
 def mag2(a):
-    return array([mag(x) for x in a])
+    return np.array([mag(x) for x in a])
 
 
 class Container(OrderedDict):
@@ -43,7 +43,7 @@ class Nodes(Container):
         i = len(self)
         for row in item.data:
             label = int(row[0])
-            node = Node(label=int(row[0]), coord=array([float(x) for x in row[1:]]))
+            node = Node(label=label, coord=np.array([float(x) for x in row[1:]]))
             self[node.label] = node
             nodes.append(node.label)
             self._map[node.label] = i
@@ -58,38 +58,38 @@ class Element:
 
     @property
     def centroid(self):
-        return average(self.coord, axis=0)
+        return np.average(self.coord, axis=0)
 
     @property
     def coord(self):
-        return array([node.coord for node in self.nodes])
+        return np.array([node.coord for node in self.nodes])
 
     def normal(self, face):
         """Find the normal to the plane defined by points"""
         et = self.type.upper()
-        xc = array([node.coord for node in self.nodes if node.label in face])
+        xc = np.array([node.coord for node in self.nodes if node.label in face])
         if et[:5] == "C3D20":
             assert len(xc) == 8
             x1 = xc[1] - xc[0]
             for x in xc[2:]:
                 x2 = x - xc[0]
-                if abs(dot(x1, x2)) < 1e-4:
+                if abs(np.dot(x1, x2)) < 1e-4:
                     continue
-                n = cross(x2, x1)
+                n = np.cross(x2, x1)
                 return n / mag(n)
         elif et[:4] == "C3D8":
             assert len(face) == 4
             x1 = xc[1] - xc[0]
             for x in xc[1:]:
                 x2 = x - xc[0]
-                if abs(dot(x1, x2)) < 1e-4:
+                if abs(np.dot(x1, x2)) < 1e-4:
                     continue
-                n = cross(x2, x1)
+                n = np.cross(x2, x1)
                 return n / mag(n)
         elif et in ("CAX4", "PE4", "PS4"):
             assert len(face) == 2
             dx, dy = xc[1, [0, 1]] - xc[0, [0, 1]]
-            n = array([dy, -dx], dtype=float)
+            n = np.array([dy, -dx], dtype=float)
             return n / mag(n)
         else:
             raise TypeError("ELEMENT TYPE {0} DOES NOT DEFINE NORMAL".format(et))
@@ -111,9 +111,9 @@ class Elements(Container):
         et = item.params.get("type")
         for row in item.data:
             label = int(row[0])
-            e_nodes = array([nodes[int(x)] for x in row[1:]])
+            e_nodes = np.array([nodes[int(x)] for x in row[1:]])
             e = Element(
-                label=int(row[0]),
+                label=label,
                 type=et,
                 nodes=e_nodes,
                 connect=[node.label for node in e_nodes],
@@ -242,9 +242,9 @@ class ElementSets(SetContainer):
 
 
 def AbaqusModelFactory(filename):
-    root, ext = splitext(filename)
+    root, ext = os.path.splitext(filename)
     pkl = root + ".p"
-    if isfile(pkl):
+    if os.path.isfile(pkl):
         with open(pkl, "rb") as fh:
             model = pickle.load(fh)
     else:
@@ -283,10 +283,10 @@ class AbaqusModel(object):
         return self.get_coord().shape[1]
 
     def get_min_on_axis(self, axis):
-        return amin(self.get_coord()[:, axis])
+        return np.amin(self.get_coord()[:, axis])
 
     def get_max_on_axis(self, axis):
-        return amax(self.get_coord()[:, axis])
+        return np.amax(self.get_coord()[:, axis])
 
     def get_nodes_in_set(self, nset, disp=0):
         labels = self.nodesets.get(nset.upper())
@@ -302,7 +302,7 @@ class AbaqusModel(object):
 
     def get_elem_centroids(self, labels=None, subset=None):
         if self._c is None:
-            self._c = array(
+            self._c = np.array(
                 [self.elements[label].centroid for label in self.elements.labels]
             )
         if labels is not None:
@@ -315,7 +315,7 @@ class AbaqusModel(object):
 
     def get_coord(self, labels=None):
         if self._x is None:
-            self._x = array([self.nodes[label].coord for label in self.nodes.labels])
+            self._x = np.array([self.nodes[label].coord for label in self.nodes.labels])
         if labels is None:
             return self._x
         ix = [self.nodmap[label] for label in labels]
@@ -323,7 +323,7 @@ class AbaqusModel(object):
 
     def get_length(self, axis):
         xc = self.get_elem_centroids()[:, axis]
-        return abs(amax(xc) - amin(xc))
+        return abs(np.amax(xc) - np.amin(xc))
 
     def get_radius(self, axis, pos=None, subset=None, at_min=0, at_max=0):
         xc = self.get_elem_centroids()
@@ -331,17 +331,17 @@ class AbaqusModel(object):
             ix = [self.elemap[e.label] for e in subset]
             xc = xc[ix]
             if at_min:
-                i = argmin(xc[:, axis])
+                i = np.argmin(xc[:, axis])
             elif at_max:
-                i = argmax(xc[:, axis])
+                i = np.argmax(xc[:, axis])
             else:
                 raise TypeError("Requires at_min or at_max keyword")
         else:
             if pos is None:
                 raise TypeError("pos keyword required")
-            i = argmin(abs(xc[:, axis] - pos))
+            i = np.argmin(abs(xc[:, axis] - pos))
 
-        r = sqrt(sum([xc[i, j] ** 2 for j in range(xc.shape[1]) if j != axis]))
+        r = np.sqrt(sum([xc[i, j] ** 2 for j in range(xc.shape[1]) if j != axis]))
         return r
 
     def get_closest_element(
@@ -354,7 +354,7 @@ class AbaqusModel(object):
             skip_labels.extend(self.elsets[xset.upper()])
 
         xc = self.get_elem_centroids()
-        clen = abs(average(diff(sorted(xc[:, axis]))))
+        # clen = abs(np.average(np.diff(sorted(xc[:, axis]))))
 
         if radial:
             # RADIAL COORDINATES
@@ -365,16 +365,16 @@ class AbaqusModel(object):
             if len(pos) == 2:
                 r = pos[{0: 1, 1: 0}[axis]]
             else:
-                r = sqrt(sum(pos[i] ** 2 for i in range(3) if i != axis))
-            pos = array([r, z])
+                r = np.sqrt(sum(pos[i] ** 2 for i in range(3) if i != axis))
+            pos = np.array([r, z])
 
             # ALL ELEMENTS CENTROIDS
             z = xc[:, axis]
             if xc.shape[1] == 2:
                 r = xc[:, {0: 1, 1: 0}[axis]]
             else:
-                r = sqrt(sum(xc[:, i] ** 2 for i in range(3) if i != axis))
-            xc = column_stack((r, z))
+                r = np.sqrt(sum(xc[:, i] ** 2 for i in range(3) if i != axis))
+            xc = np.column_stack((r, z))
 
         dx = mag2(abs(xc - pos))
 
@@ -383,10 +383,10 @@ class AbaqusModel(object):
             ix = [self.elemap[label] for label in skip_labels]
             dx_m = masked_array(dx)
             dx_m[ix] = masked
-            index = dx_m.argmin()
+            index = dx_m.np.argmin()
 
         else:
-            index = dx.argmin()
+            index = dx.np.argmin()
 
         label = self.elements.labels[index]
         if disp:
@@ -424,8 +424,8 @@ class AbaqusModel(object):
         self._x = None
 
     def parse(self, filename):
-        assert isfile(filename)
-        self.f = basename(filename)
+        assert os.path.isfile(filename)
+        self.f = os.path.basename(filename)
         p = AbaqusParser(lex_optimize=False, yacc_optimize=False)
         buf = open(filename).read()
         t = p.parse(buf, self.f, debuglevel=0)
@@ -454,7 +454,7 @@ class AbaqusModel(object):
                 self.elsets.put(item)
 
             elif item.key == "nset":
-                elset = item.params.get("elset")
+                # elset = item.params.get("elset")
                 self.nodesets.put(item)
 
             elif item.key == "surface":
@@ -477,7 +477,7 @@ class AbaqusModel(object):
                 notread.append(item.key)
 
         if notread:
-            logging.debug(
+            tty.debug(
                 "THE FOLLOWING KEYWORDS AND THEIR DATA WERE NOT READ:\n"
                 "{0}".format(", ".join(notread))
             )
@@ -488,7 +488,7 @@ def test():
 
     D = dirname(realpath(__file__))
     filename = join(D, "mmxmn.inp")
-    assert isfile(filename)
+    assert os.path.isfile(filename)
     a = AbaqusModel(filename)
     a.shift([-1.0, 0.0, 0.0])
     el = a.elements[1]

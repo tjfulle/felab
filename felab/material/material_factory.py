@@ -1,10 +1,9 @@
-import logging
-from numpy import *
-from ..x.utilities import UserInputError, is_listlike
-from .elas import elas
-from .linear_elastic import linear_elastic
-from .neohooke import neo_hooke
-from .thermal import thermally_conductive
+import felab.util.tty as tty
+from felab.error import UserInputError
+from felab.material.elas import elas
+from felab.material.neohooke import neo_hooke
+from felab.material.linear_elastic import linear_elastic
+from felab.material.thermal import thermally_conductive
 
 __all__ = ["Material"]
 
@@ -41,7 +40,7 @@ class Material(object):
          mat = Material('Material-1')
          mat.isotropic_thermal_conductivity(12)
 
-    """
+    """  # noqa: W605
 
     def __init__(self, name, **kwds):
 
@@ -83,7 +82,7 @@ class Material(object):
                 self.thermal_conductivity(v)
 
             else:
-                logging.warn("SETTING UNKNOWN MATERIAL PROPERTY {0!r}".format(kwd))
+                tty.warn("SETTING UNKNOWN MATERIAL PROPERTY {0!r}".format(kwd))
                 setattr(self, kwd, v)
 
     @property

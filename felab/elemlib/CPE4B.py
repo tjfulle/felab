@@ -1,4 +1,4 @@
-from numpy import *
+import numpy as np
 from numpy.linalg import det, inv
 from .CPX4 import CPX4
 from .gauss_rule_info import quad_gauss_rule_info
@@ -16,32 +16,26 @@ class CPE4B(CPX4):
         return quad_gauss_rule_info(2, point)
 
     def bmatrix(self, dN, *args):
-        B = zeros((4, 8))
+        B = np.zeros((4, 8))
         B[0, 0::2] = B[3, 1::2] = dN[0, :]
         B[1, 1::2] = B[3, 0::2] = dN[1, :]
 
         # MEAN DILATATIONAL FORMULATION
-        xc = self.xc
-
-        dNb = zeros((2, 4))
-        jac = zeros(self.num_gauss)
+        dNb = np.zeros((2, 4))
+        w = np.zeros(self.num_gauss)
+        jac = np.zeros(self.num_gauss)
         for p in range(self.num_gauss):
             # COMPUTE THE INTEGRALS OVER THE VOLUME
-            xi = self.gaussp[p]
-            dNdxi = self.shapegrad(xi)
-            dxdxi = dot(dNdxi, xc)
-            jac[p] = det(dxdxi)
-            dxidx = inv(dxdxi)
-            dNdx = dot(dxidx, dNdxi)
-            dNb += dNdx * self.gaussw[p] * jac[p] / self.dimensions
+            xi, w[p] = self.gauss_rule_info(p)
+            _, dN, jac[p] = self.shapefun_der(self.xc, xi)
+            dNb += dN * w[p] * jac[p] / self.dimensions
 
         # SCALING
-        ev = dot(jac, self.gaussw)
+        ev = np.dot(jac, w)
         dNb /= ev
 
         for a in range(self.nodes):
             i = 2 * a
-            j = i + 1
             bb1 = (dNb[0, a] - dN[0, a]) / 2.0
             bb2 = (dNb[1, a] - dN[1, a]) / 2.0
             B[0, i : i + 2] += [bb1, bb2]

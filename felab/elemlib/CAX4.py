@@ -1,4 +1,4 @@
-from numpy import *
+import numpy as np
 from .CPX4 import CPX4
 from .gauss_rule_info import quad_gauss_rule_info
 
@@ -27,8 +27,8 @@ class CAX4(CPX4):
 
     def bmatrix(self, dN, *args):
         N = args[0]
-        rp = dot(N, self.xc[:, 0])
-        B = zeros((4, 8))
+        rp = np.dot(N, self.xc[:, 0])
+        B = np.zeros((4, 8))
         B[0, 0::2] = B[3, 1::2] = dN[0, :]
         B[1, 1::2] = B[3, 0::2] = dN[1, :]
         B[2, 0::2] = N / rp

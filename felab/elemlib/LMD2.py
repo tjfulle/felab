@@ -1,6 +1,8 @@
-from numpy import *
-from ..x.utilities import *
-from .element_base import element_base
+import numpy as np
+
+from felab.util.numeric import count_digits
+from felab.constants import SCALAR, STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY
+from felab.elemlib.element_base import element_base
 
 
 # --------------------------------------------------------------------------- #
@@ -77,12 +79,12 @@ class LMD2(element_base):
 
         # ELEMENT NORMAL
         v = self.xc[1] - self.xc[0]
-        h = sqrt(dot(v, v))
+        h = np.sqrt(np.dot(v, v))
         n = v / h
         if self.dimensions == 1:
             nn = 1.0
         else:
-            nn = outer(n, n)
+            nn = np.outer(n, n)
 
         svars[1, 0] = self.internal_force(u + du)
         svars[1, 1] = svars[1, 0] / self.A
@@ -122,6 +124,6 @@ class LMD2(element_base):
         x = self.xc[1] - self.xc[0]
         uc = uc.reshape(self.xc.shape)
         u = uc[1] - uc[0]
-        Xu = dot(x, u)
-        L = sqrt(dot(x, x))
+        Xu = np.dot(x, u)
+        L = np.sqrt(np.dot(x, x))
         return self.material.E * self.A / L * Xu / L

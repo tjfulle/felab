@@ -1,10 +1,5 @@
-import logging
-from numpy import *
-from numpy.linalg import det, inv
-
-from ..x.constants import *
-from ..x.utilities import *
-from .isop_base import isop_base
+from felab.elemlib.isop_base import isop_base
+from felab.constants import STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY, HSRC, SFILM, SFLUX
 
 
 class DCMDN(isop_base):

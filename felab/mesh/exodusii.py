@@ -1,17 +1,19 @@
-import re
 import os
 import sys
-import logging
 import datetime
-from numpy import *
-from copy import deepcopy
-from os.path import basename, join, splitext, isfile
+import numpy as np
+import copy as _copy
 
-from .element_block import element_block
-from ..elemlib import element_family
-from ..x.utilities import *
-from ..x.constants import *
-from ..stage.data_wharehouse import *
+import felab.util.tty as tty
+from felab.constants import ELEMENT_CENTROID, NODE
+from felab.mesh.element_block import element_block
+from felab.elemlib import element_family
+from felab.stage.data_wharehouse import (
+    ScalarField,
+    VectorField,
+    FieldOutputs,
+    SymmetricTensorField,
+)
 
 
 # True if we are running on Python 3.
@@ -23,7 +25,7 @@ except ImportError:
     NETCDF4 = False
     warn_all = False
     if PY3 and warn_all:
-        logging.warn(
+        tty.warn(
             "USING SCIPY.IO.NETCDF LIBRARY TO WRITE EXODUSII FILES.  "
             "INSTALL NETCDF4 FOR BETTER RELIABILITY."
         )
@@ -53,7 +55,7 @@ def stringify(a):
 
 def aindex(arr, ij):
     a = arr.tolist()
-    return array([a.index(i) for i in ij])
+    return np.array([a.index(i) for i in ij])
 
 
 def sortexoname(key):
@@ -114,7 +116,7 @@ def labels_and_data(key, data, numdim, numnod=None):
 
 def stringtoarr(string, NUMCHARS):
     # function to convert a string to a array of NUMCHARS characters
-    arr = zeros(NUMCHARS, "S1")
+    arr = np.zeros(NUMCHARS, "S1")
     arr[0 : len(string)] = tuple(string)
     return arr
 
@@ -279,7 +281,7 @@ class EXOFileWriter(EXOFile):
 
         """
         self.fh = self.open_file(filename, mode="w")
-        self.jobid = splitext(basename(filename))[0]
+        self.jobid = os.path.splitext(os.path.basename(filename))[0]
         self.filename = filename
         self.initialized = False
         self.count = 0
@@ -304,10 +306,10 @@ class EXOFileWriter(EXOFile):
             coord = coord.reshape(-1, 1)
         numnod, numdim = coord.shape
         # Node map: nodmap1[i] is the external node label of the ith node
-        nodmap1 = array(sorted(nodmap.keys(), key=lambda k: nodmap[k]))
+        nodmap1 = np.array(sorted(nodmap.keys(), key=lambda k: nodmap[k]))
 
         elemap = elemap
-        elemap1 = array(sorted(elemap.keys(), key=lambda k: elemap[k]))
+        elemap1 = np.array(sorted(elemap.keys(), key=lambda k: elemap[k]))
 
         # ------------------------------------------------------------------- #
         # ------------------------------------------------- record arrays --- #
@@ -324,7 +326,7 @@ class EXOFileWriter(EXOFile):
         self.fh.api_version = 5.0300002
         self.fh.title = "finite element simulation"
 
-        self.fh.filename = basename(self.filename)
+        self.fh.filename = os.path.basename(self.filename)
         self.fh.jobid = self.jobid
 
         self.fh.createDimension(DIM_LEN_STRING, LEN_STRING)
@@ -378,7 +380,7 @@ class EXOFileWriter(EXOFile):
         self.fh.variables[VAR_ELE_MAP(1)][:] = elemap1
 
         self.fh.createVariable(VAR_EB_STATUS, INT, (DIM_NUM_ELEBLK,))
-        self.fh.variables[VAR_EB_STATUS][:] = ones(num_el_blk, dtype=int)
+        self.fh.variables[VAR_EB_STATUS][:] = np.ones(num_el_blk, dtype=int)
 
         self.fh.createVariable(VAR_EB_NAMES, CHAR, (DIM_NUM_ELEBLK, DIM_LEN_STRING))
         for (ieb, eb) in enumerate(element_blocks, start=1):
@@ -407,7 +409,7 @@ class EXOFileWriter(EXOFile):
         if elemsets:
             nes = len(elemsets)
             self.fh.createDimension(DIM_NUM_ES, nes)
-            prop1 = arange(nes, dtype=int32) + 1
+            prop1 = np.arange(nes, dtype=int) + 1
             self.fh.createVariable(VAR_ES_PROP1, INT, (DIM_NUM_ES,))
             self.fh.variables[VAR_ES_PROP1][:] = prop1
             self.setncattr(VAR_ES_PROP1, "name", "ID")
@@ -427,7 +429,7 @@ class EXOFileWriter(EXOFile):
             nns = len(nodesets)
             self.fh.createDimension(DIM_NUM_NS, nns)
             # node set IDs - standard map
-            prop1 = arange(nns, dtype=int32) + 1
+            prop1 = np.arange(nns, dtype=int) + 1
             self.fh.createVariable(VAR_NS_PROP1, INT, (DIM_NUM_NS,))
             self.fh.variables[VAR_NS_PROP1][:] = prop1
             self.setncattr(VAR_NS_PROP1, "name", "ID")
@@ -447,7 +449,7 @@ class EXOFileWriter(EXOFile):
             nss = len(sidesets)
             self.fh.createDimension(DIM_NUM_SS, nss)
             # side set IDs - standard map
-            prop1 = arange(nss, dtype=int32) + 1
+            prop1 = np.arange(nss, dtype=int) + 1
             self.fh.createVariable(VAR_SS_PROP1, INT, (DIM_NUM_SS,))
             self.fh.variables[VAR_SS_PROP1][:] = prop1
             self.setncattr(VAR_SS_PROP1, "name", "ID")
@@ -525,19 +527,14 @@ class EXOFileWriter(EXOFile):
                 if fo.position == NODE:
                     nodvarnames.extend(fo.keys)
                 else:
-                    if any(in1d(fo.keys, elevarnames)):
+                    if any(np.in1d(fo.keys, elevarnames)):
                         continue
                     elevarnames.extend(fo.keys)
             self.initialize(nodvarnames, elevarnames)
 
-        numele = self.getdim(DIM_NUM_ELE)
-        numnod = self.getdim(DIM_NUM_NOD)
-        numblk = self.getdim(DIM_NUM_ELEBLK)
-        numdim = self.getdim(DIM_NUM_DIM)
-
         for increment in stage.increments:
             if not increment.converged:
-                logging.warn("CANNOT WRITE UNCONVERGED INCREMENT")
+                tty.warn("CANNOT WRITE UNCONVERGED INCREMENT")
                 return
             self.putincrement(increment)
 
@@ -577,7 +574,7 @@ class EXOFileReader(EXOFile):
     mode = "r"
 
     def __init__(self, filename):
-        if not isfile(filename):
+        if not os.path.isfile(filename):
             raise IOError("NO SUCH FILE: {0}".format(repr(filename)))
         self.filename = filename
         self.fh = self.open_file(filename, mode="r")
@@ -596,7 +593,6 @@ class EXOFileReader(EXOFile):
         numns = self.getdim(DIM_NUM_NS, 0)
         numes = self.getdim(DIM_NUM_ES, 0)
         numss = self.getdim(DIM_NUM_SS, 0)
-        maxnod = max([self.getdim(DIM_NUM_NOD_PER_EL(i + 1)) for i in range(numblk)])
 
         # Node and element maps
         # maps from external to internal numbers
@@ -620,10 +616,10 @@ class EXOFileReader(EXOFile):
         else:
             em = range(numele)
         elemap = dict([(xe, e) for (e, xe) in enumerate(em)])
-        elemap1 = array(sorted(elemap.keys(), key=lambda k: elemap[k]))
+        elemap1 = np.array(sorted(elemap.keys(), key=lambda k: elemap[k]))
 
         # Coordinates
-        coord = column_stack(
+        coord = np.column_stack(
             [self.fh.variables[VAR_COOR_NAME(i)][:] for i in range(numdim)]
         )
 
@@ -637,7 +633,7 @@ class EXOFileReader(EXOFile):
         for ieb in range(numblk):
             name = blknams[ieb]
             blkcon = self.fh.variables[VAR_BLKCON(ieb + 1)][:] - 1
-            ix = arange(k, k + blkcon.shape[0])
+            ix = np.arange(k, k + blkcon.shape[0])
             elefam = element_family(numdim, blkcon.shape[1])
             blk = element_block(
                 name, len(element_blocks) + 1, elemap1[ix], elefam, blkcon
@@ -753,7 +749,6 @@ class EXOFileReader(EXOFile):
             nodvarnames = stringify2(nodvarnames)
         else:
             nodvarnames = ""
-        numstep = len(times)
 
         node_labels = sorted(self.nodmap, key=lambda k: self.nodmap[k])
 
@@ -812,13 +807,13 @@ class EXOFileReader(EXOFile):
                 d = []
                 for (i, comp) in item:
                     d.append(self.fh.variables[VALS_NOD_VAR(i + 1)][count])
-                d = column_stack(d)
+                d = np.column_stack(d)
                 increment.field_outputs[name].add_data(d)
             for (name, item) in tensors1.items():
                 d = []
                 for (i, comp) in item:
                     d.append(self.fh.variables[VALS_NOD_VAR(i + 1)][count])
-                d = column_stack(d)
+                d = np.column_stack(d)
                 increment.field_outputs[name].add_data(d)
 
             # ELEMENT DATA
@@ -830,13 +825,13 @@ class EXOFileReader(EXOFile):
                     d = []
                     for (i, comp) in item:
                         d.append(self.fh.variables[VALS_ELE_VAR(i + 1, ieb + 1)][count])
-                    d = column_stack(d)
+                    d = np.column_stack(d)
                     increment.field_outputs[eb.name, name].add_data(d)
                 for (name, item) in tensors2.items():
                     d = []
                     for (i, comp) in item:
                         d.append(self.fh.variables[VALS_ELE_VAR(i + 1, ieb + 1)][count])
-                    d = column_stack(d)
+                    d = np.column_stack(d)
                     ndir, nshr = {1: (1, 0), 3: (2, 1), 4: (3, 1), 6: (3, 3)}[len(item)]
                     increment.field_outputs[eb.name, name].add_data(d)
 
@@ -863,7 +858,6 @@ def put_nodal_solution(filename, nodmap, elemap, coord, element_blocks, u):
 
     # initialize file with parameters
     numnod, numdim = coord.shape
-    numele = len(elemap)
     exo.genesis(nodmap, elemap, coord, element_blocks)
     fh.createDimension(DIM_NUM_GLO_VAR, 1)
     fh.createVariable(VALS_GLO_VAR, FLOAT, (DIM_TIME_STEP,))
@@ -877,7 +871,7 @@ def put_nodal_solution(filename, nodmap, elemap, coord, element_blocks, u):
         fh.variables[VAR_NAME_NOD_VAR][k, :] = key
         fh.createVariable(VALS_NOD_VAR(k + 1), FLOAT, (DIM_TIME_STEP, DIM_NUM_NOD))
 
-    u0 = zeros_like(u)
+    u0 = np.zeros_like(u)
     fh.variables[VAR_TIME_WHOLE][0] = 0.0
     fh.variables[VALS_GLO_VAR][0] = 0.0
     for (k, label) in enumerate(nodvarnames):
@@ -942,7 +936,7 @@ class StageRepository(object):
             last = self._values[-1].framces[-1]
             stage = Stage(name, last.value)
             if copy:
-                stage.increments[0].field_outputs = deepcopy(last.field_outputs)
+                stage.increments[0].field_outputs = _copy.deepcopy(last.field_outputs)
         self[name] = stage
         return self._values[-1]
 
@@ -971,7 +965,7 @@ class Stage(object):
         self.time += dtime
         if self.increments and copy:
             increment_n = self.increments[-1]
-            increment.field_outputs = deepcopy(increment_n.field_outputs)
+            increment.field_outputs = _copy.deepcopy(increment_n.field_outputs)
         increment.number = len(self.increments)
         self.increments.append(increment)
         return increment

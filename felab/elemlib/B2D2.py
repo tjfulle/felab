@@ -1,11 +1,9 @@
-from numpy import *
+import numpy as np
 
-from ..x.constants import *
+from felab.constants import SCALAR, STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY
 from .element_base import element_base
 
-# --------------------------------------------------------------------------- #
-# ---------------------- EULER BERNOULI BEAM ELEMENT ------------------------ #
-# --------------------------------------------------------------------------- #
+
 class B2D2(element_base):
     """Base class for 2 node Euler-Bernouli beam elements
 
@@ -69,11 +67,11 @@ class B2D2(element_base):
 
         # COMPUTE ELEMENT NORMAL
         v = self.xc[1] - self.xc[0]
-        h = sqrt(dot(v, v))
+        h = np.sqrt(np.dot(v, v))
         n = v / h
 
         # TRANSFORMATION MATRIX
-        Te = eye(6)
+        Te = np.eye(6)
         Te[0:2, 0:2] = Te[3:5, 3:5] = [[n[0], n[1]], [-n[1], n[0]]]
 
         # COLUMN STIFFNESS
@@ -81,7 +79,7 @@ class B2D2(element_base):
         K1 = (
             EA
             / h
-            * array(
+            * np.array(
                 [
                     [1.0, 0.0, 0.0, -1.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -97,7 +95,7 @@ class B2D2(element_base):
             2.0
             * EI
             / h ** 3
-            * array(
+            * np.array(
                 [
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0],
                     [0.0, 6.0, 3.0 * h, 0.0, -6.0, 3.0 * h],
@@ -109,4 +107,4 @@ class B2D2(element_base):
             )
         )
 
-        A[:] = dot(dot(Te.T, K1 + K2), Te)
+        A[:] = np.dot(np.dot(Te.T, K1 + K2), Te)

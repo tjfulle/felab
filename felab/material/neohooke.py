@@ -1,5 +1,5 @@
 """Neo Hookean HYPERELASTICITY, cannot be used for plane stress"""
-from numpy import *
+import numpy as np
 
 
 class neo_hooke(object):
@@ -26,7 +26,7 @@ class neo_hooke(object):
         ntens,
         coords,
         F0,
-        F,
+        F1,
         noel,
         kstep,
         kinc,
@@ -50,7 +50,7 @@ class neo_hooke(object):
         Fb = scale * F1
 
         # DEVIATORIC LEFT CAUCHY-GREEN DEFORMATION TENSOR
-        Bb = zeros(ntens)
+        Bb = np.zeros(ntens)
         Bb[0] = Fb[0, 0] * Fb[0, 0] + Fb[0, 1] * Fb[0, 1] + Fb[0, 2] * Fb[0, 2]
         Bb[1] = Fb[1, 0] * Fb[1, 0] + Fb[1, 1] * Fb[1, 1] + Fb[1, 2] * Fb[1, 2]
         Bb[2] = Fb[2, 0] * Fb[2, 0] + Fb[2, 1] * Fb[2, 1] + Fb[2, 2] * Fb[2, 2]
@@ -69,7 +69,7 @@ class neo_hooke(object):
         stress[ndir : ndir + nshr] = G * Bb[ndir : ndir + nshr]
 
         # SPATIAL STIFFNESS
-        D = zeros(ndir, ndir)
+        D = np.zeros(ndir, ndir)
         G23 = G * 2.0 / 3.0
         D[0, 0] = G23 * (Bb[0] + I1B) + K
         D[0, 1] = -G23 * (Bb[0] + Bb[1] - I1B) + K

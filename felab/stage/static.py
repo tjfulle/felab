@@ -1,9 +1,17 @@
-from numpy import *
+import numpy as np
 
-from .stage import sd_stage
-from ..x.constants import *
-from ..x.utilities import *
-from ..assembly import assemble_system, apply_boundary_conditions
+import felab.util.tty as tty
+from felab.constants import (
+    NEWTON,
+    GENERAL,
+    STIFF_AND_RHS,
+    SMALL_DISPLACEMENT,
+    STATIC_DIRECT,
+    STATIC_ITERATIVE,
+)
+from felab.util.numeric import linsolve
+from felab.stage.stage import sd_stage
+from felab.assembly import assemble_system, apply_boundary_conditions
 
 
 class static_stage(sd_stage):
@@ -41,7 +49,7 @@ class static_stage(sd_stage):
 
     def direct_solve(self):
 
-        time = array([0.0, self.start])
+        time = np.array([0.0, self.start])
 
         # CONCENTRATED FORCES
         Qf = self.cload(self.period)
@@ -49,15 +57,15 @@ class static_stage(sd_stage):
         X = self.dofvals(self.period)
 
         # define arguments needed for assembly
-        u = zeros(self.model.numdof)
+        u = np.zeros(self.model.numdof)
         energy = v = a = ddlmag = mdload = pnewdt = None
-        time = array([0.0, self.period])
+        time = np.array([0.0, self.period])
         dtime = 1.0
         lflags = [STATIC_DIRECT, SMALL_DISPLACEMENT, STIFF_AND_RHS, GENERAL, 0]
 
         # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
-        rhs = zeros(self.model.numdof)
-        K = zeros((self.model.numdof, self.model.numdof))
+        rhs = np.zeros(self.model.numdof)
+        K = np.zeros((self.model.numdof, self.model.numdof))
         assemble_system(
             rhs,
             K,
@@ -96,16 +104,16 @@ class static_stage(sd_stage):
         u[:] = linsolve(Kbc, Fbc)
 
         # SANITY CHECK
-        if not allclose(u[self.doftags], X):
-            logging.warn("INCORRECT SOLUTION TO DOFS")
+        if not np.allclose(u[self.doftags], X):
+            tty.warn("INCORRECT SOLUTION TO DOFS")
 
         # TOTAL FORCE, INCLUDING REACTION, AND REACTION
-        react = dot(K, u) - rhs
+        react = np.dot(K, u) - rhs
 
         # ASSEMBLE AGAIN - ONLY TO UPDATE STRESS IN ELEMENTS TO COMPUTED
         # DISPLACEMENT
-        rhs2 = zeros_like(rhs)
-        K2 = zeros_like(K)
+        rhs2 = np.zeros_like(rhs)
+        K2 = np.zeros_like(K)
         assemble_system(
             rhs2,
             K2,
@@ -156,7 +164,7 @@ class static_stage(sd_stage):
         # TIME IS:
         # TIME[0]: VALUE OF STAGE TIME AT BEGINNING OF INCREMENT
         # TIME[1]: VALUE OF TOTAL TIME AT BEGINNING OF INCREMENT
-        time = array([0.0, self.start])
+        time = np.array([0.0, self.start])
         dtime = period / float(increments)
 
         maxit2 = int(maxiters)
@@ -173,11 +181,11 @@ class static_stage(sd_stage):
 
             # NEWTON-RAPHSON LOOP
             err1 = 1.0
-            u = zeros(self.model.numdof)
+            u = np.zeros(self.model.numdof)
             for kiter in range(maxit2):
 
-                rhs = zeros(self.model.numdof)
-                K = zeros((self.model.numdof, self.model.numdof))
+                rhs = np.zeros(self.model.numdof)
+                K = np.zeros((self.model.numdof, self.model.numdof))
                 assemble_system(
                     rhs,
                     K,
@@ -220,11 +228,11 @@ class static_stage(sd_stage):
                 u += relax * w
 
                 # --- CHECK CONVERGENCE
-                err1 = sqrt(dot(w, w))
-                dnom = sqrt(dot(u, u))
+                err1 = np.sqrt(np.dot(w, w))
+                dnom = np.sqrt(np.dot(u, u))
                 if dnom > 1e-8:
                     err1 /= dnom
-                err2 = sqrt(dot(rhs, rhs)) / float(self.model.numdof)
+                err2 = np.sqrt(np.dot(rhs, rhs)) / float(self.model.numdof)
 
                 if kiter < maxit1:
                     if err1 < tolerance1:
@@ -233,7 +241,7 @@ class static_stage(sd_stage):
                     if err1 < tolerance:
                         break
                     elif err2 < 5e-2:
-                        logging.debug(
+                        tty.debug(
                             "CONVERGING TO LOSER TOLERANCE ON STAGE "
                             "{0}, INCREMENT {1}".format(self.number, kinc + 1)
                         )
@@ -244,10 +252,10 @@ class static_stage(sd_stage):
             else:
                 message = "FAILED TO CONVERGE ON STAGE "
                 message += "{0}, INCREMENT {1}".format(self.number, kinc + 1)
-                logging.error(message)
+                tty.error(message)
                 raise RuntimeError(message)
 
-            logging.debug(
+            tty.debug(
                 "STAGE {0}, INCREMENT {1}, " "COMPLETE.".format(self.number, kinc + 1)
             )
             time += dtime

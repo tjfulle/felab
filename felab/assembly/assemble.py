@@ -1,10 +1,27 @@
-import os
-import logging
-from numpy import *
-import numpy.linalg as la
+import numpy as np
 
-from ..x.utilities import *
-from ..x.constants import *
+import felab.util.tty as tty
+from felab.util.numeric import IX
+from felab.constants import (
+    STATIC_ITERATIVE,
+    STATIC_DIRECT,
+    DYNAMIC,
+    HEAT_TRANSFER_STEADY_STATE,
+    RHS_ONLY,
+    MASS_ONLY,
+    MASS_AND_RHS,
+    STIFF_AND_RHS,
+    STIFF_ONLY,
+)
+
+
+def get_procname(proc):
+    return {
+        STATIC_DIRECT: "DIRECT STATIC",
+        STATIC_ITERATIVE: "ITERATIVE STATIC",
+        DYNAMIC: "DYNAMIC",
+        HEAT_TRANSFER_STEADY_STATE: "STEADY STATE HEAT TRANSFER",
+    }[proc]
 
 
 def assemble_system(
@@ -55,7 +72,7 @@ def assemble_system(
         Distributed loads
     predef : ndarray
         Predefined fields
-    time : ndarray, optional {array([0.,0.])}
+    time : ndarray, optional {np.array([0.,0.])}
         time[0] is the stage time, time[1] the total time
     dtime : float {1.}
         Time increment
@@ -99,10 +116,10 @@ def assemble_system(
         msg += ", INCREMENT: {0}".format(kiter)
 
     if not kiter:
-        logging.debug(msg)
+        tty.debug(msg)
 
     elif kiter == 1 and kinc == 1:
-        logging.debug(msg)
+        tty.debug(msg)
 
     if lflags[2] not in (STIFF_AND_RHS, STIFF_ONLY, MASS_ONLY, RHS_ONLY, MASS_AND_RHS):
         raise NotImplementedError
@@ -112,7 +129,7 @@ def assemble_system(
     fac2 = (time[1] + dtime) / (time[0] + period)
     x0 = (1.0 - fac1) * predef[0] + fac1 * predef[1]
     xf = (1.0 - fac2) * predef[0] + fac2 * predef[1]
-    predef_i = array([x0, xf - x0])
+    predef_i = np.array([x0, xf - x0])
 
     # COMPUTE THE ELEMENT STIFFNESS AND SCATTER TO GLOBAL ARRAY
     for (ieb, eb) in enumerate(element_blocks):
@@ -123,8 +140,8 @@ def assemble_system(
             el = elements[iel]
             eft = element_freedom_table[iel]
             n = len(eft)
-            A_e = zeros((n, n))
-            rhs_e = zeros(n)
+            A_e = np.zeros((n, n))
+            rhs_e = np.zeros(n)
             el.response(
                 rhs_e,
                 A_e,

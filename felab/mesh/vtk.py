@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-import datetime
 import os
-from os.path import join, isdir
-from numpy import *
+import gzip
+import numpy as np
 import xml.dom.minidom as xdom
 
-from ..x.constants import *
-from ..elemlib import element_family
+import felab.util.tty as tty
+from felab.elemlib import element_family
 
 # Linear cells
 VTK_EMPTY_CELL = 0
@@ -91,14 +90,16 @@ def pyfem_elem_type(et):
 def arrtotens(a):
     if a.ndim == 1:
         if a.size == 4:
-            return array((a[0], a[3], 0, a[3], a[1], 0, 0, 0, a[2]))
+            return np.array((a[0], a[3], 0, a[3], a[1], 0, 0, 0, a[2]))
         elif a.size == 6:
-            return array((a[0], a[3], a[5], a[3], a[1], a[4], a[5], a[4], a[2]))
+            return np.array((a[0], a[3], a[5], a[3], a[1], a[4], a[5], a[4], a[2]))
     if a.shape[1] == 4:
-        z = zeros(a.shape[0])
-        return column_stack((a[:, 0], a[:, 3], z, a[:, 3], a[:, 1], z, z, z, a[:, 2]))
+        z = np.zeros(a.shape[0])
+        return np.column_stack(
+            (a[:, 0], a[:, 3], z, a[:, 3], a[:, 1], z, z, z, a[:, 2])
+        )
     elif a.shape[1] == 6:
-        return column_stack(
+        return np.column_stack(
             (
                 a[:, 0],
                 a[:, 3],
@@ -150,11 +151,11 @@ class VTKFile(object):
             ) = x
 
     def put_init(self, coord, nodlab, elelab, eletyp, elecon):
-        self.coord = asarray(coord)
-        self.nodlab = asarray(nodlab, dtype=int)
-        self.elecon = asarray(elecon, dtype=int)
-        self.elelab = asarray(elelab, dtype=int)
-        self.eletyp = asarray(eletyp, dtype=object)
+        self.coord = np.asarray(coord)
+        self.nodlab = np.asarray(nodlab, dtype=int)
+        self.elecon = np.asarray(elecon, dtype=int)
+        self.elelab = np.asarray(elelab, dtype=int)
+        self.eletyp = np.asarray(eletyp, dtype=object)
         self.nodes, self.dimensions = coord.shape
         self.numele, self.max_num_node_per_elem = elecon.shape
 
@@ -168,10 +169,10 @@ class VTKFile(object):
         root = self.doc.getElementsByTagName("VTKFile")[0]
         grid = root.getElementsByTagName("UnstructuredGrid")
         if not grid:
-            logging.warn("NO GRID INFORMATION FOUND in {0!r}".format(filename))
+            tty.warn("NO GRID INFORMATION FOUND in {0!r}".format(filename))
             return None
         if len(grid) > 1:
-            logging.warn("MULTIPLE GRIDS NOT SUPPORTED")
+            tty.warn("MULTIPLE GRIDS NOT SUPPORTED")
             return None
         grid = grid[0]
         # Piece 0 (only one)
@@ -182,7 +183,7 @@ class VTKFile(object):
         el = points.getElementsByTagName("DataArray")[0]
         numcmp = int(el.getAttribute("NumberOfComponents"))
         s = [line for line in el.firstChild.data.split("\n") if line.split()]
-        coord = array([float(a) for o in s for a in o.split()]).reshape(nodes, -1)
+        coord = np.array([float(a) for o in s for a in o.split()]).reshape(nodes, -1)
         assert coord.shape[1] == numcmp, "Error reading coord shape"
 
         try:
@@ -208,18 +209,19 @@ class VTKFile(object):
             ]
             name = item.getAttribute("Name")
             if name == "connectivity":
-                conn = array([int(x) for x in s(item)])
+                conn = np.array([int(x) for x in s(item)])
             elif name == "offsets":
-                offsets = array([int(x) for x in s(item)])
+                offsets = np.array([int(x) for x in s(item)])
             elif name == "types":
-                eletyp = array([pyfem_elem_type(int(x)) for x in s(item)])
+                # eletyp = np.array([pyfem_elem_type(int(x)) for x in s(item)])
+                pass
         if len(offsets) > 1:
-            maxnod = max(diff(offsets))
+            maxnod = max(np.diff(offsets))
         else:
             maxnod = offsets[0]
 
         # format connectivity
-        elecon = zeros((numele, maxnod), dtype=int)
+        elecon = np.zeros((numele, maxnod), dtype=int)
         k = 0
         for (el, offset) in enumerate(offsets):
             j = offset - k
@@ -311,9 +313,11 @@ class VTKFile(object):
         return coord, nodlab, elecon, elelab, nodesets, elemsets, surfaces
 
     def snapshot(self, u=None, **kwds):
-        if not isdir(self.datadir):
+        if not os.path.isdir(self.datadir):
             os.makedirs(self.datadir)
-        filename = join(self.datadir, self.jobid + "-{0:04d}.vtu".format(self.count))
+        filename = os.path.join(
+            self.datadir, self.jobid + "-{0:04d}.vtu".format(self.count)
+        )
         self.write_vtu_file(filename=filename, u=u, **kwds)
         # Write the updated pvd file
         ds = self.pvd.createElementNS("VTK", "DataSet")
@@ -345,7 +349,7 @@ class VTKFile(object):
         cd = self.create_element("CellData", parent="Piece")
 
         for (key, val) in kwds.items():
-            val = asarray(val)
+            val = np.asarray(val)
             da = self.doc.createElementNS("VTK", "DataArray")
             da.setAttribute("Name", key)
             if val.ndim == 1:
@@ -357,8 +361,8 @@ class VTKFile(object):
                     nc = 3
                     # Vector data
                     if val.shape[1] != 3:
-                        z = zeros((self.nodes, 3 - val.shape[1]))
-                        val = column_stack((val, z))
+                        z = np.zeros((self.nodes, 3 - val.shape[1]))
+                        val = np.column_stack((val, z))
                 elif val.shape[1] == 4:
                     val = arrtotens(val, 1)
                     nc = 6
@@ -437,13 +441,13 @@ class VTKFile(object):
             NumberOfComponents=3,
             NumberOfProblemDimensions=self.dimensions,
         )
-        x = array(self.coord)
+        x = np.array(self.coord)
         if u is not None:
             x += u
         if self.dimensions != 3:
-            z = zeros(self.nodes)
+            z = np.zeros(self.nodes)
             for i in range(3 - self.dimensions):
-                x = column_stack((x, z))
+                x = np.column_stack((x, z))
         da.appendChild(self.doc.createTextNode(arrtostr2(x, indent="")))
 
         # Cells
@@ -503,7 +507,7 @@ class VTKFile(object):
         da = self.create_element(
             "DataArray", parent=el.nodeName, type=dtype, format="ascii"
         )
-        arr = asarray(arr)
+        arr = np.asarray(arr)
         fmt = {"Int32": "d", "Float32": ".18f"}[dtype]
         if arr.ndim == 1:
             string = arrtostr(arr, fmt, indent="")
@@ -527,10 +531,10 @@ def WriteVTUMesh(filename, coord, nodlab, elelab, eletyp, elecon, check=0):
     f.write_vtu_file()
     if check:
         x, nl, ec, el = read_mesh(filename, disp=1)
-        assert allclose(x, coord), "coord"
-        assert allclose(nl, nodlab), "nodlab"
-        assert allclose(ec, elecon), "elecon"
-        assert allclose(el, elelab), "elelab"
+        assert np.allclose(x, coord), "coord"
+        assert np.allclose(nl, nodlab), "nodlab"
+        assert np.allclose(ec, elecon), "elecon"
+        assert np.allclose(el, elelab), "elelab"
 
 
 def WriteFEResults(jobid, coord, nodmap, elemap, eletyp, elecon, u=None, **kwds):
@@ -541,7 +545,7 @@ def WriteFEResults(jobid, coord, nodmap, elemap, eletyp, elecon, u=None, **kwds)
     if u is None:
         f.write_vtu_file(**kwds)
     else:
-        kw = dict([(key, zeros_like(val)) for (key, val) in kwds.items()])
+        kw = dict([(key, np.zeros_like(val)) for (key, val) in kwds.items()])
         f.snapshot(**kw)
         f.snapshot(u=u, **kwds)
 
@@ -565,7 +569,7 @@ def read_mesh(filename, disp=0):
 def test_write_fe_results():
     from distmesh import drectangle, distmesh2d, huniform
 
-    random.seed(190)  # Always the same results
+    np.random.seed(190)  # Always the same results
     fd = lambda p: drectangle(p, -1, 1, -1, 1)
     fh = huniform
     coord, elecon = distmesh2d(
@@ -577,12 +581,12 @@ def test_write_fe_results():
     elelab = range(elecon.shape[0])
     elemap = dict([(n, n) for n in elelab])
     eletyp = [element_family(2, 3)] * elecon.shape[0]
-    scal = random.rand(coord.shape[0])
-    vect = random.rand(coord.shape[0] * 2).reshape(-1, 2)
-    tens = random.rand(elecon.shape[0] * 9).reshape(-1, 9)
-    symt = random.rand(elecon.shape[0] * 6).reshape(-1, 6)
+    scal = np.random.rand(coord.shape[0])
+    vect = np.random.rand(coord.shape[0] * 2).reshape(-1, 2)
+    tens = np.random.rand(elecon.shape[0] * 9).reshape(-1, 9)
+    symt = np.random.rand(elecon.shape[0] * 6).reshape(-1, 6)
     kwds = dict(scal=scal, vect=vect, tens=tens, symt=symt)
-    u = zeros_like(coord)
+    u = np.zeros_like(coord)
     u[:, 0] = 1
     WriteFEResults(jobid, coord, nodmap, elemap, eletyp, elecon, u=u, **kwds)
     filename = jobid + ".vtu"

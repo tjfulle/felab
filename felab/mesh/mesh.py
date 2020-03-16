@@ -1,28 +1,18 @@
-import os
-from numpy import *
-from argparse import ArgumentParser
-from collections import OrderedDict
+import numpy as np
 
-from ..x.constants import *
-from ..x.utilities import is_listlike, UserInputError
-from ..elemlib import element_family
+from felab.constants import ALL, ILO, IHI, JLO, JHI, KLO, KHI, BOUNDARY
 
-from . import aba
-from . import vtk
-from . import exodusii
-from .element_block import element_block
+from felab.error import UserInputError
+from felab.util.lang import is_listlike, is_stringlike
+from felab.elemlib import element_family
+
+from felab.mesh import aba
+from felab.mesh import vtk
+from felab.mesh import exodusii
+from felab.mesh.element_block import element_block
+
 
 __all__ = ["Mesh"]
-
-
-def is_listlike(a):
-    return (
-        not hasattr(a, "strip") and hasattr(a, "__getitem__") or hasattr(a, "__iter__")
-    )
-
-
-def is_stringlike(s):
-    return hasattr(s, "strip")
 
 
 class Mesh(object):
@@ -79,8 +69,8 @@ class Mesh(object):
 
     Method 3: specifying ``p`` and ``t``:
 
-    >>> p = array([[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5]])
-    >>> t = array([[0, 1, 2, 3]])
+    >>> p = np.array([[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5]])
+    >>> t = np.array([[0, 1, 2, 3]])
     >>> mesh = Mesh(p=p, t=t)
 
     """
@@ -104,7 +94,7 @@ class Mesh(object):
             self.init_from_file(filename)
 
         elif o3:
-            p, t = asarray(p, dtype=float), asarray(t, dtype=int)
+            p, t = np.asarray(p, dtype=float), np.asarray(t, dtype=int)
             nodmap = dict(zip(range(p.shape[0]), range(p.shape[0])))
             eletab = dict([(i, t[i]) for i in range(t.shape[0])])
             self.init1(nodmap, p, eletab)
@@ -122,7 +112,7 @@ class Mesh(object):
     def connectivity(self):
         M = len(self.eletab)
         N = max([len(x) for x in self.eletab.values()])
-        elecon = zeros((M, N), dtype=int)
+        elecon = np.zeros((M, N), dtype=int)
 
         a = sorted(self.eletab.keys())
         for (i, e) in enumerate(a):
@@ -132,7 +122,7 @@ class Mesh(object):
 
     def init1(self, nodmap, coord, eletab, nodesets=None, elemsets=None, surfaces=None):
         self.nodmap = nodmap
-        self.coord = asarray(coord)
+        self.coord = np.asarray(coord)
         self.numnod, self.dimensions = self.coord.shape
 
         self.eletab = eletab
@@ -161,12 +151,12 @@ class Mesh(object):
         self, nodmap, coord, elemap, element_blocks, nodesets, elemsets, sidesets
     ):
         self.nodmap = nodmap
-        self.coord = asarray(coord)
+        self.coord = np.asarray(coord)
         self.numnod, self.dimensions = self.coord.shape
 
         self.elemap = elemap
         self.numele = len(self.elemap)
-        self.ielemap = array(sorted(elemap.keys(), key=lambda k: elemap[k]))
+        self.ielemap = np.array(sorted(elemap.keys(), key=lambda k: elemap[k]))
 
         self.nodesets, self.elemsets, self.surfaces = {}, {}, {}
         for (name, nodes) in nodesets.items():
@@ -229,7 +219,7 @@ class Mesh(object):
             raise UserInputError("No such node set {0!r}".format(label))
         else:
             inodes = [self.nodmap[xn] for xn in label]
-        return array(inodes, dtype=int)
+        return np.array(inodes, dtype=int)
 
     @staticmethod
     def parse_nod_and_elem_tables(nodtab, eletab):
@@ -270,7 +260,7 @@ class Mesh(object):
                 raise UserInputError("Duplicate node label: {0}".format(noddef[0]))
             nodmap[noddef[0]] = inode
         maxdim = max(maxdim, len(noddef[1:]))
-        coord = zeros((numnod, maxdim))
+        coord = np.zeros((numnod, maxdim))
         for (inode, noddef) in enumerate(nodtab):
             coord[inode, : len(noddef[1:])] = noddef[1:]
 
@@ -296,7 +286,6 @@ class Mesh(object):
             return self._free_edges
 
         edges = {}
-        k = 0
         for (ieb, eb) in enumerate(self.element_blocks):
             for (j, elenod) in enumerate(eb.elecon):
                 iel = self.elemap[eb.labels[j]]
@@ -315,12 +304,12 @@ class Mesh(object):
             if len(edge) == 1:
                 # edge not shared by multiple elements
                 nodes.extend(edge[0][2:])
-        self._bndry_nod2 = unique(sorted(nodes))
+        self._bndry_nod2 = np.unique(sorted(nodes))
         return self._bndry_nod2
 
     def boundary_nodes(self):
         if self.dimensions == 1:
-            return [argmin(self.coord), argmax(self.coord)]
+            return [np.argmin(self.coord), np.argmax(self.coord)]
         elif self.dimensions == 2:
             return self.boundary_nodes2()
         raise UserInputError("3D meshes not supported")
@@ -330,15 +319,15 @@ class Mesh(object):
         if region not in (ILO, IHI, JLO, JHI, KLO, KHI):
             raise UserInputError("unknown region {0!r}".format(region))
         axis, fun = {
-            ILO: (0, amin),
-            IHI: (0, amax),
-            JLO: (1, amin),
-            JHI: (1, amax),
-            KLO: (2, amin),
-            KHI: (2, amax),
+            ILO: (0, np.amin),
+            IHI: (0, np.amax),
+            JLO: (1, np.amin),
+            JHI: (1, np.amax),
+            KLO: (2, np.amin),
+            KHI: (2, np.amax),
         }[region]
         xpos = fun(self.coord[:, axis])
-        return where(abs(self.coord[:, axis] - xpos) < tol)[0]
+        return np.where(abs(self.coord[:, axis] - xpos) < tol)[0]
 
     def find_surface(self, region):
         if self.unassigned:
@@ -359,9 +348,9 @@ class Mesh(object):
         if not is_listlike(region):
             raise UserInputError("Unrecognized surface: {0}".format(region))
         surface = []
-        region = asarray(region)
+        region = np.asarray(region)
         if region.ndim == 1:
-            region = region[newaxis, :]
+            region = region[np.newaxis, :]
         for item in region:
             elem, edge = [int(x) for x in item]
             if is_listlike(elem):
@@ -374,9 +363,9 @@ class Mesh(object):
         if region not in (ILO, IHI):
             raise UserInputError("Incorrect 1D region")
         if region == ILO:
-            node = argmin(self.coord)
+            node = np.argmin(self.coord)
         else:
-            node = argmax(self.coord)
+            node = np.argmax(self.coord)
         for (ieb, eb) in enumerate(self.element_blocks):
             for (e, elenod) in enumerate(eb.elecon):
                 if node in elenod:
@@ -388,7 +377,7 @@ class Mesh(object):
         surface = []
         for (ieb, eb) in enumerate(self.element_blocks):
             for (e, elenod) in enumerate(eb.elecon):
-                w = where(in1d(elenod, nodes))[0]
+                w = np.where(np.in1d(elenod, nodes))[0]
                 if len(w) < 2:
                     continue
                 w = tuple(sorted(w))
@@ -396,11 +385,11 @@ class Mesh(object):
                     if tuple(sorted(edge)) == w:
                         # the internal node numbers match, this is the edge
                         surface.append((self.elemap[eb.labels[e]], ie))
-        return array(surface)
+        return np.array(surface)
 
         for (e, c) in enumerate(self.elecon):
             c = c[: self.elefam[e].nodes]
-            w = where(in1d(c, nodes))[0]
+            w = np.where(np.in1d(c, nodes))[0]
             if len(w) < 2:
                 continue
             w = tuple(sorted(w))
@@ -408,7 +397,7 @@ class Mesh(object):
                 if tuple(sorted(edge)) == w:
                     # the internal node numbers match, this is the edge
                     surface.append((e, ie))
-        return array(surface)
+        return np.array(surface)
 
     def create_node_set(self, name, region):
         if not is_stringlike(name):
@@ -439,7 +428,7 @@ class Mesh(object):
             if not is_listlike(region):
                 region = [region]
             ielems = [self.elemap[el] for el in region]
-        self.elemsets[name.upper()] = array(ielems, dtype=int)
+        self.elemsets[name.upper()] = np.array(ielems, dtype=int)
 
     def create_element_block(self, name, elements):
 
@@ -459,7 +448,7 @@ class Mesh(object):
         # we need to map from the temporary internal numbers
         blkcon, badel = [], []
         numblkel = len(xelems)
-        ielems = arange(self.num_assigned, self.num_assigned + numblkel)
+        ielems = np.arange(self.num_assigned, self.num_assigned + numblkel)
         for (i, xelem) in enumerate(xelems):
             # external element label -> new internal element ID
             ielem = ielems[i]
@@ -476,7 +465,7 @@ class Mesh(object):
                 "The following elements have inconsistent element "
                 "connectivity:\n   {0}".format(badel)
             )
-        blkcon = array(blkcon, dtype=int)
+        blkcon = np.array(blkcon, dtype=int)
         elefam = element_family(self.dimensions, blkcon.shape[1])
         blk = element_block(name, len(self.element_blocks) + 1, xelems, elefam, blkcon)
         self.element_blocks.append(blk)
@@ -485,7 +474,7 @@ class Mesh(object):
         return blk
 
     def to_genesis(self, filename):
-        exof = File(filename, mode="w")
+        exof = exodusii.File(filename, mode="w")
         if not self.element_blocks:
             # put in a single element block
             self.create_element_block("ElementBlock1", ALL)
@@ -515,22 +504,22 @@ class Mesh(object):
         xlim=None,
         ylim=None,
         filename=None,
-        **kwds
+        **kwds,
     ):
         assert self.dimensions == 2
         from matplotlib.patches import Polygon
-        import matplotlib.lines as mlines
+        # import matplotlib.lines as mlines
         from matplotlib.collections import PatchCollection
-        from matplotlib.cm import coolwarm, Spectral
+        from matplotlib.cm import Spectral  # , coolwarm
         import matplotlib.pyplot as plt
 
         if xy is None:
-            xy = array(self.coord)
+            xy = np.array(self.coord)
         if elecon is None:
             elecon = []
             for blk in self.element_blocks:
                 elecon.extend(blk.elecon.tolist())
-            elecon = asarray(elecon)
+            elecon = np.asarray(elecon)
         if u is not None:
             xy += u.reshape(xy.shape)
 
@@ -545,10 +534,10 @@ class Mesh(object):
         # colors = 100 * random.rand(len(patches))
         p = PatchCollection(patches, linewidth=weight, **kwds)
         if colorby is not None:
-            colorby = asarray(colorby).flatten()
+            colorby = np.asarray(colorby).flatten()
             if len(colorby) == len(xy):
                 # average value in element
-                colorby = array([average(colorby[points]) for points in elecon])
+                colorby = np.array([np.average(colorby[points]) for points in elecon])
             p.set_cmap(Spectral)  # coolwarm)
             p.set_array(colorby)
             p.set_clim(vmin=colorby.min(), vmax=colorby.max())
@@ -567,14 +556,14 @@ class Mesh(object):
         ax.add_collection(p)
 
         if not ylim:
-            ymin, ymax = amin(xy[:, 1]), amax(xy[:, 1])
+            ymin, ymax = np.amin(xy[:, 1]), np.amax(xy[:, 1])
             dy = max(abs(ymin * 0.05), abs(ymax * 0.05))
             ax.set_ylim([ymin - dy, ymax + dy])
         else:
             ax.set_ylim(ylim)
 
         if not xlim:
-            xmin, xmax = amin(xy[:, 0]), amax(xy[:, 0])
+            xmin, xmax = np.amin(xy[:, 0]), np.amax(xy[:, 0])
             dx = max(abs(xmin * 0.05), abs(xmax * 0.05))
             ax.set_xlim([xmin - dx, xmax + dx])
         else:
@@ -594,7 +583,7 @@ class Mesh(object):
 
     def PlotScalar2D(self, u, show=0):
         import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D
+        from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
         from matplotlib.cm import Spectral
 
         fig = plt.figure()
@@ -602,7 +591,7 @@ class Mesh(object):
         elecon = []
         for eb in self.element_blocks:
             elecon.extend(eb.elecon)
-        elecon = asarray(elecon)
+        elecon = np.asarray(elecon)
         ax.plot_trisurf(
             self.coord[:, 0], self.coord[:, 1], u, triangles=elecon, cmap=Spectral
         )

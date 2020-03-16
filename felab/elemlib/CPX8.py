@@ -1,4 +1,4 @@
-from numpy import *
+import numpy as np
 from .CMDN import CMDN
 
 
@@ -25,14 +25,14 @@ class CPX8(CMDN):
     nodes = 8
     dimensions = 2
     elefab = {"t": 1.0}
-    cp = array([0, 0], dtype=float64)
+    cp = np.array([0, 0], dtype=float)
     xp = (
-        array(
+        np.array(
             [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, -1], [1, 0], [0, 1], [-1, 0]],
-            dtype=float64,
+            dtype=float,
         ),
     )
-    edges = array([[0, 1, 4], [1, 2, 5], [2, 3, 6], [3, 0, 7]])
+    edges = np.array([[0, 1, 4], [1, 2, 5], [2, 3, 6], [3, 0, 7]])
     signature = [
         (1, 1, 0, 0, 0, 0, 0),
         (1, 1, 0, 0, 0, 0, 0),
@@ -55,19 +55,19 @@ class CPX8(CMDN):
     def volume(self):
         return self.t * self.area
 
-    def foo():
-        if edge is not None:
-            # EVALUATE SHAPE FUNCTION ON SPECIFIC EDGE
-            xi = array([[xi, -1.0], [1.0, xi], [xi, 1.0], [-1.0, xi]][edge])
+    # def foo():
+    #     if edge is not None:
+    #         # EVALUATE SHAPE FUNCTION ON SPECIFIC EDGE
+    #         xi = np.array([[xi, -1.0], [1.0, xi], [xi, 1.0], [-1.0, xi]][edge])
 
     def shape(self, qcoord, edge=None):
         if edge is not None:
             # EVALUATE SHAPE FUNCTION ON SPECIFIC EDGE
             x = qcoord
-            qcoord = array([[x, -1.0], [1.0, x], [x, 1.0], [-1.0, x]][edge])
+            qcoord = np.array([[x, -1.0], [1.0, x], [x, 1.0], [-1.0, x]][edge])
         xi, eta = qcoord[:2]
         # CORNER NODES
-        N = zeros(8)
+        N = np.zeros(8)
         N[0] = -0.25 * (1.0 - xi) * (1.0 - eta) * (1.0 + xi + eta)
         N[1] = 0.25 * (1.0 + xi) * (1.0 - eta) * (xi - eta - 1.0)
         N[2] = 0.25 * (1.0 + xi) * (1.0 + eta) * (xi + eta - 1.0)
@@ -81,7 +81,7 @@ class CPX8(CMDN):
 
     def shapegrad(self, qcoord):
         xi, eta = qcoord[:2]
-        dN = zeros((2, 8))
+        dN = np.zeros((2, 8))
         dN[0, 0] = 0.25 * (1.0 - eta) * (2.0 * xi + eta)
         dN[0, 1] = 0.25 * (1.0 - eta) * (2.0 * xi - eta)
         dN[0, 2] = 0.25 * (1.0 + eta) * (2.0 * xi + eta)
@@ -127,12 +127,12 @@ class CPX8(CMDN):
         dNdxi = self.shapegrad(qcoord)
 
         # Jacobian to natural coordinates
-        dxdxi = dot(dNdxi, coord)
-        dxidx = linalg.inv(dxdxi)
-        J = linalg.det(dxdxi)
+        dxdxi = np.dot(dNdxi, coord)
+        dxidx = np.linalg.inv(dxdxi)
+        J = np.linalg.det(dxdxi)
 
         # Convert shape function derivatives to derivatives wrt global physical
         # coordinates
-        dNdx = dot(dxidx, dNdxi)
+        dNdx = np.dot(dxidx, dNdxi)
 
         return N, dNdx, J

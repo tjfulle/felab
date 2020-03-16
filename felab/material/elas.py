@@ -70,6 +70,11 @@ USAGE
    formulas.
 """
 
+import re
+import sys
+import argparse
+from math import sqrt
+
 constformulas = """
    #########################################################################
    Lame = First Lame parameter         = G(E-2G)/(3G-E) = K-2G/3
@@ -85,12 +90,6 @@ constformulas = """
      Cr = thin rod elastic wave speed  = Sqrt[E/Rho]
    #########################################################################
 """
-import sys
-import os
-import re
-import argparse
-import readline
-from math import sqrt
 
 LAME, G, E, NU, K, H = "Lame", "G", "E", "Nu", "K", "H"
 C10, D1 = "C10", "D1"
@@ -464,7 +463,7 @@ def main(argv=None):
     args = p.parse_args(argv)
 
     if args.man:
-        parser.print_help()
+        p.print_help()
         sys.exit(manpage)
 
     EC = ElasticConstants()

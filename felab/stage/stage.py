@@ -1,9 +1,34 @@
-from numpy import *
-from copy import deepcopy
+import sys
+import numpy as np
+import copy as _copy
 
-from .data_wharehouse import *
-from ..x.utilities import *
-from ..x.constants import *
+import felab.util.tty as tty
+from felab.error import UserInputError
+from felab.util.lang import is_listlike
+from felab.util.numeric import emptywithlists, normal2d
+from felab.stage.data_wharehouse import (
+    SymmetricTensorField,
+    FieldOutputs,
+    ScalarField,
+    VectorField,
+)
+from felab.constants import (
+    ALL,
+    X,
+    Y,
+    Z,
+    PIN,
+    DIRICHLET,
+    NEUMANN,
+    SCALAR,
+    SYMTENSOR,
+    VECTOR,
+    SFILM,
+    SLOAD,
+    DLOAD,
+    HSRC,
+    SFLUX,
+)
 
 
 class load_stage(object):
@@ -24,7 +49,7 @@ class load_stage(object):
         self.number = number
         self.previous = previous
 
-        self.dofs = zeros(self.model.numdof)
+        self.dofs = np.zeros(self.model.numdof)
 
         # DOFX[I] IS THE PRESCRIBED DOF FOR DOF I
         self.dofx = {}
@@ -42,7 +67,7 @@ class load_stage(object):
         self.hsrcx = {}
 
         # PREDEFINED FIELDS
-        self.predef = zeros((3, 1, self.model.numnod))
+        self.predef = np.zeros((3, 1, self.model.numnod))
 
         # --- ALLOCATE STORAGE FOR SIMULATION DATA
         # STATE VARIABLE TABLE
@@ -62,7 +87,7 @@ class load_stage(object):
             a = [nstatev, nstatev + m]
             svtab.append(slice(*a))
             nstatev += m
-        self.svars = zeros((2, nstatev))
+        self.svars = np.zeros((2, nstatev))
         self.svtab = svtab
         self._K = None
 
@@ -92,8 +117,8 @@ class load_stage(object):
 
         elif style == "latex":
             stream.write("\\setcounter{MaxMatrixCols}{%d}\n" % n)
-            stream.write("\\renewcommand{\kbldelim}{[}\n")
-            stream.write("\\renewcommand{\kbrdelim}{]}\n")
+            stream.write("\\renewcommand{\kbldelim}{[}\n")  # noqa: W605
+            stream.write("\\renewcommand{\kbrdelim}{]}\n")  # noqa: W605
             stream.write("\\begin{displaymath}\n  \\kbordermatrix{\n")
             header = "      &" + " & ".join("{0}".format(i) for i in range(m))
             stream.write(header + "\\\\\n")
@@ -103,7 +128,7 @@ class load_stage(object):
             stream.write("  }\n\\end{displaymath}\n")
 
         elif style == "numeric":
-            machine_epsilon = finfo(float).eps
+            machine_epsilon = np.finfo(float).eps
             fmt = lambda x: numeric_fmt.format(x if abs(x) > machine_epsilon else 0)
             for (i, row) in enumerate(self._K):
                 stream.write(" ".join(fmt(x) for x in row))
@@ -114,17 +139,17 @@ class load_stage(object):
 
     @property
     def doftags(self):
-        return array(sorted(self.dofx), dtype=int)
+        return np.array(sorted(self.dofx), dtype=int)
 
     def dofvals(self, stage_time):
 
         ix = self.doftags
 
         # DOFS AT END OF LAST STAGE
-        X0 = array([self.previous.dofx.get(I, 0) for I in ix])
+        X0 = np.array([self.previous.dofx.get(I, 0) for I in ix])
 
         # DOFS AT END OF THIS STAGE
-        Xf = array([self.dofx[I] for I in ix])
+        Xf = np.array([self.dofx[I] for I in ix])
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
         fac = max(1.0, stage_time / self.period)
@@ -132,17 +157,17 @@ class load_stage(object):
 
     @property
     def cltags(self):
-        return array(sorted(self.cloadx), dtype=int)
+        return np.array(sorted(self.cloadx), dtype=int)
 
     def cload(self, stage_time):
         # CONCENTRATED LOAD AT END OF LAST STAGE
         ix = self.previous.cltags
-        Q0 = zeros_like(self.dofs)
+        Q0 = np.zeros_like(self.dofs)
         Q0[ix] = [self.previous.cloadx[key] for key in ix]
 
         # CONCENTRATED LOAD AT END OF THIS STAGE
         ix = self.cltags
-        Qf = zeros_like(self.dofs)
+        Qf = np.zeros_like(self.dofs)
         Qf[ix] = [self.cloadx[key] for key in ix]
 
         # INTERPOLATE CONCENTRATED LOAD TO CURRENT TIME
@@ -163,7 +188,7 @@ class load_stage(object):
         # INTERPOLATE SURFACE LOADS
         for (key, Ff) in self.sloadx.items():
             iel, iedge = key
-            F0 = self.previous.sloadx.get(key, zeros_like(Ff))
+            F0 = self.previous.sloadx.get(key, np.zeros_like(Ff))
             Fx = (1.0 - fac) * F0 + fac * Ff
             dltyp[iel].append(SLOAD)
             dload[iel].append([iedge] + [x for x in Fx])
@@ -171,7 +196,7 @@ class load_stage(object):
         # INTERPOLATE DISTRIBUTED LOADS
         for (key, Ff) in self.dloadx.items():
             iel = key
-            F0 = self.previous.dloadx.get(key, zeros_like(Ff))
+            F0 = self.previous.dloadx.get(key, np.zeros_like(Ff))
             Fx = (1.0 - fac) * F0 + fac * Ff
             dltyp[iel].append(DLOAD)
             dload[iel].append(Fx)
@@ -196,7 +221,7 @@ class load_stage(object):
         # INTERPOLATE HEAT SOURCES
         for (key, sf) in self.hsrcx.items():
             iel = key
-            s0 = self.previous.hsrcx.get(key, zeros_like(sf))
+            s0 = self.previous.hsrcx.get(key, np.zeros_like(sf))
             sx = (1.0 - fac) * s0 + fac * sf
             dltyp[iel].append(HSRC)
             dload[iel].append(sx)
@@ -204,40 +229,42 @@ class load_stage(object):
         return dltyp, dload
 
     def assign_sload(self, iel, iedge, a):
-        self.sloadx[(iel, iedge)] = asarray(a)
+        self.sloadx[(iel, iedge)] = np.asarray(a)
 
     def assign_dload(self, iel, a):
-        self.dloadx[iel] = asarray(a)
+        self.dloadx[iel] = np.asarray(a)
 
     def assign_sflux(self, iel, iedge, a):
-        self.sfluxx[(iel, iedge)] = asarray(a)
+        self.sfluxx[(iel, iedge)] = np.asarray(a)
 
     def assign_sfilm(self, iel, iedge, Too, h):
         self.sfilmx[(iel, iedge)] = [Too, h]
 
     def assign_hsrc(self, iel, s):
-        self.hsrcx[iel] = asarray(s)
+        self.hsrcx[iel] = np.asarray(s)
 
     def Increment(self, dtime, copy=1):
         increment = Increment(self.value, dtime)
         self.value += dtime
         if self.increments and copy:
             increment_n = self.increments[-1]
-            increment.field_outputs = deepcopy(increment_n.field_outputs)
+            increment.field_outputs = _copy.deepcopy(increment_n.field_outputs)
         increment.number = len(self.increments)
         self.increments.append(increment)
         return increment
 
     def copy_from(self, stage):
-        self.increments[0].field_outputs = deepcopy(stage.increments[-1].field_outputs)
+        self.increments[0].field_outputs = _copy.deepcopy(
+            stage.increments[-1].field_outputs
+        )
         self.dofs[:] = stage.dofs
-        self.dofx = deepcopy(stage.dofx)
-        self.cloadx = deepcopy(stage.cloadx)
-        self.dloadx = deepcopy(stage.dloadx)
-        self.sloadx = deepcopy(stage.sloadx)
-        self.sfluxx = deepcopy(stage.sfluxx)
-        self.sfilmx = deepcopy(stage.sfilmx)
-        self.hsrcx = deepcopy(stage.hsrcx)
+        self.dofx = _copy.deepcopy(stage.dofx)
+        self.cloadx = _copy.deepcopy(stage.cloadx)
+        self.dloadx = _copy.deepcopy(stage.dloadx)
+        self.sloadx = _copy.deepcopy(stage.sloadx)
+        self.sfluxx = _copy.deepcopy(stage.sfluxx)
+        self.sfilmx = _copy.deepcopy(stage.sfilmx)
+        self.hsrcx = _copy.deepcopy(stage.hsrcx)
         self.predef[:] = stage.predef
         self.svars[:] = stage.svars
 
@@ -312,7 +339,7 @@ class load_stage(object):
              fun = lambda x: x[:,1]**2
              self.assign_prescribed_bc(ILO, X, fun)
 
-        """
+        """  # noqa: W605
         self.assign_dof(DIRICHLET, nodes, dof, amplitude)
 
     PrescribedDOF = assign_prescribed_bc
@@ -334,9 +361,9 @@ class load_stage(object):
             # REMOVE THIS BC
             for (i, inode) in enumerate(inodes):
                 for j in dofs:
-                    I = self.model.dofmap(inode, j)
+                    I = self.model.dofmap(inode, j)  # noqa: E741
                     if I is None:
-                        logging.warn("INVALID DOF FOR NODE " "{0}".format(inode))
+                        tty.warn("INVALID DOF FOR NODE " "{0}".format(inode))
                         continue
                     if doftype == DIRICHLET and I in self.dofx:
                         self.dofx.pop(I)
@@ -349,16 +376,16 @@ class load_stage(object):
             a = amplitude(self.model.mesh.coord[inodes])
         elif not is_listlike(amplitude):
             # CREATE A SINGLE AMPLITUDE FOR EACH NODE
-            a = ones(len(inodes)) * amplitude
+            a = np.ones(len(inodes)) * amplitude
         else:
             if len(amplitude) != len(inodes):
                 raise UserInputError("INCORRECT AMPLITUDE LENGTH")
             # AMPLITUDE IS A LIST OF AMPLITUDES
-            a = asarray(amplitude)
+            a = np.asarray(amplitude)
 
         for (i, inode) in enumerate(inodes):
             for j in dofs:
-                I = self.model.dofmap(inode, j)
+                I = self.model.dofmap(inode, j)  # noqa: E741
                 if I is None:
                     raise UserInputError("INVALID DOF FOR NODE {0}".format(inode))
                 if I in self.cloadx and doftype == DIRICHLET:
@@ -387,12 +414,12 @@ class load_stage(object):
             a = amplitude(self.model.mesh.coord[inodes])
         elif not is_listlike(amplitude):
             # CREATE A SINGLE AMPLITUDE FOR EACH NODE
-            a = ones(len(inodes)) * amplitude
+            a = np.ones(len(inodes)) * amplitude
         else:
             if len(amplitude) != len(inodes):
                 raise UserInputError("INCORRECT AMPLITUDE LENGTH")
             # AMPLITUDE IS A LIST OF AMPLITUDES
-            a = asarray(amplitude)
+            a = np.asarray(amplitude)
         self.final_temp = a
 
     def advance(self, dtime, dofs, react=None, **kwds):
@@ -442,7 +469,6 @@ class load_stage(object):
             for (e, xel) in enumerate(eb.labels):
                 iel = self.model.mesh.elemap[xel]
                 el = self.model.elements[iel]
-                ue = u[el.inodes]
                 if ntens is not None:
                     svars = self.svars[0, self.svtab[iel]].reshape(m, n, ntens)
                 else:
@@ -572,7 +598,7 @@ class sd_stage(load_stage):
                 "EXPECTED {0} GRAVITY LOAD "
                 "COMPONENTS".format(len(self.model.active_dof))
             )
-        a = asarray(components)
+        a = np.asarray(components)
         for iel in ielems:
             el = self.model.elements[iel]
             rho = el.material.density
@@ -596,7 +622,7 @@ class sd_stage(load_stage):
             ielems = [self.model.mesh.elemap[region]]
         else:
             ielems = [self.model.mesh.elemap[el] for el in region]
-        a = asarray(components)
+        a = np.asarray(components)
         for iel in ielems:
             self.assign_dload(iel, a)
 

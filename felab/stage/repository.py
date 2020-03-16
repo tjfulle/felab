@@ -1,11 +1,7 @@
-from numpy import *
-
-from .stage import load_stage
-from .diffusive_ht import diffusive_ht_stage
-from .static import static_stage
-from .dynamic import dynamic_stage
-from ..x.utilities import *
-from ..x.constants import *
+from felab.stage.stage import load_stage
+from felab.stage.diffusive_ht import diffusive_ht_stage
+from felab.stage.static import static_stage
+from felab.stage.dynamic import dynamic_stage
 
 __all__ = ["repository"]
 
@@ -48,12 +44,12 @@ class repository(object):
             yield (key, self._values[i])
 
     def InitialStage(self, name):
-        start, period = 0.0, 0.0
+        period = 0.0
         stage = load_stage(self.model, len(self), name, None, period)
         self[name] = stage
         return self.last
 
-    def create_static_stage(self, name, period=1.0, **kwds):
+    def create_static_stage(self, name, period=1.0, copy=True, **kwds):
         last = self._values[-1].increments[-1]
         if not last.converged:
             raise RuntimeError("PREVIOUS STAGE HAS UNCONVERGED INCREMENTS")
@@ -64,7 +60,7 @@ class repository(object):
         self[name] = stage
         return self.last
 
-    def create_dynamic_stage(self, name, period=1.0, **kwds):
+    def create_dynamic_stage(self, name, period=1.0, copy=True, **kwds):
         last = self._values[-1].increments[-1]
         if not last.converged:
             raise RuntimeError("PREVIOUS STAGE HAS UNCONVERGED INCREMENTS")
@@ -75,7 +71,7 @@ class repository(object):
         self[name] = stage
         return self.last
 
-    def create_heat_transfer_stage(self, name, period):
+    def create_heat_transfer_stage(self, name, period, copy=True):
         last = self._values[-1].increments[-1]
         if not last.converged:
             raise RuntimeError("PREVIOUS STAGE HAS UNCONVERGED INCREMENTS")

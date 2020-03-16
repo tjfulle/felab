@@ -46,17 +46,10 @@ from numpy.compat import asbytes, asstr
 from numpy import fromstring, dtype, empty, array, asarray
 from numpy import little_endian as LITTLE_ENDIAN
 from functools import reduce
-import sys
 
-PY3 = sys.version_info[0] == 3
-if PY3:
-    integer_types = (int,)
-    text_type = str
-    binary_type = bytes
-else:
-    integer_types = (int, long)
-    text_type = unicode
-    binary_type = str
+integer_types = (int,)
+text_type = str
+binary_type = bytes
 
 ABSENT = b"\x00\x00\x00\x00\x00\x00\x00\x00"
 ZERO = b"\x00\x00\x00\x00"
@@ -227,7 +220,7 @@ class netcdf_file(object):
     ...     print(f.history)
     Created for a test
 
-    """
+    """  # noqa: E501
 
     def __init__(self, filename, mode="r", mmap=None, version=1, maskandscale=False):
         """Initialize netcdf_file from fileobj (str or file-like)."""
@@ -301,13 +294,12 @@ class netcdf_file(object):
                         # we cannot close self._mm, since self._mm_buf is
                         # alive and there may still be arrays referring to it
                         warnings.warn(
-                            (
-                                "Cannot close a netcdf_file opened with mmap=True, when "
-                                "netcdf_variables or arrays referring to its data still exist. "
-                                "All data arrays obtained from such files refer directly to "
-                                "data on disk, and must be copied before the file can be cleanly "
-                                "closed. (See netcdf_file docstring for more information on mmap.)"
-                            ),
+                            "Cannot close a netcdf_file opened with mmap=True, when "
+                            "netcdf_variables or arrays referring to its data still "
+                            "exist.  All data arrays obtained from such files refer "
+                            "directly to data on disk, and must be copied before the "
+                            "file can be cleanly closed. (See netcdf_file docstring "
+                            "for more information on mmap.)",
                             category=RuntimeWarning,
                         )
                 self._mm = None
@@ -773,7 +765,7 @@ class netcdf_file(object):
         values = self.fp.read(int(count))
         self.fp.read(-count % 4)  # read padding
 
-        if typecode is not "c":
+        if typecode != "c":
             values = fromstring(values, dtype=">%s" % typecode)
             if values.shape == (1,):
                 values = values[0]

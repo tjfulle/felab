@@ -1,5 +1,6 @@
 import numpy as np
-from ..x.utilities import is_listlike
+
+from felab.util.lang import is_listlike
 
 
 # ---------------------------------------------------------------------------- #
@@ -45,7 +46,6 @@ def line_gauss_rule_info(rule=2, p=None):
 
 
 def tri_gauss_rule_info(rule, point):
-    tol = 1e-24
     if rule == 1:
         gp, w = np.ones(3) / 3, 1
     elif rule == 3:

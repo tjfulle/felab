@@ -1,7 +1,8 @@
 import os
-from numpy import *
-from .mesh import Mesh
-from ..x.utilities import UserInputError
+import numpy as np
+
+from felab.mesh import Mesh
+from felab.error import UserInputError
 
 
 __all__ = [
@@ -98,14 +99,14 @@ def gen_node_and_elem_tables(p, t):
 def gen_quad4_pt_1(nx, ny, lx, ly, sx=None, sy=None):
 
     sx, sy = sx or 0.0, sy or 0.0
-    xpoints = linspace(0, lx, nx + 1) + sx
-    ypoints = linspace(0, ly, ny + 1) + sy
-    p = array([(x, y) for y in ypoints for x in xpoints])
+    xpoints = np.linspace(0, lx, nx + 1) + sx
+    ypoints = np.linspace(0, ly, ny + 1) + sy
+    p = np.array([(x, y) for y in ypoints for x in xpoints])
 
     # Connectivity
     k = 0
     numele = nx * ny
-    t = zeros((numele, 4), dtype=int)
+    t = np.zeros((numele, 4), dtype=int)
     for elem_num in range(numele):
         ii = elem_num + k
         elem_nodes = [ii, ii + 1, ii + nx + 2, ii + nx + 1]
@@ -121,7 +122,7 @@ def gen_quad4_pt_2(nx, ny, lx, ly, sx=None, sy=None):
 
     # Bounding box
     sx, sy = sx or 0.0, sy or 0.0
-    xc = array(
+    xc = np.array(
         [
             [0.0 + sx, 0.0 + sy],
             [lx + sx, 0.0 + sy],
@@ -131,7 +132,7 @@ def gen_quad4_pt_2(nx, ny, lx, ly, sx=None, sy=None):
     )
 
     def shape(x, y):
-        a = array(
+        a = np.array(
             [
                 (1.0 - x) * (1.0 - y),
                 (1.0 + x) * (1.0 - y),
@@ -143,19 +144,19 @@ def gen_quad4_pt_2(nx, ny, lx, ly, sx=None, sy=None):
 
     # Nodal coordinates
     numnod = (nx + 1) * (ny + 1)
-    p = zeros((numnod, 2))
+    p = np.zeros((numnod, 2))
     k = 0
     for i in range(nx + 1):
         for j in range(ny + 1):
             xi = 2.0 * i / nx - 1.0
             eta = 2.0 * j / ny - 1.0
             N = shape(xi, eta)
-            p[k] = (dot(N, xc[:, 0]), dot(N, xc[:, 1]))
+            p[k] = (np.dot(N, xc[:, 0]), np.dot(N, xc[:, 1]))
             k += 1
 
     # Element connectivity
     numele = nx * ny
-    t = zeros((numele, 4), dtype=int)
+    t = np.zeros((numele, 4), dtype=int)
     k = 0
     for i in range(nx):
         for j in range(ny):
@@ -172,10 +173,10 @@ def gen_quad8_pt_2(nx, ny, lx, ly, sx=None, sy=None):
 
     # Bounding box
     sx, sy = sx or 0.0, sy or 0.0
-    xc = array([[sx, sy], [lx + sy, sy], [lx + sx, ly + sy], [sx, ly + sy]])
+    xc = np.array([[sx, sy], [lx + sy, sy], [lx + sx, ly + sy], [sx, ly + sy]])
 
     def shape(x, y):
-        a = array(
+        a = np.array(
             [
                 (1.0 - x) * (1.0 - y),
                 (1.0 + x) * (1.0 - y),
@@ -187,7 +188,7 @@ def gen_quad8_pt_2(nx, ny, lx, ly, sx=None, sy=None):
 
     # Nodal coordinates
     numnod = (2 * nx + 1) * (2 * ny + 1) - nx * ny
-    p = zeros((numnod, 2))
+    p = np.zeros((numnod, 2))
     k = 0
     for i in range(2 * nx + 1):
         for j in range(2 * ny + 1):
@@ -196,12 +197,12 @@ def gen_quad8_pt_2(nx, ny, lx, ly, sx=None, sy=None):
             xi = float(i - nx) / nx
             eta = float(j - ny) / ny
             N = shape(xi, eta)
-            p[k] = (dot(N, xc[:, 0]), dot(N, xc[:, 1]))
+            p[k] = (np.dot(N, xc[:, 0]), np.dot(N, xc[:, 1]))
             k += 1
 
     # Element connectivity
     numele = nx * ny
-    t = zeros((numele, 8), dtype=int)
+    t = np.zeros((numele, 8), dtype=int)
     k = 0
     for i in range(nx):
         for j in range(ny):

@@ -1,8 +1,16 @@
-from numpy import *
+import numpy as np
 from numpy.linalg import eigvalsh
 from collections import OrderedDict
 
-from ..x.utilities import *
+from felab.util.lang import is_listlike
+from felab.constants import (
+    ELEMENT_CENTROID,
+    INTEGRATION_POINT,
+    SCALAR,
+    VECTOR,
+    SYMTENSOR,
+    TENSOR,
+)
 
 __all__ = ["FieldOutputs", "ScalarField", "VectorField", "SymmetricTensorField"]
 
@@ -11,7 +19,7 @@ class FieldOutputs(OrderedDict):
     def __getitem__(self, key):
         try:
             return super(FieldOutputs, self).__getitem__(key)
-        except KeyError as E:
+        except KeyError:
             pass
         keys = []
         for k in self.keys():
@@ -22,7 +30,7 @@ class FieldOutputs(OrderedDict):
             raise KeyError(key)
         a = self[keys[0]]
         for k in keys[1:]:
-            a = row_stack((a, self[k]))
+            a = np.row_stack((a, self[k]))
         return a
 
 
@@ -52,12 +60,12 @@ class FieldOutput(object):
         else:
             self.keys = [self.key]
         self.shape = shape
-        self.data = zeros(self.shape)
+        self.data = np.zeros(self.shape)
 
         if data is not None:
-            idata = asarray(data)
+            idata = np.asarray(data)
             if len(idata) == shape[-1]:
-                idata = zeros(shape)
+                idata = np.zeros(shape)
                 idata[:] = data
             self.add_data(idata)
 
@@ -75,16 +83,16 @@ class FieldOutput(object):
 
     def add_data(self, data, ix=None):
         if self.data is None:
-            self.data = zeros(self.shape)
+            self.data = np.zeros(self.shape)
         if not is_listlike(data):
-            data = ones_like(self.data) * data
+            data = np.ones_like(self.data) * data
         else:
-            data = asarray(data)
+            data = np.asarray(data)
         if ix is not None:
             self.data[ix] = data
         else:
             assert data.size == self.data.size
-            self.data[:] = reshape(data, self.data.shape)
+            self.data[:] = np.reshape(data, self.data.shape)
 
     def get_data(self, position=None):
 
@@ -98,7 +106,7 @@ class FieldOutput(object):
                 raise ValueError("Cannot project data to centroid")
             # INTERPOLATE GAUSS POINT DATA TO ELEMENT CENTER
             # FIXME: is the index i below right?  it used to be e
-            return array(
+            return np.array(
                 [
                     self._elements[i].interpolate_to_centroid(x)
                     for (i, x) in enumerate(self.data)
@@ -176,7 +184,9 @@ class TensorField(FieldOutput):
         if position == INTEGRATION_POINT and not ngauss:
             raise TypeError("Expected ngauss")
 
-        components = array([["xx", "xy", "xz"], ["yx", "yy", "yz"], ["zx", "zy", "zz"]])
+        components = np.array(
+            [["xx", "xy", "xz"], ["yx", "yy", "yz"], ["zx", "zy", "zz"]]
+        )
         if ndir < 3:
             components[2, 2] = ""
             if ndir < 2:
@@ -287,10 +297,10 @@ class FieldValue:
     def magnitude(self):
         if self._mag is None:
             if self.type in (SCALAR, VECTOR):
-                self._mag = sqrt(dot(self.data, self.data))
+                self._mag = np.sqrt(np.dot(self.data, self.data))
             else:
-                w = array([1.0, 1.0, 1.0, 2.0, 2.0, 2.0])
-                self._mag = sqrt(sum(self.data * self.data * w))
+                w = np.array([1.0, 1.0, 1.0, 2.0, 2.0, 2.0])
+                self._mag = np.sqrt(sum(self.data * self.data * w))
         return self._mag
 
     def _tensor_components(self):
@@ -315,7 +325,7 @@ class FieldValue:
             s3, s2, s1 = sorted(
                 eigvalsh([[sx, txy, txz], [txy, sy, tyz], [txz, tyz, sz]])
             )
-            self._prin = array([s3, s2, s1])
+            self._prin = np.array([s3, s2, s1])
         return self._prin
 
     @property

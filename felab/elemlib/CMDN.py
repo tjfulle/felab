@@ -1,10 +1,20 @@
-import logging
-from numpy import *
+import numpy as np
 from numpy.linalg import det, inv
 
-from ..x.constants import *
-from ..x.utilities import *
-from .isop_base import isop_base
+import felab.util.tty as tty
+from felab.elemlib.isop_base import isop_base
+from felab.util.numeric import asvec, axialt, axialv, count_digits, iso_dev_split
+from felab.constants import (
+    SYMTENSOR,
+    TENSOR,
+    STIFF_AND_RHS,
+    STIFF_ONLY,
+    MASS_ONLY,
+    MASS_AND_RHS,
+    DLOAD,
+    SLOAD,
+    RHS_ONLY,
+)
 
 
 class CMDN(isop_base):
@@ -94,7 +104,7 @@ class CMDN(isop_base):
                     iedge, components = dlmag[i][0], dlmag[i][1:]
                     rhs[:] += self.surface_force(iedge, components)
                 else:
-                    logging.warn("UNRECOGNIZED DLTYP FLAG")
+                    tty.warn("UNRECOGNIZED DLTYP FLAG")
 
     def surface_force(self, edge, qe):
 
@@ -104,10 +114,10 @@ class CMDN(isop_base):
         if self.dimensions == 2:
             if len(xb) == 2:
                 # LINEAR SIDE
-                gw = ones(2)
-                gp = array([-1.0 / sqrt(3.0), 1.0 / sqrt(3.0)])
+                gw = np.ones(2)
+                gp = np.array([-1.0 / np.sqrt(3.0), 1.0 / np.sqrt(3.0)])
                 Jac = (
-                    lambda xi: sqrt(
+                    lambda xi: np.sqrt(
                         (xb[1, 1] - xb[0, 1]) ** 2 + (xb[1, 0] - xb[0, 0]) ** 2
                     )
                     / 2.0
@@ -115,12 +125,12 @@ class CMDN(isop_base):
 
             elif len(xb) == 3:
                 # QUADRATIC SIDE
-                gp = array([-sqrt(3.0 / 5.0), 0, sqrt(3.0 / 5.0)])
-                gw = array([0.5555555556, 0.8888888889, 0.5555555556])
+                gp = np.array([-np.sqrt(3.0 / 5.0), 0, np.sqrt(3.0 / 5.0)])
+                gw = np.array([0.5555555556, 0.8888888889, 0.5555555556])
 
                 def Jac(xi):
-                    dxdxi = dot([[-0.5 + xi, 0.5 + xi, -2.0 * xi]], xb)
-                    return sqrt(dxdxi[0, 0] ** 2 + dxdxi[0, 1] ** 2)
+                    dxdxi = np.dot([[-0.5 + xi, 0.5 + xi, -2.0 * xi]], xb)
+                    return np.sqrt(dxdxi[0, 0] ** 2 + dxdxi[0, 1] ** 2)
 
             else:
                 raise ValueError("UNKNOWN ELEMENT EDGE ORDER")
@@ -128,16 +138,16 @@ class CMDN(isop_base):
         else:
             raise ValueError("3D SURFACE FORCE NOT IMPLEMENTED")
 
-        Fe = zeros(self.numdof)
+        Fe = np.zeros(self.numdof)
         for (p, xi) in enumerate(gp):
             # FORM GAUSS POINT ON SPECIFIC EDGE
             Ne = self.shape(xi, edge=edge)
             Pe = self.pmatrix(Ne)
             c = Jac(xi) * gw[p]
             if self.axisymmetric == 1:
-                rp = dot(Ne, self.xc[:, 0])
+                rp = np.dot(Ne, self.xc[:, 0])
                 c *= rp
-            Fe += c * dot(Pe.T, qe)
+            Fe += c * np.dot(Pe.T, qe)
 
         return Fe
 
@@ -148,8 +158,8 @@ class CMDN(isop_base):
         if self.incompatible_modes:
             # INCOMPATIBLE MODES STIFFNESSES
             m1 = self.numdofpernod
-            Kci = zeros((self.numdof, self.dimensions * m1))
-            Kii = zeros((self.dimensions * m1, self.dimensions * m1))
+            Kci = np.zeros((self.numdof, self.dimensions * m1))
+            Kii = np.zeros((self.dimensions * m1, self.dimensions * m1))
 
         # DATA FOR INDEXING STATE VARIABLE ARRAY
         ntens = self.ndir + self.nshr
@@ -168,63 +178,63 @@ class CMDN(isop_base):
             B = self.bmatrix(dNdx, Ne)
 
             # STRAIN INCREMENT
-            de = dot(B, du)
+            de = np.dot(B, du)
 
             # VELOCITY GRADIENT
             # L_ij = dv_i / dx_j = d(du_i/dtime) / dx_j
             #      = du_iI dN_I / dx_j * 1 / dtime
-            L = zeros((3, 3))
-            L1 = dot(dNdx, du.reshape(-1, self.dimensions))
+            L = np.zeros((3, 3))
+            L1 = np.dot(dNdx, du.reshape(-1, self.dimensions))
             L[: self.dimensions, : self.dimensions] = L1 / dtime
 
             # SYMMETRIC AND DEVIATORIC PARTS -> NEEDED FOR FINITE ROTATIONS
             D = 0.5 * (L + L.T)
             W = L - D
 
-            V = eye(3)
-            I3x3 = eye(3)
-            R = eye(3)
+            V = np.eye(3)
+            I3x3 = np.eye(3)
+            R = np.eye(3)
 
-            z = -2 * axialv(dot(V, D))
+            z = -2 * axialv(np.dot(V, D))
             w = -2.0 * axialv(W)
-            _w_ = w - 2.0 * dot(inv(V - trace(V) * I3x3), z)
+            _w_ = w - 2.0 * np.dot(inv(V - np.trace(V) * I3x3), z)
             _W_ = -0.5 * axialt(_w_)
 
             # UPDATE THE ROTATION
             _A = I3x3 - _W_ * dtime / 2.0
-            _R = dot(I3x3 + _W_ * dtime / 2.0, R)
+            _R = np.dot(I3x3 + _W_ * dtime / 2.0, R)
 
             # UPDATED ROTATION
-            R = dot(inv(_A), _R)
+            R = np.dot(inv(_A), _R)
 
             # RATE OF STRETCH
-            Vdot = dot((D + W), V) - dot(V, _W_)
+            Vdot = np.dot((D + W), V) - np.dot(V, _W_)
             V += Vdot * dtime
 
             # UNROTATE DEFORMATION RATE
-            d = dot(R.T, dot(D, R))
+            d = np.dot(R.T, np.dot(D, R))
 
             # UNROTATE CAUCHY STRESS
             # T = asmatrix(self.data[0, intpt, STRESS:STRESS+NSYMM])
-            # sig = dot(R.T, dot(T, R))
+            # sig = np.dot(R.T, np.dot(T, R))
 
             # CONVERT QUANTITIES TO ARRAYS THAT WILL BE PASSED TO MATERIAL MODEL
             d = asvec(d, self.ndir, self.nshr)
-            # de = d*dtime*array([1.,1.,1.,2.])
+            # de = d*dtime*np.array([1.,1.,1.,2.])
             # sig = asvec(sig)
 
             # SET DEFORMATION GRADIENT TO THE IDENTITY
-            F0 = eye(self.ndir + self.nshr)
-            F = eye(self.ndir + self.nshr)
+            F0 = np.eye(self.ndir + self.nshr)
+            F = np.eye(self.ndir + self.nshr)
 
             # PREDEF AND INCREMENT
-            temp = dot(Ne, predef[0, 0])
-            dtemp = dot(Ne, predef[1, 0])
+            temp = np.dot(Ne, predef[0, 0])
+            dtemp = np.dot(Ne, predef[1, 0])
 
             # MATERIAL RESPONSE
-            xv = zeros(1)
-            e = array(svars[0, ij + a1 * ntens : ij + (a1 + 1) * ntens])
-            s = array(svars[0, ij + a3 * ntens : ij + (a3 + 1) * ntens])
+            xv = np.zeros(1)
+            e = np.array(svars[0, ij + a1 * ntens : ij + (a1 + 1) * ntens])
+            s = np.array(svars[0, ij + a3 * ntens : ij + (a3 + 1) * ntens])
             s, xv, D = self.material.response(
                 s,
                 xv,
@@ -248,11 +258,11 @@ class CMDN(isop_base):
             )
 
             # Rotate stress to material increment
-            # T = dot(R, dot(asmatrix(sig), R.T))
+            # T = np.dot(R, np.dot(asmatrix(sig), R.T))
 
             # Calculate strain
-            # F = dot(V, R)
-            # E = .5 * (dot(F.T, F) - I3x3)
+            # F = np.dot(V, R)
+            # E = .5 * (np.dot(F.T, F) - I3x3)
 
             # STORE THE UPDATED VARIABLES
             svars[1, ij + a1 * ntens : ij + (a1 + 1) * ntens] += de  # STRAIN
@@ -262,40 +272,40 @@ class CMDN(isop_base):
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             c = J * wt
             if self.axisymmetric == 1:
-                rp = dot(Ne, xc[:, 0])
+                rp = np.dot(Ne, xc[:, 0])
                 c *= rp
 
             # Update element residual
             if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):
-                rhs[:] -= c * dot(s, B)
+                rhs[:] -= c * np.dot(s, B)
                 if lflags[2] == RHS_ONLY:
                     continue
 
             if self.selective_reduced:
                 D1, D2 = iso_dev_split(self.ndir, self.nshr, self.dimensions, D)
-                A += c * dot(dot(B.T, D2), B)
+                A += c * np.dot(np.dot(B.T, D2), B)
 
             else:
-                A += c * dot(dot(B.T, D), B)
+                A += c * np.dot(np.dot(B.T, D), B)
                 if self.axisymmetric == 2:
                     c = J * wt
                     Pe = self.pmatrix(Ne)
-                    rp = dot(Ne, xc[:, 0])
-                    Dh = zeros((2, 4))
+                    rp = np.dot(Ne, xc[:, 0])
+                    Dh = np.zeros((2, 4))
                     Dh[0, :3] = D[2, :3]
-                    Db = zeros((2, 4))
+                    Db = np.zeros((2, 4))
                     Db[0, 0], Db[1, 0] = D[0, 0], D[3, 0]
-                    A += c / rp * dot(Pe.T, (dot(Dh, B) - dot(Db, B)))
+                    A += c / rp * np.dot(Pe.T, (np.dot(Dh, B) - np.dot(Db, B)))
 
             if self.incompatible_modes:
                 # INCOMPATIBLE MODES
                 G = self.gmatrix(xi)
-                Kci += dot(dot(B.T, D), G) * J * wt
-                Kii += dot(dot(G.T, D), G) * J * wt
+                Kci += np.dot(np.dot(B.T, D), G) * J * wt
+                Kii += np.dot(np.dot(G.T, D), G) * J * wt
 
         if lflags[2] in (STIFF_AND_RHS, STIFF_ONLY):
             if self.incompatible_modes:
-                A -= dot(dot(Kci, inv(Kii)), Kci.T)
+                A -= np.dot(np.dot(Kci, inv(Kii)), Kci.T)
 
             if self.selective_reduced:
                 A += self.sri_correction(
@@ -309,25 +319,25 @@ class CMDN(isop_base):
 
         # PERFORM HOURGLASS CORRECTION
         xc = self.xc
-        Khg = zeros((self.numdof, self.numdof))
+        Khg = np.zeros((self.numdof, self.numdof))
         for p in range(len(self.hglassp)):
 
             # SHAPE FUNCTION DERIVATIVE AT HOURGLASS GAUSS POINTS
-            xi = array(self.hglassp[p])
+            xi = np.array(self.hglassp[p])
             dNdxi = self.shapegrad(xi)
 
             # JACOBIAN TO NATURAL COORDINATES
-            Ne = self.shape(xi)
-            dxdxi = dot(dNdxi, xc)
+            # Ne = self.shape(xi)
+            dxdxi = np.dot(dNdxi, xc)
             dxidx = inv(dxdxi)
-            dNdx = dot(dxidx, dNdxi)
-            B = self.bmatrix(dNdx, Ne, xi)
+            dNdx = np.dot(dxidx, dNdxi)
+            # B = self.bmatrix(dNdx, Ne, xi)
             J = det(dxdxi)
 
             # HOURGLASS BASE VECTORS
-            g = array(self.hglassv[p])
+            g = np.array(self.hglassv[p])
             for i in range(len(xi)):
-                xi[i] = dot(g, xc[:, i])
+                xi[i] = np.dot(g, xc[:, i])
 
             # CORRECT THE BASE VECTORS TO ENSURE ORTHOGONALITY
             scale = 0.0
@@ -352,7 +362,7 @@ class CMDN(isop_base):
     def sri_correction(self, svars, u, du, time, dtime, kstage, kinc, predef, lflags):
         # SELECTIVE REDUCED INTEGRATION CORRECTION
 
-        Ksri = zeros((self.numdof, self.numdof))
+        Ksri = np.zeros((self.numdof, self.numdof))
 
         # EVALUATE MATERIAL MODEL AT ELEMENT CENTROID
         xi = self.cp
@@ -365,31 +375,31 @@ class CMDN(isop_base):
         dNdxi = self.shapegrad(xi)
 
         # JACOBIAN TO NATURAL COORDINATES
-        dxdxi = dot(dNdxi, xc)
+        dxdxi = np.dot(dNdxi, xc)
         dxidx = inv(dxdxi)
         J = det(dxdxi)
 
         # CONVERT SHAPE FUNCTION DERIVATIVES TO DERIVATIVES WRT GLOBAL X
-        dNdx = dot(dxidx, dNdxi)
+        dNdx = np.dot(dxidx, dNdxi)
         B = self.bmatrix(dNdx, Ne, xi)
 
         # STRAIN INCREMENT
-        de = dot(B, du)
+        de = np.dot(B, du)
 
         # SET DEFORMATION GRADIENT TO THE IDENTITY
-        F0 = eye(self.ndir + self.nshr)
-        F = eye(self.ndir + self.nshr)
+        F0 = np.eye(self.ndir + self.nshr)
+        F = np.eye(self.ndir + self.nshr)
 
         # PREDEF AND INCREMENT
-        temp = dot(Ne, predef[0, 0])
-        dtemp = dot(Ne, predef[1, 0])
+        temp = np.dot(Ne, predef[0, 0])
+        dtemp = np.dot(Ne, predef[1, 0])
 
         # MATERIAL RESPONSE AT CENTROID
         v = [x[0] for x in self.variables()]
         a1, a2, a3 = [v.index(x) for x in ("E", "DE", "S")]
         e = self.interpolate_to_centroid(svars[0], index=a1)
         s = self.interpolate_to_centroid(svars[0], index=a3)
-        xv = zeros(1)
+        xv = np.zeros(1)
         s, xv, D = self.material.response(
             s,
             xv,
@@ -418,29 +428,29 @@ class CMDN(isop_base):
             xi = self.srip[p]
             wt = self.sriw[p]
             dNdxi = self.shapegrad(xi)
-            dxdxi = dot(dNdxi, xc)
+            dxdxi = np.dot(dNdxi, xc)
             dxidx = inv(dxdxi)
             J = det(dxdxi)
             Ne = self.shape(xi)
-            dNdx = dot(dxidx, dNdxi)
+            dNdx = np.dot(dxidx, dNdxi)
             B = self.bmatrix(dNdx, Ne, xi)
-            Ksri += J * wt * dot(dot(B.T, D1), B)
+            Ksri += J * wt * np.dot(np.dot(B.T, D1), B)
 
         return Ksri
 
     def mass_matrix(self, u, du):
-        Me = zeros((self.numdof, self.numdof))
+        Me = np.zeros((self.numdof, self.numdof))
         for p in range(self.num_gauss):
             xi, wt = self.gauss_rule_info(p)
             Ne, dNdx, J = self.shapefun_der(self.xc, xi)
             # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
             Pe = self.pmatrix(Ne)
-            Me += J * wt * self.material.density * dot(Pe.T, Pe)
+            Me += J * wt * self.material.density * np.dot(Pe.T, Pe)
         return Me
 
     def body_force(self, dltyp, dlmag):
         bload = [dlmag[i] for (i, typ) in enumerate(dltyp) if typ == DLOAD]
-        Fe = zeros(self.numdof)
+        Fe = np.zeros(self.numdof)
         for p in range(self.num_gauss):
             # INDEX TO START OF STATE VARIABLES
             xi, wt = self.gauss_rule_info(p)
@@ -450,7 +460,7 @@ class CMDN(isop_base):
                 # ADD CONTRIBUTION OF FUNCTION CALL TO INTEGRAL
                 c = J * wt
                 if self.axisymmetric == 1:
-                    rp = dot(Ne, self.xc[:, 0])
+                    rp = np.dot(Ne, self.xc[:, 0])
                     c *= rp
-                Fe += c * dot(Pe.T, dlmagx)
+                Fe += c * np.dot(Pe.T, dlmagx)
         return Fe

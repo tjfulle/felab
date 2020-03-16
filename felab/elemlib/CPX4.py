@@ -1,4 +1,4 @@
-from numpy import *
+import numpy as np
 from .CMDN import CMDN
 
 
@@ -31,14 +31,14 @@ class CPX4(CMDN):
         (1, 1, 0, 0, 0, 0, 0),
         (1, 1, 0, 0, 0, 0, 0),
     ]
-    cp = array([0, 0], dtype=float64)
+    cp = np.array([0, 0], dtype=float)
     xp = (
-        array(
+        np.array(
             [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, -1], [1, 0], [0, 1], [-1, 0]],
-            dtype=float64,
+            dtype=float,
         ),
     )
-    edges = array([[0, 1], [1, 2], [2, 3], [3, 0]])
+    edges = np.array([[0, 1], [1, 2], [2, 3], [3, 0]])
 
     @property
     def area(self):
@@ -55,10 +55,10 @@ class CPX4(CMDN):
         if edge is not None:
             # EVALUATE SHAPE FUNCTION ON SPECIFIC EDGE
             xi = qcoord
-            qcoord = array([[xi, -1.0], [1.0, xi], [xi, 1.0], [-1.0, xi]][edge])
+            qcoord = np.array([[xi, -1.0], [1.0, xi], [xi, 1.0], [-1.0, xi]][edge])
         xi, eta = qcoord
         N = (
-            array(
+            np.array(
                 [
                     (1.0 - xi) * (1.0 - eta),
                     (1.0 + xi) * (1.0 - eta),
@@ -73,7 +73,7 @@ class CPX4(CMDN):
     def shapegrad(self, qcoord):
         xi, eta = qcoord
         dNdxi = (
-            array(
+            np.array(
                 [
                     [-1.0 + eta, 1.0 - eta, 1.0 + eta, -1.0 - eta],
                     [-1.0 + xi, -1.0 - xi, 1.0 + xi, 1.0 - xi],
@@ -109,12 +109,12 @@ class CPX4(CMDN):
         dNdxi = self.shapegrad(qcoord)
 
         # Jacobian to natural coordinates
-        dxdxi = dot(dNdxi, coord)
-        dxidx = linalg.inv(dxdxi)
-        J = linalg.det(dxdxi)
+        dxdxi = np.dot(dNdxi, coord)
+        dxidx = np.linalg.inv(dxdxi)
+        J = np.linalg.det(dxdxi)
 
         # Convert shape function derivatives to derivatives wrt global physical
         # coordinates
-        dNdx = dot(dxidx, dNdxi)
+        dNdx = np.dot(dxidx, dNdxi)
 
         return N, dNdx, J

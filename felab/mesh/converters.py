@@ -1,5 +1,7 @@
-from numpy import *
-from .mesh import Mesh
+import os
+
+from felab.mesh import Mesh
+from felab.error import UserInputError
 
 
 def VTU2Genesis(nodtab=None, eletab=None, filename=None):

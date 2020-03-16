@@ -1,10 +1,18 @@
-from numpy import *
+import numpy as np
 
-from .stage import load_stage
-from ..x.constants import *
-from ..x.utilities import *
-from ..elemlib import DC2D3
-from ..assembly import assemble_system, apply_boundary_conditions
+from felab.elemlib import DC2D3
+from felab.error import UserInputError
+from felab.util.numeric import linsolve
+from felab.util.lang import is_listlike
+from felab.stage.stage import load_stage
+from felab.assembly import assemble_system, apply_boundary_conditions
+from felab.constants import (
+    ALL,
+    HEAT_TRANSFER_STEADY_STATE,
+    SMALL_DISPLACEMENT,
+    STIFF_AND_RHS,
+    GENERAL,
+)
 
 
 class diffusive_ht_stage(load_stage):
@@ -41,20 +49,20 @@ class diffusive_ht_stage(load_stage):
             for (i, xel) in enumerate(eb.labels):
                 if xel in xelems:
                     inodes.extend(eb.elecon[i])
-        inodes = unique(inodes)
+        inodes = np.unique(inodes)
         if hasattr(amplitude, "__call__"):
             # AMPLITUDE IS A FUNCTION
             x = self.model.mesh.coord[inodes]
             a = amplitude(x)
         elif not is_listlike(amplitude):
-            a = amplitude * ones(len(inodes))
+            a = amplitude * np.ones(len(inodes))
         else:
             if len(amplitude) != len(inodes):
                 raise UserInputError(
                     "HEAT GENERATION AMPLITUDE MUST HAVE "
                     "LENGTH {0}".format(len(inodes))
                 )
-            a = asarray(amplitude)
+            a = np.asarray(amplitude)
         nodmap = dict(zip(inodes, range(inodes.shape[0])))
         for xelem in xelems:
             ielem = self.model.mesh.elemap[xelem]
@@ -66,13 +74,13 @@ class diffusive_ht_stage(load_stage):
     # ----------------------------------------------------------------------- #
     def run(self):
         # define arguments needed for assembly
-        time = array([0.0, self.start])
-        du = zeros(self.model.numdof)
-        Q = zeros_like(self.dofs)
+        time = np.array([0.0, self.start])
+        du = np.zeros(self.model.numdof)
+        Q = np.zeros_like(self.dofs)
         dltyp, dlmag = self.dload(self.period)
         X = self.dofvals(self.period)
         energy = v = a = ddlmag = mdload = pnewdt = None
-        time = array([1.0, 1.0])
+        time = np.array([1.0, 1.0])
         dtime = 1.0
         lflags = [
             HEAT_TRANSFER_STEADY_STATE,
@@ -83,8 +91,8 @@ class diffusive_ht_stage(load_stage):
         ]
 
         # ASSEMBLE THE GLOBAL STIFFNESS AND FORCE
-        rhs = zeros(self.model.numdof)
-        K = zeros((self.model.numdof, self.model.numdof))
+        rhs = np.zeros(self.model.numdof)
+        K = np.zeros((self.model.numdof, self.model.numdof))
         assemble_system(
             rhs,
             K,
@@ -117,5 +125,5 @@ class diffusive_ht_stage(load_stage):
         self._K = K
         Kbc, Fbc = apply_boundary_conditions(K, rhs, self.doftags, X)
         self.dofs[:] = linsolve(Kbc, Fbc)
-        react = dot(K, self.dofs) - rhs
+        react = np.dot(K, self.dofs) - rhs
         self.advance(self.period, self.dofs, react)

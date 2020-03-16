@@ -1,9 +1,8 @@
-from numpy import *
+import numpy as np
 
-from .stage import sd_stage
-from ..x.constants import *
-from ..x.utilities import *
-from ..assembly import assemble_system
+from felab.stage.stage import sd_stage
+from felab.assembly import assemble_system
+from felab.constants import DYNAMIC, SMALL_DISPLACEMENT, MASS_AND_RHS, GENERAL
 
 
 class dynamic_stage(sd_stage):
@@ -22,23 +21,23 @@ class dynamic_stage(sd_stage):
         period = getattr(self, "period", period)
         increments = getattr(self, "_increments", increments)
 
-        time = array([0.0, self.start])
+        time = np.array([0.0, self.start])
         dtime = period / float(increments)
 
         shape = (self.model.numdof, 2)
-        un = zeros(shape)
-        vn = zeros(shape)
-        an = zeros(shape)
+        un = np.zeros(shape)
+        vn = np.zeros(shape)
+        an = np.zeros(shape)
 
         # GET MASS AND RHS AT TIME 0
         Q = self.cload(time[0])
         dltyp, dlmag = self.dload(time[0])
 
-        energy = v = a = ddlmag = mdload = None
-        pnewdt = zeros(1)
+        energy = ddlmag = mdload = None
+        pnewdt = np.zeros(1)
         lflags = [DYNAMIC, SMALL_DISPLACEMENT, MASS_AND_RHS, GENERAL, 0]
-        A = zeros((self.model.numdof, self.model.numdof))
-        rhs = zeros(self.model.numdof)
+        A = np.zeros((self.model.numdof, self.model.numdof))
+        rhs = np.zeros(self.model.numdof)
         assemble_system(
             rhs,
             A,
@@ -70,7 +69,7 @@ class dynamic_stage(sd_stage):
         )
 
         # LUMPED MASS MATRIX
-        mass = array([sum(row) for row in A])
+        mass = np.array([sum(row) for row in A])
         an[:, 0] = rhs / mass
 
         for kinc in range(increments):
@@ -80,8 +79,8 @@ class dynamic_stage(sd_stage):
             X = self.dofvals(time[0] + dtime)
             dltyp, dload = self.dload(time[0] + dtime)
 
-            rhs = zeros(self.model.numdof)
-            A = zeros((self.model.numdof, self.model.numdof))
+            rhs = np.zeros(self.model.numdof)
+            A = np.zeros((self.model.numdof, self.model.numdof))
             assemble_system(
                 rhs,
                 A,
@@ -112,7 +111,7 @@ class dynamic_stage(sd_stage):
                 self.model.eftab,
             )
             # LUMPED MASS MATRIX
-            mass = array([sum(row) for row in A])
+            mass = np.array([sum(row) for row in A])
 
             # UPDATE ACCELERATION
             an[:, 1] = rhs / mass

@@ -1,7 +1,7 @@
 from numpy import zeros, array
-
-from ..x.constants import *
-from ..x.utilities import *
+from felab.constants import MDOF
+from felab.error import UserInputError
+from felab.util.numeric import count_digits
 
 
 def node_freedom_association_table(numnod, elements, disp=0):

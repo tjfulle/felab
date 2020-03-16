@@ -1,10 +1,7 @@
-import logging
-from numpy import *
-from numpy.linalg import det, inv
+import numpy as np
 
-from ..x.constants import *
-from ..x.utilities import *
-from .element_base import element_base
+from felab.util.numeric import count_digits
+from felab.elemlib.element_base import element_base
 
 
 class isop_base(element_base):
@@ -36,7 +33,7 @@ class isop_base(element_base):
 
     def pmatrix(self, N):
         n = count_digits(self.signature[0])
-        P = zeros((n, self.nodes * n))
+        P = np.zeros((n, self.nodes * n))
         for i in range(self.dimensions):
             P[i, i :: self.dimensions] = N
         return P
@@ -48,7 +45,7 @@ class isop_base(element_base):
         if index is not None:
             ntens = cls.ndir + cls.nshr
             m = len(cls.variables()) * ntens
-            data = row_stack(
+            data = np.row_stack(
                 [
                     data[(m * p) + index * ntens : (m * p) + (index + 1) * ntens]
                     for p in range(cls.num_gauss)
@@ -61,7 +58,7 @@ class isop_base(element_base):
         """Inverse distance weighted average of integration point data at each
         element node"""
         nx = len(v)
-        a = zeros((cls.nodes, nx))
+        a = np.zeros((cls.nodes, nx))
         for i in range(cls.nodes):
             a[i, :] = cls.average(cls.xp[i], data, v)
         return a
@@ -84,16 +81,16 @@ class isop_base(element_base):
         if cls.num_gauss == 1:
             weights = [1.0]
         else:
-            dist = lambda a, b: max(sqrt(dot(a - b, a - b)), 1e-6)
-            weights = zeros(cls.num_gauss)
+            dist = lambda a, b: max(np.sqrt(np.dot(a - b, a - b)), 1e-6)
+            weights = np.zeros(cls.num_gauss)
             for p in range(cls.num_gauss):
                 xi, _ = cls.gauss_rule_info(p)
                 weights[p] = 1.0 / dist(point, xi)
 
         if data.ndim == 1:
             # SCALAR DATA
-            return average(data, weights=weights)
+            return np.average(data, weights=weights)
 
         elif len(data.shape) == 2:
             # VECTOR OR TENSOR DATA
-            return average(data, axis=0, weights=weights)
+            return np.average(data, axis=0, weights=weights)

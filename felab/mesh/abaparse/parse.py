@@ -1,17 +1,6 @@
-# -----------------------------------------------------------------
-# plyparser.py
-#
-# PLYParser class and other utilites for simplifying programming
-# parsers with PLY
-#
-# Copyright (C) 2008-2011, Eli Bendersky
-# License: BSD
-# -----------------------------------------------------------------
-import os
 import re
 import sys
 import ply.lex
-import logging
 from ply.lex import TOKEN
 import ply.yacc
 
@@ -115,11 +104,7 @@ class AbaqusLexer(object):
         g = self.lexer.token()
         return g
 
-    ######################--   PRIVATE   --######################
-
-    ##
-    ## Internal auxiliary methods
-    ##
+    # --- Internal auxiliary methods
     def _error(self, msg, token):
         location = self._make_tok_location(token)
         self.error_func(msg, location[0], location[1])
@@ -136,9 +121,7 @@ class AbaqusLexer(object):
     def _make_tok_location(self, token):
         return (token.lineno, self._find_tok_column(token))
 
-    ##
-    ## All the tokens recognized by the lexer
-    ##
+    # --- All the tokens recognized by the lexer
     tokens = (
         # Keyword
         "KEYWORD",
@@ -161,10 +144,7 @@ class AbaqusLexer(object):
         "LASTTOKENONLINE",
     )
 
-    ##
-    ## Regexes for use in tokens
-    ##
-    ##
+    # --- Regexes for use in tokens
 
     # valid C identifiers (K&R2: A.2.3)
     identifier = r"[a-zA-Z_][0-9a-zA-Z_. ]*"
@@ -225,9 +205,7 @@ class AbaqusLexer(object):
         + "))[FfLl]?)"
     )
 
-    ##
-    ## Lexer states
-    ##
+    # --- Lexer states
     states = (
         #
         ("keywordstate", "inclusive"),
@@ -267,9 +245,7 @@ class AbaqusLexer(object):
         t.lexer.lineno += t.value.count("\n")
         return t
 
-    ##
-    ## Rules for the normal state
-    ##
+    # --- Rules for the normal state
     t_ignore = " \t"
 
     def t_COMMENT(self, t):
@@ -446,7 +422,6 @@ class Keyword(object):
             o[0] += ", " + self.params.toinp()
         if self.data is not None:
             for data in self.data:
-                chunks = chunker(data)
                 for chunk in chunker(data):
                     o.append(" " + ", ".join(chunk) + ",")
                 o[-1] = o[-1][:-1]
@@ -541,14 +516,10 @@ class AbaqusParser(PLYParser):
         t = self.cparser.parse(text, lexer=self.clex, debug=debuglevel)
         return t
 
-    ######################--   PRIVATE   --######################
-
     def _lex_error_func(self, msg, line, column):
         self._parse_error(msg, self._coord(line, column))
 
-    ##
-    ## Grammar productions
-    ##
+    # --- Grammar productions
 
     def p_keyword_list(self, p):
         """
