@@ -22,7 +22,7 @@ def demo_plane_elasticity2(plot=False):
     V.assign_prescribed_bc("BottomLeft", Y)
 
     # CREATE LOAD STEP AND PRESCRIBED NONHOMOGENEOUS BCS TO IT
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_prescribed_bc("RightHandSide", X, 0.1)
 
     # RUN THE STEP TO SOLVE FOR THE UNKNOWN DEGREES OF FREEDOM

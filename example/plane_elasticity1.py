@@ -8,12 +8,12 @@ def demo_plane_elasticity1(plot=False):
     V = fe_model(jobid="Plane1")
     V.genesis_mesh("./data/PlateWithHoleQuad4.g")
 
-    mat = V.create_material("Material-1")
+    mat = V.material("Material-1")
     mat.elastic(E=10e6, Nu=0.29)
 
     V.assign_properties("ElementBlock1", CPE4, mat, t=1)
 
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_prescribed_bc("LeftHandSide", X, 0.0)
     step.assign_prescribed_bc("PinNode", Y, 0.0)
     step.assign_prescribed_bc("RightHandSide", X, 0.1)

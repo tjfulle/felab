@@ -4,7 +4,7 @@ from felab.elemlib import DC2D3
 from felab.error import UserInputError
 from felab.util.numeric import linsolve
 from felab.util.lang import is_listlike
-from felab.step.step import load_step
+from felab.step.step import LoadStep
 from felab.assembly import assemble_system, apply_boundary_conditions
 from felab.constants import (
     ALL,
@@ -15,9 +15,9 @@ from felab.constants import (
 )
 
 
-class diffusive_ht_step(load_step):
+class DiffusiveHeatTransferStep(LoadStep):
     def __init__(self, model, number, name, previous, period):
-        super(diffusive_ht_step, self).__init__(model, number, name, previous, period)
+        super(DiffusiveHeatTransferStep, self).__init__(model, number, name, previous, period)
 
         # CHECK ELEMENTS
         eletyp = (DC2D3,)

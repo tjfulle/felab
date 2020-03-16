@@ -12,7 +12,7 @@ def demo_cantilever8():
     V = fe_model(mesh=mesh)
     V.assign_properties("EAll", CPS8, mat, t=1)
     V.fix_nodes((1, 22, 33))
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_concentrated_load(49, Y, 0.01)
     step.run(frames=10)
     V.write_results()

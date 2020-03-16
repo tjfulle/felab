@@ -7,14 +7,14 @@ from felab.constants import X, Y, ALL
 def demo_quarter_plate(plot=False):
     V = fe_model(jobid="PlateWithHoleQuad4QuarterSym")
     V.genesis_mesh("./data/PlateWithHoleQuad4QuarterSym.g")
-    mat = V.create_material("Material-1")
+    mat = V.material("Material-1")
     mat.elastic(E=100, Nu=0.2)
     V.assign_properties("", CPE4, mat, t=1)
     V.assign_prescribed_bc("SymYZ", X)
     V.assign_prescribed_bc("SymXZ", Y)
     V.assign_initial_temperature(ALL, 60)
 
-    step = V.create_static_step("Step-1")
+    step = V.static_step("Step-1")
     step.assign_surface_load("RightHandSide", [1, 0])
     step.run()
 

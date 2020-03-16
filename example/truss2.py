@@ -81,14 +81,14 @@ def demo_truss():
         2.44,
         2.44,
     ]
-    V.create_element_block("ElementBlock1", ALL)
+    V.element_block("ElementBlock1", ALL)
     V.assign_properties("ElementBlock1", L3D2, mat, A=A)
 
     # Define boundary conditons
     V.fix_nodes((7, 8, 9, 10))
 
     # Define concentrated loads
-    step = V.create_static_step()
+    step = V.static_step()
 
     P1, P2, P3, P4 = 1000, 10000, -5000, 500
     step.assign_concentrated_load(1, X, P1)

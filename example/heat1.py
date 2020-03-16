@@ -12,14 +12,14 @@ def demo_heat(plot=False):
     V.genesis_mesh("./data/PlateWithHoleTria3Fine.g")
 
     # Create a material and define the thermal conductivity
-    mat = V.create_material("Material-1")
+    mat = V.material("Material-1")
     mat.isotropic_thermal_conductivity(12)
 
     # Define an alement block of diffusive heat transfer elements with material mat
     V.assign_properties("ElementBlock1", DC2D3, mat)
 
     # Fix temperatures on left and right edge
-    step = V.create_heat_transfer_step()
+    step = V.heat_transfer_step()
     step.assign_prescribed_bc(ILO, T, 200)
     step.assign_prescribed_bc(IHI, T, 50)
 

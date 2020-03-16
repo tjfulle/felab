@@ -345,8 +345,8 @@ class VTKFile(object):
             kwds["u"] = u
 
         # Data at nodes
-        pd = self.create_element("PointData", parent="Piece")
-        cd = self.create_element("CellData", parent="Piece")
+        pd = self.element("PointData", parent="Piece")
+        cd = self.element("CellData", parent="Piece")
 
         for (key, val) in kwds.items():
             val = np.asarray(val)
@@ -394,7 +394,7 @@ class VTKFile(object):
             flattened.extend(self.flatten(el))
         return flattened
 
-    def create_element(self, name, parent="VTKFile", **kwds):
+    def element(self, name, parent="VTKFile", **kwds):
         el = self.doc.createElementNS("VTK", name)
         for (key, val) in kwds.items():
             el.setAttribute(key, str(val))
@@ -411,7 +411,7 @@ class VTKFile(object):
             if el.nodeName == name:
                 return el
         if parent is not None:
-            return self.create_element(name, parent=parent)
+            return self.element(name, parent=parent)
         raise ValueError("No element {0!r}".format(name))
 
     def write_grid(self, u=None):
@@ -419,10 +419,10 @@ class VTKFile(object):
         # write the unstructured grid
 
         # Unstructured grid element
-        usgrid = self.create_element("UnstructuredGrid")
+        usgrid = self.element("UnstructuredGrid")
 
         # Piece 0 (only one)
-        piece = self.create_element(
+        piece = self.element(
             "Piece",
             parent=usgrid.nodeName,
             NumberOfPoints=self.nodes,
@@ -430,10 +430,10 @@ class VTKFile(object):
         )
 
         # Points
-        points = self.create_element("Points", parent=piece.nodeName)
+        points = self.element("Points", parent=piece.nodeName)
 
         # Point location data
-        da = self.create_element(
+        da = self.element(
             "DataArray",
             parent=points.nodeName,
             type="Float32",
@@ -451,10 +451,10 @@ class VTKFile(object):
         da.appendChild(self.doc.createTextNode(arrtostr2(x, indent="")))
 
         # Cells
-        cells = self.create_element("Cells", parent=piece.nodeName)
+        cells = self.element("Cells", parent=piece.nodeName)
 
         # Cell connectivity
-        da = self.create_element(
+        da = self.element(
             "DataArray",
             parent=cells.nodeName,
             type="Int32",
@@ -468,7 +468,7 @@ class VTKFile(object):
         da.appendChild(self.doc.createTextNode(arrtostr2(o, "d", indent="")))
 
         # Cell offsets
-        da = self.create_element(
+        da = self.element(
             "DataArray",
             parent=cells.nodeName,
             type="Int32",
@@ -482,7 +482,7 @@ class VTKFile(object):
         da.appendChild(self.doc.createTextNode(arrtostr(o, "d", indent="")))
 
         # Cell types
-        da = self.create_element(
+        da = self.element(
             "DataArray",
             parent=cells.nodeName,
             type="UInt8",
@@ -493,18 +493,18 @@ class VTKFile(object):
         da.appendChild(self.doc.createTextNode(arrtostr(o, "d", indent="")))
 
         # Node and element tables
-        self.create_fd("NodeLabels", "Int32", self.nodlab)
-        self.create_fd("ElementLabels", "Int32", self.elelab)
+        self.field_data("NodeLabels", "Int32", self.nodlab)
+        self.field_data("ElementLabels", "Int32", self.elelab)
 
         return
 
-    def create_fd(self, name, dtype, arr):
+    def field_data(self, name, dtype, arr):
 
         # Field data
         fd = self.get_element("FieldData", parent="VTKFile")
 
-        el = self.create_element(name, parent=fd.nodeName)
-        da = self.create_element(
+        el = self.element(name, parent=fd.nodeName)
+        da = self.element(
             "DataArray", parent=el.nodeName, type=dtype, format="ascii"
         )
         arr = np.asarray(arr)

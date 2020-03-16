@@ -18,15 +18,15 @@ def test_thick_pressurized_cylinder_quad4(plot=False):
     E, Nu = 1000.0, 0.0
     V = fe_model()
     V.rectilinear_mesh(nx, ny, b - a, d, shiftx=a, method=2)
-    mat = V.create_material("Material-1")
+    mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
 
-    V.create_element_block("EALL", ALL)
+    V.element_block("EALL", ALL)
     V.assign_properties("EALL", CAX4, mat, formulation=1)
 
     V.assign_prescribed_bc(ALL, Zr)
 
-    step = V.create_static_step()
+    step = V.static_step()
     pfor = Kfac * p * a * d
     step.assign_concentrated_load((1, 2), Rr, pfor / 2.0)
     step.run()

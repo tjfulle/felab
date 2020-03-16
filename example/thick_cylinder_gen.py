@@ -12,13 +12,13 @@ E = 2.0 * mu * (1.0 + Nu)
 def demo_linear(ax=None):
     V = fe_model(jobid="VolumeLocking.Linear")
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
-    mat = V.create_material("Material-1")
+    mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
     V.assign_properties("ElementBlock1", CPE4, mat, t=1)
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_pressure("SURFACE-1", 1.0)
     step.run()
     V.write_results()
@@ -39,13 +39,13 @@ def demo_linear(ax=None):
 def demo_reduced_integration(ax=None):
     V = fe_model(jobid="VolumeLocking.Reduced")
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
-    mat = V.create_material("Material-1")
+    mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
     V.assign_properties("ElementBlock1", CPE4R, mat, t=1, hourglass_control=True)
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
 
-    step = V.create_static_step()
+    step = V.static_step()
     # Pressure on inside face
     step.assign_pressure("SURFACE-1", 1.0)
     step.run()
@@ -60,13 +60,13 @@ def demo_reduced_integration(ax=None):
 def demo_selectively_reduced_integration(ax=None):
     V = fe_model(jobid="VolumeLocking.SelReduced")
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
-    mat = V.create_material("Material-1")
+    mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
     V.assign_properties("ElementBlock1", CPE4RS, mat, t=1)
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
 
-    step = V.create_static_step()
+    step = V.static_step()
     # Pressure on inside face
     step.assign_pressure("SURFACE-1", 1.0)
     step.run()
@@ -81,13 +81,13 @@ def demo_selectively_reduced_integration(ax=None):
 def demo_quadratic(ax=None):
     V = fe_model(jobid="VolumeLocking.Quadratic")
     V.genesis_mesh("./data/QuarterCylinderQuad8.g")
-    mat = V.create_material("Material-1")
+    mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
     V.assign_properties("ElementBlock1", CPE8B, mat, t=1)
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
 
-    step = V.create_static_step()
+    step = V.static_step()
     # Pressure on inside face
     # V.assign_pressure('SURFACE-1', 1.)
     step.assign_surface_load("SURFACE-300", [0.195090322, 0.98078528])

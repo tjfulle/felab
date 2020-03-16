@@ -33,13 +33,13 @@ def demo_volume_locking(plot=False):
         # Linear finite element solution
         V = fe_model()
         V.genesis_mesh("./data/QuarterCylinderQuad4.g")
-        mat = V.create_material("Material-1")
+        mat = V.material("Material-1")
         mat.elastic(E=E, Nu=Nu)
         V.assign_properties("ElementBlock1", CPE4, mat)
         V.assign_prescribed_bc("Nodeset-200", X)
         V.assign_prescribed_bc("Nodeset-201", Y)
 
-        step = V.create_static_step()
+        step = V.static_step()
         # Pressure on inside face
         step.assign_pressure("SURFACE-1", 1.0)
         step.run()

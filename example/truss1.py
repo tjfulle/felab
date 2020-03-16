@@ -46,14 +46,14 @@ def demo_truss():
         [20, 7, 8],
         [21, 9, 10],
     ]
-    V.create_mesh(nodtab=nodtab, eletab=eletab)
+    V.ne_mesh(nodtab=nodtab, eletab=eletab)
 
     # Create a material and define the elastic properties
     mat = Material("Material-1")
     mat.elastic(E=1000, Nu=0.29)
 
     # Define an element block of 3D 2-node link elements
-    V.create_element_block("ElementBlock1", ALL)
+    V.element_block("ElementBlock1", ALL)
 
     # Assign material properties
     Abot, Atop, Abat, Adia = 2, 10, 3, 1
@@ -87,7 +87,7 @@ def demo_truss():
     V.assign_prescribed_bc(12, Y)
 
     # Apply concentrated loads
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_concentrated_load((3, 5, 9, 11), Y, -10)
     step.assign_concentrated_load(7, Y, -16)
 

@@ -81,11 +81,11 @@ def INP2Genesis(filename):
             continue
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
     for (name, elems) in element_blocks.items():
-        mesh.create_element_block(name, elems)
+        mesh.element_block(name, elems)
     for (name, nodes) in nodesets.items():
-        mesh.create_node_set(name, nodes)
+        mesh.node_set(name, nodes)
     for (name, elems) in elemsets.items():
-        mesh.create_element_set(name, elems)
+        mesh.element_set(name, elems)
     outfile = os.path.splitext(filename)[0] + ".g"
     mesh.to_genesis(outfile)
     return

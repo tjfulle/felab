@@ -12,7 +12,7 @@ from felab.mesh import (
     unit_square_mesh,
     rectilinear_mesh2d,
 )
-from felab.step import step_repository
+from felab.step import StepRepository
 from felab.util.lang import is_listlike, is_stringlike
 from felab.assembly import vdof
 
@@ -156,7 +156,7 @@ class fe_model(object):
             nx=nx, ny=ny, shiftx=shiftx, shifty=shifty, method=method
         )
 
-    def create_mesh(self, **kwds):
+    def pt_mesh(self, p, t):
         """
         Generates the finite element mesh.
 
@@ -165,7 +165,18 @@ class fe_model(object):
         felab.mesh.Mesh
 
         """
-        self.mesh = Mesh(**kwds)
+        self.mesh = Mesh(p=p, t=t)
+
+    def ne_mesh(self, nodtab, eletab):
+        """
+        Generates the finite element mesh.
+
+        See Also
+        --------
+        felab.mesh.Mesh
+
+        """
+        self.mesh = Mesh(nodtab=nodtab, eletab=eletab)
 
     @property
     def dofs(self):
@@ -211,7 +222,7 @@ class fe_model(object):
 
         node_labels = sorted(self.mesh.nodmap, key=lambda k: self.mesh.nodmap[k])
 
-        self.steps = step_repository(self)
+        self.steps = StepRepository(self)
         step = self.steps.InitialStep("Step-0")
         for (nodes, dof) in self.pr_bc:
             step.assign_prescribed_bc(nodes, dof, amplitude=0.0)
@@ -327,7 +338,7 @@ class fe_model(object):
     # ----------------------------------------------------------------------- #
     # --- MATERIAL MODELS --------------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def create_material(self, name, **kwargs):
+    def material(self, name, **kwargs):
         """Create an empty material object.
 
         Parameters
@@ -445,7 +456,7 @@ class fe_model(object):
             if any(el.signature[0][:3]):
                 tty.warn("STEP WILL IGNORE DISPLACEMENT DEGREES OF FREEDOM")
 
-    def create_static_step(self, name=None, period=1.0, **kwds):
+    def static_step(self, name=None, period=1.0, **kwds):
 
         if self.steps is None:
             self.setup()
@@ -460,10 +471,10 @@ class fe_model(object):
         if name in self.steps:
             raise UserInputError("Duplicate step name {0!r}".format(name))
 
-        step = self.steps.create_static_step(name, period, **kwds)
+        step = self.steps.static_step(name, period, **kwds)
         return step
 
-    def create_dynamic_step(self, name=None, period=1.0, **kwds):
+    def dynamic_step(self, name=None, period=1.0, **kwds):
 
         if period is None:
             raise UserInputError("DYNAMIC STEP REQUIRES PERIOD")
@@ -481,10 +492,10 @@ class fe_model(object):
         if name in self.steps:
             raise UserInputError("Duplicate step name {0!r}".format(name))
 
-        step = self.steps.create_dynamic_step(name, period, **kwds)
+        step = self.steps.dynamic_step(name, period, **kwds)
         return step
 
-    def create_heat_transfer_step(self, name=None, period=1.0):
+    def heat_transfer_step(self, name=None, period=1.0):
         if self.steps is None:
             self.setup()
             self.initialize_steps()
@@ -498,13 +509,13 @@ class fe_model(object):
         if name in self.steps:
             raise UserInputError("Duplicate step name {0!r}".format(name))
 
-        step = self.steps.create_heat_transfer_step(name, period=period)
+        step = self.steps.heat_transfer_step(name, period=period)
         return step
 
     # ----------------------------------------------------------------------- #
     # --- ELEMENT BLOCKS AND SETS-------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def create_element_block(self, name, elements):
+    def element_block(self, name, elements):
         """Create an element block and assign elements to it
 
         Parameters
@@ -521,7 +532,7 @@ class fe_model(object):
         """
         if self.mesh is None:
             raise UserInputError("MESH MUST FIRST BE CREATED")
-        blk = self.mesh.create_element_block(name, elements)
+        blk = self.mesh.element_block(name, elements)
         return blk
 
     def assign_properties(self, blknam, eletyp, elemat, **elefab):
@@ -586,7 +597,7 @@ class fe_model(object):
                 kwds[key] = val[i]
             self.elements[iel] = eletyp(xel, elenod, elecoord, elemat, **kwds)
 
-    def create_node_set(self, name, region):
+    def node_set(self, name, region):
         """Create a node set
 
         Parameters
@@ -603,9 +614,9 @@ class fe_model(object):
         """
         if self.mesh is None:
             raise UserInputError("MESH MUST FIRST BE CREATED")
-        self.mesh.create_node_set(name, region)
+        self.mesh.node_set(name, region)
 
-    def create_side_set(self, name, surface):
+    def side_set(self, name, surface):
         """Create a surface
 
         Parameters
@@ -622,9 +633,9 @@ class fe_model(object):
         """
         if self.mesh is None:
             raise UserInputError("MESH MUST FIRST BE CREATED")
-        self.mesh.create_side_set(name, surface)
+        self.side_set(name, surface)
 
-    def create_element_set(self, name, region):
+    def element_set(self, name, region):
         """Create an element set
 
         Parameters
@@ -641,7 +652,7 @@ class fe_model(object):
         """
         if self.mesh is None:
             raise UserInputError("MESH MUST FIRST BE CREATED")
-        self.mesh.create_element_set(name, region)
+        self.mesh.element_set(name, region)
 
     def _get_field(self, key):
         key1 = key.lower()

@@ -8,11 +8,11 @@ from felab.constants import X, Y
 def demo_plane_stran_quad4_patch(plot=False):
     V = fe_model(jobid="Quad4PlaneStrainPatch")
     V.abaqus_mesh(filename="./data/EC4SFP1.inp")
-    mat = V.create_material("Material-1")
+    mat = V.material("Material-1")
     mat.elastic(E=1e6, Nu=0.25)
     V.assign_properties("EALL", CPE4, mat, t=0.001)
 
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_prescribed_bc(10, (X, Y), 0.0)
     step.assign_prescribed_bc(20, X, 0.24e-3)
     step.assign_prescribed_bc(20, Y, 0.12e-3)

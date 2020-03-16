@@ -31,7 +31,7 @@ from felab.constants import (
 )
 
 
-class load_step(object):
+class LoadStep(object):
     def __init__(self, model, number, name, previous, period):
         self.model = model
         self.written = 0
@@ -562,7 +562,7 @@ class Frame(object):
             self.field_outputs[key].add_data(value, **d)
 
 
-class sd_step(load_step):
+class StressDisplacmentStep(LoadStep):
     """Base class for stress/displacement steps"""
 
     def pin_nodes(self, nodes):

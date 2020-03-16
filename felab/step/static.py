@@ -10,13 +10,13 @@ from felab.constants import (
     STATIC_ITERATIVE,
 )
 from felab.util.numeric import linsolve
-from felab.step.step import sd_step
+from felab.step.step import StressDisplacmentStep
 from felab.assembly import assemble_system, apply_boundary_conditions
 
 
-class static_step(sd_step):
+class StaticStep(StressDisplacmentStep):
     def __init__(self, model, number, name, previous, period=1.0, **kwds):
-        super(static_step, self).__init__(model, number, name, previous, period)
+        super(StaticStep, self).__init__(model, number, name, previous, period)
         for (key, val) in kwds.items():
             if key == "frames":
                 key = "_frames"

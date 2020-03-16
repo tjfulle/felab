@@ -193,13 +193,13 @@ class Mesh(object):
             nodmap, coord, eletab1 = self.parse_nod_and_elem_tables(nodtab, eletab)
             self.init1(nodmap, coord, eletab1)
             for (name, (et, elems)) in element_blocks.items():
-                self.create_element_block(name, elems)
+                self.element_block(name, elems)
             for (name, nodes) in nodesets.items():
-                self.create_node_set(name, nodes)
+                self.node_set(name, nodes)
             for (name, elems) in elemsets.items():
-                self.create_element_set(name, elems)
+                self.element_set(name, elems)
             for (name, surf) in surfaces.items():
-                self.create_side_set(name, surf)
+                self.side_set(name, surf)
 
         else:
             raise UserInputError("Unknown file type")
@@ -399,12 +399,12 @@ class Mesh(object):
                     surface.append((e, ie))
         return np.array(surface)
 
-    def create_node_set(self, name, region):
+    def node_set(self, name, region):
         if not is_stringlike(name):
             raise UserInputError("Name must be a string")
         self.nodesets[name.upper()] = self.get_internal_node_ids(region)
 
-    def create_side_set(self, name, surface):
+    def side_set(self, name, surface):
         if self.unassigned:
             raise UserInputError(
                 "Mesh element operations require all elements be "
@@ -414,7 +414,7 @@ class Mesh(object):
             raise UserInputError("Name must be a string")
         self.surfaces[name.upper()] = self.find_surface(surface)
 
-    def create_element_set(self, name, region):
+    def element_set(self, name, region):
         if self.unassigned:
             raise UserInputError(
                 "Mesh element operations require all elements be "
@@ -430,7 +430,7 @@ class Mesh(object):
             ielems = [self.elemap[el] for el in region]
         self.elemsets[name.upper()] = np.array(ielems, dtype=int)
 
-    def create_element_block(self, name, elements):
+    def element_block(self, name, elements):
 
         if name.upper() in [eb.name.upper() for eb in self.element_blocks]:
             raise UserInputError("{0!r} already an element block".format(name))
@@ -477,7 +477,7 @@ class Mesh(object):
         exof = exodusii.File(filename, mode="w")
         if not self.element_blocks:
             # put in a single element block
-            self.create_element_block("ElementBlock1", ALL)
+            self.element_block("ElementBlock1", ALL)
         exof.genesis(
             self.nodmap,
             self.elemap,
@@ -605,7 +605,7 @@ class Mesh(object):
         import felab.mesh.exodusii as exodusii
 
         if not self.element_blocks:
-            self.create_element_block("ElementBlock1", ALL)
+            self.element_block("ElementBlock1", ALL)
         if not filename.endswith((".exo", ".e")):
             filename += ".exo"
         exodusii.put_nodal_solution(

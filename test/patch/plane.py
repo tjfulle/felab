@@ -28,14 +28,14 @@ def test_4_node_plane_stress():
     mat = Material("Mat-1", elastic={"E": 1e6, "Nu": 0.25})
 
     V = fe_model(mesh=mesh)
-    V.create_element_block("Block-1", ALL)
+    V.element_block("Block-1", ALL)
     V.assign_properties("Block-1", CPS4, mat)
 
     # Fixed BC
     V.fix_nodes(0)
 
     # Load step
-    step = V.create_static_step()
+    step = V.static_step()
 
     step.assign_prescribed_bc(1, X, 2.4e-4)
     step.assign_prescribed_bc(1, Y, 1.2e-4)
@@ -88,12 +88,12 @@ def test_8_node_plane_stress():
     mat = Material("Mat-1", elastic={"E": 1e6, "Nu": 0.25})
 
     V = fe_model(mesh=mesh, jobid="foo")
-    V.create_element_block("Block-1", ALL)
+    V.element_block("Block-1", ALL)
     V.assign_properties("Block-1", CPS8, mat)
 
     V.fix_nodes(0)
 
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_prescribed_bc(1, X, 1.2e-4)
     step.assign_prescribed_bc(1, Y, 6.0e-5)
     step.assign_prescribed_bc(2, X, 2.4e-4)
@@ -143,12 +143,12 @@ def test_3_node_plane_stress():
     mat = Material("Mat-1", elastic={"E": 1e6, "Nu": 0.25})
 
     V = fe_model(mesh=mesh)
-    V.create_element_block("Block-1", ALL)
+    V.element_block("Block-1", ALL)
     V.assign_properties("Block-1", CPS3, mat)
 
     V.fix_nodes(0)
 
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_prescribed_bc(1, X, 2.4e-4)
     step.assign_prescribed_bc(1, Y, 1.2e-4)
     step.assign_prescribed_bc(22, X, 3.0e-4)

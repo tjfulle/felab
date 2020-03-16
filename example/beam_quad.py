@@ -10,12 +10,12 @@ def demo_beam_quad(plot=False):
     mat = Material("Material-1", elastic={"E": 20000, "Nu": 0})
 
     V = fe_model(mesh=mesh, jobid="QuadBeam")
-    V.create_element_block("ElementBlock1", ALL)
+    V.element_block("ElementBlock1", ALL)
     V.assign_properties("ElementBlock1", CPE4, mat, t=1)
 
-    step = V.create_static_step()
+    step = V.static_step()
     step.fix_dofs(ILO)
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_concentrated_load(IHI, Y, -10)
     step.run()
     V.write_results()

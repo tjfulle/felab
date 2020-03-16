@@ -17,7 +17,7 @@ def demo_postprocess():
     V.assign_prescribed_bc("LeftHandSide", X)
     V.fix_nodes("PinNode")
 
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_surface_load(IHI, [1, 0])
     step.run()
 

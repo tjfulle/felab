@@ -22,7 +22,7 @@ def demo_plane_stress_tria3_patch(plot=False):
     V.assign_prescribed_bc(10, (X, Y))
 
     # CREATE LOAD STEP AND TO IT ASSIGN INHOMOGENEOUS BCS
-    step = V.create_static_step(solver=NEWTON)
+    step = V.static_step(solver=NEWTON)
     step.assign_prescribed_bc(20, X, 0.24e-3)
     step.assign_prescribed_bc(20, Y, 0.12e-3)
     step.assign_prescribed_bc(30, X, 0.3e-3)
@@ -69,7 +69,7 @@ def demo_plane_stress_tria3_patch(plot=False):
     V.assign_prescribed_bc(10, (X, Y))
 
     # CREATE LOAD STEP AND TO IT ASSIGN INHOMOGENEOUS BCS
-    step = V.create_static_step()
+    step = V.static_step()
     step.assign_prescribed_bc(20, X, 0.24e-3)
     step.assign_prescribed_bc(20, Y, 0.12e-3)
     step.assign_prescribed_bc(30, X, 0.3e-3)
