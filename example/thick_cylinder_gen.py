@@ -9,7 +9,7 @@ Nu = 0.499
 E = 2.0 * mu * (1.0 + Nu)
 
 
-def test_linear(ax=None):
+def demo_linear(ax=None):
     V = fe_model(jobid="VolumeLocking.Linear")
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.create_material("Material-1")
@@ -36,7 +36,7 @@ def test_linear(ax=None):
     return None
 
 
-def test_reduced_integration(ax=None):
+def demo_reduced_integration(ax=None):
     V = fe_model(jobid="VolumeLocking.Reduced")
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.create_material("Material-1")
@@ -57,7 +57,7 @@ def test_reduced_integration(ax=None):
     return None
 
 
-def test_selectively_reduced_integration(ax=None):
+def demo_selectively_reduced_integration(ax=None):
     V = fe_model(jobid="VolumeLocking.SelReduced")
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.create_material("Material-1")
@@ -78,7 +78,7 @@ def test_selectively_reduced_integration(ax=None):
     return None
 
 
-def test_quadratic(ax=None):
+def demo_quadratic(ax=None):
     V = fe_model(jobid="VolumeLocking.Quadratic")
     V.genesis_mesh("./data/QuarterCylinderQuad8.g")
     mat = V.create_material("Material-1")
@@ -99,7 +99,7 @@ def test_quadratic(ax=None):
     V.write_results()
 
 
-def test_analytic(plot=False):
+def demo_analytic(plot=False):
     mesh = Mesh(filename="./data/QuarterCylinderQuad4.g")
     a = mesh.coord[0, 1]
     b = mesh.coord[-1, 0]

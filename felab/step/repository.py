@@ -50,35 +50,35 @@ class repository(object):
         return self.last
 
     def create_static_step(self, name, period=1.0, copy=True, **kwds):
-        last = self._values[-1].increments[-1]
+        last = self._values[-1].frames[-1]
         if not last.converged:
-            raise RuntimeError("PREVIOUS STEP HAS UNCONVERGED INCREMENTS")
+            raise RuntimeError("PREVIOUS STEP HAS UNCONVERGED FRAMES")
         step = static_step(self.model, len(self), name, self.last, period, **kwds)
         if copy:
             step.copy_from(self.last)
-        step.increments[0].converged = True
+        step.frames[0].converged = True
         self[name] = step
         return self.last
 
     def create_dynamic_step(self, name, period=1.0, copy=True, **kwds):
-        last = self._values[-1].increments[-1]
+        last = self._values[-1].frames[-1]
         if not last.converged:
-            raise RuntimeError("PREVIOUS STEP HAS UNCONVERGED INCREMENTS")
+            raise RuntimeError("PREVIOUS STEP HAS UNCONVERGED FRAMES")
         step = dynamic_step(self.model, len(self), name, self.last, period, **kwds)
         if copy:
             step.copy_from(self.last)
-        step.increments[0].converged = True
+        step.frames[0].converged = True
         self[name] = step
         return self.last
 
     def create_heat_transfer_step(self, name, period, copy=True):
-        last = self._values[-1].increments[-1]
+        last = self._values[-1].frames[-1]
         if not last.converged:
-            raise RuntimeError("PREVIOUS STEP HAS UNCONVERGED INCREMENTS")
+            raise RuntimeError("PREVIOUS STEP HAS UNCONVERGED FRAMES")
         step = diffusive_ht_step(self.model, len(self), name, self.last, period)
         if copy:
             step.copy_from(self.last)
-        step.increments[0].converged = True
+        step.frames[0].converged = True
         self[name] = step
         return self.last
 

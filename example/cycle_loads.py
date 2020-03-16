@@ -5,7 +5,7 @@ from felab.elemlib import CPS4
 from felab.mesh import unit_square_mesh
 
 
-def test_cycle_loads(plot=False):
+def demo_cycle_loads(plot=False):
     mesh = unit_square_mesh(nx=1, ny=1)
     mat = Material("Mat-1", elastic={"E": 500, "Nu": 0})
 

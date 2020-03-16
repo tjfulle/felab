@@ -9,20 +9,20 @@ class dynamic_step(sd_step):
     def __init__(self, model, number, name, previous, period, **kwds):
         super(dynamic_step, self).__init__(model, number, name, previous, period)
         for (key, val) in kwds.items():
-            if key == "increments":
-                key = "_increments"
+            if key == "frames":
+                key = "_frames"
             setattr(self, key, val)
 
     # ----------------------------------------------------------------------- #
     # --- RUN --------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def run(self, period=1.0, increments=10, alpha=0.5, beta=0.0):
+    def run(self, period=1.0, frames=10, alpha=0.5, beta=0.0):
 
         period = getattr(self, "period", period)
-        increments = getattr(self, "_increments", increments)
+        frames = getattr(self, "_frames", frames)
 
         time = np.array([0.0, self.start])
-        dtime = period / float(increments)
+        dtime = period / float(frames)
 
         shape = (self.model.numdof, 2)
         un = np.zeros(shape)
@@ -72,7 +72,7 @@ class dynamic_step(sd_step):
         mass = np.array([sum(row) for row in A])
         an[:, 0] = rhs / mass
 
-        for kinc in range(increments):
+        for kframe in range(frames):
 
             # GET LOADS AND PRESCRIBED DISPLACEMENTS
             Q = self.cload(time[0] + dtime)
@@ -95,7 +95,7 @@ class dynamic_step(sd_step):
                 time,
                 dtime,
                 self.number,
-                kinc + 1,
+                kframe + 1,
                 1,
                 dltyp,
                 dlmag,

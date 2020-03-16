@@ -4,7 +4,7 @@ from felab.elemlib import DC2D3
 from felab.constants import T, ALL, ILO, IHI, JLO, JHI
 
 
-def test_heat(plot=False):
+def demo_heat(plot=False):
     # Create the model
     V = fe_model(jobid="Heat1")
 

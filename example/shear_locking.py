@@ -9,7 +9,7 @@ nu = 0.0
 E = 2.0 * mu * (1.0 + nu)
 
 
-def test_plane_stress_beam(ratio=0.25, plot=False):
+def demo_plane_stress_beam(ratio=0.25, plot=False):
     V = fe_model()
     length = 10.0
     a = ratio * length

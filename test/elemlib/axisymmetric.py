@@ -35,7 +35,7 @@ def test_thick_pressurized_cylinder_quad4(plot=False):
         ax = V.Plot2D(deformed=1, color="orange", weight=3)
         V.Plot2D(color="blue", weight=0.75, ax=ax, show=1)
 
-    u = step.increments[-1].field_outputs["U"]
+    u = step.frames[-1].field_outputs["U"]
     print("node model   analytic")
     for (i, urz) in enumerate(u.data):
         ur = urz[0]

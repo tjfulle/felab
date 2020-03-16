@@ -30,7 +30,7 @@ class linear_elastic(object):
         F,
         noel,
         kstep,
-        kinc,
+        kframe,
     ):
 
         C11 = self.Lambda + 2 * self.Mu

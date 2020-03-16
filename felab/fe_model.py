@@ -216,24 +216,24 @@ class fe_model(object):
         for (nodes, dof) in self.pr_bc:
             step.assign_prescribed_bc(nodes, dof, amplitude=0.0)
 
-        increment = step.increments[0]
+        frame = step.frames[0]
 
         # NODE DATA
         if T in self.active_dof:
-            increment.FieldOutput(SCALAR, "Q", NODE, node_labels)
-        increment.FieldOutput(SCALAR, "T", NODE, node_labels)
-        increment.FieldOutput(VECTOR, "U", NODE, node_labels, ncomp=self.dimensions)
-        increment.FieldOutput(VECTOR, "RF", NODE, node_labels, ncomp=self.dimensions)
+            frame.FieldOutput(SCALAR, "Q", NODE, node_labels)
+        frame.FieldOutput(SCALAR, "T", NODE, node_labels)
+        frame.FieldOutput(VECTOR, "U", NODE, node_labels, ncomp=self.dimensions)
+        frame.FieldOutput(VECTOR, "RF", NODE, node_labels, ncomp=self.dimensions)
 
         a = np.in1d((TX, TY, TZ), self.active_dof)
         if any(a):
             n = len([x for x in a if x])
-            increment.FieldOutput(VECTOR, "R", NODE, node_labels, ncomp=n)
-            increment.FieldOutput(VECTOR, "M", NODE, node_labels, ncomp=n)
+            frame.FieldOutput(VECTOR, "R", NODE, node_labels, ncomp=n)
+            frame.FieldOutput(VECTOR, "M", NODE, node_labels, ncomp=n)
 
         if self.initial_temp:
             itemp = self.get_initial_temperature()
-            increment.field_outputs["T"].add_data(itemp)
+            frame.field_outputs["T"].add_data(itemp)
 
         # ELEMENT DATA
         for eb in self.mesh.element_blocks:
@@ -263,7 +263,7 @@ class fe_model(object):
                     elif idata == 1 and vtype == TENSOR:
                         idata = np.eye(elems[0].ndir)
 
-                increment.FieldOutput(
+                frame.FieldOutput(
                     vtype,
                     name,
                     position,
@@ -277,7 +277,7 @@ class fe_model(object):
                     data=idata,
                 )
 
-        increment.converged = True
+        frame.converged = True
         return
 
     def format_dof(self, dofs):
@@ -647,7 +647,7 @@ class fe_model(object):
         key1 = key.lower()
         if key1 in ("u", "ux", "uy", "uz"):
             key1 = "displ" + key1[1:]
-        for (name, field) in self.steps.last.increments[-1].field_outputs.items():
+        for (name, field) in self.steps.last.frames[-1].field_outputs.items():
             if key1 == name.lower() or key.lower() == name.lower():
                 if field.type != SCALAR:
                     comps = ",".join(key + comp for comp in field.components)

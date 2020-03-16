@@ -4,7 +4,7 @@ from felab.elemlib import DC2D3
 from felab.constants import ILO, IHI, JLO, T
 
 
-def test_heat_unit_square(plot=False):
+def demo_heat_unit_square(plot=False):
     # Create the model
     V = fe_model(jobid="Heat1")
 

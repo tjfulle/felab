@@ -6,7 +6,7 @@ from felab.elemlib import L3D2
 from felab.constants import X, Y, Z, ALL
 
 
-def test_truss():
+def demo_truss():
 
     # Create mesh and define the finite element model
     nodtab = [

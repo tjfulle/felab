@@ -523,7 +523,7 @@ class EXOFileWriter(EXOFile):
     def snapshot(self, step):
         if not self.initialized:
             nodvarnames, elevarnames = [], []
-            for fo in step.increments[0].field_outputs.values():
+            for fo in step.frames[0].field_outputs.values():
                 if fo.position == NODE:
                     nodvarnames.extend(fo.keys)
                 else:
@@ -532,22 +532,22 @@ class EXOFileWriter(EXOFile):
                     elevarnames.extend(fo.keys)
             self.initialize(nodvarnames, elevarnames)
 
-        for increment in step.increments:
-            if not increment.converged:
-                tty.warn("CANNOT WRITE UNCONVERGED INCREMENT")
+        for frame in step.frames:
+            if not frame.converged:
+                tty.warn("CANNOT WRITE UNCONVERGED FRAME")
                 return
-            self.putincrement(increment)
+            self.putframe(frame)
 
-    def putincrement(self, increment):
+    def putframe(self, frame):
         # write time value
         count = self.count
-        self.fh.variables[VAR_TIME_WHOLE][count] = increment.value
-        self.fh.variables[VALS_GLO_VAR][count] = increment.increment
+        self.fh.variables[VAR_TIME_WHOLE][count] = frame.value
+        self.fh.variables[VALS_GLO_VAR][count] = frame.increment
 
         nodvars = self.fh.variables.get(VAR_NAME_NOD_VAR)
         if nodvars is not None:
             nodvars = stringify2(nodvars)
-            for fo in increment.field_outputs.values():
+            for fo in frame.field_outputs.values():
                 if fo.position != NODE:
                     continue
                 for (k, label) in enumerate(fo.keys):
@@ -558,7 +558,7 @@ class EXOFileWriter(EXOFile):
         if elevars is not None:
             elevars = stringify2(elevars)
             ebs = stringify2(self.fh.variables[VAR_EB_NAMES][:])
-            for (name, fo) in increment.field_outputs.items():
+            for (name, fo) in frame.field_outputs.items():
                 if fo.position == NODE:
                     continue
                 ieb = ebs.index(name[0])
@@ -757,33 +757,33 @@ class EXOFileReader(EXOFile):
 
         self.steps = StepRepository()
         step = self.steps.Step()
-        increment = step.increments[0]
+        frame = step.frames[0]
 
         # --- REGISTER VARIABLES
 
         # NODE DATA
         for (i, name) in scalars1:
-            increment.ScalarField(name, NODE, node_labels)
+            frame.ScalarField(name, NODE, node_labels)
         for (name, item) in vectors1.items():
             if name == "displ":
                 name = "U"
-            increment.VectorField(name, NODE, node_labels, self.numdim)
+            frame.VectorField(name, NODE, node_labels, self.numdim)
         for (name, item) in tensors1.items():
             ndir, nshr = {1: (1, 0), 3: (2, 1), 4: (3, 1), 6: (3, 3)}[len(item)]
-            increment.SymmetricTensorField(name, NODE, node_labels, ndir, nshr)
+            frame.SymmetricTensorField(name, NODE, node_labels, ndir, nshr)
 
         # ELEMENT DATA
         for (ieb, eb) in enumerate(self.element_blocks):
             elems = [eb.elefam] * len(eb.labels)
             for (i, name) in scalars2:
-                increment.ScalarField(name, ELEMENT_CENTROID, eb.labels, eb.name)
+                frame.ScalarField(name, ELEMENT_CENTROID, eb.labels, eb.name)
             for (name, item) in vectors2.items():
-                increment.VectorField(
+                frame.VectorField(
                     name, ELEMENT_CENTROID, eb.labels, self.numdim, eb.name
                 )
             for (name, item) in tensors2.items():
                 ndir, nshr = {1: (1, 0), 3: (2, 1), 4: (3, 1), 6: (3, 3)}[len(item)]
-                increment.SymmetricTensorField(
+                frame.SymmetricTensorField(
                     name,
                     ELEMENT_CENTROID,
                     eb.labels,
@@ -795,12 +795,12 @@ class EXOFileReader(EXOFile):
 
         for (count, time) in enumerate(times):
             if count > 0:
-                increment = step.Increment(dtimes[count])
+                frame = step.Frame(dtimes[count])
 
             # NODE DATA
             for (i, name) in scalars1:
                 d = self.fh.variables[VALS_NOD_VAR(i + 1)][count]
-                increment.field_outputs[name].add_data(d)
+                frame.field_outputs[name].add_data(d)
             for (name, item) in vectors1.items():
                 if name == "displ":
                     name = "U"
@@ -808,32 +808,32 @@ class EXOFileReader(EXOFile):
                 for (i, comp) in item:
                     d.append(self.fh.variables[VALS_NOD_VAR(i + 1)][count])
                 d = np.column_stack(d)
-                increment.field_outputs[name].add_data(d)
+                frame.field_outputs[name].add_data(d)
             for (name, item) in tensors1.items():
                 d = []
                 for (i, comp) in item:
                     d.append(self.fh.variables[VALS_NOD_VAR(i + 1)][count])
                 d = np.column_stack(d)
-                increment.field_outputs[name].add_data(d)
+                frame.field_outputs[name].add_data(d)
 
             # ELEMENT DATA
             for (ieb, eb) in enumerate(self.element_blocks):
                 for (i, name) in scalars2:
                     d = self.fh.variables[VALS_ELE_VAR(i + 1, ieb + 1)][count]
-                    increment.field_outputs[eb.name, name].add_data(d)
+                    frame.field_outputs[eb.name, name].add_data(d)
                 for (name, item) in vectors2.items():
                     d = []
                     for (i, comp) in item:
                         d.append(self.fh.variables[VALS_ELE_VAR(i + 1, ieb + 1)][count])
                     d = np.column_stack(d)
-                    increment.field_outputs[eb.name, name].add_data(d)
+                    frame.field_outputs[eb.name, name].add_data(d)
                 for (name, item) in tensors2.items():
                     d = []
                     for (i, comp) in item:
                         d.append(self.fh.variables[VALS_ELE_VAR(i + 1, ieb + 1)][count])
                     d = np.column_stack(d)
                     ndir, nshr = {1: (1, 0), 3: (2, 1), 4: (3, 1), 6: (3, 3)}[len(item)]
-                    increment.field_outputs[eb.name, name].add_data(d)
+                    frame.field_outputs[eb.name, name].add_data(d)
 
         return self.steps
 
@@ -936,7 +936,7 @@ class StepRepository(object):
             last = self._values[-1].framces[-1]
             step = Step(name, last.value)
             if copy:
-                step.increments[0].field_outputs = _copy.deepcopy(last.field_outputs)
+                step.frames[0].field_outputs = _copy.deepcopy(last.field_outputs)
         self[name] = step
         return self._values[-1]
 
@@ -954,24 +954,24 @@ class Step(object):
         self.written = 0
         self.name = name
         self.time = start
-        self.increments = []
-        self.Increment(0.0)
+        self.frames = []
+        self.Frame(0.0)
 
     def __len__(self):
-        return len(self.increments)
+        return len(self.frames)
 
-    def Increment(self, dtime, copy=1):
-        increment = Increment(self.time, dtime)
+    def Frame(self, dtime, copy=1):
+        frame = Frame(self.time, dtime)
         self.time += dtime
-        if self.increments and copy:
-            increment_n = self.increments[-1]
-            increment.field_outputs = _copy.deepcopy(increment_n.field_outputs)
-        increment.number = len(self.increments)
-        self.increments.append(increment)
-        return increment
+        if self.frames and copy:
+            frame_n = self.frames[-1]
+            frame.field_outputs = _copy.deepcopy(frame_n.field_outputs)
+        frame.number = len(self.frames)
+        self.frames.append(frame)
+        return frame
 
 
-class Increment(object):
+class Frame(object):
     def __init__(self, start, dtime):
         self.start = start
         self.increment = dtime

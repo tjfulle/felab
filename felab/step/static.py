@@ -18,8 +18,8 @@ class static_step(sd_step):
     def __init__(self, model, number, name, previous, period=1.0, **kwds):
         super(static_step, self).__init__(model, number, name, previous, period)
         for (key, val) in kwds.items():
-            if key == "increments":
-                key = "_increments"
+            if key == "frames":
+                key = "_frames"
             setattr(self, key, val)
 
     # ----------------------------------------------------------------------- #
@@ -31,9 +31,9 @@ class static_step(sd_step):
             raise RuntimeError("STEP ALREADY RUN")
 
         solver = kwargs.pop("solver", getattr(self, "solver", None))
-        increments = kwargs.get("increments", getattr(self, "_increments", None))
+        frames = kwargs.get("frames", getattr(self, "_frames", None))
 
-        if solver is None and increments:
+        if solver is None and frames:
             solver = NEWTON
 
         if solver is None:
@@ -150,7 +150,7 @@ class static_step(sd_step):
     def newton_solve(
         self,
         period=1.0,
-        increments=5,
+        frames=5,
         maxiters=20,
         tolerance=1e-4,
         relax=1.0,
@@ -158,21 +158,21 @@ class static_step(sd_step):
     ):
 
         period = getattr(self, "period", period)
-        increments = getattr(self, "_increments", increments)
+        frames = getattr(self, "_frames", frames)
         maxiters = getattr(self, "maxiters", maxiters)
 
         # TIME IS:
         # TIME[0]: VALUE OF STEP TIME AT BEGINNING OF INCREMENT
         # TIME[1]: VALUE OF TOTAL TIME AT BEGINNING OF INCREMENT
         time = np.array([0.0, self.start])
-        dtime = period / float(increments)
+        dtime = period / float(frames)
 
         maxit2 = int(maxiters)
         maxit1 = max(int(maxit2 / 2.0), 1)
 
         energy = v = a = ddlmag = mdload = pnewdt = None
         lflags = [STATIC_ITERATIVE, SMALL_DISPLACEMENT, STIFF_AND_RHS, GENERAL, 0]
-        for kinc in range(increments):
+        for kframe in range(frames):
 
             # GET LOADS AND PRESCRIBED DISPLACEMENTS
             Q = self.cload(time[0] + dtime)
@@ -200,7 +200,7 @@ class static_step(sd_step):
                     time,
                     dtime,
                     self.number,
-                    kinc + 1,
+                    kframe + 1,
                     kiter + 1,
                     dltyp,
                     dlmag,
@@ -243,7 +243,7 @@ class static_step(sd_step):
                     elif err2 < 5e-2:
                         tty.debug(
                             "CONVERGING TO LOSER TOLERANCE ON STEP "
-                            "{0}, INCREMENT {1}".format(self.number, kinc + 1)
+                            "{0}, FRAME {1}".format(self.number, kframe + 1)
                         )
                         break
 
@@ -251,12 +251,12 @@ class static_step(sd_step):
 
             else:
                 message = "FAILED TO CONVERGE ON STEP "
-                message += "{0}, INCREMENT {1}".format(self.number, kinc + 1)
+                message += "{0}, FRAME {1}".format(self.number, kframe + 1)
                 tty.error(message)
                 raise RuntimeError(message)
 
             tty.debug(
-                "STEP {0}, INCREMENT {1}, " "COMPLETE.".format(self.number, kinc + 1)
+                "STEP {0}, FRAME {1}, " "COMPLETE.".format(self.number, kframe + 1)
             )
             time += dtime
             self.dofs += u

@@ -61,7 +61,7 @@ class CMDN(isop_base):
         time,
         dtime,
         kstep,
-        kinc,
+        kframe,
         dltyp,
         dlmag,
         predef,
@@ -87,11 +87,11 @@ class CMDN(isop_base):
                 return
 
         if lflags[2] in (STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY, MASS_AND_RHS):
-            self.eval(rhs, A, svars, u, du, time, dtime, kstep, kinc, predef, lflags)
+            self.eval(rhs, A, svars, u, du, time, dtime, kstep, kframe, predef, lflags)
             if lflags[2] == STIFF_ONLY:
                 return
 
-        if kinc == 0:
+        if kframe == 0:
             return
 
         if lflags[2] in (STIFF_AND_RHS, RHS_ONLY, MASS_AND_RHS):
@@ -151,7 +151,7 @@ class CMDN(isop_base):
 
         return Fe
 
-    def eval(self, rhs, A, svars, u, du, time, dtime, kstep, kinc, predef, lflags):
+    def eval(self, rhs, A, svars, u, du, time, dtime, kstep, kframe, predef, lflags):
         """Evaluate the element stiffness and residual"""
         xc = self.xc  # + u.reshape(self.xc.shape)
 
@@ -254,7 +254,7 @@ class CMDN(isop_base):
                 F,
                 self.label,
                 kstep,
-                kinc,
+                kframe,
             )
 
             # Rotate stress to material increment
@@ -309,7 +309,7 @@ class CMDN(isop_base):
 
             if self.selective_reduced:
                 A += self.sri_correction(
-                    svars, u, du, time, dtime, kstep, kinc, predef, lflags
+                    svars, u, du, time, dtime, kstep, kframe, predef, lflags
                 )
 
             if self.hourglass_control:
@@ -359,7 +359,7 @@ class CMDN(isop_base):
 
         return Khg
 
-    def sri_correction(self, svars, u, du, time, dtime, kstep, kinc, predef, lflags):
+    def sri_correction(self, svars, u, du, time, dtime, kstep, kframe, predef, lflags):
         # SELECTIVE REDUCED INTEGRATION CORRECTION
 
         Ksri = np.zeros((self.numdof, self.numdof))
@@ -419,7 +419,7 @@ class CMDN(isop_base):
             F,
             self.label,
             kstep,
-            kinc,
+            kframe,
         )
         D1, D2 = iso_dev_split(self.ndir, self.nshr, self.dimensions, D)
 

@@ -5,7 +5,7 @@ from felab.elemlib import CPE4
 from felab.constants import X, Y
 
 
-def test_plane_stran_quad4_patch(plot=False):
+def demo_plane_stran_quad4_patch(plot=False):
     V = fe_model(jobid="Quad4PlaneStrainPatch")
     V.abaqus_mesh(filename="./data/EC4SFP1.inp")
     mat = V.create_material("Material-1")
@@ -27,7 +27,7 @@ def test_plane_stran_quad4_patch(plot=False):
 
     # Average stress must be 1600 in x and y
     step = V.steps.last
-    field = step.increments[-1].field_outputs["S"]
+    field = step.frames[-1].field_outputs["S"]
     for value in field.values:
         data = value.data
         assert np.allclose(data[:, 0], 1600.0), "Wrong Sxx"

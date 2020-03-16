@@ -5,7 +5,7 @@ from felab.elemlib import CPE4
 from felab.constants import X, Y
 
 
-def test_volume_locking(plot=False):
+def demo_volume_locking(plot=False):
     mu = 1.0
     for (i, Nu) in enumerate((0.0, 0.2, 0.45, 0.499)):
         E = 2.0 * mu * (1.0 + Nu)

@@ -5,7 +5,7 @@ from felab.constants import ALL, Y, ILO, IHI
 from felab.elemlib import CPE4
 
 
-def test_beam_quad(plot=False):
+def demo_beam_quad(plot=False):
     mesh = rectilinear_mesh2d(nx=10, ny=2, lx=10, ly=2)
     mat = Material("Material-1", elastic={"E": 20000, "Nu": 0})
 

@@ -29,7 +29,7 @@ class neo_hooke(object):
         F1,
         noel,
         kstep,
-        kinc,
+        kframe,
     ):
 
         if ndir != 3:

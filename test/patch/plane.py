@@ -48,7 +48,7 @@ def test_4_node_plane_stress():
 
     step.run()
 
-    s = step.increments[-1].field_outputs["S"].data
+    s = step.frames[-1].field_outputs["S"].data
     assert allclose(s[:, :, :2], 1333.3333)
     assert allclose(s[:, :, 2], 400.0)
 
@@ -111,7 +111,7 @@ def test_8_node_plane_stress():
 
     step.run()
 
-    s = step.increments[-1].field_outputs["S"].data
+    s = step.frames[-1].field_outputs["S"].data
     assert allclose(s[:, :, :2], 1333.3333)
     assert allclose(s[:, :, 2], 400.0)
 
@@ -158,7 +158,7 @@ def test_3_node_plane_stress():
 
     step.run()
 
-    s = step.increments[-1].field_outputs["S"].data
+    s = step.frames[-1].field_outputs["S"].data
     assert allclose(s[:, :, :2], 1333.3333)
     assert allclose(s[:, :, 2], 400.0)
 

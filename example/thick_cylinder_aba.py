@@ -9,7 +9,7 @@ Nu = 0.499
 E = 2.0 * mu * (1.0 + Nu)
 
 
-def test_linear(ax=None):
+def demo_linear(ax=None):
     V = fe_model(jobid="VolumeLocking.Linear")
     V.abaqus_mesh("./data/ThickCylinder_Linear.inp")
     mat = V.create_material("Material-1")
@@ -36,7 +36,7 @@ def test_linear(ax=None):
     return None
 
 
-def test_quadratic(ax=None):
+def demo_quadratic(ax=None):
     V = fe_model(jobid="VolumeLocking.Quadratic")
     V.abaqus_mesh("./data/ThickCylinder_Quadratic.inp")
     mat = V.create_material("Material-1")
@@ -54,7 +54,7 @@ def test_quadratic(ax=None):
     return None
 
 
-def test_analytic(plot=False):
+def demo_analytic(plot=False):
     mesh = Mesh(filename="./data/ThickCylinder_Linear.inp")
     ix = np.where(mesh.coord[:, 1] <= 1e-12)
     a = mesh.coord[ix][:, 0].min()

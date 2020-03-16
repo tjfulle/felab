@@ -41,7 +41,7 @@ class thermally_conductive(object):
         F,
         noel,
         kstep,
-        kinc,
+        kframe,
     ):
         return self.isotropic_thermal_conductivity(coords.shape[0])
 

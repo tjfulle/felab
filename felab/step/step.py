@@ -41,10 +41,10 @@ class load_step(object):
             self.start = 0.0
             self.value = 0.0
         else:
-            self.start = previous.increments[-1].value
-            self.value = previous.increments[-1].value
-        self.increments = []
-        self.Increment(0.0)
+            self.start = previous.frames[-1].value
+            self.value = previous.frames[-1].value
+        self.frames = []
+        self.Frame(0.0)
         self.period = period
         self.number = number
         self.previous = previous
@@ -92,7 +92,7 @@ class load_step(object):
         self._K = None
 
     def __len__(self):
-        return len(self.increments)
+        return len(self.frames)
 
     def print_stiffness_structure(
         self, style="ascii", stream=sys.stdout, index_base=0, numeric_fmt="{0: 8f}"
@@ -243,19 +243,19 @@ class load_step(object):
     def assign_hsrc(self, iel, s):
         self.hsrcx[iel] = np.asarray(s)
 
-    def Increment(self, dtime, copy=1):
-        increment = Increment(self.value, dtime)
+    def Frame(self, dtime, copy=1):
+        frame = Frame(self.value, dtime)
         self.value += dtime
-        if self.increments and copy:
-            increment_n = self.increments[-1]
-            increment.field_outputs = _copy.deepcopy(increment_n.field_outputs)
-        increment.number = len(self.increments)
-        self.increments.append(increment)
-        return increment
+        if self.frames and copy:
+            frame_n = self.frames[-1]
+            frame.field_outputs = _copy.deepcopy(frame_n.field_outputs)
+        frame.number = len(self.frames)
+        self.frames.append(frame)
+        return frame
 
     def copy_from(self, step):
-        self.increments[0].field_outputs = _copy.deepcopy(
-            step.increments[-1].field_outputs
+        self.frames[0].field_outputs = _copy.deepcopy(
+            step.frames[-1].field_outputs
         )
         self.dofs[:] = step.dofs
         self.dofx = _copy.deepcopy(step.dofx)
@@ -423,15 +423,15 @@ class load_step(object):
         self.final_temp = a
 
     def advance(self, dtime, dofs, react=None, **kwds):
-        increment_n = self.increments[-1]
-        if not increment_n.converged:
-            raise RuntimeError("ATTEMPTING TO UPDATE AN UNCONVERGED INCREMENT")
+        frame_n = self.frames[-1]
+        if not frame_n.converged:
+            raise RuntimeError("ATTEMPTING TO UPDATE AN UNCONVERGED FRAME")
 
         # ADVANCE STATE VARIABLES
         self.svars[0] = self.svars[1]
 
-        # CREATE INCREMENT TO HOLD RESULTS
-        increment = self.Increment(dtime)
+        # CREATE FRAME TO HOLD RESULTS
+        frame = self.Frame(dtime)
 
         # STORE DEGREES OF FREEDOM
         u, R, temp = self.model.format_dof(dofs)
@@ -439,27 +439,27 @@ class load_step(object):
             RF, M, Q = self.model.format_dof(react)
 
         if temp is not None:
-            increment.field_outputs["T"].add_data(temp)
+            frame.field_outputs["T"].add_data(temp)
             if react is not None:
-                increment.field_outputs["Q"].add_data(Q)
+                frame.field_outputs["Q"].add_data(Q)
         if u.shape[1]:
-            increment.field_outputs["U"].add_data(u)
+            frame.field_outputs["U"].add_data(u)
             if react is not None:
-                increment.field_outputs["RF"].add_data(RF)
+                frame.field_outputs["RF"].add_data(RF)
         if R.shape[1]:
-            increment.field_outputs["R"].add_data(R)
+            frame.field_outputs["R"].add_data(R)
             if react is not None:
-                increment.field_outputs["M"].add_data(M)
+                frame.field_outputs["M"].add_data(M)
 
         # STORE KEYWORDS
         for (kwd, val) in kwds.items():
-            increment.field_outputs[kwd].add_data(val)
+            frame.field_outputs[kwd].add_data(val)
 
         for (ieb, eb) in enumerate(self.model.mesh.element_blocks):
             if not eb.eletyp.variables():
                 continue
 
-            # PASS VALUES FROM SVARS TO THE INCREMENT OUTPUT
+            # PASS VALUES FROM SVARS TO THE FRAME OUTPUT
             if eb.eletyp.ndir is not None:
                 ntens = eb.eletyp.ndir + eb.eletyp.nshr
             else:
@@ -475,12 +475,12 @@ class load_step(object):
                     svars = self.svars[0, self.svtab[iel]].reshape(m, n)
                 for (j, variable) in enumerate(el.variables()):
                     name, ftype = variable[:2]
-                    increment.field_outputs[eb.name, name].add_data(svars[:, j], e)
+                    frame.field_outputs[eb.name, name].add_data(svars[:, j], e)
 
-        increment.converged = True
+        frame.converged = True
 
 
-class Increment(object):
+class Frame(object):
     def __init__(self, start, dtime):
         self.start = start
         self.increment = dtime

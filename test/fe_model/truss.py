@@ -18,7 +18,7 @@ def test_model_truss_0():
     step.assign_prescribed_bc((2, 3), (X, Y))
     step.assign_concentrated_load(1, Y, 1000e3)
     step.run()
-    u = V.steps.last.increments[-1].field_outputs["U"].data
+    u = V.steps.last.frames[-1].field_outputs["U"].data
     assert allclose([[-0.05, 0.0882842], [0.0, 0.0], [0.0, 0.0]], u)
 
 
@@ -100,8 +100,8 @@ def test_model_truss_1():
     step.assign_concentrated_load(7, Y, -16)
 
     step.run()
-    u = V.steps.last.increments[-1].field_outputs["U"].data
-    RF = V.steps.last.increments[-1].field_outputs["RF"].data
+    u = V.steps.last.frames[-1].field_outputs["U"].data
+    RF = V.steps.last.frames[-1].field_outputs["RF"].data
     assert allclose(
         [
             [0.0, 0.0, 0.0],
@@ -215,8 +215,8 @@ def test_model_truss_2():
     step.assign_concentrated_load(7, Y, -16)
 
     step.run()
-    u = V.steps.last.increments[-1].field_outputs["U"].data
-    RF = V.steps.last.increments[-1].field_outputs["RF"].data
+    u = V.steps.last.frames[-1].field_outputs["U"].data
+    RF = V.steps.last.frames[-1].field_outputs["RF"].data
     assert allclose(
         [
             [0.0, 0.0],
@@ -268,7 +268,7 @@ def test_model_truss_3():
     step.assign_prescribed_bc(1, X, -0.05)
     step.assign_concentrated_load(1, Y, 1000e3)
     step.run()
-    u = V.steps.last.increments[-1].field_outputs["U"].data
+    u = V.steps.last.frames[-1].field_outputs["U"].data
     assert allclose([[-0.05, 0.0882842], [0.0, 0.0], [0.0, 0.0]], u)
 
 
@@ -288,7 +288,7 @@ def test_model_truss_4():
     step.assign_prescribed_bc(1, Z)
     step.assign_concentrated_load(1, Y, 1000e3)
     step.run()
-    u = V.steps.last.increments[-1].field_outputs["U"].data
+    u = V.steps.last.frames[-1].field_outputs["U"].data
     assert allclose([[-0.05, 0.0882842, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], u)
 
 
@@ -309,7 +309,7 @@ def test_model_truss_5():
     # Concentrated force in 'z' direction on node 1
     step.assign_concentrated_load(1, Z, -1000)
     step.run()
-    u = V.steps.last.increments[-1].field_outputs["U"].data
+    u = V.steps.last.frames[-1].field_outputs["U"].data
     ua = (
         array(
             [
@@ -417,7 +417,7 @@ def test_model_truss_6():
 
     # Solve and write results
     step.run()
-    u = V.steps.last.increments[-1].field_outputs["U"].data
+    u = V.steps.last.frames[-1].field_outputs["U"].data
 
     assert allclose(
         [

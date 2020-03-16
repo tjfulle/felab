@@ -7,7 +7,7 @@ from felab.mesh import abaqus_mesh
 from felab.material import Material
 
 
-def test_plane_stress_tria3_patch(plot=False):
+def demo_plane_stress_tria3_patch(plot=False):
     # READ MESH
     mesh = abaqus_mesh(filename="./data/EC3SFP1.inp")
 
@@ -35,7 +35,7 @@ def test_plane_stress_tria3_patch(plot=False):
 
     # CHECK THE RESULTS AGAINST ANALYTIC SOLUTION
     step = V.steps.last
-    field = step.increments[-1].field_outputs["S"]
+    field = step.frames[-1].field_outputs["S"]
     error = []
     for value in field.values:
         data = value.data
@@ -43,7 +43,7 @@ def test_plane_stress_tria3_patch(plot=False):
         assert np.allclose(data[:, 1], 1333.333333333), error.append("Syy")
         assert np.allclose(data[:, 2], 400.0), error.append("Sxy")
 
-    field = step.increments[-1].field_outputs["E"]
+    field = step.frames[-1].field_outputs["E"]
     for value in field.values:
         data = value.data
         assert np.allclose(data[:, 0], 1e-3), error.append("Exx")
@@ -82,7 +82,7 @@ def test_plane_stress_tria3_patch(plot=False):
 
     # CHECK THE RESULTS AGAINST ANALYTIC SOLUTION
     step = V.steps.last
-    field = step.increments[-1].field_outputs["S"]
+    field = step.frames[-1].field_outputs["S"]
     error = []
     for value in field.values:
         data = value.data
@@ -90,7 +90,7 @@ def test_plane_stress_tria3_patch(plot=False):
         assert np.allclose(data[:, 1], 1333.333333333), error.append("Syy")
         assert np.allclose(data[:, 2], 400.0), error.append("Sxy")
 
-    field = step.increments[-1].field_outputs["E"]
+    field = step.frames[-1].field_outputs["E"]
     for value in field.values:
         data = value.data
         assert np.allclose(data[:, 0], 1e-3), error.append("Exx")

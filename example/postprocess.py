@@ -6,7 +6,7 @@ from felab.constants import X, IHI
 from felab.elemlib import CPE4
 
 
-def test_postprocess():
+def demo_postprocess():
     mesh = genesis_mesh("./data/PlateWithHoleQuad4.g")
     mat = Material("Material-1")
     mat.elastic(E=100, Nu=0.2)
@@ -27,14 +27,14 @@ def test_postprocess():
     max_p = [0.0, None]
     max_u = [0.0, None]
     for step in F.steps.values():
-        for increment in step.increments:
-            u = increment.field_outputs["U"]
+        for frame in step.frames:
+            u = frame.field_outputs["U"]
             for value in u.values:
                 u1 = value.magnitude
                 if max_u[0] < u1:
                     max_u = [u1, value]
 
-            s = increment.field_outputs["S"]
+            s = frame.field_outputs["S"]
             for value in s.values:
                 s1 = value.max_principal
                 if max_p[0] < s1:

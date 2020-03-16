@@ -4,7 +4,7 @@ from felab.elemlib import L2D2
 from felab.material import Material
 
 
-def test_truss():
+def demo_truss():
     # Create the model problem
     V = fe_model(jobid="Truss1")
 

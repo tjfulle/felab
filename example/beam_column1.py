@@ -6,7 +6,7 @@ from felab.constants import X, Y, TZ
 from felab.mesh import Mesh
 
 
-def test_beam_column():
+def demo_beam_column():
     nodtab = [[1, -4, 3], [2, 0, 0], [3, 0, 3], [4, nan, nan], [5, 4, 3]]
     eletab = [[1, 1, 3], [2, 3, 5], [3, 1, 2], [4, 2, 3], [5, 2, 5]]
     mesh = Mesh(nodtab=nodtab, eletab=eletab)

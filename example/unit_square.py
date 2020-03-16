@@ -5,7 +5,7 @@ from felab.material import Material
 from felab.mesh import unit_square_mesh
 
 
-def test_unit_square(plot=False):
+def demo_unit_square(plot=False):
     mesh = unit_square_mesh(nx=2, ny=2)
     mat = Material("Mat", elastic={"E": 1000, "Nu": 0})
 

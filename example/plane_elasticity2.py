@@ -5,7 +5,7 @@ from felab.material import Material
 from felab.constants import X, Y
 
 
-def test_plane_elasticity2(plot=False):
+def demo_plane_elasticity2(plot=False):
 
     # READ MESH FROM FILE
     mesh = genesis_mesh("./data/PlateWithHoleTria3.g")

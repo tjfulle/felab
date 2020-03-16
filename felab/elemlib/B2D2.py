@@ -44,7 +44,7 @@ class B2D2(element_base):
         time,
         dtime,
         kstep,
-        kinc,
+        kframe,
         dltyp,
         dlmag,
         predef,
@@ -57,7 +57,7 @@ class B2D2(element_base):
         if lflags[2] not in (STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY):
             raise NotImplementedError
 
-        if kinc == 0:
+        if kframe == 0:
             return
 
         if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):

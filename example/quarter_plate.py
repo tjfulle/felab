@@ -4,7 +4,7 @@ from felab.mesh.exodusii import EXOFileReader
 from felab.constants import X, Y, ALL
 
 
-def test_quarter_plate(plot=False):
+def demo_quarter_plate(plot=False):
     V = fe_model(jobid="PlateWithHoleQuad4QuarterSym")
     V.genesis_mesh("./data/PlateWithHoleQuad4QuarterSym.g")
     mat = V.create_material("Material-1")
@@ -24,14 +24,14 @@ def test_quarter_plate(plot=False):
     max_p = [0.0, None]
     max_u = [0.0, None]
     for step in F.steps.values():
-        for increment in step.increments:
-            u = increment.field_outputs["U"]
+        for frame in step.frames:
+            u = frame.field_outputs["U"]
             for value in u.values:
                 u1 = value.magnitude
                 if max_u[0] < u1:
                     max_u = [u1, value]
 
-            s = increment.field_outputs["S"]
+            s = frame.field_outputs["S"]
             for value in s.values:
                 s1 = value.max_principal
                 if max_p[0] < s1:

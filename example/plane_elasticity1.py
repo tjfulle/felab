@@ -4,7 +4,7 @@ from felab.elemlib import CPE4
 from felab.constants import X, Y
 
 
-def test_plane_elasticity1(plot=False):
+def demo_plane_elasticity1(plot=False):
     V = fe_model(jobid="Plane1")
     V.genesis_mesh("./data/PlateWithHoleQuad4.g")
 

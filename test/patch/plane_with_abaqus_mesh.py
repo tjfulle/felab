@@ -22,14 +22,14 @@ def test_quad4_plane_strain(data_path):
     step.run()
 
     # Average stress must be 1600 in x and y
-    field = step.increments[-1].field_outputs["S"]
+    field = step.frames[-1].field_outputs["S"]
     for value in field.values:
         data = value.data
         assert allclose(data[:, 0], 1600.0)
         assert allclose(data[:, 1], 1600.0)
         assert allclose(data[:, 2], 800.0)
         assert allclose(data[:, 3], 400.0)
-    field = step.increments[-1].field_outputs["E"]
+    field = step.frames[-1].field_outputs["E"]
     for value in field.values:
         data = value.data
         assert allclose(data[:, 0], 1e-3)
@@ -51,13 +51,13 @@ def test_quad4_plane_stress(data_path):
     step.assign_prescribed_bc(40, X, 0.06e-3)
     step.assign_prescribed_bc(40, Y, 0.12e-3)
     step.run()
-    field = step.increments[-1].field_outputs["S"]
+    field = step.frames[-1].field_outputs["S"]
     for value in field.values:
         data = value.data
         assert allclose(data[:, 0], 1333.33333333)
         assert allclose(data[:, 1], 1333.33333333)
         assert allclose(data[:, 2], 400.0)
-    field = step.increments[-1].field_outputs["E"]
+    field = step.frames[-1].field_outputs["E"]
     for value in field.values:
         data = value.data
         assert allclose(data[:, 0], 1e-3)
@@ -80,13 +80,13 @@ def test_tria3_plane_stress(data_path):
     step.assign_prescribed_bc(40, Y, 0.12e-3)
     step.run()
     V.write_results()
-    field = step.increments[-1].field_outputs["S"]
+    field = step.frames[-1].field_outputs["S"]
     for value in field.values:
         data = value.data
         assert allclose(data[:, 0], 1333.333333333), "Wrong Sxx"
         assert allclose(data[:, 1], 1333.333333333), "Wrong Syy"
         assert allclose(data[:, 2], 400.0), "Wrong Sxy"
-    field = step.increments[-1].field_outputs["E"]
+    field = step.frames[-1].field_outputs["E"]
     for value in field.values:
         data = value.data
         assert allclose(data[:, 0], 1e-3)
@@ -109,14 +109,14 @@ def test_tria3_plane_strain(data_path):
     step.assign_prescribed_bc(40, Y, 0.12e-3)
     step.run()
     # Average stress must be 1600 in x and y
-    field = step.increments[-1].field_outputs["S"]
+    field = step.frames[-1].field_outputs["S"]
     for value in field.values:
         data = value.data
         assert allclose(data[:, 0], 1600.0)
         assert allclose(data[:, 1], 1600.0)
         assert allclose(data[:, 2], 800.0)
         assert allclose(data[:, 3], 400.0)
-    field = step.increments[-1].field_outputs["E"]
+    field = step.frames[-1].field_outputs["E"]
     for value in field.values:
         data = value.data
         assert allclose(data[:, 0], 1e-3)

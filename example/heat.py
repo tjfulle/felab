@@ -5,7 +5,7 @@ from felab.elemlib import DC2D3
 from felab.constants import T, ALL, ILO, IHI, JLO, JHI, BOUNDARY
 
 
-def test_plate_with_hole_fine(plot=False):
+def demo_plate_with_hole_fine(plot=False):
     V = fe_model()
     V.genesis_mesh("./data/PlateWithHoleTria3Fine.g")
     k, h, Too = 12, 250, 25
@@ -24,7 +24,7 @@ def test_plate_with_hole_fine(plot=False):
         V.mesh.PlotScalar2D(step.dofs.flatten())
 
 
-def test_plate_with_hole_coarse():
+def demo_plate_with_hole_coarse():
     k, h, Too = 12, 250, 25  # noqa: F841
     V = fe_model(jobid="HeatPlateWithHole")
     V.genesis_mesh("./data/PlateWithHoleTria3.g")

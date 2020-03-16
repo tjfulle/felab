@@ -38,7 +38,7 @@ class DCMDN(isop_base):
         time,
         dtime,
         kstep,
-        kinc,
+        kframe,
         dltyp,
         dlmag,
         predef,

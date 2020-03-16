@@ -217,7 +217,7 @@ class Material(object):
         F,
         noel,
         kstep,
-        kinc,
+        kframe,
     ):
         return self.model.response(
             stress,
@@ -238,5 +238,5 @@ class Material(object):
             F,
             noel,
             kstep,
-            kinc,
+            kframe,
         )

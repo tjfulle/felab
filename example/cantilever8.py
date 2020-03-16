@@ -5,7 +5,7 @@ from felab.elemlib import CPS8
 from felab.constants import Y
 
 
-def test_cantilever8():
+def demo_cantilever8():
     filename = "./data/Cantilever8.inp"
     mesh = abaqus_mesh(filename)
     mat = Material("Material-1", elastic={"E": 100.0, "Nu": 0.3})
@@ -14,7 +14,7 @@ def test_cantilever8():
     V.fix_nodes((1, 22, 33))
     step = V.create_static_step()
     step.assign_concentrated_load(49, Y, 0.01)
-    step.run(increments=10)
+    step.run(frames=10)
     V.write_results()
 
 

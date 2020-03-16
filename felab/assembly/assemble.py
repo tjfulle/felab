@@ -38,7 +38,7 @@ def assemble_system(
     time,
     dtime,
     kstep,
-    kinc,
+    kframe,
     kiter,
     dltyp,
     dlmag,
@@ -59,7 +59,7 @@ def assemble_system(
     Parameters
     ----------
     u, du : ndarray
-        Value of DOFs at beginning of step and increment, respectively.
+        Value of DOFs at beginning of step and frame, respectively.
     Q : ndarray
         Force array due to Neumann boundary condtions
     svtab : ndarray of int
@@ -78,8 +78,8 @@ def assemble_system(
         Time increment
     period : float {1.}
         step period
-    kstep, kinc : int, optional {1, 1}
-        step and increment numbers
+    kstep, kframe : int, optional {1, 1}
+        step and frame numbers
     nlgeom : bool, optional {False}
         Nonlinear geometry
     kiter : int, opitional {None}
@@ -111,14 +111,14 @@ def assemble_system(
     msg += "PROCEDURE: {0}, NLGEOM: {1}\n      ".format(procname, nlgeom)
 
     tf = time[-1] + dtime
-    msg += "STEP: {0}, INCREMENT: {1}, TIME: {2}".format(kstep, kinc, tf)
+    msg += "STEP: {0}, FRAME: {1}, TIME: {2}".format(kstep, kframe, tf)
     if kiter is not None:
-        msg += ", INCREMENT: {0}".format(kiter)
+        msg += ", FRAME: {0}".format(kiter)
 
     if not kiter:
         tty.debug(msg)
 
-    elif kiter == 1 and kinc == 1:
+    elif kiter == 1 and kframe == 1:
         tty.debug(msg)
 
     if lflags[2] not in (STIFF_AND_RHS, STIFF_ONLY, MASS_ONLY, RHS_ONLY, MASS_AND_RHS):
@@ -154,7 +154,7 @@ def assemble_system(
                 time,
                 dtime,
                 kstep,
-                kinc,
+                kframe,
                 dltyp[iel],
                 dlmag[iel],
                 predef_i[:, :, el.inodes],
