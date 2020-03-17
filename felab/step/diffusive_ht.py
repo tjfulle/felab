@@ -29,17 +29,17 @@ class DiffusiveHeatTransferStep(LoadStep):
     # ----------------------------------------------------------------------- #
     # --- HEAT TRANSFER LOADINGS -------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def SurfaceFlux(self, surface, qn):
+    def dflux(self, surface, qn):
         surf = self.model.mesh.find_surface(surface)
         for (iel, iedge) in surf:
-            self.assign_sflux(iel, iedge, qn)
+            self.register_dflux(iel, iedge, qn)
 
-    def SurfaceConvection(self, surface, Too, h):
+    def sfilm(self, surface, Too, h):
         if self.model.mesh is None:
             raise UserInputError("MESH MUST FIRST BE CREATED")
         surf = self.model.mesh.find_surface(surface)
         for (iel, iedge) in surf:
-            self.assign_sfilm(iel, iedge, Too, h)
+            self.register_sfilm(iel, iedge, Too, h)
 
     def HeatGeneration(self, region, amplitude):
         if region == ALL:
@@ -69,7 +69,7 @@ class DiffusiveHeatTransferStep(LoadStep):
         for xelem in xelems:
             ielem = self.model.mesh.elemap[xelem]
             ix = [nodmap[n] for n in self.model.elements[ielem].inodes]
-            self.assign_hsrc(ielem, a[ix])
+            self.register_heat_source(ielem, a[ix])
 
     # ----------------------------------------------------------------------- #
     # --- RUN --------------------------------------------------------------- #

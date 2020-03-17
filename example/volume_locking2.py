@@ -1,5 +1,5 @@
 import numpy as np
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.elemlib import CPE4, CPE4B, CPE4R, CPE4RS, CPE8B
 from felab.constants import NEWTON, X, Y
 from felab.mesh import Mesh
@@ -11,16 +11,18 @@ E = 2.0 * mu * (1.0 + Nu)
 
 
 def demo_linear(ax=None):
-    V = fe_model(jobid="VolumeLocking.Linear")
+    V = FEModel(jobid="VolumeLocking.Linear")
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties(element_block="ElementBlock1", element_type=CPE4, material=mat, t=1)
-    V.assign_prescribed_bc("Nodeset-200", X)
-    V.assign_prescribed_bc("Nodeset-201", Y)
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=CPE4, material=mat, t=1
+    )
+    V.dirichlet_bc("Nodeset-200", X)
+    V.dirichlet_bc("Nodeset-201", Y)
     # Pressure on inside face
     step = V.static_step()
-    step.assign_pressure("SURFACE-1", 1.0)
+    step.pressure("SURFACE-1", 1.0)
     step.run()
     V.write_results()
     if ax is not None:
@@ -39,16 +41,18 @@ def demo_linear(ax=None):
 
 
 def demo_bbar(ax=None):
-    V = fe_model(jobid="VolumeLocking.BBar")
+    V = FEModel(jobid="VolumeLocking.BBar")
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties(element_block="ElementBlock1", element_type=CPE4B, material=mat, t=1)
-    V.assign_prescribed_bc("Nodeset-200", X)
-    V.assign_prescribed_bc("Nodeset-201", Y)
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=CPE4B, material=mat, t=1
+    )
+    V.dirichlet_bc("Nodeset-200", X)
+    V.dirichlet_bc("Nodeset-201", Y)
     # Pressure on inside face
     step = V.static_step()
-    step.assign_pressure("SURFACE-1", 1.0)
+    step.pressure("SURFACE-1", 1.0)
     step.run()
     V.write_results()
     if ax is not None:
@@ -58,16 +62,18 @@ def demo_bbar(ax=None):
 
 
 def demo_reduced_integration(ax=None):
-    V = fe_model(jobid="VolumeLocking.Reduced")
+    V = FEModel(jobid="VolumeLocking.Reduced")
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties(element_block="ElementBlock1", element_type=CPE4R, material=mat, t=1)
-    V.assign_prescribed_bc("Nodeset-200", X)
-    V.assign_prescribed_bc("Nodeset-201", Y)
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=CPE4R, material=mat, t=1
+    )
+    V.dirichlet_bc("Nodeset-200", X)
+    V.dirichlet_bc("Nodeset-201", Y)
     # Pressure on inside face
     step = V.static_step()
-    step.assign_pressure("SURFACE-1", 1.0)
+    step.pressure("SURFACE-1", 1.0)
     step.run()
     V.write_results()
     if ax is not None:
@@ -77,16 +83,18 @@ def demo_reduced_integration(ax=None):
 
 
 def demo_selectively_reduced_integration(ax=None):
-    V = fe_model(jobid="VolumeLocking.SelReduced")
+    V = FEModel(jobid="VolumeLocking.SelReduced")
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties(element_block="ElementBlock1", element_type=CPE4RS, material=mat, t=1)
-    V.assign_prescribed_bc("Nodeset-200", X)
-    V.assign_prescribed_bc("Nodeset-201", Y)
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=CPE4RS, material=mat, t=1
+    )
+    V.dirichlet_bc("Nodeset-200", X)
+    V.dirichlet_bc("Nodeset-201", Y)
     # Pressure on inside face
     step = V.static_step()
-    step.assign_pressure("SURFACE-1", 1.0)
+    step.pressure("SURFACE-1", 1.0)
     step.run()
     V.write_results()
     if ax is not None:
@@ -98,20 +106,22 @@ def demo_selectively_reduced_integration(ax=None):
 
 
 def demo_quadratic(ax=None):
-    V = fe_model(jobid="VolumeLocking.Quadratic")
+    V = FEModel(jobid="VolumeLocking.Quadratic")
     V.genesis_mesh("./data/QuarterCylinderQuad8.g")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties(element_block="ElementBlock1", element_type=CPE8B, material=mat, t=1)
-    V.assign_prescribed_bc("Nodeset-200", X)
-    V.assign_prescribed_bc("Nodeset-201", Y)
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=CPE8B, material=mat, t=1
+    )
+    V.dirichlet_bc("Nodeset-200", X)
+    V.dirichlet_bc("Nodeset-201", Y)
     # Pressure on inside face
     step = V.static_step(solver=NEWTON)
-    step.assign_pressure("SURFACE-1", 1.0)
-    # V.assign_surface_load("SURFACE-300", [0.195090322, 0.98078528])
-    # V.assign_surface_load("SURFACE-301", [0.555570233, 0.831469612])
-    # V.assign_surface_load("SURFACE-302", [0.831469612, 0.555570233])
-    # V.assign_surface_load("SURFACE-303", [0.98078528, 0.195090322])
+    step.pressure("SURFACE-1", 1.0)
+    # V.surface_load("SURFACE-300", [0.195090322, 0.98078528])
+    # V.surface_load("SURFACE-301", [0.555570233, 0.831469612])
+    # V.surface_load("SURFACE-302", [0.831469612, 0.555570233])
+    # V.surface_load("SURFACE-303", [0.98078528, 0.195090322])
     step.run()
     V.write_results()
 

@@ -1,26 +1,26 @@
 import numpy as np
 import felab.util.tty as tty
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.elemlib import CPE4
 from felab.constants import X, Y
 from felab.io.plot import plot2d
 
 
 def demo_plane_stran_quad4_patch(plot=False):
-    V = fe_model(jobid="Quad4PlaneStrainPatch")
+    V = FEModel(jobid="Quad4PlaneStrainPatch")
     V.abaqus_mesh(filename="./data/EC4SFP1.inp")
     mat = V.material("Material-1")
     mat.elastic(E=1e6, Nu=0.25)
     V.assign_properties(element_block="EALL", element_type=CPE4, material=mat, t=0.001)
 
     step = V.static_step()
-    step.assign_prescribed_bc(10, (X, Y), 0.0)
-    step.assign_prescribed_bc(20, X, 0.24e-3)
-    step.assign_prescribed_bc(20, Y, 0.12e-3)
-    step.assign_prescribed_bc(30, X, 0.3e-3)
-    step.assign_prescribed_bc(30, Y, 0.24e-3)
-    step.assign_prescribed_bc(40, X, 0.06e-3)
-    step.assign_prescribed_bc(40, Y, 0.12e-3)
+    step.dirichlet_bc(10, (X, Y), 0.0)
+    step.dirichlet_bc(20, X, 0.24e-3)
+    step.dirichlet_bc(20, Y, 0.12e-3)
+    step.dirichlet_bc(30, X, 0.3e-3)
+    step.dirichlet_bc(30, Y, 0.24e-3)
+    step.dirichlet_bc(40, X, 0.06e-3)
+    step.dirichlet_bc(40, Y, 0.12e-3)
     step.run()
     if plot:
         plot2d(model=V, show=1)

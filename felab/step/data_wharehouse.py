@@ -46,6 +46,7 @@ class FieldOutput(object):
         eleblk,
         elements=None,
         data=None,
+        description=None,
     ):
         self.name = name
         self.position = position
@@ -61,6 +62,7 @@ class FieldOutput(object):
             self.keys = [self.key]
         self.shape = shape
         self.data = np.zeros(self.shape)
+        self.description = description
 
         if data is not None:
             idata = np.asarray(data)
@@ -140,6 +142,7 @@ class SymmetricTensorField(FieldOutput):
         ngauss=None,
         elements=None,
         data=None,
+        description=None,
     ):
 
         if position == INTEGRATION_POINT and not ngauss:
@@ -179,6 +182,7 @@ class TensorField(FieldOutput):
         ngauss=None,
         elements=None,
         data=None,
+        description=None,
     ):
 
         if position == INTEGRATION_POINT and not ngauss:
@@ -228,6 +232,7 @@ class VectorField(FieldOutput):
         ngauss=None,
         elements=None,
         data=None,
+        description=None,
     ):
 
         if position == INTEGRATION_POINT and not ngauss:
@@ -256,7 +261,15 @@ class VectorField(FieldOutput):
 
 class ScalarField(FieldOutput):
     def __init__(
-        self, name, position, labels, eleblk=None, ngauss=None, elements=None, data=None
+        self,
+        name,
+        position,
+        labels,
+        eleblk=None,
+        ngauss=None,
+        elements=None,
+        data=None,
+        description=None,
     ):
 
         if position == INTEGRATION_POINT and not ngauss:

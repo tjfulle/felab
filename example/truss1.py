@@ -1,4 +1,4 @@
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.constants import ALL, X, Y
 from felab.elemlib import L2D2
 from felab.material import Material
@@ -6,7 +6,7 @@ from felab.material import Material
 
 def demo_truss():
     # Create the model problem
-    V = fe_model(jobid="Truss1")
+    V = FEModel(jobid="Truss1")
 
     # Create the mesh from tables of nodes and elements
     nodtab = [
@@ -80,16 +80,18 @@ def demo_truss():
         Adia,
         Adia,
     ]
-    V.assign_properties(element_block="ElementBlock1", element_type=L2D2, material=mat, A=A)
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=L2D2, material=mat, A=A
+    )
 
     # Apply boundary conditions
-    V.assign_prescribed_bc(1, (X, Y))
-    V.assign_prescribed_bc(12, Y)
+    V.dirichlet_bc(1, (X, Y))
+    V.dirichlet_bc(12, Y)
 
     # Apply concentrated loads
     step = V.static_step()
-    step.assign_concentrated_load((3, 5, 9, 11), Y, -10)
-    step.assign_concentrated_load(7, Y, -16)
+    step.concentrated_load((3, 5, 9, 11), Y, -10)
+    step.concentrated_load(7, Y, -16)
 
     step.run()
     V.write_results()

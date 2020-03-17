@@ -1,5 +1,5 @@
 from felab.elemlib.isop_base import isop_base
-from felab.constants import STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY, HSRC, SFILM, SFLUX
+from felab.constants import STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY, HSRC, SFILM, DFLUX
 
 
 class DCMDN(isop_base):
@@ -74,7 +74,7 @@ class DCMDN(isop_base):
                 if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):
                     rhs[:] += self.heat_source(dlmag[i])
 
-            elif typ == SFLUX:
+            elif typ == DFLUX:
                 # EVALUATE THE BOUNDARY FLUX CONTRIBUTION
                 if lflags[2] in (STIFF_AND_RHS, RHS_ONLY):
                     iedge, qn = dlmag[i]

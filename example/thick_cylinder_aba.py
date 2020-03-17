@@ -1,5 +1,5 @@
 import numpy as np
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.elemlib import CPE4R, CPE8B
 from felab.constants import X, Y
 from felab.mesh import Mesh
@@ -11,16 +11,16 @@ E = 2.0 * mu * (1.0 + Nu)
 
 
 def demo_linear(ax=None):
-    V = fe_model(jobid="VolumeLocking.Linear")
+    V = FEModel(jobid="VolumeLocking.Linear")
     V.abaqus_mesh("./data/ThickCylinder_Linear.inp")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
     V.assign_properties(element_block="ALL", element_type=CPE4R, material=mat, t=1)
-    V.assign_prescribed_bc("SymYZ", X)
-    V.assign_prescribed_bc("SymXZ", Y)
+    V.dirichlet_bc("SymYZ", X)
+    V.dirichlet_bc("SymXZ", Y)
     step = V.static_step()
     # Pressure on inside face
-    step.assign_pressure("SurfID", 1.0)
+    step.pressure("SurfID", 1.0)
     step.run()
     V.write_results()
     if ax is not None:
@@ -39,16 +39,16 @@ def demo_linear(ax=None):
 
 
 def demo_quadratic(ax=None):
-    V = fe_model(jobid="VolumeLocking.Quadratic")
+    V = FEModel(jobid="VolumeLocking.Quadratic")
     V.abaqus_mesh("./data/ThickCylinder_Quadratic.inp")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
     V.assign_properties(element_block="ALL", element_type=CPE8B, material=mat, t=1)
-    V.assign_prescribed_bc("SymYZ", X)
-    V.assign_prescribed_bc("SymXZ", Y)
+    V.dirichlet_bc("SymYZ", X)
+    V.dirichlet_bc("SymXZ", Y)
     # Pressure on inside face
     step = V.static_step()
-    step.assign_pressure("SurfID", 1.0)
+    step.pressure("SurfID", 1.0)
     step.run()
     V.write_results()
     if ax is not None:

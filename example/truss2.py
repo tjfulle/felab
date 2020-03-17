@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.material import Material
 from felab.mesh import Mesh
 from felab.elemlib import L3D2
@@ -49,7 +49,7 @@ def demo_truss():
         [25, 4, 8],
     ]
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
-    V = fe_model(mesh=mesh, jobid="Truss2")
+    V = FEModel(mesh=mesh, jobid="Truss2")
 
     # Define element blocks
     mat = Material("Material-1")
@@ -82,7 +82,9 @@ def demo_truss():
         2.44,
     ]
     V.element_block(name="ElementBlock1", elements=ALL)
-    V.assign_properties(element_block="ElementBlock1", element_type=L3D2, material=mat, A=A)
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=L3D2, material=mat, A=A
+    )
 
     # Define boundary conditons
     V.fix_nodes((7, 8, 9, 10))
@@ -91,12 +93,12 @@ def demo_truss():
     step = V.static_step()
 
     P1, P2, P3, P4 = 1000, 10000, -5000, 500
-    step.assign_concentrated_load(1, X, P1)
-    step.assign_concentrated_load(1, Y, P2)
-    step.assign_concentrated_load(1, Z, P3)
-    step.assign_concentrated_load(2, Y, P2)
-    step.assign_concentrated_load(2, Z, P3)
-    step.assign_concentrated_load((3, 6), X, P4)
+    step.concentrated_load(1, X, P1)
+    step.concentrated_load(1, Y, P2)
+    step.concentrated_load(1, Z, P3)
+    step.concentrated_load(2, Y, P2)
+    step.concentrated_load(2, Z, P3)
+    step.concentrated_load((3, 6), X, P4)
 
     # Solve and write results
     step.run()

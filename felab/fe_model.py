@@ -37,10 +37,10 @@ from felab.constants import (
     MDOF,
 )
 
-__all__ = ["fe_model"]
+__all__ = ["FEModel"]
 
 
-class fe_model(object):
+class FEModel(object):
     """The base finite element class"""
 
     def __init__(self, mesh=None, jobid=None):
@@ -224,29 +224,50 @@ class fe_model(object):
 
         self.steps = StepRepository(self)
         step = self.steps.InitialStep("Step-0")
+
+        # Transfer model boundary conditions to initial step
         for (nodes, dof) in self.pr_bc:
-            step.assign_prescribed_bc(nodes, dof, amplitude=0.0)
+            step.dirichlet_bc(nodes, dof, amplitude=0.0)
 
         frame = step.frames[0]
 
-        # NODE DATA
+        # -- Allocate field outputs for node-based data
         if T in self.active_dof:
-            frame.FieldOutput(SCALAR, "Q", NODE, node_labels)
-        frame.FieldOutput(SCALAR, "T", NODE, node_labels)
-        frame.FieldOutput(VECTOR, "U", NODE, node_labels, ncomp=self.dimensions)
-        frame.FieldOutput(VECTOR, "RF", NODE, node_labels, ncomp=self.dimensions)
+            frame.FieldOutput(SCALAR, "Q", NODE, node_labels, description="Heat flux")
+        frame.FieldOutput(SCALAR, "T", NODE, node_labels, description="Temperature")
+        frame.FieldOutput(
+            VECTOR,
+            "U",
+            NODE,
+            node_labels,
+            ncomp=self.dimensions,
+            description="Displacement",
+        )
+        frame.FieldOutput(
+            VECTOR,
+            "RF",
+            NODE,
+            node_labels,
+            ncomp=self.dimensions,
+            description="Reaction force",
+        )
 
+        # Check for rotation
         a = np.in1d((TX, TY, TZ), self.active_dof)
         if any(a):
             n = len([x for x in a if x])
-            frame.FieldOutput(VECTOR, "R", NODE, node_labels, ncomp=n)
-            frame.FieldOutput(VECTOR, "M", NODE, node_labels, ncomp=n)
+            frame.FieldOutput(
+                VECTOR, "R", NODE, node_labels, ncomp=n, description="Rotation"
+            )
+            frame.FieldOutput(
+                VECTOR, "M", NODE, node_labels, ncomp=n, description="Moment"
+            )
 
         if self.initial_temp:
             itemp = self.get_initial_temperature()
             frame.field_outputs["T"].add_data(itemp)
 
-        # ELEMENT DATA
+        # -- Generate the initial element data
         for eb in self.mesh.element_blocks:
 
             if not eb.eletyp.variables():
@@ -292,7 +313,12 @@ class fe_model(object):
         return
 
     def format_dof(self, dofs):
-        # CONSTRUCT DISPLACEMENT AND ROTATION VECTORS
+        """Construct displacement and rotation vectors from the `dofs`
+
+        `dofs` is a single column vector containing all dofs. This procedure
+        separates out components
+
+        """
         d1 = len([x for x in self.active_dof if x in (X, Y, Z)])
         u = np.zeros((self.numnod, d1))
 
@@ -361,7 +387,7 @@ class fe_model(object):
         self.materials[name] = Material(name, **kwargs)
         return self.materials[name]
 
-    def assign_prescribed_bc(self, nodes, dof):
+    def dirichlet_bc(self, nodes, dof):
         if self.steps is not None:
             raise UserInputError(
                 "Boundary conditions must be assigned to steps "
@@ -387,7 +413,7 @@ class fe_model(object):
             )
         self.pr_bc.append((nodes, PIN))
 
-    def assign_initial_temperature(self, nodes, amplitude):
+    def initial_temperature(self, nodes, amplitude):
         if self.steps is not None:
             raise UserInputError(
                 "Intial temperatures must be assigned " "before creating first step"

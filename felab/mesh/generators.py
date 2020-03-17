@@ -75,7 +75,7 @@ def unit_square_mesh(nx=1, ny=1, shiftx=None, shifty=None, method=None, order=1)
     Notes
     -----
     This method calls the ``Mesh.rectilinear_mesh_2d`` class method and
-    stores the returned mesh as the ``fe_model.mesh`` attribute.
+    stores the returned mesh as the ``FEModel.mesh`` attribute.
 
     """
     return rectilinear_mesh2d(
@@ -231,7 +231,7 @@ def genesis_mesh(filename):
     Notes
     -----
     This method calls ``mesh.Mesh`` with the ``filename`` keyword and
-    stores the returned mesh as the ``fe_model.mesh`` attribute.
+    stores the returned mesh as the ``FEModel.mesh`` attribute.
 
     """
     if not os.path.isfile(filename):
@@ -255,7 +255,7 @@ def abaqus_mesh(filename):
     Notes
     -----
     This method calls ``mesh.Mesh`` with the ``filename`` keyword and
-    stores the returned mesh as the ``fe_model.mesh`` attribute.
+    stores the returned mesh as the ``FEModel.mesh`` attribute.
 
     """
     if not os.path.isfile(filename):
@@ -279,7 +279,7 @@ def vtk_mesh(filename):
     Notes
     -----
     This method calls ``mesh.Mesh`` with the ``filename`` keyword and
-    stores the returned mesh as the ``fe_model.mesh`` attribute.
+    stores the returned mesh as the ``FEModel.mesh`` attribute.
 
     """
     if not os.path.isfile(filename):

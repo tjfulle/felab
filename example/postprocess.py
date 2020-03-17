@@ -1,4 +1,4 @@
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.material import Material
 from felab.mesh import genesis_mesh
 from felab.io.exodusii import EXOFileReader
@@ -11,14 +11,16 @@ def demo_postprocess():
     mat = Material("Material-1")
     mat.elastic(E=100, Nu=0.2)
 
-    V = fe_model(mesh=mesh, jobid="PlateWithHoleQuad4")
+    V = FEModel(mesh=mesh, jobid="PlateWithHoleQuad4")
 
-    V.assign_properties(element_block="ElementBlock1", element_type=CPE4, material=mat, t=1)
-    V.assign_prescribed_bc("LeftHandSide", X)
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=CPE4, material=mat, t=1
+    )
+    V.dirichlet_bc("LeftHandSide", X)
     V.fix_nodes("PinNode")
 
     step = V.static_step()
-    step.assign_surface_load(IHI, [1, 0])
+    step.surface_load(IHI, [1, 0])
     step.run()
 
     V.write_results()

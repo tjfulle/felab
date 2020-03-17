@@ -4,7 +4,7 @@ from felab.elemlib import *
 
 from felab.constants import *
 from felab.first_fe_program import UniformBar
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.material import Material
 from felab.mesh import *
 from felab.io.exodusii import File, put_nodal_solution

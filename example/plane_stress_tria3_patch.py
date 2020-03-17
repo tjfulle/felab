@@ -1,6 +1,6 @@
 import numpy as np
 import felab.util.tty as tty
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.elemlib import CPS3
 from felab.constants import NEWTON, X, Y
 from felab.mesh import abaqus_mesh
@@ -16,20 +16,20 @@ def demo_plane_stress_tria3_patch(plot=False):
     mat = Material("Material-1", elastic={"E": 1e6, "Nu": 0.25})
 
     # CREATE FINITE ELEMENT MODEL AND ASSIGN PROPERTIES
-    V = fe_model(mesh=mesh, jobid="Tri3PlaneStressPatch")
+    V = FEModel(mesh=mesh, jobid="Tri3PlaneStressPatch")
     V.assign_properties(element_block="EALL", element_type=CPS3, material=mat, t=0.001)
 
     # ASSIGN HOMOGENEOUS BCS TO MODEL
-    V.assign_prescribed_bc(10, (X, Y))
+    V.dirichlet_bc(10, (X, Y))
 
     # CREATE LOAD STEP AND TO IT ASSIGN INHOMOGENEOUS BCS
     step = V.static_step(solver=NEWTON)
-    step.assign_prescribed_bc(20, X, 0.24e-3)
-    step.assign_prescribed_bc(20, Y, 0.12e-3)
-    step.assign_prescribed_bc(30, X, 0.3e-3)
-    step.assign_prescribed_bc(30, Y, 0.24e-3)
-    step.assign_prescribed_bc(40, X, 0.06e-3)
-    step.assign_prescribed_bc(40, Y, 0.12e-3)
+    step.dirichlet_bc(20, X, 0.24e-3)
+    step.dirichlet_bc(20, Y, 0.12e-3)
+    step.dirichlet_bc(30, X, 0.3e-3)
+    step.dirichlet_bc(30, Y, 0.24e-3)
+    step.dirichlet_bc(40, X, 0.06e-3)
+    step.dirichlet_bc(40, Y, 0.12e-3)
 
     # RUN THE STEP
     step.run()
@@ -63,20 +63,20 @@ def demo_plane_stress_tria3_patch(plot=False):
         plot2d(model=V, show=1, deformed=1)
 
     # CREATE FINITE ELEMENT MODEL AND ASSIGN PROPERTIES
-    V = fe_model(mesh=mesh, jobid="Tri3PlaneStressPatch")
+    V = FEModel(mesh=mesh, jobid="Tri3PlaneStressPatch")
     V.assign_properties(element_block="EALL", element_type=CPS3, material=mat, t=0.001)
 
     # ASSIGN HOMOGENEOUS BCS TO MODEL
-    V.assign_prescribed_bc(10, (X, Y))
+    V.dirichlet_bc(10, (X, Y))
 
     # CREATE LOAD STEP AND TO IT ASSIGN INHOMOGENEOUS BCS
     step = V.static_step()
-    step.assign_prescribed_bc(20, X, 0.24e-3)
-    step.assign_prescribed_bc(20, Y, 0.12e-3)
-    step.assign_prescribed_bc(30, X, 0.3e-3)
-    step.assign_prescribed_bc(30, Y, 0.24e-3)
-    step.assign_prescribed_bc(40, X, 0.06e-3)
-    step.assign_prescribed_bc(40, Y, 0.12e-3)
+    step.dirichlet_bc(20, X, 0.24e-3)
+    step.dirichlet_bc(20, Y, 0.12e-3)
+    step.dirichlet_bc(30, X, 0.3e-3)
+    step.dirichlet_bc(30, Y, 0.24e-3)
+    step.dirichlet_bc(40, X, 0.06e-3)
+    step.dirichlet_bc(40, Y, 0.12e-3)
 
     # RUN THE STEP
     step.run()

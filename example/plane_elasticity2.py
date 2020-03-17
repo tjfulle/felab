@@ -1,4 +1,4 @@
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.mesh import genesis_mesh
 from felab.elemlib import CPS3
 from felab.material import Material
@@ -15,16 +15,18 @@ def demo_plane_elasticity2(plot=False):
     mat = Material("Material-1", elastic={"E": 10e6, "Nu": 0.29})
 
     # CREATE THE MODEL AND ASSIGN PROPERTIES
-    V = fe_model(mesh=mesh, jobid="Plane2")
-    V.assign_properties(element_block="ElementBlock1", element_type=CPS3, material=mat, t=1)
+    V = FEModel(mesh=mesh, jobid="Plane2")
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=CPS3, material=mat, t=1
+    )
 
     # PRESCRIBE FIXED BCS TO MODEL
-    V.assign_prescribed_bc("LeftHandSide", X)
-    V.assign_prescribed_bc("BottomLeft", Y)
+    V.dirichlet_bc("LeftHandSide", X)
+    V.dirichlet_bc("BottomLeft", Y)
 
     # CREATE LOAD STEP AND PRESCRIBED NONHOMOGENEOUS BCS TO IT
     step = V.static_step()
-    step.assign_prescribed_bc("RightHandSide", X, 0.1)
+    step.dirichlet_bc("RightHandSide", X, 0.1)
 
     # RUN THE STEP TO SOLVE FOR THE UNKNOWN DEGREES OF FREEDOM
     step.run()

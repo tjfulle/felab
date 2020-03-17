@@ -1,5 +1,5 @@
 from numpy import allclose
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.mesh import Mesh
 from felab.material import Material
 from felab.elemlib import CPS4, CPS8, CPS3
@@ -27,7 +27,7 @@ def test_4_node_plane_stress():
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
     mat = Material("Mat-1", elastic={"E": 1e6, "Nu": 0.25})
 
-    V = fe_model(mesh=mesh)
+    V = FEModel(mesh=mesh)
     V.element_block(name="Block-1", elements=ALL)
     V.assign_properties(element_block="Block-1", element_type=CPS4, material=mat)
 
@@ -37,14 +37,14 @@ def test_4_node_plane_stress():
     # Load step
     step = V.static_step()
 
-    step.assign_prescribed_bc(1, X, 2.4e-4)
-    step.assign_prescribed_bc(1, Y, 1.2e-4)
+    step.dirichlet_bc(1, X, 2.4e-4)
+    step.dirichlet_bc(1, Y, 1.2e-4)
 
-    step.assign_prescribed_bc(22, X, 3.0e-4)
-    step.assign_prescribed_bc(22, Y, 2.4e-4)
+    step.dirichlet_bc(22, X, 3.0e-4)
+    step.dirichlet_bc(22, Y, 2.4e-4)
 
-    step.assign_prescribed_bc(3, X, 6.0e-5)
-    step.assign_prescribed_bc(3, Y, 1.2e-4)
+    step.dirichlet_bc(3, X, 6.0e-5)
+    step.dirichlet_bc(3, Y, 1.2e-4)
 
     step.run()
 
@@ -87,27 +87,27 @@ def test_8_node_plane_stress():
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
     mat = Material("Mat-1", elastic={"E": 1e6, "Nu": 0.25})
 
-    V = fe_model(mesh=mesh, jobid="foo")
+    V = FEModel(mesh=mesh, jobid="foo")
     V.element_block(name="Block-1", elements=ALL)
     V.assign_properties(element_block="Block-1", element_type=CPS8, material=mat)
 
     V.fix_nodes(0)
 
     step = V.static_step()
-    step.assign_prescribed_bc(1, X, 1.2e-4)
-    step.assign_prescribed_bc(1, Y, 6.0e-5)
-    step.assign_prescribed_bc(2, X, 2.4e-4)
-    step.assign_prescribed_bc(2, Y, 1.2e-4)
-    step.assign_prescribed_bc(3, X, 2.7e-4)
-    step.assign_prescribed_bc(3, Y, 1.8e-4)
-    step.assign_prescribed_bc(4, X, 3.0e-4)
-    step.assign_prescribed_bc(4, Y, 2.4e-4)
-    step.assign_prescribed_bc(5, X, 1.8e-4)
-    step.assign_prescribed_bc(5, Y, 1.8e-4)
-    step.assign_prescribed_bc(6, X, 6.0e-5)
-    step.assign_prescribed_bc(6, Y, 1.2e-4)
-    step.assign_prescribed_bc(7, X, 3.0e-5)
-    step.assign_prescribed_bc(7, Y, 6.0e-5)
+    step.dirichlet_bc(1, X, 1.2e-4)
+    step.dirichlet_bc(1, Y, 6.0e-5)
+    step.dirichlet_bc(2, X, 2.4e-4)
+    step.dirichlet_bc(2, Y, 1.2e-4)
+    step.dirichlet_bc(3, X, 2.7e-4)
+    step.dirichlet_bc(3, Y, 1.8e-4)
+    step.dirichlet_bc(4, X, 3.0e-4)
+    step.dirichlet_bc(4, Y, 2.4e-4)
+    step.dirichlet_bc(5, X, 1.8e-4)
+    step.dirichlet_bc(5, Y, 1.8e-4)
+    step.dirichlet_bc(6, X, 6.0e-5)
+    step.dirichlet_bc(6, Y, 1.2e-4)
+    step.dirichlet_bc(7, X, 3.0e-5)
+    step.dirichlet_bc(7, Y, 6.0e-5)
 
     step.run()
 
@@ -142,19 +142,19 @@ def test_3_node_plane_stress():
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
     mat = Material("Mat-1", elastic={"E": 1e6, "Nu": 0.25})
 
-    V = fe_model(mesh=mesh)
+    V = FEModel(mesh=mesh)
     V.element_block(name="Block-1", elements=ALL)
     V.assign_properties(element_block="Block-1", element_type=CPS3, material=mat)
 
     V.fix_nodes(0)
 
     step = V.static_step()
-    step.assign_prescribed_bc(1, X, 2.4e-4)
-    step.assign_prescribed_bc(1, Y, 1.2e-4)
-    step.assign_prescribed_bc(22, X, 3.0e-4)
-    step.assign_prescribed_bc(22, Y, 2.4e-4)
-    step.assign_prescribed_bc(3, X, 6.0e-5)
-    step.assign_prescribed_bc(3, Y, 1.2e-4)
+    step.dirichlet_bc(1, X, 2.4e-4)
+    step.dirichlet_bc(1, Y, 1.2e-4)
+    step.dirichlet_bc(22, X, 3.0e-4)
+    step.dirichlet_bc(22, Y, 2.4e-4)
+    step.dirichlet_bc(3, X, 6.0e-5)
+    step.dirichlet_bc(3, Y, 1.2e-4)
 
     step.run()
 

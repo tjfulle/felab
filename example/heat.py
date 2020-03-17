@@ -1,23 +1,25 @@
 import numpy as np
 
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.elemlib import DC2D3
 from felab.constants import T, ALL, ILO, IHI, JLO, JHI, BOUNDARY
 
 
 def demo_plate_with_hole_fine(plot=False):
-    V = fe_model()
+    V = FEModel()
     V.genesis_mesh("./data/PlateWithHoleTria3Fine.g")
     k, h, Too = 12, 250, 25
     fun = lambda x: 1000 / np.sqrt(x[:, 0] ** 2 + x[:, 1] ** 2)
     V.material("Material-1")
     V.materials["Material-1"].isotropic_thermal_conductivity(k)
-    V.assign_properties(element_block="ElementBlock1", element_type=DC2D3, material="Material-1")
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=DC2D3, material="Material-1"
+    )
     step = V.heat_transfer_step()
-    step.assign_prescribed_bc(ILO, T, 200)
-    step.assign_prescribed_bc(IHI, T, 50)
-    step.SurfaceFlux(JLO, 2000)
-    step.SurfaceConvection(JHI, Too, h)
+    step.dirichlet_bc(ILO, T, 200)
+    step.dirichlet_bc(IHI, T, 50)
+    step.dflux(JLO, 2000)
+    step.sfilm(JHI, Too, h)
     step.HeatGeneration(ALL, fun)
     step.run()
     if plot:
@@ -26,14 +28,16 @@ def demo_plate_with_hole_fine(plot=False):
 
 def demo_plate_with_hole_coarse():
     k, h, Too = 12, 250, 25  # noqa: F841
-    V = fe_model(jobid="HeatPlateWithHole")
+    V = FEModel(jobid="HeatPlateWithHole")
     V.genesis_mesh("./data/PlateWithHoleTria3.g")
     V.material("Material-1")
     V.materials["Material-1"].isotropic_thermal_conductivity(k)
-    V.assign_properties(element_block="ElementBlock1", element_type=DC2D3, material="Material-1")
-    V.assign_initial_temperature(ALL, 50)
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=DC2D3, material="Material-1"
+    )
+    V.initial_temperature(ALL, 50)
     step = V.heat_transfer_step()
-    step.assign_prescribed_bc(BOUNDARY, T, 50)
+    step.dirichlet_bc(BOUNDARY, T, 50)
     fun = lambda x: 1000 / np.sqrt(x[:, 0] ** 2 + x[:, 1] ** 2)
     step.HeatGeneration(ALL, fun)
     step.run()

@@ -1,5 +1,5 @@
 from numpy import allclose, array
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.constants import ALL, Rr, Zr
 from felab.elemlib import CAX4
 from felab.io.plot import plot2d
@@ -17,19 +17,21 @@ def test_thick_pressurized_cylinder_quad4(plot=False):
     nx, ny = 4, 1
     a, b, d, p = 4, 10, 2, 10
     E, Nu = 1000.0, 0.0
-    V = fe_model()
+    V = FEModel()
     V.rectilinear_mesh(nx, ny, b - a, d, shiftx=a, method=2)
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
 
     V.element_block(name="EALL", elements=ALL)
-    V.assign_properties(element_block="EALL", element_type=CAX4, material=mat, formulation=1)
+    V.assign_properties(
+        element_block="EALL", element_type=CAX4, material=mat, formulation=1
+    )
 
-    V.assign_prescribed_bc(ALL, Zr)
+    V.dirichlet_bc(ALL, Zr)
 
     step = V.static_step()
     pfor = Kfac * p * a * d
-    step.assign_concentrated_load((1, 2), Rr, pfor / 2.0)
+    step.concentrated_load((1, 2), Rr, pfor / 2.0)
     step.run()
 
     if plot:

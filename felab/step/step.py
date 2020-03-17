@@ -27,7 +27,7 @@ from felab.constants import (
     SLOAD,
     DLOAD,
     HSRC,
-    SFLUX,
+    DFLUX,
 )
 
 
@@ -62,7 +62,7 @@ class LoadStep(object):
         self._sload = {}
 
         # CONTAINERS TO HOLD HEAT TRANSFER LOADS
-        self._sflux = {}
+        self._dflux = {}
         self._sfilm = {}
         self._hsrc = {}
 
@@ -202,11 +202,11 @@ class LoadStep(object):
             dload[iel].append(Fx)
 
         # INTERPOLATE SURFACE FLUXES
-        for (key, qf) in self._sflux.items():
+        for (key, qf) in self._dflux.items():
             iel, iedge = key
-            q0 = self.previous._sflux.get(key, 0.0)
+            q0 = self.previous._dflux.get(key, 0.0)
             qn = (1.0 - fac) * q0 + fac * qf
-            dltyp[iel].append(SFLUX)
+            dltyp[iel].append(DFLUX)
             dload[iel].append([iedge, qn])
 
         # INTERPOLATE SURFACE FILMS
@@ -228,19 +228,19 @@ class LoadStep(object):
 
         return dltyp, dload
 
-    def assign_sload(self, iel, iedge, a):
+    def register_surface_load(self, iel, iedge, a):
         self._sload[(iel, iedge)] = np.asarray(a)
 
-    def assign_dload(self, iel, a):
+    def register_distributed_load(self, iel, a):
         self._dload[iel] = np.asarray(a)
 
-    def assign_sflux(self, iel, iedge, a):
-        self._sflux[(iel, iedge)] = np.asarray(a)
+    def register_dflux(self, iel, iedge, a):
+        self._dflux[(iel, iedge)] = np.asarray(a)
 
-    def assign_sfilm(self, iel, iedge, Too, h):
+    def register_sfilm(self, iel, iedge, Too, h):
         self._sfilm[(iel, iedge)] = [Too, h]
 
-    def assign_hsrc(self, iel, s):
+    def register_heat_source(self, iel, s):
         self._hsrc[iel] = np.asarray(s)
 
     def Frame(self, dtime, copy=1):
@@ -260,7 +260,7 @@ class LoadStep(object):
         self._cload = _copy.deepcopy(step._cload)
         self._dload = _copy.deepcopy(step._dload)
         self._sload = _copy.deepcopy(step._sload)
-        self._sflux = _copy.deepcopy(step._sflux)
+        self._dflux = _copy.deepcopy(step._dflux)
         self._sfilm = _copy.deepcopy(step._sfilm)
         self._hsrc = _copy.deepcopy(step._hsrc)
         self.predef[:] = step.predef
@@ -285,17 +285,17 @@ class LoadStep(object):
         All active displacement and rotation degrees of freedom are set to 0.
 
         """
-        self.assign_dof(DIRICHLET, nodes, ALL, 0.0)
+        self.register_dof_constraint(DIRICHLET, nodes, ALL, 0.0)
 
     fix_dofs = fix_nodes
 
     def remove_bc(self, nodes, dof):
-        self.assign_dof(DIRICHLET, nodes, dof, None)
+        self.register_dof_constraint(DIRICHLET, nodes, dof, None)
 
     def remove_concentrated_load(self, nodes, dof):
-        self.assign_dof(NEUMANN, nodes, dof, None)
+        self.register_dof_constraint(NEUMANN, nodes, dof, None)
 
-    def assign_prescribed_bc(self, nodes, dof, amplitude=0.0):
+    def dirichlet_bc(self, nodes, dof, amplitude=0.0):
         """Prescribe nodal degrees of freedom
 
         Parameters
@@ -326,7 +326,7 @@ class LoadStep(object):
 
           .. code:: python
 
-             self.assign_prescribed_bc(ILO, X, 5.)
+             self.dirichlet_bc(ILO, X, 5.)
 
         - Assign variable amplitude BC to the :math:`x` displacement of all
           nodes on left side of domain. The variable amplitude function is
@@ -335,14 +335,14 @@ class LoadStep(object):
           .. code:: python
 
              fun = lambda x: x[:,1]**2
-             self.assign_prescribed_bc(ILO, X, fun)
+             self.dirichlet_bc(ILO, X, fun)
 
         """  # noqa: W605
-        self.assign_dof(DIRICHLET, nodes, dof, amplitude)
+        self.register_dof_constraint(DIRICHLET, nodes, dof, amplitude)
 
-    PrescribedDOF = assign_prescribed_bc
+    prescribed_dof = dirichlet_bc
 
-    def assign_dof(self, doftype, nodes, dof, amplitude):
+    def register_dof_constraint(self, doftype, nodes, dof, amplitude):
 
         if dof == ALL:
             dofs = self.model.active_dof
@@ -402,10 +402,10 @@ class LoadStep(object):
     # ----------------------------------------------------------------------- #
     # --- LOADING CONDITIONS ------------------------------------------------ #
     # ----------------------------------------------------------------------- #
-    def assign_concentrated_load(self, nodes, dof, amplitude=0.0):
-        self.assign_dof(NEUMANN, nodes, dof, amplitude)
+    def concentrated_load(self, nodes, dof, amplitude=0.0):
+        self.register_dof_constraint(NEUMANN, nodes, dof, amplitude)
 
-    def assign_temperature(self, nodes, amplitude):
+    def temperature(self, nodes, amplitude):
         inodes = self.model.mesh.get_internal_node_ids(nodes)
         if hasattr(amplitude, "__call__"):
             # AMPLITUDE IS A FUNCTION
@@ -503,6 +503,7 @@ class Frame(object):
         ncomp=None,
         elements=None,
         data=None,
+        description=None,
     ):
 
         if ftype == SYMTENSOR:
@@ -516,6 +517,7 @@ class Frame(object):
                 ngauss=ngauss,
                 elements=elements,
                 data=data,
+                description=description,
             )
 
         elif ftype == VECTOR:
@@ -528,6 +530,7 @@ class Frame(object):
                 ngauss=ngauss,
                 elements=elements,
                 data=data,
+                description=description,
             )
 
         elif ftype == SCALAR:
@@ -539,6 +542,7 @@ class Frame(object):
                 ngauss=ngauss,
                 elements=elements,
                 data=data,
+                description=description,
             )
 
         if field.eleblk is not None:
@@ -579,12 +583,12 @@ class StressDisplacmentStep(LoadStep):
         All active displacement degrees of freedom are set to 0.
 
         """
-        self.assign_dof(DIRICHLET, nodes, PIN, 0.0)
+        self.register_dof_constraint(DIRICHLET, nodes, PIN, 0.0)
 
     # ----------------------------------------------------------------------- #
     # --- LOADING CONDITIONS ------------------------------------------------ #
     # ----------------------------------------------------------------------- #
-    def assign_gravity_load(self, region, components):
+    def gravity_load(self, region, components):
         if region == ALL:
             ielems = range(self.model.numele)
         else:
@@ -604,9 +608,9 @@ class StressDisplacmentStep(LoadStep):
                 raise UserInputError(
                     "ELEMENT MATERIAL DENSITY MUST BE ASSIGNED " "BEFORE GRAVITY LOADS"
                 )
-            self.assign_dload(iel, rho * a)
+            self.register_distributed_load(iel, rho * a)
 
-    def assign_distributed_load(self, region, components):
+    def distributed_load(self, region, components):
         if not is_listlike(components):
             raise UserInputError("EXPECTED DISTRIBUTED LOAD VECTOR")
         if len(components) != self.model.dimensions:
@@ -622,9 +626,9 @@ class StressDisplacmentStep(LoadStep):
             ielems = [self.model.mesh.elemap[el] for el in region]
         a = np.asarray(components)
         for iel in ielems:
-            self.assign_dload(iel, a)
+            self.register_distributed_load(iel, a)
 
-    def assign_surface_load(self, surface, components):
+    def surface_load(self, surface, components):
         if not is_listlike(components):
             raise UserInputError("EXPECTED SURFACE LOAD VECTOR")
         if len(components) != self.model.dimensions:
@@ -635,9 +639,9 @@ class StressDisplacmentStep(LoadStep):
         surface = self.model.mesh.find_surface(surface)
         components = [x for x in components]
         for (iel, iedge) in surface:
-            self.assign_sload(iel, iedge, components)
+            self.register_surface_load(iel, iedge, components)
 
-    def assign_surface_load_N(self, surface, amplitude):
+    def surface_load_N(self, surface, amplitude):
         surface = self.model.mesh.find_surface(surface)
         for (iel, iedge) in surface:
             # DETERMINE THE NORMAL TO THE EDGE
@@ -649,7 +653,7 @@ class StressDisplacmentStep(LoadStep):
             else:
                 raise NotImplementedError("3D SURFACE NORMAL")
             components = [x for x in amplitude * n]
-            self.assign_sload(iel, iedge, components)
+            self.register_surface_load(iel, iedge, components)
 
-    def assign_pressure(self, surface, amplitude):
-        self.assign_surface_load_N(surface, -amplitude)
+    def pressure(self, surface, amplitude):
+        self.surface_load_N(surface, -amplitude)

@@ -1,5 +1,5 @@
 from numpy import sqrt
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.elemlib import DC2D3
 from felab.constants import ILO, IHI, JLO, T
 from felab.io.plot import plot2d
@@ -7,7 +7,7 @@ from felab.io.plot import plot2d
 
 def demo_heat_unit_square(plot=False):
     # Create the model
-    V = fe_model(jobid="Heat1")
+    V = FEModel(jobid="Heat1")
 
     # Read mesh from file
     V.abaqus_mesh("./data/mesh.inp")
@@ -22,15 +22,15 @@ def demo_heat_unit_square(plot=False):
 
     # Fix temperatures on left and right edge
     step = V.heat_transfer_step()
-    step.assign_prescribed_bc(ILO, T, 200)
-    step.assign_prescribed_bc(IHI, T, 50)
+    step.dirichlet_bc(ILO, T, 200)
+    step.dirichlet_bc(IHI, T, 50)
 
     # Define surface flux on bottome edge of domain
-    step.SurfaceFlux(JLO, 2000)
+    step.dflux(JLO, 2000)
 
     # Define surface convection on top edge of domain
     # Too, h = 25, 250
-    # step.SurfaceConvection(JHI, Too, h)
+    # step.sfilm(JHI, Too, h)
 
     # Define a function specifying the heat generation
     def fun(x):

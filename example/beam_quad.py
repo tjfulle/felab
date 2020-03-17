@@ -1,4 +1,4 @@
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.mesh import rectilinear_mesh2d
 from felab.material import Material
 from felab.constants import ALL, Y, ILO, IHI
@@ -10,14 +10,16 @@ def demo_beam_quad(plot=False):
     mesh = rectilinear_mesh2d(nx=10, ny=2, lx=10, ly=2)
     mat = Material("Material-1", elastic={"E": 20000, "Nu": 0})
 
-    V = fe_model(mesh=mesh, jobid="QuadBeam")
+    V = FEModel(mesh=mesh, jobid="QuadBeam")
     V.element_block(name="ElementBlock1", elements=ALL)
-    V.assign_properties(element_block="ElementBlock1", element_type=CPE4, material=mat, t=1)
+    V.assign_properties(
+        element_block="ElementBlock1", element_type=CPE4, material=mat, t=1
+    )
 
     step = V.static_step()
     step.fix_dofs(ILO)
     step = V.static_step()
-    step.assign_concentrated_load(IHI, Y, -10)
+    step.concentrated_load(IHI, Y, -10)
     step.run()
     V.write_results()
     if plot:

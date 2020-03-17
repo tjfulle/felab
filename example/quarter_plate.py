@@ -1,4 +1,4 @@
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.elemlib import CPE4
 from felab.io.exodusii import EXOFileReader
 from felab.constants import X, Y, ALL
@@ -6,17 +6,17 @@ from felab.io.plot import plot2d
 
 
 def demo_quarter_plate(plot=False):
-    V = fe_model(jobid="PlateWithHoleQuad4QuarterSym")
+    V = FEModel(jobid="PlateWithHoleQuad4QuarterSym")
     V.genesis_mesh("./data/PlateWithHoleQuad4QuarterSym.g")
     mat = V.material("Material-1")
     mat.elastic(E=100, Nu=0.2)
     V.assign_properties(element_block="", element_type=CPE4, material=mat, t=1)
-    V.assign_prescribed_bc("SymYZ", X)
-    V.assign_prescribed_bc("SymXZ", Y)
-    V.assign_initial_temperature(ALL, 60)
+    V.dirichlet_bc("SymYZ", X)
+    V.dirichlet_bc("SymXZ", Y)
+    V.initial_temperature(ALL, 60)
 
     step = V.static_step("Step-1")
-    step.assign_surface_load("RightHandSide", [1, 0])
+    step.surface_load("RightHandSide", [1, 0])
     step.run()
 
     V.write_results()

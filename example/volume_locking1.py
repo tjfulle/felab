@@ -1,5 +1,5 @@
 import numpy as np
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.mesh import Mesh
 from felab.elemlib import CPE4
 from felab.constants import X, Y
@@ -33,17 +33,19 @@ def demo_volume_locking(plot=False):
             )
 
         # Linear finite element solution
-        V = fe_model()
+        V = FEModel()
         V.genesis_mesh("./data/QuarterCylinderQuad4.g")
         mat = V.material("Material-1")
         mat.elastic(E=E, Nu=Nu)
-        V.assign_properties(element_block="ElementBlock1", element_type=CPE4, material=mat)
-        V.assign_prescribed_bc("Nodeset-200", X)
-        V.assign_prescribed_bc("Nodeset-201", Y)
+        V.assign_properties(
+            element_block="ElementBlock1", element_type=CPE4, material=mat
+        )
+        V.dirichlet_bc("Nodeset-200", X)
+        V.dirichlet_bc("Nodeset-201", Y)
 
         step = V.static_step()
         # Pressure on inside face
-        step.assign_pressure("SURFACE-1", 1.0)
+        step.pressure("SURFACE-1", 1.0)
         step.run()
         filename = "VolumeLocking_%d.png" % i
         if plot:

@@ -1,5 +1,5 @@
 from numpy import allclose, array, nan
-from felab.fe_model import fe_model
+from felab.fe_model import FEModel
 from felab.elemlib import L3D2, L2D2, B2D2
 from felab.constants import X, Y, Z, ALL, TZ
 
@@ -7,16 +7,18 @@ from felab.constants import X, Y, Z, ALL, TZ
 def test_model_truss_0():
     nodtab = [[1, 0, 0], [2, 3, 4], [3, 0, 4]]
     eletab = [[1, 1, 2], [2, 1, 3]]
-    V = fe_model()
+    V = FEModel()
     V.ne_mesh(nodtab=nodtab, eletab=eletab)
     V.material("Material-1")
     V.materials["Material-1"].elastic(E=70e9, Nu=0.3)
     V.element_block(name="B1", elements=ALL)
-    V.assign_properties(element_block="B1", element_type=L2D2, material="Material-1", A=5 * 0.01 * 0.01)
+    V.assign_properties(
+        element_block="B1", element_type=L2D2, material="Material-1", A=5 * 0.01 * 0.01
+    )
     step = V.static_step()
-    step.assign_prescribed_bc(1, X, -0.05)
-    step.assign_prescribed_bc((2, 3), (X, Y))
-    step.assign_concentrated_load(1, Y, 1000e3)
+    step.dirichlet_bc(1, X, -0.05)
+    step.dirichlet_bc((2, 3), (X, Y))
+    step.concentrated_load(1, Y, 1000e3)
     step.run()
     u = V.steps.last.frames[-1].field_outputs["U"].data
     assert allclose([[-0.05, 0.0882842], [0.0, 0.0], [0.0, 0.0]], u)
@@ -60,7 +62,7 @@ def test_model_truss_1():
         [20, 7, 8],
         [21, 9, 10],
     ]
-    V = fe_model()
+    V = FEModel()
     V.ne_mesh(nodtab=nodtab, eletab=eletab)
     V.material("Material-1")
     V.materials["Material-1"].elastic(E=1000, Nu=0.333)
@@ -89,15 +91,17 @@ def test_model_truss_1():
         Adia,
     ]
     V.element_block(name="element_block-1", elements=ALL)
-    V.assign_properties(element_block="element_block-1", element_type=L3D2, material="Material-1", A=A)
+    V.assign_properties(
+        element_block="element_block-1", element_type=L3D2, material="Material-1", A=A
+    )
 
     step = V.static_step()
-    step.assign_prescribed_bc(1, (X, Y))
-    step.assign_prescribed_bc(12, Y)
-    step.assign_prescribed_bc(ALL, Z)
+    step.dirichlet_bc(1, (X, Y))
+    step.dirichlet_bc(12, Y)
+    step.dirichlet_bc(ALL, Z)
 
-    step.assign_concentrated_load((3, 5, 9, 11), Y, -10)
-    step.assign_concentrated_load(7, Y, -16)
+    step.concentrated_load((3, 5, 9, 11), Y, -10)
+    step.concentrated_load(7, Y, -16)
 
     step.run()
     u = V.steps.last.frames[-1].field_outputs["U"].data
@@ -176,7 +180,7 @@ def test_model_truss_2():
         [20, 7, 8],
         [21, 9, 10],
     ]
-    V = fe_model()
+    V = FEModel()
     V.ne_mesh(nodtab=nodtab, eletab=eletab)
     V.material("Material-1")
     V.materials["Material-1"].elastic(E=1000, Nu=0.333)
@@ -205,14 +209,16 @@ def test_model_truss_2():
         Adia,
     ]
     V.element_block(name="element_block-1", elements=ALL)
-    V.assign_properties(element_block="element_block-1", element_type=L2D2, material="Material-1", A=A)
+    V.assign_properties(
+        element_block="element_block-1", element_type=L2D2, material="Material-1", A=A
+    )
 
     step = V.static_step()
-    step.assign_prescribed_bc(1, (X, Y))
-    step.assign_prescribed_bc(12, Y)
+    step.dirichlet_bc(1, (X, Y))
+    step.dirichlet_bc(12, Y)
 
-    step.assign_concentrated_load((3, 5, 9, 11), Y, -10)
-    step.assign_concentrated_load(7, Y, -16)
+    step.concentrated_load((3, 5, 9, 11), Y, -10)
+    step.concentrated_load(7, Y, -16)
 
     step.run()
     u = V.steps.last.frames[-1].field_outputs["U"].data
@@ -256,17 +262,19 @@ def test_model_truss_2():
 def test_model_truss_3():
     nodtab = [[1, 0.0, 0.0], [2, 3.0, 4.0], [3, 0.0, 4.0]]
     eletab = [[1, 1, 2], [2, 1, 3]]
-    V = fe_model()
+    V = FEModel()
     V.ne_mesh(nodtab=nodtab, eletab=eletab)
     V.material("Material-1")
     V.materials["Material-1"].elastic(E=70e9, Nu=0.333)
     A = 5 * 0.01 * 0.01
     V.element_block(name="element_block-1", elements=ALL)
-    V.assign_properties(element_block="element_block-1", element_type=L2D2, material="Material-1", A=A)
+    V.assign_properties(
+        element_block="element_block-1", element_type=L2D2, material="Material-1", A=A
+    )
     step = V.static_step()
     step.fix_nodes((2, 3))
-    step.assign_prescribed_bc(1, X, -0.05)
-    step.assign_concentrated_load(1, Y, 1000e3)
+    step.dirichlet_bc(1, X, -0.05)
+    step.concentrated_load(1, Y, 1000e3)
     step.run()
     u = V.steps.last.frames[-1].field_outputs["U"].data
     assert allclose([[-0.05, 0.0882842], [0.0, 0.0], [0.0, 0.0]], u)
@@ -275,18 +283,20 @@ def test_model_truss_3():
 def test_model_truss_4():
     nodtab = [[1, 0.0, 0.0, 0.0], [2, 3.0, 4.0, 0.0], [3, 0.0, 4.0, 0.0]]
     eletab = [[1, 1, 2], [2, 1, 3]]
-    V = fe_model()
+    V = FEModel()
     V.ne_mesh(nodtab=nodtab, eletab=eletab)
     V.material("Material-1")
     V.materials["Material-1"].elastic(E=70e9, Nu=0.333)
     A = 5 * 0.01 * 0.01
     V.element_block(name="element_block-1", elements=ALL)
-    V.assign_properties(element_block="element_block-1", element_type=L3D2, material="Material-1", A=A)
+    V.assign_properties(
+        element_block="element_block-1", element_type=L3D2, material="Material-1", A=A
+    )
     step = V.static_step()
     step.fix_nodes((2, 3))
-    step.assign_prescribed_bc(1, X, -0.05)
-    step.assign_prescribed_bc(1, Z)
-    step.assign_concentrated_load(1, Y, 1000e3)
+    step.dirichlet_bc(1, X, -0.05)
+    step.dirichlet_bc(1, Z)
+    step.concentrated_load(1, Y, 1000e3)
     step.run()
     u = V.steps.last.frames[-1].field_outputs["U"].data
     assert allclose([[-0.05, 0.0882842, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], u)
@@ -295,19 +305,21 @@ def test_model_truss_4():
 def test_model_truss_5():
     nodtab = [[1, 72, 0, 0], [2, 0, 36, 0], [3, 0, 36, 72], [4, 0, 0, -48]]
     eletab = [[1, 1, 2], [2, 1, 3], [3, 1, 4]]
-    V = fe_model()
+    V = FEModel()
     V.ne_mesh(nodtab=nodtab, eletab=eletab)
     V.material("Material-1")
     V.materials["Material-1"].elastic(E=10e4, Nu=0.333)
     A = [0.302, 0.729, 0.187]
     V.element_block(name="element_block-1", elements=ALL)
-    V.assign_properties(element_block="element_block-1", element_type=L3D2, material="Material-1", A=A)
+    V.assign_properties(
+        element_block="element_block-1", element_type=L3D2, material="Material-1", A=A
+    )
     step = V.static_step()
     # Boundary conditions
     step.fix_nodes((2, 3, 4))
-    step.assign_prescribed_bc(1, Y)
+    step.dirichlet_bc(1, Y)
     # Concentrated force in 'z' direction on node 1
-    step.assign_concentrated_load(1, Z, -1000)
+    step.concentrated_load(1, Z, -1000)
     step.run()
     u = V.steps.last.frames[-1].field_outputs["U"].data
     ua = (
@@ -365,7 +377,7 @@ def test_model_truss_6():
         [24, 5, 9],
         [25, 4, 8],
     ]
-    V = fe_model()
+    V = FEModel()
     V.ne_mesh(nodtab=nodtab, eletab=eletab)
 
     # Define element blocks
@@ -399,7 +411,9 @@ def test_model_truss_6():
         2.44,
     ]
     V.element_block(name="element_block-1", elements=ALL)
-    V.assign_properties(element_block="element_block-1", element_type=L3D2, material="Material-1", A=A)
+    V.assign_properties(
+        element_block="element_block-1", element_type=L3D2, material="Material-1", A=A
+    )
 
     step = V.static_step()
 
@@ -407,13 +421,13 @@ def test_model_truss_6():
     step.fix_nodes([7, 8, 9, 10])
 
     # Define concentrated loads
-    step.assign_concentrated_load(1, X, 1000)
-    step.assign_concentrated_load(1, Y, 10000)
-    step.assign_concentrated_load(1, Z, -5000)
-    step.assign_concentrated_load(2, Y, 10000)
-    step.assign_concentrated_load(2, Z, -5000)
-    step.assign_concentrated_load(3, X, 500)
-    step.assign_concentrated_load(6, X, 500)
+    step.concentrated_load(1, X, 1000)
+    step.concentrated_load(1, Y, 10000)
+    step.concentrated_load(1, Z, -5000)
+    step.concentrated_load(2, Y, 10000)
+    step.concentrated_load(2, Z, -5000)
+    step.concentrated_load(3, X, 500)
+    step.concentrated_load(6, X, 500)
 
     # Solve and write results
     step.run()
@@ -439,7 +453,7 @@ def test_model_truss_6():
 def test_model_truss_beam_0():
     nodtab = [[1, -4, 3], [2, 0, 0], [3, 0, 3], [4, nan, nan], [5, 4, 3]]
     eletab = [[1, 1, 3], [2, 3, 5], [3, 1, 2], [4, 2, 3], [5, 2, 5]]
-    V = fe_model()
+    V = FEModel()
     V.ne_mesh(nodtab=nodtab, eletab=eletab)
     Ec, Em = 30000, 200000
     V.material("Material-1")
@@ -449,13 +463,19 @@ def test_model_truss_beam_0():
     V.element_block(name="B1", elements=(1, 2))
     V.element_block(name="B2", elements=(3, 5))
     V.element_block(name="B3", elements=(4,))
-    V.assign_properties(element_block="B1", element_type=B2D2, material="Material-1", A=0.02, Izz=0.004)
-    V.assign_properties(element_block="B2", element_type=L2D2, material="Material-2", A=0.001)
-    V.assign_properties(element_block="B3", element_type=L2D2, material="Material-2", A=0.003)
-    V.assign_prescribed_bc(1, (X, Y, TZ))
-    V.assign_prescribed_bc(5, Y)
+    V.assign_properties(
+        element_block="B1", element_type=B2D2, material="Material-1", A=0.02, Izz=0.004
+    )
+    V.assign_properties(
+        element_block="B2", element_type=L2D2, material="Material-2", A=0.001
+    )
+    V.assign_properties(
+        element_block="B3", element_type=L2D2, material="Material-2", A=0.003
+    )
+    V.dirichlet_bc(1, (X, Y, TZ))
+    V.dirichlet_bc(5, Y)
     step = V.static_step()
-    step.assign_concentrated_load(2, Y, 100)
-    step.assign_concentrated_load(5, TZ, 200)
-    step.assign_concentrated_load(5, X, 300)
+    step.concentrated_load(2, Y, 100)
+    step.concentrated_load(5, TZ, 200)
+    step.concentrated_load(5, X, 300)
     step.run()
