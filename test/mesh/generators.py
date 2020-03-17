@@ -1,6 +1,7 @@
 import numpy as np
 from felab.mesh import rectilinear_mesh2d
 from felab.constants import ALL
+from felab.io.plot import plot2d
 
 
 def test_compare_new_to_old(plot=False):
@@ -28,8 +29,8 @@ def test_compare_new_to_old(plot=False):
     assert np.allclose(mesh8.connectivity(), c)
 
     if plot:
-        ax = mesh2.Plot2D(color="orange", label="Original", weight=3)
-        mesh1.Plot2D(ax=ax, show=1, color="b", label="New")
+        ax = plot2d(mesh=mesh2, color="orange", label="Original", weight=3)
+        plot2d(mesh=mesh1, ax=ax, show=1, color="b", label="New")
 
 
 if __name__ == "__main__":

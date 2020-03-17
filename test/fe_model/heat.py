@@ -61,6 +61,7 @@ def test_heat_transfer_2(data_path):
 def test_heat_transfer_3():
     if dm is None:
         return
+
     def solution(x, N=20):
         def fun(n):
             return (
@@ -154,6 +155,7 @@ def test_heat_transfer_4():
 def test_heat_transfer_5():
     if dm is None:
         return
+
     def solution(x, q0=1.0, k=1.0, N=20):
         def fun(n):
             al = 0.5 * (2.0 * n - 1.0) * np.pi

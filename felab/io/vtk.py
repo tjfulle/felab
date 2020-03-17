@@ -504,9 +504,7 @@ class VTKFile(object):
         fd = self.get_element("FieldData", parent="VTKFile")
 
         el = self.element(name, parent=fd.nodeName)
-        da = self.element(
-            "DataArray", parent=el.nodeName, type=dtype, format="ascii"
-        )
+        da = self.element("DataArray", parent=el.nodeName, type=dtype, format="ascii")
         arr = np.asarray(arr)
         fmt = {"Int32": "d", "Float32": ".18f"}[dtype]
         if arr.ndim == 1:

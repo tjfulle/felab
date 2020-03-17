@@ -3,6 +3,7 @@ import felab.util.tty as tty
 from felab.fe_model import fe_model
 from felab.elemlib import CPE4
 from felab.constants import X, Y
+from felab.io.plot import plot2d
 
 
 def demo_plane_stran_quad4_patch(plot=False):
@@ -22,7 +23,7 @@ def demo_plane_stran_quad4_patch(plot=False):
     step.assign_prescribed_bc(40, Y, 0.12e-3)
     step.run()
     if plot:
-        V.Plot2D(show=1)
+        plot2d(model=V, show=1)
     V.write_results()
 
     # Average stress must be 1600 in x and y

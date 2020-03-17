@@ -72,16 +72,8 @@ class DC2D3(DCMDN):
         J = np.array(
             [
                 [1, 1, 1],
-                [
-                    np.dot(x, dNdz[:, 0]),
-                    np.dot(x, dNdz[:, 1]),
-                    np.dot(x, dNdz[:, 2]),
-                ],
-                [
-                    np.dot(y, dNdz[:, 0]),
-                    np.dot(y, dNdz[:, 1]),
-                    np.dot(y, dNdz[:, 2]),
-                ],
+                [np.dot(x, dNdz[:, 0]), np.dot(x, dNdz[:, 1]), np.dot(x, dNdz[:, 2])],
+                [np.dot(y, dNdz[:, 0]), np.dot(y, dNdz[:, 1]), np.dot(y, dNdz[:, 2])],
             ]
         )
         Jdet = np.linalg.det(J)

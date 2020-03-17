@@ -1,8 +1,8 @@
-#!/usr/bin/env python
 from numpy import zeros_like
 from felab.fe_model import fe_model
 from felab.elemlib import CPS4, CPS4I
 from felab.constants import ALL, X, Y, ILO, IHI
+from felab.io.plot import plot2d
 
 mu = 10000.0
 nu = 0.0
@@ -29,11 +29,11 @@ def demo_plane_stress_beam(ratio=0.25, plot=False):
     step.run()
 
     if plot:
-        ax = V.Plot2D(deformed=1, color="b")
+        ax = plot2d(model=V, deformed=1, color="b")
     u = analytic(V.mesh.coord, q)
     xy = V.mesh.coord + u
     if plot:
-        V.mesh.Plot2D(xy=xy, color="r", ax=ax, show=1)
+        plot2d(mesh=V.mesh, xy=xy, color="r", ax=ax, show=1)
 
 
 def analytic(coord, q):
@@ -66,5 +66,3 @@ if __name__ == "__main__":
     # ---- Change the aspect ratio to see shear locking
     ratio = 0.25
     demo_plane_stress_beam(ratio=ratio, plot=True)
-
-

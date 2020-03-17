@@ -254,9 +254,7 @@ class LoadStep(object):
         return frame
 
     def copy_from(self, step):
-        self.frames[0].field_outputs = _copy.deepcopy(
-            step.frames[-1].field_outputs
-        )
+        self.frames[0].field_outputs = _copy.deepcopy(step.frames[-1].field_outputs)
         self.dofs[:] = step.dofs
         self._dof = _copy.deepcopy(step._dof)
         self._cload = _copy.deepcopy(step._cload)

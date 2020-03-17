@@ -3,6 +3,7 @@ from felab.fe_model import fe_model
 from felab.elemlib import CPE4R, CPE8B
 from felab.constants import X, Y
 from felab.mesh import Mesh
+from felab.io.plot import plot2d
 
 mu = 1.0
 Nu = 0.499
@@ -23,7 +24,8 @@ def demo_linear(ax=None):
     step.run()
     V.write_results()
     if ax is not None:
-        ax = V.Plot2D(
+        ax = plot2d(
+            model=V,
             deformed=1,
             color="b",
             linestyle="-.",
@@ -78,6 +80,7 @@ def demo_analytic(plot=False):
 
 def runall(plot=False):
     import matplotlib.pyplot as plt
+
     ax = demo_analytic(plot=plot)
     ax = demo_linear(ax)
     demo_quadratic()

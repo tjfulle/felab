@@ -3,6 +3,7 @@ from felab.elemlib import CPE4
 from felab.constants import ALL, X, IHI
 from felab.mesh import unit_square_mesh
 from felab.material import Material
+from felab.io.plot import plot2d
 
 
 def demo_dynamic_load_step(plot=False):
@@ -18,7 +19,7 @@ def demo_dynamic_load_step(plot=False):
     step.assign_prescribed_bc(IHI, X, 0.1)
     step.run()
     if plot:
-        V.Plot2D(show=1, deformed=True)
+        plot2d(model=V, show=1, deformed=True)
 
 
 if __name__ == "__main__":

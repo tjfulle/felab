@@ -3,6 +3,7 @@ from felab.mesh import rectilinear_mesh2d
 from felab.material import Material
 from felab.constants import ALL, Y, ILO, IHI
 from felab.elemlib import CPE4
+from felab.io.plot import plot2d
 
 
 def demo_beam_quad(plot=False):
@@ -20,7 +21,7 @@ def demo_beam_quad(plot=False):
     step.run()
     V.write_results()
     if plot:
-        V.Plot2D(show=1, deformed=1)
+        plot2d(model=V, show=1, deformed=1)
 
 
 if __name__ == "__main__":

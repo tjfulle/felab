@@ -2,6 +2,7 @@
 from felab.fe_model import fe_model
 from felab.elemlib import CPE4
 from felab.constants import X, Y
+from felab.io.plot import plot2d
 
 
 def demo_plane_elasticity1(plot=False):
@@ -23,7 +24,7 @@ def demo_plane_elasticity1(plot=False):
     V.write_results()
 
     if plot:
-        V.Plot2D(show=1, deformed=1, colorby="Ux")
+        plot2d(model=V, show=1, deformed=1, colorby="Ux")
 
 
 if __name__ == "__main__":

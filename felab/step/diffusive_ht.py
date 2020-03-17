@@ -17,7 +17,9 @@ from felab.constants import (
 
 class DiffusiveHeatTransferStep(LoadStep):
     def __init__(self, model, number, name, previous, period):
-        super(DiffusiveHeatTransferStep, self).__init__(model, number, name, previous, period)
+        super(DiffusiveHeatTransferStep, self).__init__(
+            model, number, name, previous, period
+        )
 
         # CHECK ELEMENTS
         eletyp = (DC2D3,)

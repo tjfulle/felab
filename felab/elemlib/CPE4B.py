@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.linalg import det, inv
 from .CPX4 import CPX4
 from .gauss_rule_info import quad_gauss_rule_info
 

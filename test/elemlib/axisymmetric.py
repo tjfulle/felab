@@ -2,6 +2,7 @@ from numpy import allclose, array
 from felab.fe_model import fe_model
 from felab.constants import ALL, Rr, Zr
 from felab.elemlib import CAX4
+from felab.io.plot import plot2d
 
 
 def analytic(a, b, E, Nu, r, p):
@@ -32,8 +33,8 @@ def test_thick_pressurized_cylinder_quad4(plot=False):
     step.run()
 
     if plot:
-        ax = V.Plot2D(deformed=1, color="orange", weight=3)
-        V.Plot2D(color="blue", weight=0.75, ax=ax, show=1)
+        ax = plot2d(model=V, deformed=1, color="orange", weight=3)
+        plot2d(model=V, color="blue", weight=0.75, ax=ax, show=1)
 
     u = step.frames[-1].field_outputs["U"]
     print("node model   analytic")

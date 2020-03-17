@@ -2,6 +2,7 @@ from felab.fe_model import fe_model
 from felab.elemlib import CPE4
 from felab.io.exodusii import EXOFileReader
 from felab.constants import X, Y, ALL
+from felab.io.plot import plot2d
 
 
 def demo_quarter_plate(plot=False):
@@ -39,7 +40,7 @@ def demo_quarter_plate(plot=False):
 
     # External and internal element numbers
     if plot:
-        V.Plot2D(deformed=1, show=True)
+        plot2d(model=V, deformed=1, show=True)
 
 
 if __name__ == "__main__":

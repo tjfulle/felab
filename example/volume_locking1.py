@@ -3,6 +3,7 @@ from felab.fe_model import fe_model
 from felab.mesh import Mesh
 from felab.elemlib import CPE4
 from felab.constants import X, Y
+from felab.io.plot import plot2d
 
 
 def demo_volume_locking(plot=False):
@@ -23,7 +24,8 @@ def demo_volume_locking(plot=False):
             u[j, :] = ur * x[:] / r
         mesh.put_nodal_solution("VolumeLocking.Analytic", u)
         if plot:
-            ax = mesh.Plot2D(
+            ax = plot2d(
+                mesh=mesh,
                 xy=u + mesh.coord,
                 color="orange",
                 label=r"Analytic, $\nu=%g$" % Nu,
@@ -45,13 +47,14 @@ def demo_volume_locking(plot=False):
         step.run()
         filename = "VolumeLocking_%d.png" % i
         if plot:
-            V.Plot2D(
+            plot2d(
+                model=V,
                 deformed=1,
                 color="b",
                 linestyle="-.",
                 label=r"Linear, $\nu=%g$" % Nu,
                 ax=ax,
-                #show=1,
+                # show=1,
                 filename=filename,
                 xlim=(-0.2, 5),
                 ylim=(-0.2, 5),

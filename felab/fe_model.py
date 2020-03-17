@@ -13,7 +13,7 @@ from felab.mesh import (
     rectilinear_mesh2d,
 )
 from felab.step import StepRepository
-from felab.util.lang import is_listlike, is_stringlike
+from felab.util.lang import is_listlike
 from felab.assembly import vdof
 
 from felab.constants import (
@@ -673,46 +673,6 @@ class fe_model(object):
                     raise NotImplementedError("PLOTTING ELEMENT DATA NOT DONE")
                 return field.data[:, field.keys.index(key1)]
         raise UserInputError("NO SUCH FIELD {0!r}".format(key))
-
-    def Plot2D(self, deformed=False, color=None, colorby=None, scale=1.0, **kwds):
-        """Create a 2D plot
-
-        Parameters
-        ----------
-        deformed : bool, optional {False,True}
-            Plot the deformed mesh if True
-        color : matplotlib color
-        kwds : dict
-            kwds passed to felab.mesh.Plot2D
-
-        Returns
-        -------
-        ax : axes object
-            The plot axes
-
-        See Also
-        --------
-        felab.mesh.Mesh.Plot2D
-
-        """
-        assert self.dimensions == 2
-        if self.dimensions != 2:
-            raise UserInputError("Plot2D IS ONLY APPLICABLE TO 2D PROBLEMS")
-        xy = np.array(self.mesh.coord)
-        if deformed:
-            xy += scale * self.steps.last.dofs.reshape(xy.shape)
-        elecon = []
-        for blk in self.mesh.element_blocks:
-            if (blk.eletyp.dimensions, blk.eletyp.nodes) == (2, 8):
-                raise NotImplementedError("PLOTTING VALID ONLY FOR LINEAR ELEMENT")
-            else:
-                elecon.extend(blk.elecon)
-
-        if colorby is not None and is_stringlike(colorby):
-            colorby = self._get_field(colorby)
-        return self.mesh.Plot2D(
-            xy=xy, elecon=np.array(elecon), color=color, colorby=colorby, **kwds
-        )
 
     def write_results(self):
         """Write the finite element results to a file"""

@@ -3,6 +3,7 @@ from felab.mesh import genesis_mesh
 from felab.elemlib import CPS3
 from felab.material import Material
 from felab.constants import X, Y
+from felab.io.plot import plot2d
 
 
 def demo_plane_elasticity2(plot=False):
@@ -33,7 +34,7 @@ def demo_plane_elasticity2(plot=False):
 
     if plot:
         # VISUALIZE RESULTS
-        V.Plot2D(show=1, deformed=1)
+        plot2d(model=V, show=1, deformed=1)
 
 
 if __name__ == "__main__":

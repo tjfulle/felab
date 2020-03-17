@@ -5,6 +5,7 @@ from felab.elemlib import CPS3
 from felab.constants import NEWTON, X, Y
 from felab.mesh import abaqus_mesh
 from felab.material import Material
+from felab.io.plot import plot2d
 
 
 def demo_plane_stress_tria3_patch(plot=False):
@@ -59,7 +60,7 @@ def demo_plane_stress_tria3_patch(plot=False):
 
     if plot:
         # VISUALIZE RESULTS
-        V.Plot2D(show=1, deformed=1)
+        plot2d(model=V, show=1, deformed=1)
 
     # CREATE FINITE ELEMENT MODEL AND ASSIGN PROPERTIES
     V = fe_model(mesh=mesh, jobid="Tri3PlaneStressPatch")

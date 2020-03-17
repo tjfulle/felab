@@ -1,6 +1,7 @@
 from felab.fe_model import fe_model
 from felab.elemlib import CPE4
 from felab.constants import ILO, ALL
+from felab.io.plot import plot2d
 
 
 def test_gravity_load(plot=False):
@@ -18,8 +19,8 @@ def test_gravity_load(plot=False):
     V.write_results()
 
     if plot:
-        ax = V.Plot2D(label="Undeformed", color="orange")
-        V.Plot2D(deformed=1, label="Deformed", color="blue", ax=ax, show=1)
+        ax = plot2d(model=V, label="Undeformed", color="orange")
+        plot2d(model=V, deformed=1, label="Deformed", color="blue", ax=ax, show=1)
 
 
 if __name__ == "__main__":

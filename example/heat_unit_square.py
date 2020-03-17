@@ -2,6 +2,7 @@ from numpy import sqrt
 from felab.fe_model import fe_model
 from felab.elemlib import DC2D3
 from felab.constants import ILO, IHI, JLO, T
+from felab.io.plot import plot2d
 
 
 def demo_heat_unit_square(plot=False):
@@ -44,7 +45,7 @@ def demo_heat_unit_square(plot=False):
     V.write_results()
 
     if plot:
-        V.Plot2D(colorby=step.dofs.flatten(), show=1)
+        plot2d(model=V, colorby=step.dofs.flatten(), show=1)
 
         # PlotScalar2D(V.mesh.coord, V.mesh.elecon, V.dofs.flatten())
 

@@ -3,6 +3,7 @@ from felab.constants import NEWTON, ALL, X, ILO, IHI
 from felab.material import Material
 from felab.elemlib import CPS4
 from felab.mesh import unit_square_mesh
+from felab.io.plot import plot2d
 
 
 def demo_cycle_loads(plot=False):
@@ -19,20 +20,20 @@ def demo_cycle_loads(plot=False):
     step.assign_prescribed_bc(IHI, X, 0.1)
     step.run()
     if plot:
-        V.Plot2D(show=1, deformed=True)
+        plot2d(model=V, show=1, deformed=True)
 
     step = V.static_step(solver=NEWTON)
     step.assign_prescribed_bc(IHI, X, 0)
     step.run()
     if plot:
-        V.Plot2D(show=1, deformed=True)
+        plot2d(model=V, show=1, deformed=True)
 
     step = V.static_step(solver=NEWTON)
     step.remove_bc(IHI, X)
     step.assign_surface_load(IHI, [100, 0])
     step.run()
     if plot:
-        V.Plot2D(show=1, deformed=True)
+        plot2d(model=V, show=1, deformed=True)
 
 
 if __name__ == "__main__":

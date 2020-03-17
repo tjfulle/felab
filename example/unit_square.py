@@ -3,6 +3,7 @@ from felab.elemlib import CPS4
 from felab.constants import ALL, ILO, IHI, X
 from felab.material import Material
 from felab.mesh import unit_square_mesh
+from felab.io.plot import plot2d
 
 
 def demo_unit_square(plot=False):
@@ -19,14 +20,14 @@ def demo_unit_square(plot=False):
     step.run()
     step.print_stiffness_structure(style="latex")
     if plot:
-        V.Plot2D(deformed=1, show=1)
+        plot2d(model=V, deformed=1, show=1)
 
     step = V.static_step()
     step.assign_prescribed_bc(IHI, X, 0)
     step.run()
 
     if plot:
-        V.Plot2D(deformed=1, show=1)
+        plot2d(model=V, deformed=1, show=1)
 
 
 if __name__ == "__main__":

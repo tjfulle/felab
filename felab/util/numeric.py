@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.linalg as la
+
 try:
     import scipy.linalg.flapack as flapack
 except ImportError:
