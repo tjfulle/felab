@@ -11,8 +11,8 @@ def test_model_truss_0():
     V.ne_mesh(nodtab=nodtab, eletab=eletab)
     V.material("Material-1")
     V.materials["Material-1"].elastic(E=70e9, Nu=0.3)
-    V.element_block("B1", ALL)
-    V.assign_properties("B1", L2D2, "Material-1", A=5 * 0.01 * 0.01)
+    V.element_block(name="B1", elements=ALL)
+    V.assign_properties(element_block="B1", element_type=L2D2, material="Material-1", A=5 * 0.01 * 0.01)
     step = V.static_step()
     step.assign_prescribed_bc(1, X, -0.05)
     step.assign_prescribed_bc((2, 3), (X, Y))
@@ -88,8 +88,8 @@ def test_model_truss_1():
         Adia,
         Adia,
     ]
-    V.element_block("element_block-1", ALL)
-    V.assign_properties("element_block-1", L3D2, "Material-1", A=A)
+    V.element_block(name="element_block-1", elements=ALL)
+    V.assign_properties(element_block="element_block-1", element_type=L3D2, material="Material-1", A=A)
 
     step = V.static_step()
     step.assign_prescribed_bc(1, (X, Y))
@@ -204,8 +204,8 @@ def test_model_truss_2():
         Adia,
         Adia,
     ]
-    V.element_block("element_block-1", ALL)
-    V.assign_properties("element_block-1", L2D2, "Material-1", A=A)
+    V.element_block(name="element_block-1", elements=ALL)
+    V.assign_properties(element_block="element_block-1", element_type=L2D2, material="Material-1", A=A)
 
     step = V.static_step()
     step.assign_prescribed_bc(1, (X, Y))
@@ -261,8 +261,8 @@ def test_model_truss_3():
     V.material("Material-1")
     V.materials["Material-1"].elastic(E=70e9, Nu=0.333)
     A = 5 * 0.01 * 0.01
-    V.element_block("element_block-1", ALL)
-    V.assign_properties("element_block-1", L2D2, "Material-1", A=A)
+    V.element_block(name="element_block-1", elements=ALL)
+    V.assign_properties(element_block="element_block-1", element_type=L2D2, material="Material-1", A=A)
     step = V.static_step()
     step.fix_nodes((2, 3))
     step.assign_prescribed_bc(1, X, -0.05)
@@ -280,8 +280,8 @@ def test_model_truss_4():
     V.material("Material-1")
     V.materials["Material-1"].elastic(E=70e9, Nu=0.333)
     A = 5 * 0.01 * 0.01
-    V.element_block("element_block-1", ALL)
-    V.assign_properties("element_block-1", L3D2, "Material-1", A=A)
+    V.element_block(name="element_block-1", elements=ALL)
+    V.assign_properties(element_block="element_block-1", element_type=L3D2, material="Material-1", A=A)
     step = V.static_step()
     step.fix_nodes((2, 3))
     step.assign_prescribed_bc(1, X, -0.05)
@@ -300,8 +300,8 @@ def test_model_truss_5():
     V.material("Material-1")
     V.materials["Material-1"].elastic(E=10e4, Nu=0.333)
     A = [0.302, 0.729, 0.187]
-    V.element_block("element_block-1", ALL)
-    V.assign_properties("element_block-1", L3D2, "Material-1", A=A)
+    V.element_block(name="element_block-1", elements=ALL)
+    V.assign_properties(element_block="element_block-1", element_type=L3D2, material="Material-1", A=A)
     step = V.static_step()
     # Boundary conditions
     step.fix_nodes((2, 3, 4))
@@ -398,8 +398,8 @@ def test_model_truss_6():
         2.44,
         2.44,
     ]
-    V.element_block("element_block-1", ALL)
-    V.assign_properties("element_block-1", L3D2, "Material-1", A=A)
+    V.element_block(name="element_block-1", elements=ALL)
+    V.assign_properties(element_block="element_block-1", element_type=L3D2, material="Material-1", A=A)
 
     step = V.static_step()
 
@@ -446,12 +446,12 @@ def test_model_truss_beam_0():
     V.materials["Material-1"].elastic(E=Ec, Nu=0.3)
     V.material("Material-2")
     V.materials["Material-2"].elastic(E=Em, Nu=0.3)
-    V.element_block("B1", (1, 2))
-    V.element_block("B2", (3, 5))
-    V.element_block("B3", (4,))
-    V.assign_properties("B1", B2D2, "Material-1", A=0.02, Izz=0.004)
-    V.assign_properties("B2", L2D2, "Material-2", A=0.001)
-    V.assign_properties("B3", L2D2, "Material-2", A=0.003)
+    V.element_block(name="B1", elements=(1, 2))
+    V.element_block(name="B2", elements=(3, 5))
+    V.element_block(name="B3", elements=(4,))
+    V.assign_properties(element_block="B1", element_type=B2D2, material="Material-1", A=0.02, Izz=0.004)
+    V.assign_properties(element_block="B2", element_type=L2D2, material="Material-2", A=0.001)
+    V.assign_properties(element_block="B3", element_type=L2D2, material="Material-2", A=0.003)
     V.assign_prescribed_bc(1, (X, Y, TZ))
     V.assign_prescribed_bc(5, Y)
     step = V.static_step()

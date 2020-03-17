@@ -11,8 +11,8 @@ def demo_unit_square(plot=False):
     mat = Material("Mat", elastic={"E": 1000, "Nu": 0})
 
     V = fe_model(mesh=mesh)
-    V.element_block("All", ALL)
-    V.assign_properties("All", CPS4, mat)
+    V.element_block(name="All", elements=ALL)
+    V.assign_properties(element_block="All", element_type=CPS4, material=mat)
     V.fix_nodes(ILO)
 
     step = V.static_step()

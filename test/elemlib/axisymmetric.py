@@ -22,8 +22,8 @@ def test_thick_pressurized_cylinder_quad4(plot=False):
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
 
-    V.element_block("EALL", ALL)
-    V.assign_properties("EALL", CAX4, mat, formulation=1)
+    V.element_block(name="EALL", elements=ALL)
+    V.assign_properties(element_block="EALL", element_type=CAX4, material=mat, formulation=1)
 
     V.assign_prescribed_bc(ALL, Zr)
 

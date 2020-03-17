@@ -18,7 +18,7 @@ def demo_heat_unit_square(plot=False):
     print(V.mesh.element_blocks[0].elecon)
 
     # Define an alement block of diffusive heat transfer elements with material mat
-    V.assign_properties("EALL", DC2D3, mat)
+    V.assign_properties(element_block="EALL", element_type=DC2D3, material=mat)
 
     # Fix temperatures on left and right edge
     step = V.heat_transfer_step()

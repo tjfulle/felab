@@ -515,7 +515,7 @@ class fe_model(object):
     # ----------------------------------------------------------------------- #
     # --- ELEMENT BLOCKS AND SETS-------------------------------------------- #
     # ----------------------------------------------------------------------- #
-    def element_block(self, name, elements):
+    def element_block(self, *, name, elements):
         """Create an element block and assign elements to it
 
         Parameters
@@ -535,16 +535,16 @@ class fe_model(object):
         blk = self.mesh.element_block(name, elements)
         return blk
 
-    def assign_properties(self, blknam, eletyp, elemat, **elefab):
+    def assign_properties(self, *, element_block, element_type, material, **elefab):
         """Assign properties to elements in an element block
 
         Parameters
         ----------
-        blknam : str
+        element_block : str
             The name of the element block
-        eletyp : object
+        element_type : object
             The element type (uninstantiated class)
-        elemat : str or Material
+        material : str or Material
             The name of the material model, or a material model
         elefab : dict
             Element fabrication properties
@@ -563,20 +563,20 @@ class fe_model(object):
         """
         if self.mesh is None:
             raise UserInputError("MESH MUST FIRST BE CREATED")
-        if elemat in self.materials:
-            elemat = self.materials[elemat]
-        elif isinstance(elemat, Material):
-            if elemat.name not in self.materials:
-                self.materials[elemat.name] = elemat
+        if material in self.materials:
+            material = self.materials[material]
+        elif isinstance(material, Material):
+            if material.name not in self.materials:
+                self.materials[material.name] = material
         else:
-            raise UserInputError("NO SUCH MATERIAL {0!r}".format(elemat))
+            raise UserInputError("NO SUCH MATERIAL {0!r}".format(material))
         for blk in self.mesh.element_blocks:
-            if blk.name.upper() == blknam.upper():
+            if blk.name.upper() == element_block.upper():
                 break
         else:
-            raise UserInputError("NO SUCH ELEMENT BLOCK {0!r}".format(blknam))
-        blk.eletyp = eletyp
-        if eletyp.nodes != blk.elecon.shape[1]:
+            raise UserInputError("NO SUCH ELEMENT BLOCK {0!r}".format(element_block))
+        blk.eletyp = element_type
+        if element_type.nodes != blk.elecon.shape[1]:
             raise UserInputError("NODE TYPE NOT CONSISTENT WITH ELEMENT BLOCK")
 
         if elefab:
@@ -595,7 +595,7 @@ class fe_model(object):
             kwds = {}
             for (key, val) in elefab.items():
                 kwds[key] = val[i]
-            self.elements[iel] = eletyp(xel, elenod, elecoord, elemat, **kwds)
+            self.elements[iel] = element_type(xel, elenod, elecoord, material, **kwds)
 
     def node_set(self, name, region):
         """Create a node set

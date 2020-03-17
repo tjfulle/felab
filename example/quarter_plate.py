@@ -10,7 +10,7 @@ def demo_quarter_plate(plot=False):
     V.genesis_mesh("./data/PlateWithHoleQuad4QuarterSym.g")
     mat = V.material("Material-1")
     mat.elastic(E=100, Nu=0.2)
-    V.assign_properties("", CPE4, mat, t=1)
+    V.assign_properties(element_block="", element_type=CPE4, material=mat, t=1)
     V.assign_prescribed_bc("SymYZ", X)
     V.assign_prescribed_bc("SymXZ", Y)
     V.assign_initial_temperature(ALL, 60)

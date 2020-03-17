@@ -37,7 +37,7 @@ def demo_volume_locking(plot=False):
         V.genesis_mesh("./data/QuarterCylinderQuad4.g")
         mat = V.material("Material-1")
         mat.elastic(E=E, Nu=Nu)
-        V.assign_properties("ElementBlock1", CPE4, mat)
+        V.assign_properties(element_block="ElementBlock1", element_type=CPE4, material=mat)
         V.assign_prescribed_bc("Nodeset-200", X)
         V.assign_prescribed_bc("Nodeset-201", Y)
 

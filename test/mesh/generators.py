@@ -12,10 +12,10 @@ def test_compare_new_to_old(plot=False):
     mesh8 = rectilinear_mesh2d(3, 2, a, b, method=2, order=2)
     mesh2 = rectilinear_mesh2d(3, 2, a, b)
 
-    mesh1.element_block("EALL", ALL)
-    mesh2.element_block("EALL", ALL)
+    mesh1.element_block(name="EALL", elements=ALL)
+    mesh2.element_block(name="EALL", elements=ALL)
 
-    mesh8.element_block("EALL", ALL)
+    mesh8.element_block(name="EALL", elements=ALL)
     c = np.array(
         [
             [0, 8, 10, 2, 5, 9, 6, 1],

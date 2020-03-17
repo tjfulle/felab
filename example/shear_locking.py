@@ -18,10 +18,10 @@ def demo_plane_stress_beam(ratio=0.25, plot=False):
     V.rectilinear_mesh(nx=10, ny=3, lx=length, ly=2 * a)
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=nu)
-    V.element_block("ElementBlock1", ALL)
+    V.element_block(name="ElementBlock1", elements=ALL)
     El = CPS4I
     El = CPS4
-    V.assign_properties("ElementBlock1", El, mat, t=1)
+    V.assign_properties(element_block="ElementBlock1", element_type=El, material=mat, t=1)
     V.assign_prescribed_bc(IHI, (X, Y))
 
     step = V.static_step()

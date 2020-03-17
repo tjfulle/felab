@@ -17,7 +17,7 @@ def demo_heat(plot=False):
     mat.isotropic_thermal_conductivity(12)
 
     # Define an alement block of diffusive heat transfer elements with material mat
-    V.assign_properties("ElementBlock1", DC2D3, mat)
+    V.assign_properties(element_block="ElementBlock1", element_type=DC2D3, material=mat, t=1)
 
     # Fix temperatures on left and right edge
     step = V.heat_transfer_step()

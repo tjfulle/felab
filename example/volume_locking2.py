@@ -15,7 +15,7 @@ def demo_linear(ax=None):
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties("ElementBlock1", CPE4, mat, t=1)
+    V.assign_properties(element_block="ElementBlock1", element_type=CPE4, material=mat, t=1)
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
@@ -43,7 +43,7 @@ def demo_bbar(ax=None):
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties("ElementBlock1", CPE4B, mat, t=1)
+    V.assign_properties(element_block="ElementBlock1", element_type=CPE4B, material=mat, t=1)
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
@@ -62,7 +62,7 @@ def demo_reduced_integration(ax=None):
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties("ElementBlock1", CPE4R, mat, t=1)
+    V.assign_properties(element_block="ElementBlock1", element_type=CPE4R, material=mat, t=1)
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
@@ -81,7 +81,7 @@ def demo_selectively_reduced_integration(ax=None):
     V.genesis_mesh("./data/QuarterCylinderQuad4.g")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties("ElementBlock1", CPE4RS, mat, t=1)
+    V.assign_properties(element_block="ElementBlock1", element_type=CPE4RS, material=mat, t=1)
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face
@@ -102,7 +102,7 @@ def demo_quadratic(ax=None):
     V.genesis_mesh("./data/QuarterCylinderQuad8.g")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties("ElementBlock1", CPE8B, mat, t=1)
+    V.assign_properties(element_block="ElementBlock1", element_type=CPE8B, material=mat, t=1)
     V.assign_prescribed_bc("Nodeset-200", X)
     V.assign_prescribed_bc("Nodeset-201", Y)
     # Pressure on inside face

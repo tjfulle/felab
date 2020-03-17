@@ -13,7 +13,7 @@ def demo_postprocess():
 
     V = fe_model(mesh=mesh, jobid="PlateWithHoleQuad4")
 
-    V.assign_properties("ElementBlock1", CPE4, mat, t=1)
+    V.assign_properties(element_block="ElementBlock1", element_type=CPE4, material=mat, t=1)
     V.assign_prescribed_bc("LeftHandSide", X)
     V.fix_nodes("PinNode")
 

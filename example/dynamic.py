@@ -12,8 +12,8 @@ def demo_dynamic_load_step(plot=False):
     mat.Density(1.0)
 
     V = fe_model(mesh=mesh)
-    V.element_block("Block-1", ALL)
-    V.assign_properties("Block-1", CPE4, mat)
+    V.element_block(name="Block-1", elements=ALL)
+    V.assign_properties(element_block="Block-1", element_type=CPE4, material=mat)
 
     step = V.dynamic_step(period=1e-6, frames=10)
     step.assign_prescribed_bc(IHI, X, 0.1)

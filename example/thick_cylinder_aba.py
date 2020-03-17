@@ -15,7 +15,7 @@ def demo_linear(ax=None):
     V.abaqus_mesh("./data/ThickCylinder_Linear.inp")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties("ALL", CPE4R, mat, t=1)
+    V.assign_properties(element_block="ALL", element_type=CPE4R, material=mat, t=1)
     V.assign_prescribed_bc("SymYZ", X)
     V.assign_prescribed_bc("SymXZ", Y)
     step = V.static_step()
@@ -43,7 +43,7 @@ def demo_quadratic(ax=None):
     V.abaqus_mesh("./data/ThickCylinder_Quadratic.inp")
     mat = V.material("Material-1")
     mat.elastic(E=E, Nu=Nu)
-    V.assign_properties("ALL", CPE8B, mat, t=1)
+    V.assign_properties(element_block="ALL", element_type=CPE8B, material=mat, t=1)
     V.assign_prescribed_bc("SymYZ", X)
     V.assign_prescribed_bc("SymXZ", Y)
     # Pressure on inside face

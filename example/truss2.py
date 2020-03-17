@@ -81,8 +81,8 @@ def demo_truss():
         2.44,
         2.44,
     ]
-    V.element_block("ElementBlock1", ALL)
-    V.assign_properties("ElementBlock1", L3D2, mat, A=A)
+    V.element_block(name="ElementBlock1", elements=ALL)
+    V.assign_properties(element_block="ElementBlock1", element_type=L3D2, material=mat, A=A)
 
     # Define boundary conditons
     V.fix_nodes((7, 8, 9, 10))

@@ -17,7 +17,7 @@ def demo_plane_stress_tria3_patch(plot=False):
 
     # CREATE FINITE ELEMENT MODEL AND ASSIGN PROPERTIES
     V = fe_model(mesh=mesh, jobid="Tri3PlaneStressPatch")
-    V.assign_properties("EALL", CPS3, mat, t=0.001)
+    V.assign_properties(element_block="EALL", element_type=CPS3, material=mat, t=0.001)
 
     # ASSIGN HOMOGENEOUS BCS TO MODEL
     V.assign_prescribed_bc(10, (X, Y))
@@ -64,7 +64,7 @@ def demo_plane_stress_tria3_patch(plot=False):
 
     # CREATE FINITE ELEMENT MODEL AND ASSIGN PROPERTIES
     V = fe_model(mesh=mesh, jobid="Tri3PlaneStressPatch")
-    V.assign_properties("EALL", CPS3, mat, t=0.001)
+    V.assign_properties(element_block="EALL", element_type=CPS3, material=mat, t=0.001)
 
     # ASSIGN HOMOGENEOUS BCS TO MODEL
     V.assign_prescribed_bc(10, (X, Y))

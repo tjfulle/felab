@@ -16,7 +16,7 @@ def demo_plane_elasticity2(plot=False):
 
     # CREATE THE MODEL AND ASSIGN PROPERTIES
     V = fe_model(mesh=mesh, jobid="Plane2")
-    V.assign_properties("ElementBlock1", CPS3, mat, t=1)
+    V.assign_properties(element_block="ElementBlock1", element_type=CPS3, material=mat, t=1)
 
     # PRESCRIBE FIXED BCS TO MODEL
     V.assign_prescribed_bc("LeftHandSide", X)

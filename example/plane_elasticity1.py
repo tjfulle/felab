@@ -12,7 +12,7 @@ def demo_plane_elasticity1(plot=False):
     mat = V.material("Material-1")
     mat.elastic(E=10e6, Nu=0.29)
 
-    V.assign_properties("ElementBlock1", CPE4, mat, t=1)
+    V.assign_properties(element_block="ElementBlock1", element_type=CPE4, material=mat, t=1)
 
     step = V.static_step()
     step.assign_prescribed_bc("LeftHandSide", X, 0.0)

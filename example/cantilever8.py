@@ -10,7 +10,7 @@ def demo_cantilever8():
     mesh = abaqus_mesh(filename)
     mat = Material("Material-1", elastic={"E": 100.0, "Nu": 0.3})
     V = fe_model(mesh=mesh)
-    V.assign_properties("EAll", CPS8, mat, t=1)
+    V.assign_properties(element_block="EAll", element_type=CPS8, material=mat, t=1)
     V.fix_nodes((1, 22, 33))
     step = V.static_step()
     step.assign_concentrated_load(49, Y, 0.01)

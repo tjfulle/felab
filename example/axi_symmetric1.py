@@ -14,8 +14,8 @@ def demo_axisymmetric_ring():
     mat = V.material("Material-1")
     mat.elastic(E=30e6, Nu=0.3)
 
-    V.element_block("EALL", (1,))
-    V.assign_properties("EALL", CAX4, mat, formulation=1)
+    V.element_block(name="EALL", elements=(1,))
+    V.assign_properties(element_block="EALL", element_type=CAX4, material=mat, formulation=1)
     V.assign_prescribed_bc(1, Zr)
     V.assign_prescribed_bc(2, Zr)
 

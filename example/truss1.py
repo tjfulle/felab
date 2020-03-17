@@ -53,7 +53,7 @@ def demo_truss():
     mat.elastic(E=1000, Nu=0.29)
 
     # Define an element block of 3D 2-node link elements
-    V.element_block("ElementBlock1", ALL)
+    V.element_block(name="ElementBlock1", elements=ALL)
 
     # Assign material properties
     Abot, Atop, Abat, Adia = 2, 10, 3, 1
@@ -80,7 +80,7 @@ def demo_truss():
         Adia,
         Adia,
     ]
-    V.assign_properties("ElementBlock1", L2D2, mat, A=A)
+    V.assign_properties(element_block="ElementBlock1", element_type=L2D2, material=mat, A=A)
 
     # Apply boundary conditions
     V.assign_prescribed_bc(1, (X, Y))

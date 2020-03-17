@@ -11,8 +11,8 @@ def demo_cycle_loads(plot=False):
     mat = Material("Mat-1", elastic={"E": 500, "Nu": 0})
 
     V = fe_model(mesh=mesh)
-    V.element_block("Block-1", ALL)
-    V.assign_properties("Block-1", CPS4, mat)
+    V.element_block(name="Block-1", elements=ALL)
+    V.assign_properties(element_block="Block-1", element_type=CPS4, material=mat)
 
     V.fix_nodes(ILO)
 

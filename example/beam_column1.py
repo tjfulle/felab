@@ -16,12 +16,12 @@ def demo_beam_column():
     mat2 = Material("Material-2", elastic={"E": Em, "Nu": 0.3})
 
     V = fe_model(mesh=mesh, jobid="B2D2")
-    V.element_block("B1", (1, 2))
-    V.element_block("B2", (3, 5))
-    V.element_block("B3", (4,))
-    V.assign_properties("B1", B2D2, mat1, A=0.02, Izz=0.004)
-    V.assign_properties("B2", L2D2, mat2, A=0.001)
-    V.assign_properties("B3", L2D2, mat2, A=0.003)
+    V.element_block(name="B1", elements=(1, 2))
+    V.element_block(name="B2", elements=(3, 5))
+    V.element_block(name="B3", elements=(4,))
+    V.assign_properties(element_block="B1", element_type=B2D2, material=mat1, A=0.02, Izz=0.004)
+    V.assign_properties(element_block="B2", element_type=L2D2, material=mat2, A=0.001)
+    V.assign_properties(element_block="B3", element_type=L2D2, material=mat2, A=0.003)
 
     V.assign_prescribed_bc(1, (X, Y, TZ))
     V.assign_prescribed_bc(5, Y)

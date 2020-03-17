@@ -11,8 +11,8 @@ def demo_beam_quad(plot=False):
     mat = Material("Material-1", elastic={"E": 20000, "Nu": 0})
 
     V = fe_model(mesh=mesh, jobid="QuadBeam")
-    V.element_block("ElementBlock1", ALL)
-    V.assign_properties("ElementBlock1", CPE4, mat, t=1)
+    V.element_block(name="ElementBlock1", elements=ALL)
+    V.assign_properties(element_block="ElementBlock1", element_type=CPE4, material=mat, t=1)
 
     step = V.static_step()
     step.fix_dofs(ILO)
