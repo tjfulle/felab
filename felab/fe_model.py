@@ -3,9 +3,9 @@ import numpy as np
 import felab.util.tty as tty
 from felab.material import Material
 from felab.error import UserInputError
+from felab.io import ExodusFile
 from felab.mesh import (
     Mesh,
-    ExodusFile,
     abaqus_mesh,
     genesis_mesh,
     vtk_mesh,

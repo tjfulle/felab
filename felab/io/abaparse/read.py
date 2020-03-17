@@ -5,7 +5,7 @@ from numpy.ma import masked, masked_array
 from collections import OrderedDict
 
 import felab.util.tty as tty
-from felab.mesh.abaparse.parse import AbaqusParser
+from felab.io.abaparse.parse import AbaqusParser
 
 
 def mag(a):

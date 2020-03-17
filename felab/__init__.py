@@ -7,7 +7,7 @@ from felab.first_fe_program import UniformBar
 from felab.fe_model import fe_model
 from felab.material import Material
 from felab.mesh import *
-from felab.mesh.exodusii import File, put_nodal_solution
+from felab.io.exodusii import File, put_nodal_solution
 
 np.set_printoptions(4, suppress=True)
 

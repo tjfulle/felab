@@ -1,6 +1,6 @@
 from felab.fe_model import fe_model
 from felab.elemlib import CPE4
-from felab.mesh.exodusii import EXOFileReader
+from felab.io.exodusii import EXOFileReader
 from felab.constants import X, Y, ALL
 
 

@@ -6,9 +6,9 @@ from felab.error import UserInputError
 from felab.util.lang import is_listlike, is_stringlike
 from felab.elemlib import element_family
 
-from felab.mesh import aba
-from felab.mesh import vtk
-from felab.mesh import exodusii
+from felab.io import aba
+from felab.io import vtk
+from felab.io import exodusii
 from felab.mesh.element_block import element_block
 
 
@@ -602,7 +602,7 @@ class Mesh(object):
         return
 
     def put_nodal_solution(self, filename, u):
-        import felab.mesh.exodusii as exodusii
+        import felab.io.exodusii as exodusii
 
         if not self.element_blocks:
             self.element_block("ElementBlock1", ALL)

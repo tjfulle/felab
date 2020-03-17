@@ -1,5 +1,5 @@
-from .abaparse import AbaqusModel
-from .. import elemlib
+from felab.io.abaparse import AbaqusModel
+from felab import elemlib
 
 
 def ElementType(name):

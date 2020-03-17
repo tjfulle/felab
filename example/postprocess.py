@@ -1,7 +1,7 @@
 from felab.fe_model import fe_model
 from felab.material import Material
 from felab.mesh import genesis_mesh
-from felab.mesh.exodusii import EXOFileReader
+from felab.io.exodusii import EXOFileReader
 from felab.constants import X, IHI
 from felab.elemlib import CPE4
 
