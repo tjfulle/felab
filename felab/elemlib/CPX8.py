@@ -26,11 +26,9 @@ class CPX8(CMDN):
     dimensions = 2
     elefab = {"t": 1.0}
     cp = np.array([0, 0], dtype=float)
-    xp = (
-        np.array(
-            [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, -1], [1, 0], [0, 1], [-1, 0]],
-            dtype=float,
-        ),
+    xp = np.array(
+        [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, -1], [1, 0], [0, 1], [-1, 0]],
+        dtype=float,
     )
     edges = np.array([[0, 1, 4], [1, 2, 5], [2, 3, 6], [3, 0, 7]])
     signature = [

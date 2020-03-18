@@ -1,5 +1,4 @@
 from felab import *
-from felab.elemlib import B2D2, L2D2
 
 
 def demo_beam_column():

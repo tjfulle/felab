@@ -6,10 +6,10 @@ from felab.io.plot import plot2d
 def test_compare_new_to_old(plot=False):
     a, b = 2.0, 1.0
     nx, ny = 3, 2
-    corners = np.array([[0, 0], [a, 0], [a, b], [0, b]], dtype=float)
-    mesh1 = rectilinear_mesh2d(3, 2, a, b, method=2)
-    mesh8 = rectilinear_mesh2d(3, 2, a, b, method=2, order=2)
-    mesh2 = rectilinear_mesh2d(3, 2, a, b)
+    # corners = np.array([[0, 0], [a, 0], [a, b], [0, b]], dtype=float)
+    mesh1 = rectilinear_mesh2d(nx, ny, a, b, method=2)
+    mesh8 = rectilinear_mesh2d(nx, ny, a, b, method=2, order=2)
+    mesh2 = rectilinear_mesh2d(nx, ny, a, b)
 
     mesh1.element_block(name="EALL", elements=ALL)
     mesh2.element_block(name="EALL", elements=ALL)

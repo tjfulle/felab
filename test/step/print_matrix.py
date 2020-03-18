@@ -34,7 +34,8 @@ def test_print_matrix_1():
         dtype=int,
     )
 
-    k, h, Too = 12, 250, 25
+    # k, h, Too = 12, 250, 25
+    k = 12.
     mesh = Mesh(p=p, t=t)
     V = FEModel(jobid="test-1", mesh=mesh)
 

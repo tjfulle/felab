@@ -28,4 +28,9 @@
 [flake8]
 ignore = E129,E221,E241,E272,E731,W503,W504,F999,E203
 max-line-length = 88
-exclude = example,test,__init__.py
+exclude = __init__.py
+per-file-ignores =
+    # we use from pylab import *, so many errors are flagged about import * and
+    # undefined vars
+    test/*: F405,F403
+    example/*: F405,F403
