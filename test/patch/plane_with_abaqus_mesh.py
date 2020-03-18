@@ -1,7 +1,11 @@
 import os
 from numpy import allclose
 from felab import *
-from felab.elemlib import CPE4, CPS4, CPS3, CPE3
+
+CPE3 = Element(type="CPE3")
+CPS3 = Element(type="CPS3")
+CPE4 = Element(type="CPE4")
+CPS4 = Element(type="CPS4")
 
 
 def test_quad4_plane_strain(data_path):

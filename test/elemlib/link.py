@@ -1,8 +1,11 @@
 import numpy as np
+from felab import Element
 from felab.constants import STIFF_ONLY
-from felab.elemlib import L1D2, L2D2, L3D2
 
 lflags = [None, None, STIFF_ONLY, None, None, None]
+L1D2 = Element(type="L1D2")
+L2D2 = Element(type="L2D2")
+L3D2 = Element(type="L3D2")
 
 
 def test_element_elastic_link_0():

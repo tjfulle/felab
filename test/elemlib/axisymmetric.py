@@ -1,7 +1,9 @@
 from numpy import allclose, array
 from felab import *
-from felab.elemlib import CAX4
 from felab.io.plot import plot2d
+
+
+CAX4 = Element(type="CAX4")
 
 
 def analytic(a, b, E, Nu, r, p):

@@ -7,7 +7,9 @@ try:
 except ImportError:
     dm = None
 from felab import *
-from felab.elemlib import DC2D3
+
+
+DC2D3 = Element(type="DC2D3")
 
 
 def test_heat_transfer_1(data_path):

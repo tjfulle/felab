@@ -1,6 +1,9 @@
 from numpy import allclose, array, nan
 from felab import *
-from felab.elemlib import L3D2, L2D2, B2D2
+
+L2D2 = Element(type="L2D2")
+L3D2 = Element(type="L3D2")
+B2D2 = Element(type="B2D2")
 
 
 def test_model_truss_0():

@@ -1,5 +1,5 @@
 import numpy as np
-from felab.elemlib import B2D2
+from felab.elemlib.B2D2 import B2D2
 from felab.constants import STIFF_ONLY
 
 

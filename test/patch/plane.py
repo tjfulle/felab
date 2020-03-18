@@ -1,7 +1,11 @@
 from numpy import allclose
 from felab import *
 from felab.mesh import Mesh
-from felab.elemlib import CPS4, CPS8, CPS3
+
+
+CPS3 = Element(type="CPS3")
+CPS4 = Element(type="CPS4")
+CPS8 = Element(type="CPS8")
 
 
 def test_4_node_plane_stress():
