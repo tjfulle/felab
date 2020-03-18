@@ -1,4 +1,3 @@
-import felab.util.tty as tty
 from felab.error import UserInputError
 from felab.material.elas import elas
 

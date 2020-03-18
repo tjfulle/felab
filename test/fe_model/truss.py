@@ -456,12 +456,8 @@ def test_model_truss_beam_0():
     V.assign_properties(
         element_block="B1", element_type=B2D2, material=mat1, A=0.02, Izz=0.004
     )
-    V.assign_properties(
-        element_block="B2", element_type=L2D2, material=mat1, A=0.001
-    )
-    V.assign_properties(
-        element_block="B3", element_type=L2D2, material=mat1, A=0.003
-    )
+    V.assign_properties(element_block="B2", element_type=L2D2, material=mat1, A=0.001)
+    V.assign_properties(element_block="B3", element_type=L2D2, material=mat1, A=0.003)
     V.dirichlet_bc(1, (X, Y, TZ))
     V.dirichlet_bc(5, Y)
     step = V.static_step()
