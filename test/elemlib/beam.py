@@ -15,7 +15,7 @@ def test_element_beam_0():
     rhs = np.zeros(6)
     A = np.zeros((6, 6))
     lflags = [None, None, STIFF_ONLY, None, None, None]
-    El.response(
+    El.eval(
         rhs,
         A,
         [],

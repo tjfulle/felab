@@ -1,15 +1,11 @@
-from felab.fe_model import FEModel
-from felab.material import Material
-from felab.mesh import genesis_mesh
+from felab import *
 from felab.io.exodusii import EXOFileReader
-from felab.constants import X, IHI
 from felab.elemlib import CPE4
 
 
 def demo_postprocess():
     mesh = genesis_mesh("./data/PlateWithHoleQuad4.g")
-    mat = Material("Material-1")
-    mat.elastic(E=100, Nu=0.2)
+    mat = Material(name="Material-1", elastic=dict(E=100, Nu=0.2))
 
     V = FEModel(mesh=mesh, jobid="PlateWithHoleQuad4")
 

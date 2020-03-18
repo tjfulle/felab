@@ -1,9 +1,7 @@
 from numpy import allclose
-from felab.fe_model import FEModel
+from felab import *
 from felab.mesh import Mesh
-from felab.material import Material
 from felab.elemlib import CPS4, CPS8, CPS3
-from felab.constants import X, Y, ALL
 
 
 def test_4_node_plane_stress():
@@ -25,7 +23,7 @@ def test_4_node_plane_stress():
         [5, 14, 5, 6, 99],
     ]
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
-    mat = Material("Mat-1", elastic={"E": 1e6, "Nu": 0.25})
+    mat = Material(name="Mat-1", elastic={"E": 1e6, "Nu": 0.25})
 
     V = FEModel(mesh=mesh)
     V.element_block(name="Block-1", elements=ALL)
@@ -85,7 +83,7 @@ def test_8_node_plane_stress():
     ]
 
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
-    mat = Material("Mat-1", elastic={"E": 1e6, "Nu": 0.25})
+    mat = Material(name="Mat-1", elastic={"E": 1e6, "Nu": 0.25})
 
     V = FEModel(mesh=mesh, jobid="foo")
     V.element_block(name="Block-1", elements=ALL)
@@ -140,7 +138,7 @@ def test_3_node_plane_stress():
         [10, 14, 6, 99],
     ]
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
-    mat = Material("Mat-1", elastic={"E": 1e6, "Nu": 0.25})
+    mat = Material(name="Mat-1", elastic={"E": 1e6, "Nu": 0.25})
 
     V = FEModel(mesh=mesh)
     V.element_block(name="Block-1", elements=ALL)

@@ -48,7 +48,7 @@ class CMDN(isop_base):
     def shapegrad(self, *args):
         raise NotImplementedError
 
-    def response(
+    def eval(
         self,
         rhs,
         A,
@@ -87,7 +87,7 @@ class CMDN(isop_base):
                 return
 
         if lflags[2] in (STIFF_AND_RHS, STIFF_ONLY, RHS_ONLY, MASS_AND_RHS):
-            self.eval(rhs, A, svars, u, du, time, dtime, kstep, kframe, predef, lflags)
+            self._eval(rhs, A, svars, u, du, time, dtime, kstep, kframe, predef, lflags)
             if lflags[2] == STIFF_ONLY:
                 return
 
@@ -151,7 +151,7 @@ class CMDN(isop_base):
 
         return Fe
 
-    def eval(self, rhs, A, svars, u, du, time, dtime, kstep, kframe, predef, lflags):
+    def _eval(self, rhs, A, svars, u, du, time, dtime, kstep, kframe, predef, lflags):
         """Evaluate the element stiffness and residual"""
         xc = self.xc  # + u.reshape(self.xc.shape)
 
@@ -235,7 +235,7 @@ class CMDN(isop_base):
             xv = np.zeros(1)
             e = np.array(svars[0, ij + a1 * ntens : ij + (a1 + 1) * ntens])
             s = np.array(svars[0, ij + a3 * ntens : ij + (a3 + 1) * ntens])
-            s, xv, D = self.material.response(
+            s, xv, D = self.material.eval(
                 s,
                 xv,
                 e,
@@ -400,7 +400,7 @@ class CMDN(isop_base):
         e = self.interpolate_to_centroid(svars[0], index=a1)
         s = self.interpolate_to_centroid(svars[0], index=a3)
         xv = np.zeros(1)
-        s, xv, D = self.material.response(
+        s, xv, D = self.material.eval(
             s,
             xv,
             e,

@@ -1,15 +1,13 @@
 import os
 from numpy import allclose
-from felab.constants import X, Y
-from felab.fe_model import FEModel
-from felab.material import Material
+from felab import *
 from felab.elemlib import CPE4, CPS4, CPS3, CPE3
 
 
 def test_quad4_plane_strain(data_path):
-    V = FEModel()
-    V.abaqus_mesh(filename=os.path.join(data_path, "EC4SFP1.inp"))
-    mat = Material("Material-1", elastic={"E": 1e6, "Nu": 0.25})
+    mesh = abaqus_mesh(filename=os.path.join(data_path, "EC4SFP1.inp"))
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", elastic={"E": 1e6, "Nu": 0.25})
     V.assign_properties(element_block="EALL", element_type=CPE4, material=mat, t=0.001)
     step = V.static_step()
     step.dirichlet_bc(10, (X, Y), 0.0)
@@ -38,9 +36,9 @@ def test_quad4_plane_strain(data_path):
 
 
 def test_quad4_plane_stress(data_path):
-    V = FEModel()
-    V.abaqus_mesh(filename=os.path.join(data_path, "EC4SFP1.inp"))
-    mat = Material("Material-1", elastic={"E": 1e6, "Nu": 0.25})
+    mesh = abaqus_mesh(filename=os.path.join(data_path, "EC4SFP1.inp"))
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", elastic={"E": 1e6, "Nu": 0.25})
     V.assign_properties(element_block="EALL", element_type=CPS4, material=mat, t=0.001)
     step = V.static_step()
     step.dirichlet_bc(10, (X, Y), 0.0)
@@ -66,9 +64,9 @@ def test_quad4_plane_stress(data_path):
 
 
 def test_tria3_plane_stress(data_path):
-    V = FEModel(jobid="PlaneStressTria3Patch")
-    V.abaqus_mesh(filename=os.path.join(data_path, "EC3SFP1.inp"))
-    mat = Material("Material-1", elastic={"E": 1e6, "Nu": 0.25})
+    mesh = abaqus_mesh(filename=os.path.join(data_path, "EC3SFP1.inp"))
+    V = FEModel(jobid="PlaneStressTria3Patch", mesh=mesh)
+    mat = Material(name="Material-1", elastic={"E": 1e6, "Nu": 0.25})
     V.assign_properties(element_block="EALL", element_type=CPS3, material=mat, t=0.001)
     step = V.static_step()
     step.dirichlet_bc(10, (X, Y), 0.0)
@@ -95,9 +93,9 @@ def test_tria3_plane_stress(data_path):
 
 
 def test_tria3_plane_strain(data_path):
-    V = FEModel()
-    V.abaqus_mesh(filename=os.path.join(data_path, "EC3SFP1.inp"))
-    mat = Material("Material-1", elastic={"E": 1e6, "Nu": 0.25})
+    mesh = abaqus_mesh(filename=os.path.join(data_path, "EC3SFP1.inp"))
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", elastic={"E": 1e6, "Nu": 0.25})
     V.assign_properties(element_block="EALL", element_type=CPE3, material=mat, t=0.001)
     step = V.static_step()
     step.dirichlet_bc(10, (X, Y), 0.0)

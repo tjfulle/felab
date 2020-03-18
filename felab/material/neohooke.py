@@ -1,15 +1,19 @@
 """Neo Hookean HYPERELASTICITY, cannot be used for plane stress"""
 import numpy as np
+from felab.material.material import MaterialModel
 
 
-class neo_hooke(object):
+class NeoHooke(MaterialModel):
+    name = "Neo Hookean"
     requires = ("nlgeom",)
-    name = "Neo Hooke"
 
-    def __init__(self, E, Nu):
-        self.E, self.Nu = E, Nu
+    def __init__(self, **kwds):
+        props = self.compute_elastic_properties(**kwds)
+        self.E = props["E"]
+        self.Nu = props["Nu"]
+        self.__dict__.update(**props)
 
-    def response(
+    def eval(
         self,
         stress,
         statev,

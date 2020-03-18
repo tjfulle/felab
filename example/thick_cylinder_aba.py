@@ -1,8 +1,6 @@
 import numpy as np
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import CPE4R, CPE8B
-from felab.constants import X, Y
-from felab.mesh import Mesh
 from felab.io.plot import plot2d
 
 mu = 1.0
@@ -11,10 +9,9 @@ E = 2.0 * mu * (1.0 + Nu)
 
 
 def demo_linear(ax=None):
-    V = FEModel(jobid="VolumeLocking.Linear")
-    V.abaqus_mesh("./data/ThickCylinder_Linear.inp")
-    mat = V.material("Material-1")
-    mat.elastic(E=E, Nu=Nu)
+    mesh = abaqus_mesh("./data/ThickCylinder_Linear.inp")
+    V = FEModel(jobid="VolumeLocking.Linear", mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(element_block="ALL", element_type=CPE4R, material=mat, t=1)
     V.dirichlet_bc("SymYZ", X)
     V.dirichlet_bc("SymXZ", Y)
@@ -39,10 +36,9 @@ def demo_linear(ax=None):
 
 
 def demo_quadratic(ax=None):
-    V = FEModel(jobid="VolumeLocking.Quadratic")
-    V.abaqus_mesh("./data/ThickCylinder_Quadratic.inp")
-    mat = V.material("Material-1")
-    mat.elastic(E=E, Nu=Nu)
+    mesh = abaqus_mesh("./data/ThickCylinder_Quadratic.inp")
+    V = FEModel(jobid="VolumeLocking.Quadratic", mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(element_block="ALL", element_type=CPE8B, material=mat, t=1)
     V.dirichlet_bc("SymYZ", X)
     V.dirichlet_bc("SymXZ", Y)

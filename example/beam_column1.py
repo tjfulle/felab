@@ -1,19 +1,15 @@
-from numpy import nan
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import B2D2, L2D2
-from felab.material import Material
-from felab.constants import X, Y, TZ
-from felab.mesh import Mesh
 
 
 def demo_beam_column():
-    nodtab = [[1, -4, 3], [2, 0, 0], [3, 0, 3], [4, nan, nan], [5, 4, 3]]
+    nodtab = [[1, -4, 3], [2, 0, 0], [3, 0, 3], [4, None, None], [5, 4, 3]]
     eletab = [[1, 1, 3], [2, 3, 5], [3, 1, 2], [4, 2, 3], [5, 2, 5]]
     mesh = Mesh(nodtab=nodtab, eletab=eletab)
 
     Ec, Em = 30000, 200000
-    mat1 = Material("Material-1", elastic={"E": Ec, "Nu": 0.3})
-    mat2 = Material("Material-2", elastic={"E": Em, "Nu": 0.3})
+    mat1 = Material(name="Material-1", elastic=dict(E=Ec, Nu=0.3))
+    mat2 = Material(name="Material-2", elastic=dict(E=Em, Nu=0.3))
 
     V = FEModel(mesh=mesh, jobid="B2D2")
     V.element_block(name="B1", elements=(1, 2))

@@ -1,14 +1,11 @@
-from felab.fe_model import FEModel
-from felab.constants import NEWTON, ALL, X, ILO, IHI
-from felab.material import Material
+from felab import *
 from felab.elemlib import CPS4
-from felab.mesh import unit_square_mesh
 from felab.io.plot import plot2d
 
 
 def demo_cycle_loads(plot=False):
     mesh = unit_square_mesh(nx=1, ny=1)
-    mat = Material("Mat-1", elastic={"E": 500, "Nu": 0})
+    mat = Material(name="Mat-1", elastic=dict(E=500, Nu=0))
 
     V = FEModel(mesh=mesh)
     V.element_block(name="Block-1", elements=ALL)

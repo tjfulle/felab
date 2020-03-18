@@ -1,20 +1,13 @@
 import numpy as np
 
 import felab.util.tty as tty
-from felab.material import Material
-from felab.error import UserInputError
-from felab.io import ExodusFile
-from felab.mesh import (
-    Mesh,
-    abaqus_mesh,
-    genesis_mesh,
-    vtk_mesh,
-    unit_square_mesh,
-    rectilinear_mesh2d,
-)
-from felab.step import StepRepository
-from felab.util.lang import is_listlike
+from felab.mesh import Mesh
 from felab.assembly import vdof
+from felab.io import ExodusFile
+from felab.step import StepRepository
+from felab.error import UserInputError
+from felab.util.lang import is_listlike
+from felab.material.material import Material
 
 from felab.constants import (
     X,
@@ -43,21 +36,16 @@ __all__ = ["FEModel"]
 class FEModel(object):
     """The base finite element class"""
 
-    def __init__(self, mesh=None, jobid=None):
+    def __init__(self, *, jobid=None, mesh):
         self.jobid = jobid or "Job-1"
         self.dimensions = None
-        self.materials = {}
         self.initial_temp = []
         self.pr_bc = []
         self.fh = None
         self.steps = None
         self._setup = False
 
-        self._mesh = None
-        if mesh is not None:
-            if not isinstance(mesh, Mesh):
-                raise UserInputError("mesh must be a Mesh object")
-            self.mesh = mesh
+        self.mesh = mesh
 
     @property
     def exofile(self):
@@ -81,102 +69,14 @@ class FEModel(object):
 
     @mesh.setter
     def mesh(self, mesh):
-
-        if self._mesh is not None:
-            tty.warn("MESH ALREADY ASSIGNED, OVERWRITING")
-
         if not isinstance(mesh, Mesh):
-            raise UserInputError("MESH MUST BE A MESH OBJECT")
-
+            raise UserInputError("mesh must be a Mesh object")
         self._mesh = mesh
         self.dimensions = self.mesh.dimensions
         self.numele = self.mesh.numele
         self.elements = np.empty(self.numele, dtype=object)
         self.numnod = self.mesh.numnod
         self._setup = False
-
-    def genesis_mesh(self, filename):
-        """
-        Generates a finite element mesh from a Genesis file.
-
-        See Also
-        --------
-        felab.mesh.genesis_mesh
-
-        """
-        self.mesh = genesis_mesh(filename=filename)
-
-    def abaqus_mesh(self, filename):
-        """
-        Generates a finite element mesh from a Abaqus input file.
-
-        See Also
-        --------
-        felab.mesh.abaqus_mesh
-
-        """
-        self.mesh = abaqus_mesh(filename=filename)
-
-    def vtk_mesh(self, filename):
-        """
-        Generates a finite element mesh from a vtk .vtu file.
-
-        See Also
-        --------
-        felab.mesh.vtk_mesh
-
-        """
-        self.mesh = vtk_mesh(filename=filename)
-
-    def rectilinear_mesh(
-        self, nx=1, ny=1, lx=1, ly=1, shiftx=None, shifty=None, method=None
-    ):
-        """
-        Generates a rectilinear 2D finite element mesh.
-
-        See Also
-        --------
-        felab.mesh.rectilinear_mesh_2d
-
-        """
-        self.mesh = rectilinear_mesh2d(
-            nx=nx, ny=ny, lx=lx, ly=ly, shiftx=shiftx, shifty=shifty, method=method
-        )
-
-    def unit_square_mesh(self, nx=1, ny=1, shiftx=None, shifty=None, method=None):
-        """
-        Generates a rectilinear 2D finite element mesh.
-
-        See Also
-        --------
-        felab.mesh.unit_square_mesh
-
-        """
-        self.mesh = unit_square_mesh(
-            nx=nx, ny=ny, shiftx=shiftx, shifty=shifty, method=method
-        )
-
-    def pt_mesh(self, p, t):
-        """
-        Generates the finite element mesh.
-
-        See Also
-        --------
-        felab.mesh.Mesh
-
-        """
-        self.mesh = Mesh(p=p, t=t)
-
-    def ne_mesh(self, nodtab, eletab):
-        """
-        Generates the finite element mesh.
-
-        See Also
-        --------
-        felab.mesh.Mesh
-
-        """
-        self.mesh = Mesh(nodtab=nodtab, eletab=eletab)
 
     @property
     def dofs(self):
@@ -361,32 +261,6 @@ class FEModel(object):
         self.exofile.snapshot(step)
         step.written = 1
 
-    # ----------------------------------------------------------------------- #
-    # --- MATERIAL MODELS --------------------------------------------------- #
-    # ----------------------------------------------------------------------- #
-    def material(self, name, **kwargs):
-        """Create an empty material object.
-
-        Parameters
-        ----------
-        name : str
-            The name of the material
-
-        Notes
-        -----
-        The empty material is put in the self.materials container and can be
-        referenced as self.material[name]
-
-        See Also
-        --------
-        pyfem.material._material.Material
-
-        """
-        if name in self.materials:
-            raise UserInputError("DUPLICATE MATERIAL {0!r}".format(name))
-        self.materials[name] = Material(name, **kwargs)
-        return self.materials[name]
-
     def dirichlet_bc(self, nodes, dof):
         if self.steps is not None:
             raise UserInputError(
@@ -570,8 +444,8 @@ class FEModel(object):
             The name of the element block
         element_type : object
             The element type (uninstantiated class)
-        material : str or Material
-            The name of the material model, or a material model
+        material : Material
+            The material model
         elefab : dict
             Element fabrication properties
 
@@ -589,13 +463,6 @@ class FEModel(object):
         """
         if self.mesh is None:
             raise UserInputError("MESH MUST FIRST BE CREATED")
-        if material in self.materials:
-            material = self.materials[material]
-        elif isinstance(material, Material):
-            if material.name not in self.materials:
-                self.materials[material.name] = material
-        else:
-            raise UserInputError("NO SUCH MATERIAL {0!r}".format(material))
         for blk in self.mesh.element_blocks:
             if blk.name.upper() == element_block.upper():
                 break
@@ -604,6 +471,8 @@ class FEModel(object):
         blk.eletyp = element_type
         if element_type.nodes != blk.elecon.shape[1]:
             raise UserInputError("NODE TYPE NOT CONSISTENT WITH ELEMENT BLOCK")
+        if not isinstance(material, Material):
+            raise UserInputError("MATERIAL MUST BE OF TYPE Material")
 
         if elefab:
             # ELEMENT FABRICATION PROPERTIES GIVEN, MAKE SURE THERE IS ONE

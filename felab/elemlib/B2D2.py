@@ -31,7 +31,7 @@ class B2D2(element_base):
     def variables(cls):
         return (("P", SCALAR), ("S", SCALAR))
 
-    def response(
+    def eval(
         self,
         rhs,
         A,

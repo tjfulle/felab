@@ -1,20 +1,19 @@
 from numpy import sqrt
-from felab.fe_model import FEModel
+
+from felab import *
 from felab.elemlib import DC2D3
-from felab.constants import T, ALL, ILO, IHI, JLO, JHI
 from felab.io.plot import plot2d
 
 
 def demo_heat(plot=False):
-    # Create the model
-    V = FEModel(jobid="Heat1")
-
     # Read mesh from file
-    V.genesis_mesh("./data/PlateWithHoleTria3Fine.g")
+    mesh = genesis_mesh("./data/PlateWithHoleTria3Fine.g")
+
+    # Create the model
+    V = FEModel(jobid="Heat1", mesh=mesh)
 
     # Create a material and define the thermal conductivity
-    mat = V.material("Material-1")
-    mat.isotropic_thermal_conductivity(12)
+    mat = Material(name="Material-1", thermal_conductivity=12)
 
     # Define an alement block of diffusive heat transfer elements with material mat
     V.assign_properties(

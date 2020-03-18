@@ -1,15 +1,11 @@
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import CPE4
-from felab.constants import ALL, X, IHI
-from felab.mesh import unit_square_mesh
-from felab.material import Material
 from felab.io.plot import plot2d
 
 
 def demo_dynamic_load_step(plot=False):
     mesh = unit_square_mesh(nx=1, ny=1)
-    mat = Material("Mat-1", elastic={"E": 500, "Nu": 0})
-    mat.Density(1.0)
+    mat = Material(name="Mat-1", density=1.0, elastic=dict(E=500, Nu=0))
 
     V = FEModel(mesh=mesh)
     V.element_block(name="Block-1", elements=ALL)

@@ -41,7 +41,7 @@ class element_base(object):
                     )
                 setattr(self, name, p)
 
-    def response(self, *args):
+    def eval(self, *args):
         raise NotImplementedError
 
     @staticmethod

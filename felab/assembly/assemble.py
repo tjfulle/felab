@@ -142,7 +142,7 @@ def assemble_system(
             n = len(eft)
             A_e = np.zeros((n, n))
             rhs_e = np.zeros(n)
-            el.response(
+            el.eval(
                 rhs_e,
                 A_e,
                 svars[:, svtab[iel]],

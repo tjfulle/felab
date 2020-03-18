@@ -2,12 +2,13 @@ import numpy as np
 
 from felab.error import UserInputError
 from felab.util.lang import is_listlike
+from felab.material.material import MaterialModel
 
 
-class thermally_conductive(object):
+class ThermallyConductive(MaterialModel):
     name = "Thermally Conductive"
 
-    def __init__(self, k):
+    def __init__(self, *, k):
         if not is_listlike(k):
             self.k_iso = k
         else:
@@ -21,7 +22,7 @@ class thermally_conductive(object):
                 raise UserInputError("K MUST BE A 3 VECTOR OR 3X3 ARRAY")
             self.k_iso = np.trace(self.k_aniso) / 3.0
 
-    def response(
+    def eval(
         self,
         stress,
         statev,

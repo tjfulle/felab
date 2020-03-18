@@ -1,14 +1,11 @@
-from felab.fe_model import FEModel
-from felab.mesh import rectilinear_mesh2d
-from felab.material import Material
-from felab.constants import ALL, Y, ILO, IHI
+from felab import *
 from felab.elemlib import CPE4
 from felab.io.plot import plot2d
 
 
 def demo_beam_quad(plot=False):
     mesh = rectilinear_mesh2d(nx=10, ny=2, lx=10, ly=2)
-    mat = Material("Material-1", elastic={"E": 20000, "Nu": 0})
+    mat = Material(name="Material-1", elastic=dict(E=20000, Nu=0))
 
     V = FEModel(mesh=mesh, jobid="QuadBeam")
     V.element_block(name="ElementBlock1", elements=ALL)

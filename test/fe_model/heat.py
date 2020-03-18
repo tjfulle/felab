@@ -6,9 +6,8 @@ try:
     import distmesh as dm
 except ImportError:
     dm = None
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import DC2D3
-from felab.constants import T, ALL, ILO, IHI, JLO, JHI, BOUNDARY
 
 
 def test_heat_transfer_1(data_path):
@@ -25,13 +24,10 @@ def test_heat_transfer_1(data_path):
         )
         return u
 
-    V = FEModel()
-    V.genesis_mesh(os.path.join(data_path, "UniformPlateTria3Fine.g"))
-    V.material("Material-1")
-    V.materials["Material-1"].isotropic_thermal_conductivity(1.0)
-    V.assign_properties(
-        element_block="ElementBlock1", element_type=DC2D3, material="Material-1"
-    )
+    mesh = genesis_mesh(os.path.join(data_path, "UniformPlateTria3Fine.g"))
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", isotropic_thermal_conductivity=1.0)
+    V.assign_properties(element_block="ElementBlock1", element_type=DC2D3, material=mat)
     step = V.heat_transfer_step()
     step.HeatGeneration(ALL, 1)
     step.dirichlet_bc(BOUNDARY, T, 0)
@@ -45,13 +41,10 @@ def test_heat_transfer_2(data_path):
     def solution(x):
         return 2.0 * (1.0 + x[:, 1]) / ((3.0 + x[:, 0]) ** 2 + (1 + x[:, 1]) ** 2)
 
-    V = FEModel()
-    V.genesis_mesh(os.path.join(data_path, "UniformPlateTria3.g"))
-    V.material("Material-1")
-    V.materials["Material-1"].isotropic_thermal_conductivity(1.0)
-    V.assign_properties(
-        element_block="ElementBlock1", element_type=DC2D3, material="Material-1"
-    )
+    mesh = genesis_mesh(os.path.join(data_path, "UniformPlateTria3.g"))
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", isotropic_thermal_conductivity=1.0)
+    V.assign_properties(element_block="ElementBlock1", element_type=DC2D3, material=mat)
     step = V.heat_transfer_step()
     step.dirichlet_bc(BOUNDARY, T, solution)
     step.HeatGeneration(ALL, 0)
@@ -85,14 +78,10 @@ def test_heat_transfer_3():
         fd, fh, 0.05, (0, 0, 1, 1), [(0, 0), (0, 1), (1, 0), (1, 1)]
     )
     f2 = lambda x: np.where(x[:, 0] <= 2.0 / 3.0, 75 * x[:, 0], 150 * (1 - x[:, 0]))
-    V = FEModel()
-    V.pt_mesh(p=coord, t=elecon)
-    V.material("Material-1")
-    V.materials["Material-1"].isotropic_thermal_conductivity(1.0)
-    V.element_block(name="ElementBlock1", elements=ALL)
-    V.assign_properties(
-        element_block="ElementBlock1", element_type=DC2D3, material="Material-1"
-    )
+    mesh = Mesh(p=coord, t=elecon)
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", isotropic_thermal_conductivity=1.0)
+    V.assign_properties(element_block="ElementBlock1", element_type=DC2D3, material=mat)
     step = V.heat_transfer_step()
     step.dirichlet_bc(JLO, T, 0)
     step.dirichlet_bc(JHI, T, f2)
@@ -141,14 +130,11 @@ def test_heat_transfer_4():
         [7, 5, 6, 9],
         [8, 5, 9, 8],
     ]
-    V = FEModel()
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
-    V.material("Material-1")
-    V.materials["Material-1"].isotropic_thermal_conductivity(1.0)
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    V = FEModel(mesh=mesh)
     V.element_block(name="ElementBlock1", elements=ALL)
-    V.assign_properties(
-        element_block="ElementBlock1", element_type=DC2D3, material="Material-1"
-    )
+    mat = Material(name="Material-1", isotropic_thermal_conductivity=1.0)
+    V.assign_properties(element_block="ElementBlock1", element_type=DC2D3, material=mat)
     step = V.heat_transfer_step()
     step.dirichlet_bc(IHI, T)
     step.dirichlet_bc(JHI, T)
@@ -184,14 +170,10 @@ def test_heat_transfer_5():
     coord, elecon = dm.distmesh2d(
         fd, fh, 0.025, (0, 0, 1, 1), [(0, 0), (0, 1), (1, 0), (1, 1)]
     )
-    V = FEModel()
-    V.pt_mesh(p=coord, t=elecon)
-    V.material("Material-1")
-    V.materials["Material-1"].isotropic_thermal_conductivity(1.0)
-    V.element_block(name="ElementBlock1", elements=ALL)
-    V.assign_properties(
-        element_block="ElementBlock1", element_type=DC2D3, material="Material-1"
-    )
+    mesh = Mesh(p=coord, t=elecon)
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", isotropic_thermal_conductivity=1.0)
+    V.assign_properties(element_block="ElementBlock1", element_type=DC2D3, material=mat)
     step = V.heat_transfer_step()
     step.dirichlet_bc(IHI, T)
     step.dirichlet_bc(JHI, T)

@@ -1,7 +1,6 @@
 from numpy import zeros_like
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import CPS4, CPS4I
-from felab.constants import ALL, X, Y, ILO, IHI
 from felab.io.plot import plot2d
 
 mu = 10000.0
@@ -10,14 +9,13 @@ E = 2.0 * mu * (1.0 + nu)
 
 
 def demo_plane_stress_beam(ratio=0.25, plot=False):
-    V = FEModel()
     length = 10.0
     a = ratio * length
     P = 2.22 / length ** 3 * E * a ** 3
     q = P / a
-    V.rectilinear_mesh(nx=10, ny=3, lx=length, ly=2 * a)
-    mat = V.material("Material-1")
-    mat.elastic(E=E, Nu=nu)
+    mesh = rectilinear_mesh(nx=10, ny=3, lx=length, ly=2 * a)
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=E, Nu=nu))
     V.element_block(name="ElementBlock1", elements=ALL)
     El = CPS4I
     El = CPS4

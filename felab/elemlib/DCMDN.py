@@ -25,7 +25,7 @@ class DCMDN(isop_base):
     def boundary_flux_array(self, edge, qn):
         raise NotImplementedError
 
-    def response(
+    def eval(
         self,
         rhs,
         A,

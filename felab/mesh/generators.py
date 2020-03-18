@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from felab.mesh import Mesh
+from felab.mesh.mesh import Mesh
 from felab.error import UserInputError
 
 

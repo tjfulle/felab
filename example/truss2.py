@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-from felab.fe_model import FEModel
-from felab.material import Material
-from felab.mesh import Mesh
+from felab import *
 from felab.elemlib import L3D2
-from felab.constants import X, Y, Z, ALL
 
 
 def demo_truss():
@@ -52,8 +49,7 @@ def demo_truss():
     V = FEModel(mesh=mesh, jobid="Truss2")
 
     # Define element blocks
-    mat = Material("Material-1")
-    mat.elastic(E=10e6, Nu=0.333)
+    mat = Material(name="Material-1", elastic=dict(E=10e6, Nu=0.333))
     A = [
         0.033,
         2.015,

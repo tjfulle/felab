@@ -1,13 +1,8 @@
-from felab.fe_model import FEModel
-from felab.constants import ALL, X, Y
+from felab import *
 from felab.elemlib import L2D2
-from felab.material import Material
 
 
 def demo_truss():
-    # Create the model problem
-    V = FEModel(jobid="Truss1")
-
     # Create the mesh from tables of nodes and elements
     nodtab = [
         [1, 0, 0],
@@ -46,11 +41,13 @@ def demo_truss():
         [20, 7, 8],
         [21, 9, 10],
     ]
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
+
+    # Create the model problem
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    V = FEModel(jobid="Truss1", mesh=mesh)
 
     # Create a material and define the elastic properties
-    mat = Material("Material-1")
-    mat.elastic(E=1000, Nu=0.29)
+    mat = Material(name="Material-1", elastic=dict(E=1000, Nu=0.29))
 
     # Define an element block of 3D 2-node link elements
     V.element_block(name="ElementBlock1", elements=ALL)

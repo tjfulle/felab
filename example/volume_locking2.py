@@ -1,8 +1,6 @@
 import numpy as np
-from felab.fe_model import FEModel
-from felab.elemlib import CPE4, CPE4B, CPE4R, CPE4RS, CPE8B
-from felab.constants import NEWTON, X, Y
-from felab.mesh import Mesh
+from felab import *
+from felab.elemlib import CPE8B, CPE4R, CPE4B, CPE4RS, CPE4
 from felab.io.plot import plot2d
 
 mu = 1.0
@@ -11,13 +9,14 @@ E = 2.0 * mu * (1.0 + Nu)
 
 
 def demo_linear(ax=None):
-    V = FEModel(jobid="VolumeLocking.Linear")
-    V.genesis_mesh("./data/QuarterCylinderQuad4.g")
-    mat = V.material("Material-1")
-    mat.elastic(E=E, Nu=Nu)
+    mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
+    V = FEModel(jobid="VolumeLocking.Linear", mesh=mesh)
+
+    mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(
         element_block="ElementBlock1", element_type=CPE4, material=mat, t=1
     )
+
     V.dirichlet_bc("Nodeset-200", X)
     V.dirichlet_bc("Nodeset-201", Y)
     # Pressure on inside face
@@ -41,10 +40,9 @@ def demo_linear(ax=None):
 
 
 def demo_bbar(ax=None):
-    V = FEModel(jobid="VolumeLocking.BBar")
-    V.genesis_mesh("./data/QuarterCylinderQuad4.g")
-    mat = V.material("Material-1")
-    mat.elastic(E=E, Nu=Nu)
+    mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
+    V = FEModel(jobid="VolumeLocking.BBar", mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(
         element_block="ElementBlock1", element_type=CPE4B, material=mat, t=1
     )
@@ -62,10 +60,9 @@ def demo_bbar(ax=None):
 
 
 def demo_reduced_integration(ax=None):
-    V = FEModel(jobid="VolumeLocking.Reduced")
-    V.genesis_mesh("./data/QuarterCylinderQuad4.g")
-    mat = V.material("Material-1")
-    mat.elastic(E=E, Nu=Nu)
+    mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
+    V = FEModel(jobid="VolumeLocking.Reduced", mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(
         element_block="ElementBlock1", element_type=CPE4R, material=mat, t=1
     )
@@ -83,10 +80,9 @@ def demo_reduced_integration(ax=None):
 
 
 def demo_selectively_reduced_integration(ax=None):
-    V = FEModel(jobid="VolumeLocking.SelReduced")
-    V.genesis_mesh("./data/QuarterCylinderQuad4.g")
-    mat = V.material("Material-1")
-    mat.elastic(E=E, Nu=Nu)
+    mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
+    V = FEModel(jobid="VolumeLocking.SelReduced", mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(
         element_block="ElementBlock1", element_type=CPE4RS, material=mat, t=1
     )
@@ -106,10 +102,9 @@ def demo_selectively_reduced_integration(ax=None):
 
 
 def demo_quadratic(ax=None):
-    V = FEModel(jobid="VolumeLocking.Quadratic")
-    V.genesis_mesh("./data/QuarterCylinderQuad8.g")
-    mat = V.material("Material-1")
-    mat.elastic(E=E, Nu=Nu)
+    mesh = genesis_mesh("./data/QuarterCylinderQuad8.g")
+    V = FEModel(jobid="VolumeLocking.Quadratic", mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(
         element_block="ElementBlock1", element_type=CPE8B, material=mat, t=1
     )

@@ -1,14 +1,11 @@
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import CPS4
-from felab.constants import ALL, ILO, IHI, X
-from felab.material import Material
-from felab.mesh import unit_square_mesh
 from felab.io.plot import plot2d
 
 
 def demo_unit_square(plot=False):
     mesh = unit_square_mesh(nx=2, ny=2)
-    mat = Material("Mat", elastic={"E": 1000, "Nu": 0})
+    mat = Material(name="Mat", elastic=dict(E=1000, Nu=0))
 
     V = FEModel(mesh=mesh)
     V.element_block(name="All", elements=ALL)

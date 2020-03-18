@@ -1,6 +1,5 @@
 import numpy as np
-from felab.mesh import rectilinear_mesh2d
-from felab.constants import ALL
+from felab import *
 from felab.io.plot import plot2d
 
 

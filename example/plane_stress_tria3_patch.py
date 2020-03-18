@@ -1,10 +1,7 @@
 import numpy as np
 import felab.util.tty as tty
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import CPS3
-from felab.constants import NEWTON, X, Y
-from felab.mesh import abaqus_mesh
-from felab.material import Material
 from felab.io.plot import plot2d
 
 
@@ -13,7 +10,7 @@ def demo_plane_stress_tria3_patch(plot=False):
     mesh = abaqus_mesh(filename="./data/EC3SFP1.inp")
 
     # CREATE MATERIAL MODEL
-    mat = Material("Material-1", elastic={"E": 1e6, "Nu": 0.25})
+    mat = Material(name="Material-1", elastic=dict(E=1e6, Nu=0.25))
 
     # CREATE FINITE ELEMENT MODEL AND ASSIGN PROPERTIES
     V = FEModel(mesh=mesh, jobid="Tri3PlaneStressPatch")

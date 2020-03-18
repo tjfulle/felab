@@ -1,19 +1,17 @@
 from numpy import allclose, array, nan
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import L3D2, L2D2, B2D2
-from felab.constants import X, Y, Z, ALL, TZ
 
 
 def test_model_truss_0():
     nodtab = [[1, 0, 0], [2, 3, 4], [3, 0, 4]]
     eletab = [[1, 1, 2], [2, 1, 3]]
-    V = FEModel()
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
-    V.material("Material-1")
-    V.materials["Material-1"].elastic(E=70e9, Nu=0.3)
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=70e9, Nu=0.3))
     V.element_block(name="B1", elements=ALL)
     V.assign_properties(
-        element_block="B1", element_type=L2D2, material="Material-1", A=5 * 0.01 * 0.01
+        element_block="B1", element_type=L2D2, material=mat, A=5 * 0.01 * 0.01
     )
     step = V.static_step()
     step.dirichlet_bc(1, X, -0.05)
@@ -62,10 +60,9 @@ def test_model_truss_1():
         [20, 7, 8],
         [21, 9, 10],
     ]
-    V = FEModel()
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
-    V.material("Material-1")
-    V.materials["Material-1"].elastic(E=1000, Nu=0.333)
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=1000, Nu=0.333))
     Abot, Atop, Abat, Adia = 2, 10, 3, 1
     A = [
         Abot,
@@ -92,7 +89,7 @@ def test_model_truss_1():
     ]
     V.element_block(name="element_block-1", elements=ALL)
     V.assign_properties(
-        element_block="element_block-1", element_type=L3D2, material="Material-1", A=A
+        element_block="element_block-1", element_type=L3D2, material=mat, A=A
     )
 
     step = V.static_step()
@@ -180,10 +177,8 @@ def test_model_truss_2():
         [20, 7, 8],
         [21, 9, 10],
     ]
-    V = FEModel()
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
-    V.material("Material-1")
-    V.materials["Material-1"].elastic(E=1000, Nu=0.333)
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    V = FEModel(mesh=mesh)
     Abot, Atop, Abat, Adia = 2, 10, 3, 1
     A = [
         Abot,
@@ -209,8 +204,9 @@ def test_model_truss_2():
         Adia,
     ]
     V.element_block(name="element_block-1", elements=ALL)
+    mat = Material(name="Material-1", elastic=dict(E=1000, Nu=0.333))
     V.assign_properties(
-        element_block="element_block-1", element_type=L2D2, material="Material-1", A=A
+        element_block="element_block-1", element_type=L2D2, material=mat, A=A
     )
 
     step = V.static_step()
@@ -262,14 +258,13 @@ def test_model_truss_2():
 def test_model_truss_3():
     nodtab = [[1, 0.0, 0.0], [2, 3.0, 4.0], [3, 0.0, 4.0]]
     eletab = [[1, 1, 2], [2, 1, 3]]
-    V = FEModel()
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
-    V.material("Material-1")
-    V.materials["Material-1"].elastic(E=70e9, Nu=0.333)
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=70e9, Nu=0.333))
     A = 5 * 0.01 * 0.01
     V.element_block(name="element_block-1", elements=ALL)
     V.assign_properties(
-        element_block="element_block-1", element_type=L2D2, material="Material-1", A=A
+        element_block="element_block-1", element_type=L2D2, material=mat, A=A
     )
     step = V.static_step()
     step.fix_nodes((2, 3))
@@ -283,14 +278,13 @@ def test_model_truss_3():
 def test_model_truss_4():
     nodtab = [[1, 0.0, 0.0, 0.0], [2, 3.0, 4.0, 0.0], [3, 0.0, 4.0, 0.0]]
     eletab = [[1, 1, 2], [2, 1, 3]]
-    V = FEModel()
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
-    V.material("Material-1")
-    V.materials["Material-1"].elastic(E=70e9, Nu=0.333)
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=70e9, Nu=0.333))
     A = 5 * 0.01 * 0.01
     V.element_block(name="element_block-1", elements=ALL)
     V.assign_properties(
-        element_block="element_block-1", element_type=L3D2, material="Material-1", A=A
+        element_block="element_block-1", element_type=L3D2, material=mat, A=A
     )
     step = V.static_step()
     step.fix_nodes((2, 3))
@@ -305,14 +299,13 @@ def test_model_truss_4():
 def test_model_truss_5():
     nodtab = [[1, 72, 0, 0], [2, 0, 36, 0], [3, 0, 36, 72], [4, 0, 0, -48]]
     eletab = [[1, 1, 2], [2, 1, 3], [3, 1, 4]]
-    V = FEModel()
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
-    V.material("Material-1")
-    V.materials["Material-1"].elastic(E=10e4, Nu=0.333)
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    V = FEModel(mesh=mesh)
+    mat = Material(name="Material-1", elastic=dict(E=10e4, Nu=0.333))
     A = [0.302, 0.729, 0.187]
     V.element_block(name="element_block-1", elements=ALL)
     V.assign_properties(
-        element_block="element_block-1", element_type=L3D2, material="Material-1", A=A
+        element_block="element_block-1", element_type=L3D2, material=mat, A=A
     )
     step = V.static_step()
     # Boundary conditions
@@ -377,12 +370,10 @@ def test_model_truss_6():
         [24, 5, 9],
         [25, 4, 8],
     ]
-    V = FEModel()
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    V = FEModel(mesh=mesh)
 
     # Define element blocks
-    V.material("Material-1")
-    V.materials["Material-1"].elastic(E=10e6, Nu=0.333)
     A = [
         0.033,
         2.015,
@@ -410,9 +401,10 @@ def test_model_truss_6():
         2.44,
         2.44,
     ]
+    mat = Material(name="Material-1", elastic=dict(E=10e6, Nu=0.333))
     V.element_block(name="element_block-1", elements=ALL)
     V.assign_properties(
-        element_block="element_block-1", element_type=L3D2, material="Material-1", A=A
+        element_block="element_block-1", element_type=L3D2, material=mat, A=A
     )
 
     step = V.static_step()
@@ -453,24 +445,22 @@ def test_model_truss_6():
 def test_model_truss_beam_0():
     nodtab = [[1, -4, 3], [2, 0, 0], [3, 0, 3], [4, nan, nan], [5, 4, 3]]
     eletab = [[1, 1, 3], [2, 3, 5], [3, 1, 2], [4, 2, 3], [5, 2, 5]]
-    V = FEModel()
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+    V = FEModel(mesh=mesh)
     Ec, Em = 30000, 200000
-    V.material("Material-1")
-    V.materials["Material-1"].elastic(E=Ec, Nu=0.3)
-    V.material("Material-2")
-    V.materials["Material-2"].elastic(E=Em, Nu=0.3)
+    mat1 = Material(name="Material-1", elastic=dict(E=Ec, Nu=0.3))
+    mat2 = Material(name="Material-1", elastic=dict(E=Em, Nu=0.3))
     V.element_block(name="B1", elements=(1, 2))
     V.element_block(name="B2", elements=(3, 5))
     V.element_block(name="B3", elements=(4,))
     V.assign_properties(
-        element_block="B1", element_type=B2D2, material="Material-1", A=0.02, Izz=0.004
+        element_block="B1", element_type=B2D2, material=mat1, A=0.02, Izz=0.004
     )
     V.assign_properties(
-        element_block="B2", element_type=L2D2, material="Material-2", A=0.001
+        element_block="B2", element_type=L2D2, material=mat1, A=0.001
     )
     V.assign_properties(
-        element_block="B3", element_type=L2D2, material="Material-2", A=0.003
+        element_block="B3", element_type=L2D2, material=mat1, A=0.003
     )
     V.dirichlet_bc(1, (X, Y, TZ))
     V.dirichlet_bc(5, Y)

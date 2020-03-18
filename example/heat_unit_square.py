@@ -1,20 +1,18 @@
 from numpy import sqrt
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import DC2D3
-from felab.constants import ILO, IHI, JLO, T
 from felab.io.plot import plot2d
 
 
 def demo_heat_unit_square(plot=False):
-    # Create the model
-    V = FEModel(jobid="Heat1")
-
     # Read mesh from file
-    V.abaqus_mesh("./data/mesh.inp")
+    mesh = abaqus_mesh("./data/mesh.inp")
+
+    # Create the model
+    V = FEModel(jobid="Heat1", mesh=mesh)
 
     # Create a material and define the thermal conductivity
-    mat = V.material("Material-1")
-    mat.isotropic_thermal_conductivity(12)
+    mat = Material(name="Material-1", thermal_conductivity=12)
     print(V.mesh.element_blocks[0].elecon)
 
     # Define an alement block of diffusive heat transfer elements with material mat

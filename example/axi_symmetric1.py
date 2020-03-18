@@ -1,18 +1,18 @@
 from numpy import allclose
-from felab.fe_model import FEModel
+
+from felab import *
 from felab.elemlib import CAX4
-from felab.constants import Zr, S2, S3, S4
 
 
 def demo_axisymmetric_ring():
-    V = FEModel()
     nodtab = [[1, 1000.0, 0.0], [2, 1002.0, 0.0], [3, 1002.0, 1.0], [4, 1000.0, 1.0]]
     eletab = [[1, 1, 2, 3, 4]]
-    V.ne_mesh(nodtab=nodtab, eletab=eletab)
+    mesh = Mesh(nodtab=nodtab, eletab=eletab)
+
+    V = FEModel(mesh=mesh)
 
     # MATERIAL
-    mat = V.material("Material-1")
-    mat.elastic(E=30e6, Nu=0.3)
+    mat = Material(name="Material-1", elastic=dict(E=30e6, Nu=0.3))
 
     V.element_block(name="EALL", elements=(1,))
     V.assign_properties(
@@ -40,3 +40,4 @@ def demo_axisymmetric_ring():
 
 if __name__ == "__main__":
     demo_axisymmetric_ring()
+    print("PASSED")

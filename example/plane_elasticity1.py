@@ -1,17 +1,14 @@
 #!/usr/bin/env python
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import CPE4
-from felab.constants import X, Y
 from felab.io.plot import plot2d
 
 
 def demo_plane_elasticity1(plot=False):
-    V = FEModel(jobid="Plane1")
-    V.genesis_mesh("./data/PlateWithHoleQuad4.g")
+    mesh = genesis_mesh("./data/PlateWithHoleQuad4.g")
+    V = FEModel(jobid="Plane1", mesh=mesh)
 
-    mat = V.material("Material-1")
-    mat.elastic(E=10e6, Nu=0.29)
-
+    mat = Material(name="Material-1", elastic=dict(E=10e6, Nu=0.29))
     V.assign_properties(
         element_block="ElementBlock1", element_type=CPE4, material=mat, t=1
     )

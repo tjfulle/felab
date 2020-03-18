@@ -1,9 +1,7 @@
 import sys
 import numpy as np
-from felab.mesh import Mesh
-from felab.fe_model import FEModel
+from felab import *
 from felab.elemlib import DC2D3
-from felab.constants import ALL, BOUNDARY, T
 
 
 def test_print_matrix_1():
@@ -38,14 +36,12 @@ def test_print_matrix_1():
     )
 
     k, h, Too = 12, 250, 25
-    V = FEModel(jobid="test-1")
-    V.mesh = Mesh(p=p, t=t)
-    V.material("Material-1")
-    V.materials["Material-1"].isotropic_thermal_conductivity(k)
+    mesh = Mesh(p=p, t=t)
+    V = FEModel(jobid="test-1", mesh=mesh)
+
+    mat = Material(name="Material-1", isotropic_thermal_conductivity=k)
     V.element_block(name="ElementBlock1", elements=ALL)
-    V.assign_properties(
-        element_block="ElementBlock1", element_type=DC2D3, material="Material-1"
-    )
+    V.assign_properties(element_block="ElementBlock1", element_type=DC2D3, material=mat)
     V.initial_temperature(ALL, 50)
     step = V.heat_transfer_step()
     step.dirichlet_bc(BOUNDARY, T, 50)

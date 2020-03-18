@@ -15,7 +15,7 @@ def test_element_elastic_link_0():
     El = L1D2(1, [0, 1], [0, 1], mat, A=1)
     rhs = np.zeros(2)
     A = np.zeros((2, 2))
-    El.response(
+    El.eval(
         rhs,
         A,
         svars,
@@ -49,7 +49,7 @@ def test_element_elastic_link_1():
     El = L2D2(1, [0, 1], [[0, 0], [30, 40]], mat, A=5)
     rhs = np.zeros(4)
     A = np.zeros((4, 4))
-    El.response(
+    El.eval(
         rhs,
         A,
         svars,
@@ -91,7 +91,7 @@ def test_element_elastic_link_2():
     El = L3D2(1, [0, 1], [[0, 0, 0], [2, 3, 6]], mat, A=10)
     rhs = np.zeros(6)
     A = np.zeros((6, 6))
-    El.response(
+    El.eval(
         rhs,
         A,
         svars,

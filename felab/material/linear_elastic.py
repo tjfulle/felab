@@ -1,16 +1,50 @@
 import numpy as np
 from numpy.linalg import inv
 
+from felab.material.material import MaterialModel
 
-class linear_elastic(object):
-    """Linear elastic material """
 
-    name = "elastic"
+class LinearElastic(MaterialModel):
+    """Linear elastic material
 
-    def __init__(self, Lambda, Mu):
-        self.Lambda, self.Mu = Lambda, Mu
+    Parameters
+    ----------
+    density : float
+        The mass density
+    kwds : dict
+        name=value pairs of elastic constants
 
-    def response(
+    Notes
+    -----
+    Any two elastic constants can be passed to this method from which all
+    other elastic constants are calculated (isotropy of the tangent
+    elastic stiffness assumed).
+
+    Examples
+    --------
+    - Young's modulus :math:`E=10` and Poisson's ratio :math:`\\nu=.29`:
+
+      .. code:: python
+
+         LinearElastic(E=10, Nu=.29)
+
+    - Bulk modulus :math:`K=10` and shear modulus :math:`G=6`:
+
+      .. code:: python
+
+         LinearElastic(K=10, G=6)
+
+    """
+
+    name = "Linear Elastic"
+
+    def __init__(self, **kwds):
+        props = self.compute_elastic_properties(**kwds)
+        self.Lambda = props["Lame"]
+        self.Mu = props["G"]
+        self.__dict__.update(**props)
+
+    def eval(
         self,
         stress,
         statev,

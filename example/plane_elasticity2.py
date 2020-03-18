@@ -1,8 +1,5 @@
-from felab.fe_model import FEModel
-from felab.mesh import genesis_mesh
+from felab import *
 from felab.elemlib import CPS3
-from felab.material import Material
-from felab.constants import X, Y
 from felab.io.plot import plot2d
 
 
@@ -12,7 +9,7 @@ def demo_plane_elasticity2(plot=False):
     mesh = genesis_mesh("./data/PlateWithHoleTria3.g")
 
     # ELASTIC MATERIAL MODEL
-    mat = Material("Material-1", elastic={"E": 10e6, "Nu": 0.29})
+    mat = Material(name="Material-1", elastic=dict(E=10e6, Nu=0.29))
 
     # CREATE THE MODEL AND ASSIGN PROPERTIES
     V = FEModel(mesh=mesh, jobid="Plane2")
