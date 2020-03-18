@@ -1,6 +1,5 @@
 import numpy as np
 from felab import *
-from felab.elemlib import CPE4, CPE4R, CPE4RS, CPE8B
 from felab.io.plot import plot2d
 
 mu = 1.0
@@ -12,8 +11,9 @@ def demo_linear(ax=None):
     mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
     V = FEModel(jobid="VolumeLocking.Linear", mesh=mesh)
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
+    el = Element(type="CPE4")
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE4, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
     V.dirichlet_bc("Nodeset-200", X)
     V.dirichlet_bc("Nodeset-201", Y)
@@ -41,9 +41,10 @@ def demo_reduced_integration(ax=None):
     mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
     V = FEModel(jobid="VolumeLocking.Reduced", mesh=mesh)
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
+    el = Element(type="CPE4R")
     V.assign_properties(
         element_block="ElementBlock1",
-        element_type=CPE4R,
+        element_type=el,
         material=mat,
         t=1,
         hourglass_control=True,
@@ -67,8 +68,9 @@ def demo_selectively_reduced_integration(ax=None):
     mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
     V = FEModel(jobid="VolumeLocking.SelReduced", mesh=mesh)
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
+    el = Element(type="CPE4RS")
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE4RS, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
     V.dirichlet_bc("Nodeset-200", X)
     V.dirichlet_bc("Nodeset-201", Y)
@@ -91,8 +93,9 @@ def demo_quadratic(ax=None):
     mesh = genesis_mesh("./data/QuarterCylinderQuad8.g")
     V = FEModel(jobid="VolumeLocking.Quadratic", mesh=mesh)
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
+    el = Element(type="CPE8B")
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE8B, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
     V.dirichlet_bc("Nodeset-200", X)
     V.dirichlet_bc("Nodeset-201", Y)

@@ -1,7 +1,6 @@
 import numpy as np
-import felab.util.tty as tty
 from felab import *
-from felab.elemlib import CPS3
+import felab.util.tty as tty
 from felab.io.plot import plot2d
 
 
@@ -13,8 +12,9 @@ def demo_plane_stress_tria3_patch(plot=False):
     mat = Material(name="Material-1", elastic=dict(E=1e6, Nu=0.25))
 
     # CREATE FINITE ELEMENT MODEL AND ASSIGN PROPERTIES
+    el = Element(type="CPS3")
     V = FEModel(mesh=mesh, jobid="Tri3PlaneStressPatch")
-    V.assign_properties(element_block="EALL", element_type=CPS3, material=mat, t=0.001)
+    V.assign_properties(element_block="EALL", element_type=el, material=mat, t=0.001)
 
     # ASSIGN HOMOGENEOUS BCS TO MODEL
     V.dirichlet_bc(10, (X, Y))
@@ -60,8 +60,9 @@ def demo_plane_stress_tria3_patch(plot=False):
         plot2d(model=V, show=1, deformed=1)
 
     # CREATE FINITE ELEMENT MODEL AND ASSIGN PROPERTIES
+    el = Element(type="CPS3")
     V = FEModel(mesh=mesh, jobid="Tri3PlaneStressPatch")
-    V.assign_properties(element_block="EALL", element_type=CPS3, material=mat, t=0.001)
+    V.assign_properties(element_block="EALL", element_type=el, material=mat, t=0.001)
 
     # ASSIGN HOMOGENEOUS BCS TO MODEL
     V.dirichlet_bc(10, (X, Y))

@@ -1,6 +1,5 @@
 from felab import *
 from felab.io.exodusii import EXOFileReader
-from felab.elemlib import CPE4
 
 
 def demo_postprocess():
@@ -9,8 +8,9 @@ def demo_postprocess():
 
     V = FEModel(mesh=mesh, jobid="PlateWithHoleQuad4")
 
+    el = Element(type="CPE4")
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE4, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
     V.dirichlet_bc("LeftHandSide", X)
     V.fix_nodes("PinNode")

@@ -1,15 +1,15 @@
 from felab import *
-from felab.elemlib import CPS4
 from felab.io.plot import plot2d
 
 
 def demo_cycle_loads(plot=False):
     mesh = unit_square_mesh(nx=1, ny=1)
     mat = Material(name="Mat-1", elastic=dict(E=500, Nu=0))
+    el = Element(type="CPS4")
 
     V = FEModel(mesh=mesh)
     V.element_block(name="Block-1", elements=ALL)
-    V.assign_properties(element_block="Block-1", element_type=CPS4, material=mat)
+    V.assign_properties(element_block="Block-1", element_type=el, material=mat)
 
     V.fix_nodes(ILO)
 

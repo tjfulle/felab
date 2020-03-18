@@ -1,7 +1,6 @@
 from numpy import sqrt
 
 from felab import *
-from felab.elemlib import DC2D3
 from felab.io.plot import plot2d
 
 
@@ -16,8 +15,9 @@ def demo_heat(plot=False):
     mat = Material(name="Material-1", thermal_conductivity=12)
 
     # Define an alement block of diffusive heat transfer elements with material mat
+    el = Element(type="DC2D3")
     V.assign_properties(
-        element_block="ElementBlock1", element_type=DC2D3, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
 
     # Fix temperatures on left and right edge

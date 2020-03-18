@@ -1,6 +1,5 @@
 from numpy import zeros_like
 from felab import *
-from felab.elemlib import CPS4, CPS4I
 from felab.io.plot import plot2d
 
 mu = 10000.0
@@ -17,10 +16,9 @@ def demo_plane_stress_beam(ratio=0.25, plot=False):
     V = FEModel(mesh=mesh)
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=nu))
     V.element_block(name="ElementBlock1", elements=ALL)
-    El = CPS4I
-    El = CPS4
+    el = Element(type="CPS4")  # "CPS4I"
     V.assign_properties(
-        element_block="ElementBlock1", element_type=El, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
     V.dirichlet_bc(IHI, (X, Y))
 

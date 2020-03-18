@@ -1,5 +1,4 @@
 from felab import *
-from felab.elemlib import L2D2
 
 
 def demo_truss():
@@ -77,8 +76,9 @@ def demo_truss():
         Adia,
         Adia,
     ]
+    el = Element(type="L2D2")
     V.assign_properties(
-        element_block="ElementBlock1", element_type=L2D2, material=mat, A=A
+        element_block="ElementBlock1", element_type=el, material=mat, A=A
     )
 
     # Apply boundary conditions

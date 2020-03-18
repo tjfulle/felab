@@ -1,15 +1,15 @@
 import numpy as np
 import felab.util.tty as tty
 from felab import *
-from felab.elemlib import CPE4
 from felab.io.plot import plot2d
 
 
 def demo_plane_stran_quad4_patch(plot=False):
     mesh = abaqus_mesh(filename="./data/EC4SFP1.inp")
     V = FEModel(jobid="Quad4PlaneStrainPatch", mesh=mesh)
+    el = Element(type="CPE4")
     mat = Material(name="Material-1", elastic=dict(E=1e6, Nu=0.25))
-    V.assign_properties(element_block="EALL", element_type=CPE4, material=mat, t=0.001)
+    V.assign_properties(element_block="EALL", element_type=el, material=mat, t=0.001)
 
     step = V.static_step()
     step.dirichlet_bc(10, (X, Y), 0.0)

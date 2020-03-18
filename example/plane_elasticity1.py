@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from felab import *
-from felab.elemlib import CPE4
 from felab.io.plot import plot2d
 
 
@@ -8,9 +7,10 @@ def demo_plane_elasticity1(plot=False):
     mesh = genesis_mesh("./data/PlateWithHoleQuad4.g")
     V = FEModel(jobid="Plane1", mesh=mesh)
 
+    el = Element(type="CPE4")
     mat = Material(name="Material-1", elastic=dict(E=10e6, Nu=0.29))
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE4, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
 
     step = V.static_step()

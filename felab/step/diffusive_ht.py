@@ -1,6 +1,6 @@
 import numpy as np
 
-from felab.elemlib import DC2D3
+from felab.elemlib.DC2D3 import DC2D3
 from felab.error import UserInputError
 from felab.util.numeric import linsolve
 from felab.util.lang import is_listlike

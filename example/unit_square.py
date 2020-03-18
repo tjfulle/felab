@@ -1,15 +1,15 @@
 from felab import *
-from felab.elemlib import CPS4
 from felab.io.plot import plot2d
 
 
 def demo_unit_square(plot=False):
     mesh = unit_square_mesh(nx=2, ny=2)
     mat = Material(name="Mat", elastic=dict(E=1000, Nu=0))
+    el = Element(type="CPS4")
 
     V = FEModel(mesh=mesh)
     V.element_block(name="All", elements=ALL)
-    V.assign_properties(element_block="All", element_type=CPS4, material=mat)
+    V.assign_properties(element_block="All", element_type=el, material=mat)
     V.fix_nodes(ILO)
 
     step = V.static_step()

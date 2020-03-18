@@ -1,6 +1,5 @@
 import numpy as np
 from felab import *
-from felab.elemlib import CPE4
 from felab.io.plot import plot2d
 
 
@@ -33,9 +32,10 @@ def demo_volume_locking(plot=False):
         # Linear finite element solution
         mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
         V = FEModel(mesh=mesh)
+        el = Element(type="CPE4")
         mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
         V.assign_properties(
-            element_block="ElementBlock1", element_type=CPE4, material=mat
+            element_block="ElementBlock1", element_type=el, material=mat
         )
         V.dirichlet_bc("Nodeset-200", X)
         V.dirichlet_bc("Nodeset-201", Y)

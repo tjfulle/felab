@@ -1,5 +1,4 @@
 from felab import *
-from felab.elemlib import CPE4
 from felab.io.plot import plot2d
 
 
@@ -8,9 +7,10 @@ def demo_beam_quad(plot=False):
     mat = Material(name="Material-1", elastic=dict(E=20000, Nu=0))
 
     V = FEModel(mesh=mesh, jobid="QuadBeam")
+    el = Element(type="CPE4")
     V.element_block(name="ElementBlock1", elements=ALL)
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE4, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
 
     step = V.static_step()

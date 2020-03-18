@@ -1,5 +1,4 @@
 from felab import *
-from felab.elemlib import CPS3
 from felab.io.plot import plot2d
 
 
@@ -12,9 +11,10 @@ def demo_plane_elasticity2(plot=False):
     mat = Material(name="Material-1", elastic=dict(E=10e6, Nu=0.29))
 
     # CREATE THE MODEL AND ASSIGN PROPERTIES
+    el = Element(type="CPS3")
     V = FEModel(mesh=mesh, jobid="Plane2")
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPS3, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
 
     # PRESCRIBE FIXED BCS TO MODEL

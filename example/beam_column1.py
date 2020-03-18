@@ -15,11 +15,13 @@ def demo_beam_column():
     V.element_block(name="B1", elements=(1, 2))
     V.element_block(name="B2", elements=(3, 5))
     V.element_block(name="B3", elements=(4,))
+    el1 = Element(type="B2D2")
     V.assign_properties(
-        element_block="B1", element_type=B2D2, material=mat1, A=0.02, Izz=0.004
+        element_block="B1", element_type=el1, material=mat1, A=0.02, Izz=0.004
     )
-    V.assign_properties(element_block="B2", element_type=L2D2, material=mat2, A=0.001)
-    V.assign_properties(element_block="B3", element_type=L2D2, material=mat2, A=0.003)
+    el2 = Element(type="L2D2")
+    V.assign_properties(element_block="B2", element_type=el2, material=mat2, A=0.001)
+    V.assign_properties(element_block="B3", element_type=el2, material=mat2, A=0.003)
 
     V.dirichlet_bc(1, (X, Y, TZ))
     V.dirichlet_bc(5, Y)

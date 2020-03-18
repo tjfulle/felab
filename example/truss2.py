@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from felab import *
-from felab.elemlib import L3D2
 
 
 def demo_truss():
@@ -77,9 +76,10 @@ def demo_truss():
         2.44,
         2.44,
     ]
+    el = Element(type="L3D2")
     V.element_block(name="ElementBlock1", elements=ALL)
     V.assign_properties(
-        element_block="ElementBlock1", element_type=L3D2, material=mat, A=A
+        element_block="ElementBlock1", element_type=el, material=mat, A=A
     )
 
     # Define boundary conditons

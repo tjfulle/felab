@@ -1,6 +1,5 @@
 import numpy as np
 from felab import *
-from felab.elemlib import CPE8B, CPE4R, CPE4B, CPE4RS, CPE4
 from felab.io.plot import plot2d
 
 mu = 1.0
@@ -12,9 +11,10 @@ def demo_linear(ax=None):
     mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
     V = FEModel(jobid="VolumeLocking.Linear", mesh=mesh)
 
+    el = Element(type="CPE4")
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE4, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
 
     V.dirichlet_bc("Nodeset-200", X)
@@ -42,9 +42,10 @@ def demo_linear(ax=None):
 def demo_bbar(ax=None):
     mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
     V = FEModel(jobid="VolumeLocking.BBar", mesh=mesh)
+    el = Element(type="CPE4B")
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE4B, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
     V.dirichlet_bc("Nodeset-200", X)
     V.dirichlet_bc("Nodeset-201", Y)
@@ -62,9 +63,10 @@ def demo_bbar(ax=None):
 def demo_reduced_integration(ax=None):
     mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
     V = FEModel(jobid="VolumeLocking.Reduced", mesh=mesh)
+    el = Element(type="CPE4R")
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE4R, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
     V.dirichlet_bc("Nodeset-200", X)
     V.dirichlet_bc("Nodeset-201", Y)
@@ -82,9 +84,10 @@ def demo_reduced_integration(ax=None):
 def demo_selectively_reduced_integration(ax=None):
     mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
     V = FEModel(jobid="VolumeLocking.SelReduced", mesh=mesh)
+    el = Element(type="CPE4RS")
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE4RS, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
     V.dirichlet_bc("Nodeset-200", X)
     V.dirichlet_bc("Nodeset-201", Y)
@@ -105,8 +108,9 @@ def demo_quadratic(ax=None):
     mesh = genesis_mesh("./data/QuarterCylinderQuad8.g")
     V = FEModel(jobid="VolumeLocking.Quadratic", mesh=mesh)
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
+    el = Element(type="CPE8B")
     V.assign_properties(
-        element_block="ElementBlock1", element_type=CPE8B, material=mat, t=1
+        element_block="ElementBlock1", element_type=el, material=mat, t=1
     )
     V.dirichlet_bc("Nodeset-200", X)
     V.dirichlet_bc("Nodeset-201", Y)

@@ -1,7 +1,6 @@
 from numpy import allclose
 
 from felab import *
-from felab.elemlib import CAX4
 
 
 def demo_axisymmetric_ring():
@@ -14,9 +13,10 @@ def demo_axisymmetric_ring():
     # MATERIAL
     mat = Material(name="Material-1", elastic=dict(E=30e6, Nu=0.3))
 
+    el = Element(type="CAX4")
     V.element_block(name="EALL", elements=(1,))
     V.assign_properties(
-        element_block="EALL", element_type=CAX4, material=mat, formulation=1
+        element_block="EALL", element_type=el, material=mat, formulation=1
     )
     V.dirichlet_bc(1, Zr)
     V.dirichlet_bc(2, Zr)
