@@ -43,49 +43,8 @@ class Material:
         assert isinstance(arg, MaterialModel)
         self._model = arg
 
-    def eval(
-        self,
-        stress,
-        statev,
-        strain,
-        dstrain,
-        time,
-        dtime,
-        temp,
-        dtemp,
-        predef,
-        dpred,
-        ndir,
-        nshr,
-        ntens,
-        coords,
-        F0,
-        F,
-        noel,
-        kstep,
-        kframe,
-    ):
-        return self.model.eval(
-            stress,
-            statev,
-            strain,
-            dstrain,
-            time,
-            dtime,
-            temp,
-            dtemp,
-            predef,
-            dpred,
-            ndir,
-            nshr,
-            ntens,
-            coords,
-            F0,
-            F,
-            noel,
-            kstep,
-            kframe,
-        )
+    def eval(self, *args):
+        return self.model.eval(*args)
 
 
 class MaterialModel(object):

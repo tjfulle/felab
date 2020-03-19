@@ -1,44 +1,195 @@
-import numpy as np
-from .CPX8 import CPX8
+from .CMDN import CMDN
 from .gauss_rule_info import quad_gauss_rule_info
 
 
-class CPE8B(CPX8):
-    """8 node plane-strain element with bbar stabilization"""
+class CPE8B(CMDN):
+    """8 node plane-strain stress-displacement element with bbar stabilization
 
-    ndir = 3
-    nshr = 1
+    Notes
+    -----
+    Node and element face numbering
+
+               [2]
+            3---6---2
+            |       |
+       [3]  7       5 [1]
+            |       |
+            0---4---1
+               [0]
+
+    """
+    nodes = 8
+    dimensions = 2
+
+    #: The element signature is the active degrees of freedom at each node. Each
+    # node signature takes the following form:
+    #
+    #   (X, Y, Z, TX, TY, TZ, T)
+    #
+    # ie, the X is the X dof, TX the rotation about the X axis, T the
+    # temperature etc. Indicate that the node activates a DOF by assigning a
+    # value of 1 to the appropriate slot in the node's signature and 0
+    # otherwise.
+    #
+    #  For a 8 node isoparametric stress-displacement element, the x and y
+    #  displacements are the only dofs that are active.
+    signature = None
+
+    #: ndir is the number of direct components in the stress tensor. The direct
+    # components are the XX, YY, and ZZ components of the stress.
+    ndir = None
+
+    #: nshr is the number of shear components in the stress tensor.
+    nshr = None
+
+    #: num_gauss is the number of integration points.
     num_gauss = 9
+
+    #: cp defines the center of the element *in the natural coordinates*
+    cp = None
+
+    #: xp defines the corner nodes *in the natural coordinates*
+    xp = None
+
+    #: edges defines the nodes that define the edges of the element
+    edges = None
+
+    def __init__(self, label, nodes, coord, material, t=1.0):
+        """8 node plane-strain stress-displacement element with bbar stabilization
+
+        Parameters
+        ----------
+        label : int
+            The element's label (ID)
+        nodes : ndarray
+            The node labels making up this element
+        coord : ndarray
+            The coordinates of the nodes making up this element
+        material : Material
+            The material model
+        t : float
+            The plane strain thickness
+
+        """
+        super(CPE8B, self).__init__(label, nodes, coord, material)
+        self.t = t
+
+        # This element must be implemented
+        raise NotImplementedError
 
     @staticmethod
     def gauss_rule_info(point=None):
         return quad_gauss_rule_info(rule=3, point=point)
 
+    @property
+    def area(self):
+        """Returns the area of the undeformed element"""
+        x, y = self.xc[:, [0, 1]].T
+        A2 = (x[0] * y[1] - x[1] * y[0]) + (x[1] * y[2] - x[2] * y[1])
+        A2 += (x[2] * y[3] - x[3] * y[2]) + (x[3] * y[0] - x[0] * y[3])
+        return A2 / 2.0
+
+    @property
+    def volume(self):
+        """Returns the volume of the undeformed element"""
+        return self.t * self.area
+
+    def shape(self, qcoord, edge=None):
+        """Evaluate the shape function
+
+        Parameters
+        ----------
+        qcoord : ndarray
+            The natural coordinate
+        edge : int
+            The edge number, if evaluating the shape function on an edge
+
+        Returns
+        -------
+        N : ndarray
+            The shape function evaluated at qcoord
+
+        """
+        raise NotImplementedError
+
+    def shapegrad(self, qcoord):
+        """Evaluate the derivative of the shape function
+
+        Parameters
+        ----------
+        qcoord : ndarray
+            The natural coordinate
+
+        Returns
+        -------
+        dN : ndarray
+            The shape function derivative evaluated at qcoord
+
+        """
+        raise NotImplementedError
+
+    def shapefun_der(self, coord, qcoord):
+        """Shape function and derivative of 8 node quadratic element
+
+        Parameters
+        ----------
+        coord : ndarray
+            The coordinate in the physical coordinates
+        qcoord : ndarray
+            The coordinate in the natural coordinates
+
+        Returns
+        -------
+        N : ndarray
+            The shape function evaluated at Gauss coordinate
+        dNdx : ndarray
+            The shape function derivative in the physical coordinates
+        J : float
+            The Jacobian of the transformation
+
+        """
+        raise NotImplementedError
+
     def bmatrix(self, dN, *args):
-        """Assemble and return the B matrix"""
-        B = np.zeros((4, 16))
-        B[0, 0::2] = B[3, 1::2] = dN[0, :]
-        B[1, 1::2] = B[3, 0::2] = dN[1, :]
+        """Return the element's 'B' matrix
 
-        # MEAN DILATATIONAL FORMULATION
-        dNb = np.zeros((2, 8))
-        w = np.zeros(self.num_gauss)
-        jac = np.zeros(self.num_gauss)
-        for p in range(self.num_gauss):
-            # COMPUTE THE INTEGRALS OVER THE VOLUME
-            xi, w[p] = self.gauss_rule_info(p)
-            _, dN, jac[p] = self.shapefun_der(self.xc, xi)
-            dNb += dN * w[p] * jac[p] / self.dimensions
+        Parameters
+        ----------
+        dN : ndarray
+            The shape function derivative, in the physical coordinates
 
-        # SCALING
-        ev = np.dot(jac, w)
-        dNb /= ev
+        Returns
+        -------
+        B : ndarray
+            The element B matrix
 
-        for a in range(self.nodes):
-            i = 2 * a
-            bb1 = (dNb[0, a] - dN[0, a]) / 2.0
-            bb2 = (dNb[1, a] - dN[1, a]) / 2.0
-            B[0, i : i + 2] += [bb1, bb2]
-            B[1, i : i + 2] += [bb1, bb2]
+        """
+        raise NotImplementedError
 
-        return B
+    def stiffness(self, svars, u, du, time, dtime, kstep, kframe, predef):
+        """Evaluate the element stiffness
+
+        Parameters
+        ----------
+        svars : ndarray
+            State variables (stress, strain, etc)
+        u : ndarray
+            The displacement at the beginning of the step
+        du : ndarray
+            The displacment increment
+        time : float
+            The time at the beginning of the step
+        dtime : float
+            The time increment
+        kstep, kframe : int
+            The step and frame numbers
+        predef : ndarray
+            Prescribed deformation fields
+
+        Returns
+        -------
+        A : ndarray
+            The element stiffness
+
+        """
+        raise NotImplementedError

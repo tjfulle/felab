@@ -54,17 +54,9 @@ class LinearElastic(MaterialModel):
         dtime,
         temp,
         dtemp,
-        predef,
-        dpred,
         ndir,
         nshr,
         ntens,
-        coords,
-        F0,
-        F,
-        noel,
-        kstep,
-        kframe,
     ):
 
         C11 = self.Lambda + 2 * self.Mu
