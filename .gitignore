@@ -4,6 +4,9 @@
 *.log
 *.synctex.gz
 *.exo
+*.png
+*.pvd
+*.vtu
 _minted-*
 Working.tex
 Working.pdf
@@ -13,16 +16,10 @@ foo
 foo.*
 auto/*
 auto
-Lectures/Images/LoganImages
-Lectures/Images/LoganImages/*
 .ipynb_checkpoints
 .ipynb_checkpoints/*
-Assignments/Homel
-Assignments/Homel/*
 .DS_Store
 .cache/*
 .cache
 __pycache__/*
 __pycache__
-*.pvd
-*.vtu

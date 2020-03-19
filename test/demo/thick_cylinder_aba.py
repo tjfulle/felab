@@ -7,8 +7,8 @@ Nu = 0.499
 E = 2.0 * mu * (1.0 + Nu)
 
 
-def demo_linear(ax=None):
-    mesh = abaqus_mesh("./data/ThickCylinder_Linear.inp")
+def demo_linear(data_path, ax=None):
+    mesh = abaqus_mesh(os.path.join(data_path, "ThickCylinder_Linear.inp"))
     V = FEModel(jobid="VolumeLocking.Linear", mesh=mesh)
     el = Element(type="CPE4R")
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
@@ -35,8 +35,8 @@ def demo_linear(ax=None):
     return None
 
 
-def demo_quadratic(ax=None):
-    mesh = abaqus_mesh("./data/ThickCylinder_Quadratic.inp")
+def demo_quadratic(data_path, ax=None):
+    mesh = abaqus_mesh(os.path.join(data_path, "ThickCylinder_Quadratic.inp"))
     V = FEModel(jobid="VolumeLocking.Quadratic", mesh=mesh)
     el = Element(type="CPE8B")
     mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
@@ -53,8 +53,8 @@ def demo_quadratic(ax=None):
     return None
 
 
-def demo_analytic(plot=False):
-    mesh = Mesh(filename="./data/ThickCylinder_Linear.inp")
+def demo_analytic(data_path, plot=False):
+    mesh = Mesh(filename=os.path.join(data_path, "ThickCylinder_Linear.inp"))
     ix = np.where(mesh.coord[:, 1] <= 1e-12)
     a = mesh.coord[ix][:, 0].min()
     b = mesh.coord[ix][:, 0].max()
@@ -76,11 +76,15 @@ def demo_analytic(plot=False):
 
 
 def runall(plot=False):
+    import os
     import matplotlib.pyplot as plt
+    this_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(this_path, "..", "data")
 
-    ax = demo_analytic(plot=plot)
-    ax = demo_linear(ax)
-    demo_quadratic()
+    ax = demo_analytic(data_path, plot=plot)
+    ax = demo_linear(data_path, ax)
+    demo_quadratic(data_path, )
+
     plt.legend()
     plt.show()
 

@@ -4,9 +4,9 @@ import felab.util.tty as tty
 from felab.io.plot import plot2d
 
 
-def demo_plane_stress_tria3_patch(plot=False):
+def demo_plane_stress_tria3_patch(data_path, plot=False):
     # READ MESH
-    mesh = abaqus_mesh(filename="./data/EC3SFP1.inp")
+    mesh = abaqus_mesh(filename=os.path.join(data_path, "EC3SFP1.inp"))
 
     # CREATE MATERIAL MODEL
     mat = Material(name="Material-1", elastic=dict(E=1e6, Nu=0.25))
@@ -109,4 +109,7 @@ def demo_plane_stress_tria3_patch(plot=False):
 
 
 if __name__ == "__main__":
-    demo_plane_stress_tria3_patch(plot=True)
+    import os
+    this_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(this_path, "..", "data")
+    demo_plane_stress_tria3_patch(data_path, plot=True)

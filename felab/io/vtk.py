@@ -562,36 +562,3 @@ def read_mesh(filename, disp=0):
     eletab = [[f.elelab[e]] + f.elecon[e].tolist() for e in range(numele)]
 
     return nodtab, eletab, f.nodesets, f.elemsets, f.surfaces
-
-
-def test_write_fe_results():
-    from distmesh import drectangle, distmesh2d, huniform
-
-    np.random.seed(190)  # Always the same results
-    fd = lambda p: drectangle(p, -1, 1, -1, 1)
-    fh = huniform
-    coord, elecon = distmesh2d(
-        fd, fh, 0.1, (-1, -1, 1, 1), [(-1, -1), (-1, 1), (1, -1), (1, 1)]
-    )
-    jobid = "Job"
-    nodlab = range(coord.shape[0])
-    nodmap = dict([(n, n) for n in nodlab])
-    elelab = range(elecon.shape[0])
-    elemap = dict([(n, n) for n in elelab])
-    eletyp = [element_family(2, 3)] * elecon.shape[0]
-    scal = np.random.rand(coord.shape[0])
-    vect = np.random.rand(coord.shape[0] * 2).reshape(-1, 2)
-    tens = np.random.rand(elecon.shape[0] * 9).reshape(-1, 9)
-    symt = np.random.rand(elecon.shape[0] * 6).reshape(-1, 6)
-    kwds = dict(scal=scal, vect=vect, tens=tens, symt=symt)
-    u = np.zeros_like(coord)
-    u[:, 0] = 1
-    WriteFEResults(jobid, coord, nodmap, elemap, eletyp, elecon, u=u, **kwds)
-    filename = jobid + ".vtu"
-    WriteVTUMesh(filename, coord, nodlab, elelab, eletyp, elecon, check=1)
-    os.remove(filename)
-
-
-if __name__ == "__main__":
-    # read_mesh('uniform_plate_tri_0.05.vtu')
-    test_write_fe_results()

@@ -2,8 +2,8 @@ from felab import *
 from felab.io.exodusii import EXOFileReader
 
 
-def demo_postprocess():
-    mesh = genesis_mesh("./data/PlateWithHoleQuad4.g")
+def demo_postprocess(data_path):
+    mesh = genesis_mesh(os.path.join(data_path, "PlateWithHoleQuad4.g"))
     mat = Material(name="Material-1", elastic=dict(E=100, Nu=0.2))
 
     V = FEModel(mesh=mesh, jobid="PlateWithHoleQuad4")
@@ -40,4 +40,7 @@ def demo_postprocess():
 
 
 if __name__ == "__main__":
-    demo_postprocess()
+    import os
+    this_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(this_path, "..", "data")
+    demo_postprocess(data_path)

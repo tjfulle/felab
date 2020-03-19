@@ -2,10 +2,10 @@ from felab import *
 from felab.io.plot import plot2d
 
 
-def demo_plane_elasticity2(plot=False):
+def demo_plane_elasticity2(data_path, plot=False):
 
     # READ MESH FROM FILE
-    mesh = genesis_mesh("./data/PlateWithHoleTria3.g")
+    mesh = genesis_mesh(os.path.join(data_path, "PlateWithHoleTria3.g"))
 
     # ELASTIC MATERIAL MODEL
     mat = Material(name="Material-1", elastic=dict(E=10e6, Nu=0.29))
@@ -37,4 +37,7 @@ def demo_plane_elasticity2(plot=False):
 
 
 if __name__ == "__main__":
-    demo_plane_elasticity2(plot=True)
+    import os
+    this_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(this_path, "..", "data")
+    demo_plane_elasticity2(data_path, plot=True)

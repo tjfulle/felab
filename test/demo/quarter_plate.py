@@ -1,11 +1,11 @@
 from felab import *
-from felab.io.exodusii import EXOFileReader
 from felab.io.plot import plot2d
 from felab.material import Material
+from felab.io.exodusii import EXOFileReader
 
 
-def demo_quarter_plate(plot=False):
-    mesh = genesis_mesh("./data/PlateWithHoleQuad4QuarterSym.g")
+def demo_quarter_plate(data_path, plot=False):
+    mesh = genesis_mesh(os.path.join(data_path, "PlateWithHoleQuad4QuarterSym.g"))
     V = FEModel(jobid="PlateWithHoleQuad4QuarterSym", mesh=mesh)
     el = Element(type="CPE4")
     mat = Material(name="Material-1", elastic=dict(E=100, Nu=0.2))
@@ -43,4 +43,7 @@ def demo_quarter_plate(plot=False):
 
 
 if __name__ == "__main__":
-    demo_quarter_plate(plot=True)
+    import os
+    this_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(this_path, "..", "data")
+    demo_quarter_plate(data_path, plot=True)

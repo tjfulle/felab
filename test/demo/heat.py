@@ -1,10 +1,9 @@
 import numpy as np
-
 from felab import *
 
 
-def demo_plate_with_hole_fine(plot=False):
-    mesh = genesis_mesh("./data/PlateWithHoleTria3Fine.g")
+def demo_plate_with_hole_fine(data_path, plot=False):
+    mesh = genesis_mesh(os.path.join(data_path, "PlateWithHoleTria3Fine.g"))
     V = FEModel(mesh=mesh)
     k, h, Too = 12, 250, 25
     fun = lambda x: 1000 / np.sqrt(x[:, 0] ** 2 + x[:, 1] ** 2)
@@ -22,9 +21,9 @@ def demo_plate_with_hole_fine(plot=False):
         V.mesh.PlotScalar2D(step.dofs.flatten())
 
 
-def demo_plate_with_hole_coarse():
+def demo_plate_with_hole_coarse(data_path, ):
     k, h, Too = 12, 250, 25  # noqa: F841
-    mesh = genesis_mesh("./data/PlateWithHoleTria3.g")
+    mesh = genesis_mesh(os.path.join(data_path, "PlateWithHoleTria3.g"))
     V = FEModel(jobid="HeatPlateWithHole", mesh=mesh)
     mat = Material(name="Material-1", thermal_conductivity=k)
     el = Element(type="DC2D3")
@@ -39,5 +38,8 @@ def demo_plate_with_hole_coarse():
 
 
 if __name__ == "__main__":
-    demo_plate_with_hole_fine(plot=True)
-    demo_plate_with_hole_coarse()
+    import os
+    this_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(this_path, "..", "data")
+    demo_plate_with_hole_fine(data_path, plot=True)
+    demo_plate_with_hole_coarse(data_path, )

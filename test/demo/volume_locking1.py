@@ -3,13 +3,13 @@ from felab import *
 from felab.io.plot import plot2d
 
 
-def demo_volume_locking(plot=False):
+def demo_volume_locking(data_path, plot=False):
     mu = 1.0
     for (i, Nu) in enumerate((0.0, 0.2, 0.45, 0.499)):
         E = 2.0 * mu * (1.0 + Nu)
 
         # Analytic solution
-        mesh = Mesh(filename="./data/QuarterCylinderQuad4.g")
+        mesh = Mesh(filename=os.path.join(data_path, "QuarterCylinderQuad4.g"))
         p = 1.0
         a, b = mesh.coord[0, 1], mesh.coord[-1, 0]
         u = np.zeros_like(mesh.coord)
@@ -30,7 +30,7 @@ def demo_volume_locking(plot=False):
             )
 
         # Linear finite element solution
-        mesh = genesis_mesh("./data/QuarterCylinderQuad4.g")
+        mesh = genesis_mesh(os.path.join(data_path, "QuarterCylinderQuad4.g"))
         V = FEModel(mesh=mesh)
         el = Element(type="CPE4")
         mat = Material(name="Material-1", elastic=dict(E=E, Nu=Nu))
@@ -61,4 +61,7 @@ def demo_volume_locking(plot=False):
 
 
 if __name__ == "__main__":
-    demo_volume_locking(plot=True)
+    import os
+    this_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(this_path, "..", "data")
+    demo_volume_locking(data_path, plot=True)

@@ -1,10 +1,9 @@
-#!/usr/bin/env python
 from felab import *
 from felab.io.plot import plot2d
 
 
-def demo_plane_elasticity1(plot=False):
-    mesh = genesis_mesh("./data/PlateWithHoleQuad4.g")
+def demo_plane_elasticity1(data_path, plot=False):
+    mesh = genesis_mesh(os.path.join(data_path, "PlateWithHoleQuad4.g"))
     V = FEModel(jobid="Plane1", mesh=mesh)
 
     el = Element(type="CPE4")
@@ -27,4 +26,7 @@ def demo_plane_elasticity1(plot=False):
 
 
 if __name__ == "__main__":
-    demo_plane_elasticity1(plot=True)
+    import os
+    this_path = os.path.dirname(os.path.realpath(__file__))
+    data_path = os.path.join(this_path, "..", "data")
+    demo_plane_elasticity1(data_path, plot=True)
